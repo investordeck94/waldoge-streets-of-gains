@@ -13,7 +13,16 @@ interface LandingPageProps {
 
 export const LandingPage: FC<LandingPageProps> = () => {
   const [showTokenGatingInfo, setShowTokenGatingInfo] = useState(false);
-  const featuresRef = useRef<HTMLDivElement>(null);
+  const { setVisible } = useWalletModal();
+
+  const handleFeatureClick = (featureTitle: string) => {
+    toast.info(`Connect your wallet to access ${featureTitle}`, {
+      action: {
+        label: "Connect",
+        onClick: () => setVisible(true),
+      },
+    });
+  };
 
   const features = [
     {
