@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Zap, Sparkles, Dog } from "lucide-react";
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { cn } from "@/lib/utils";
+import waldogeMascot from "@/assets/waldoge-mascot.png";
 
 interface HeaderProps {
   balance: number;
