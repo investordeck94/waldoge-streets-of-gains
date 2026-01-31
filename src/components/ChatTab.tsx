@@ -9,6 +9,7 @@ import { UserTier } from "@/hooks/useWaldogeBalance";
 import { useChatHistory } from "@/hooks/useUsageTracking";
 import { QUICK_ACTIONS, EXAMPLE_CHATS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import waldogeMascot from "@/assets/waldoge-mascot.png";
 
 interface ChatTabProps {
   tier: UserTier;
