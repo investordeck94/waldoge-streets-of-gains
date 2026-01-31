@@ -69,7 +69,11 @@ export const Header: FC<HeaderProps> = ({
             className="flex items-center gap-3"
           >
             <div className="relative">
-              <span className="text-3xl">🐕</span>
+              <img 
+                src={waldogeMascot} 
+                alt="WALDOGE" 
+                className="w-10 h-10 object-contain"
+              />
               <motion.div
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ repeat: Infinity, duration: 2 }}

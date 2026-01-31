@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Wallet, Rocket, Sparkles, Shield } from "lucide-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { Button } from "@/components/ui/button";
+import waldogeMascot from "@/assets/waldoge-mascot.png";
 
 interface LandingPageProps {
   onLearnMore: () => void;
@@ -41,9 +42,13 @@ export const LandingPage: FC<LandingPageProps> = ({ onLearnMore }) => {
           <motion.div
             animate={{ y: [0, -15, 0] }}
             transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-            className="text-8xl mb-6"
+            className="mb-6 flex justify-center"
           >
-            🐕
+            <img 
+              src={waldogeMascot} 
+              alt="WALDOGE Mascot" 
+              className="w-48 h-48 object-contain drop-shadow-[0_0_30px_hsl(45,95%,55%,0.4)]"
+            />
           </motion.div>
 
           <h1 className="font-display text-4xl sm:text-6xl font-bold mb-4">
