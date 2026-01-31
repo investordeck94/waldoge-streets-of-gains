@@ -20,6 +20,7 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
   const { publicKey, connected } = useWallet();
   const [balance, setBalance] = useState<number>(0);
   const [tier, setTier] = useState<UserTier>("none");
+  const [isWhale, setIsWhale] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
