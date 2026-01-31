@@ -14,6 +14,7 @@ import {
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { RAID_TONES, PLATFORMS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface RaidTabProps {
   tier: UserTier;
