@@ -35,6 +35,7 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
     if (!publicKey || !connected) {
       setBalance(0);
       setTier("none");
+      setIsWhale(false);
       setError(null);
       return;
     }
