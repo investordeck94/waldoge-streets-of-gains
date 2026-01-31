@@ -1,8 +1,10 @@
 import { FC, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Rocket, Sparkles, Shield, Info, X } from "lucide-react";
+import { Rocket, Sparkles, Shield, Info, X, Wallet } from "lucide-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import waldogeMascot from "@/assets/waldoge-mascot.png";
 
 interface LandingPageProps {
