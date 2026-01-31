@@ -160,11 +160,36 @@ export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
 };
 
 // Chat history hook
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-  timestamp: number;
-}
+const ChatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().max(50000),
+  timestamp: z.number().int().min(0),
+});
+
+const ChatHistorySchema = z.array(ChatMessageSchema).max(100);
+
+type ChatMessage = z.infer<typeof ChatMessageSchema>;
+
+/**
+ * Safely parse and validate chat history from localStorage
+ */
+const safeParseChatHistory = (data: string | null): ChatMessage[] => {
+  if (!data) return [];
+  
+  try {
+    const parsed = JSON.parse(data);
+    const validated = ChatHistorySchema.safeParse(parsed);
+    
+    if (validated.success) {
+      return validated.data;
+    }
+    console.warn("Invalid chat history in localStorage, resetting");
+    return [];
+  } catch (error) {
+    console.warn("Failed to parse chat history from localStorage, resetting");
+    return [];
+  }
+};
 
 export const useChatHistory = () => {
   const { publicKey } = useWallet();
@@ -178,10 +203,7 @@ export const useChatHistory = () => {
 
     const chatKey = getChatHistoryKey(publicKey.toString());
     const stored = localStorage.getItem(chatKey);
-    
-    if (stored) {
-      setMessages(JSON.parse(stored));
-    }
+    setMessages(safeParseChatHistory(stored));
   }, [publicKey]);
 
   const addMessage = useCallback(
