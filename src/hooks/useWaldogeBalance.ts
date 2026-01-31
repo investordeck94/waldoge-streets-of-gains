@@ -93,6 +93,7 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
   return {
     balance,
     tier,
+    isWhale,
     isLoading,
     error,
     refetch: fetchBalance,
