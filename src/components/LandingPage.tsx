@@ -1,7 +1,8 @@
 import { FC } from "react";
 import { motion } from "framer-motion";
-import { Wallet, Rocket, Sparkles, Shield } from "lucide-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { Wallet, Rocket, Sparkles, Shield, ArrowRight } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Button } from "@/components/ui/button";
 import waldogeMascot from "@/assets/waldoge-mascot.png";
 
