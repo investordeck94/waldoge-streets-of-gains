@@ -72,6 +72,7 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
       setError("Failed to fetch token balance");
       setBalance(0);
       setTier("preview");
+      setIsWhale(false);
     } finally {
       setIsLoading(false);
     }
