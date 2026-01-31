@@ -221,7 +221,7 @@ export const MemeTab: FC<MemeTabProps> = ({
                     className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                   >
                     {copiedIndex === i ? (
-                      <Check className="w-4 h-4 text-green-500" />
+                      <Check className="w-4 h-4 text-waldoge-success" />
                     ) : (
                       <Copy className="w-4 h-4" />
                     )}

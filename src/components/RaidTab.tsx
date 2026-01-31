@@ -122,7 +122,7 @@ export const RaidTab: FC<RaidTabProps> = ({
       className="opacity-0 group-hover:opacity-100 transition-opacity"
     >
       {copiedIndex === id ? (
-        <Check className="w-4 h-4 text-green-500" />
+        <Check className="w-4 h-4 text-waldoge-success" />
       ) : (
         <Copy className="w-4 h-4" />
       )}
