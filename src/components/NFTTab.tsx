@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UserTier } from "@/hooks/useWaldogeBalance";
+import { NFT_MINT_FEE_PERCENT } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 interface NFTTabProps {
@@ -28,6 +29,7 @@ interface NFTTabProps {
   canUse: boolean;
   remainingUses: number;
   onUse: () => void;
+  isWhale: boolean; // Holds >= 1% supply, waives mint fee
 }
 
 type ImageSource = "generate" | "upload";
