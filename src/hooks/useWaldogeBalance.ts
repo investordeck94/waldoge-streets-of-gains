@@ -62,6 +62,7 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
         if (tokenError.name === "TokenAccountNotFoundError") {
           setBalance(0);
           setTier("preview");
+          setIsWhale(false);
         } else {
           throw tokenError;
         }
