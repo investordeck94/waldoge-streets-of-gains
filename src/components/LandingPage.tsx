@@ -1,24 +1,17 @@
-import { FC } from "react";
+import { FC, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Wallet, Rocket, Sparkles, Shield, ArrowRight } from "lucide-react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { Rocket, Sparkles, Shield, Info, X } from "lucide-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { Button } from "@/components/ui/button";
 import waldogeMascot from "@/assets/waldoge-mascot.png";
-
-// Connect wallet button component
 
 interface LandingPageProps {
   onLearnMore: () => void;
 }
 
-export const LandingPage: FC<LandingPageProps> = ({ onLearnMore }) => {
-  const { connecting } = useWallet();
-  const { setVisible } = useWalletModal();
-
-  const handleConnectWallet = () => {
-    setVisible(true);
-  };
+export const LandingPage: FC<LandingPageProps> = () => {
+  const [showTokenGatingInfo, setShowTokenGatingInfo] = useState(false);
+  const featuresRef = useRef<HTMLDivElement>(null);
 
   const features = [
     {
@@ -36,6 +29,12 @@ export const LandingPage: FC<LandingPageProps> = ({ onLearnMore }) => {
       title: "NFT Creator",
       description: "Mint unique WALDOGE Space Badges directly to your wallet",
     },
+  ];
+
+  const tokenGatingTiers = [
+    { tier: "Preview", tokens: "0", access: "Limited access to try features" },
+    { tier: "Tier 1", tokens: "1,000+", access: "Full access to all generators" },
+    { tier: "Chaos Mode", tokens: "100,000+", access: "Unlimited access + exclusive features" },
   ];
 
   return (
@@ -77,25 +76,9 @@ export const LandingPage: FC<LandingPageProps> = ({ onLearnMore }) => {
             <motion.div
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
+              className="wallet-button-wrapper"
             >
-              <Button
-                size="lg"
-                onClick={handleConnectWallet}
-                disabled={connecting}
-                className="h-14 px-8 text-lg font-semibold bg-gradient-gold hover:opacity-90 text-primary-foreground shadow-[0_0_30px_hsl(45,95%,55%,0.4)] hover:shadow-[0_0_40px_hsl(45,95%,55%,0.6)] transition-all"
-              >
-                {connecting ? (
-                  <>
-                    <span className="animate-pulse">Connecting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Wallet className="w-5 h-5 mr-2" />
-                    Connect Wallet
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </>
-                )}
-              </Button>
+              <WalletMultiButton className="!h-14 !px-8 !text-lg !font-semibold !bg-gradient-to-r !from-primary !to-accent !rounded-lg hover:!opacity-90 !shadow-[0_0_30px_hsl(45,95%,55%,0.4)] hover:!shadow-[0_0_40px_hsl(45,95%,55%,0.6)] !transition-all" />
             </motion.div>
 
             <p className="text-sm text-muted-foreground">
@@ -105,13 +88,64 @@ export const LandingPage: FC<LandingPageProps> = ({ onLearnMore }) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={onLearnMore}
-              className="text-muted-foreground hover:text-foreground"
+              onClick={() => setShowTokenGatingInfo(true)}
+              className="text-muted-foreground hover:text-foreground gap-2"
             >
+              <Info className="w-4 h-4" />
               How does token gating work?
             </Button>
           </div>
         </motion.div>
+
+        {/* Token Gating Info Modal */}
+        {showTokenGatingInfo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+            onClick={() => setShowTokenGatingInfo(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="glass-card p-6 max-w-md w-full relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={() => setShowTokenGatingInfo(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+              
+              <h3 className="font-display text-xl font-bold text-gradient-gold mb-4">
+                Token Gating Tiers
+              </h3>
+              
+              <p className="text-sm text-muted-foreground mb-4">
+                Your WALDOGE token balance determines your access level:
+              </p>
+              
+              <div className="space-y-3">
+                {tokenGatingTiers.map((item) => (
+                  <div key={item.tier} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                    <div className="flex-1">
+                      <p className="font-semibold text-foreground">{item.tier}</p>
+                      <p className="text-xs text-primary">{item.tokens} WALDOGE</p>
+                      <p className="text-sm text-muted-foreground mt-1">{item.access}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <p className="text-xs text-muted-foreground mt-4 text-center">
+                Connect your wallet to check your tier!
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
 
         {/* Features Grid */}
         <motion.div
