@@ -11,6 +11,13 @@ interface LandingPageProps {
 }
 
 export const LandingPage: FC<LandingPageProps> = ({ onLearnMore }) => {
+  const { connecting } = useWallet();
+  const { setVisible } = useWalletModal();
+
+  const handleConnectWallet = () => {
+    setVisible(true);
+  };
+
   const features = [
     {
       icon: Rocket,
