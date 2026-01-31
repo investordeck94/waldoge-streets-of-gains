@@ -13,7 +13,7 @@ import { useUsageTracking } from "@/hooks/useUsageTracking";
 
 const Index = () => {
   const { connected } = useWallet();
-  const { balance, tier, isLoading } = useWaldogeBalance();
+  const { balance, tier, isWhale, isLoading } = useWaldogeBalance();
   const { canUse, getRemainingUses, incrementUsage, clearHistory } = useUsageTracking(tier);
   const [activeTab, setActiveTab] = useState("chat");
 
@@ -41,7 +41,7 @@ const Index = () => {
       case "meme":
         return <MemeTab {...tabProps} />;
       case "nft":
-        return <NFTTab {...tabProps} />;
+        return <NFTTab {...tabProps} isWhale={isWhale} />;
       case "about":
         return <AboutTab />;
       default:

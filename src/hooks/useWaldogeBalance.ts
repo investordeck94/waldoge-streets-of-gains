@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { getAccount, getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { WALDOGE_TOKEN_MINT, TIER_THRESHOLDS } from "@/lib/constants";
+import { WALDOGE_TOKEN_MINT, TIER_THRESHOLDS, WHALE_THRESHOLD } from "@/lib/constants";
 
 export type UserTier = "none" | "preview" | "basic" | "chaos";
 
 interface WaldogeBalanceState {
   balance: number;
   tier: UserTier;
+  isWhale: boolean; // Holds >= 1% of supply, waives NFT mint fees
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -19,6 +20,7 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
   const { publicKey, connected } = useWallet();
   const [balance, setBalance] = useState<number>(0);
   const [tier, setTier] = useState<UserTier>("none");
+  const [isWhale, setIsWhale] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +35,7 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
     if (!publicKey || !connected) {
       setBalance(0);
       setTier("none");
+      setIsWhale(false);
       setError(null);
       return;
     }
@@ -53,11 +56,13 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
         const tokenBalance = Number(tokenAccount.amount) / 1e9;
         setBalance(tokenBalance);
         setTier(calculateTier(tokenBalance));
+        setIsWhale(tokenBalance >= WHALE_THRESHOLD);
       } catch (tokenError: any) {
         // If token account doesn't exist, balance is 0
         if (tokenError.name === "TokenAccountNotFoundError") {
           setBalance(0);
           setTier("preview");
+          setIsWhale(false);
         } else {
           throw tokenError;
         }
@@ -67,6 +72,7 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
       setError("Failed to fetch token balance");
       setBalance(0);
       setTier("preview");
+      setIsWhale(false);
     } finally {
       setIsLoading(false);
     }
@@ -87,6 +93,7 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
   return {
     balance,
     tier,
+    isWhale,
     isLoading,
     error,
     refetch: fetchBalance,

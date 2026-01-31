@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UserTier } from "@/hooks/useWaldogeBalance";
+import { NFT_MINT_FEE_PERCENT } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 interface NFTTabProps {
@@ -28,6 +29,7 @@ interface NFTTabProps {
   canUse: boolean;
   remainingUses: number;
   onUse: () => void;
+  isWhale: boolean; // Holds >= 1% supply, waives mint fee
 }
 
 type ImageSource = "generate" | "upload";
@@ -72,6 +74,7 @@ export const NFTTab: FC<NFTTabProps> = ({
   canUse,
   remainingUses,
   onUse,
+  isWhale,
 }) => {
   const [imageSource, setImageSource] = useState<ImageSource>("generate");
   const [artStyle, setArtStyle] = useState<ArtStyle>("cosmic");
@@ -362,10 +365,17 @@ export const NFTTab: FC<NFTTabProps> = ({
                 ))}
               </div>
 
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                <AlertCircle className="w-4 h-4" />
-                Minting may cost SOL (network fees + storage)
-              </div>
+              {isWhale ? (
+                <div className="flex items-center gap-2 text-xs text-waldoge-success mb-4">
+                  <Sparkles className="w-4 h-4" />
+                  🐋 Whale status! Minting fee waived
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
+                  <AlertCircle className="w-4 h-4" />
+                  {NFT_MINT_FEE_PERCENT}% minting fee (waived for 1%+ holders)
+                </div>
+              )}
 
               <Button
                 onClick={handleMint}
