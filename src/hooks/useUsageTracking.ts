@@ -1,15 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { z } from "zod";
 import { USAGE_LIMITS } from "@/lib/constants";
 import { UserTier } from "./useWaldogeBalance";
 
-interface DailyUsage {
-  chat: number;
-  raidGenerator: number;
-  memeGenerator: number;
-  nftCreator: number;
-  date: string;
-}
+// Zod schemas for localStorage validation
+const DailyUsageSchema = z.object({
+  chat: z.number().int().min(0).max(10000),
+  raidGenerator: z.number().int().min(0).max(10000),
+  memeGenerator: z.number().int().min(0).max(10000),
+  nftCreator: z.number().int().min(0).max(10000),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+type DailyUsage = z.infer<typeof DailyUsageSchema>;
 
 interface UsageTrackingState {
   usage: DailyUsage;
@@ -32,6 +36,27 @@ const getDefaultUsage = (): DailyUsage => ({
   date: getTodayString(),
 });
 
+/**
+ * Safely parse and validate JSON from localStorage
+ */
+const safeParseUsage = (data: string | null): DailyUsage | null => {
+  if (!data) return null;
+  
+  try {
+    const parsed = JSON.parse(data);
+    const validated = DailyUsageSchema.safeParse(parsed);
+    
+    if (validated.success) {
+      return validated.data;
+    }
+    console.warn("Invalid usage data in localStorage, resetting");
+    return null;
+  } catch (error) {
+    console.warn("Failed to parse usage data from localStorage, resetting");
+    return null;
+  }
+};
+
 export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
   const { publicKey } = useWallet();
   const [usage, setUsage] = useState<DailyUsage>(getDefaultUsage());
@@ -45,10 +70,9 @@ export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
 
     const storageKey = getStorageKey(publicKey.toString());
     const storedUsage = localStorage.getItem(storageKey);
+    const parsed = safeParseUsage(storedUsage);
 
-    if (storedUsage) {
-      const parsed: DailyUsage = JSON.parse(storedUsage);
-      
+    if (parsed) {
       // Reset if it's a new day
       if (parsed.date !== getTodayString()) {
         const newUsage = getDefaultUsage();
@@ -136,11 +160,36 @@ export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
 };
 
 // Chat history hook
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-  timestamp: number;
-}
+const ChatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().max(50000),
+  timestamp: z.number().int().min(0),
+});
+
+const ChatHistorySchema = z.array(ChatMessageSchema).max(100);
+
+type ChatMessage = z.infer<typeof ChatMessageSchema>;
+
+/**
+ * Safely parse and validate chat history from localStorage
+ */
+const safeParseChatHistory = (data: string | null): ChatMessage[] => {
+  if (!data) return [];
+  
+  try {
+    const parsed = JSON.parse(data);
+    const validated = ChatHistorySchema.safeParse(parsed);
+    
+    if (validated.success) {
+      return validated.data;
+    }
+    console.warn("Invalid chat history in localStorage, resetting");
+    return [];
+  } catch (error) {
+    console.warn("Failed to parse chat history from localStorage, resetting");
+    return [];
+  }
+};
 
 export const useChatHistory = () => {
   const { publicKey } = useWallet();
@@ -154,10 +203,7 @@ export const useChatHistory = () => {
 
     const chatKey = getChatHistoryKey(publicKey.toString());
     const stored = localStorage.getItem(chatKey);
-    
-    if (stored) {
-      setMessages(JSON.parse(stored));
-    }
+    setMessages(safeParseChatHistory(stored));
   }, [publicKey]);
 
   const addMessage = useCallback(
