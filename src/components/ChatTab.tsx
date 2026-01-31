@@ -1,12 +1,14 @@
-import { FC, useState, useRef, useEffect } from "react";
+import { FC, useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Loader2, Trash2, Lock, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { Send, Loader2, Trash2, Lock, Sparkles, StopCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { useChatHistory } from "@/hooks/useUsageTracking";
+import { useStreamingChat, ChatMessage } from "@/hooks/useStreamingChat";
 import { QUICK_ACTIONS, EXAMPLE_CHATS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import waldogeMascot from "@/assets/waldoge-mascot.png";
@@ -24,11 +26,13 @@ export const ChatTab: FC<ChatTabProps> = ({
   remainingUses,
   onUse,
 }) => {
-  const { messages, addMessage, clearMessages } = useChatHistory();
+  const { messages, addMessage, updateLastMessage, clearMessages } = useChatHistory();
+  const { streamChat, cancelStream } = useStreamingChat();
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chaosMode, setChaosMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const assistantContentRef = useRef("");
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -38,7 +42,7 @@ export const ChatTab: FC<ChatTabProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = async (messageContent?: string) => {
+  const handleSend = useCallback(async (messageContent?: string) => {
     const content = messageContent || input.trim();
     if (!content || !canUse || tier === "preview" || tier === "none") return;
 
@@ -46,26 +50,38 @@ export const ChatTab: FC<ChatTabProps> = ({
     addMessage("user", content);
     onUse();
     setIsLoading(true);
+    assistantContentRef.current = "";
 
-    // Simulate AI response (in production, this would call an API)
-    setTimeout(() => {
-      const responses = [
-        "Let's explore that 🐾 Here's something fun for you...\n\n*wags tail in cosmic joy*",
-        "Space doge wisdom says... that's a great idea! ✨🚀",
-        "My backpack's full of memes today! Here's what I've got...",
-        "Hard to explore space without wings, but easy to create vibes! 🐕✨",
-        "That's the spirit! We're not just going to the moon — we're exploring galaxies!",
-      ];
-      
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      const chaosAddition = chaosMode 
-        ? "\n\n*CHAOS MODE ACTIVATED* 🌌🔥 Maximum cosmic energy flowing through the nebula! The backpack is overflowing with interstellar meme power!"
-        : "";
-      
-      addMessage("assistant", randomResponse + chaosAddition);
-      setIsLoading(false);
-    }, 1500);
-  };
+    // Build messages array for API (convert to format expected by the AI)
+    const apiMessages: ChatMessage[] = [
+      ...messages.map(m => ({ role: m.role, content: m.content })),
+      { role: "user" as const, content },
+    ];
+
+    // Add empty assistant message that will be updated
+    addMessage("assistant", "");
+
+    await streamChat({
+      messages: apiMessages,
+      chaosMode,
+      onDelta: (chunk) => {
+        assistantContentRef.current += chunk;
+        updateLastMessage(assistantContentRef.current);
+      },
+      onDone: () => {
+        setIsLoading(false);
+      },
+      onError: (errorMessage) => {
+        updateLastMessage(errorMessage);
+        setIsLoading(false);
+      },
+    });
+  }, [input, canUse, tier, messages, chaosMode, addMessage, updateLastMessage, onUse, streamChat]);
+
+  const handleCancel = useCallback(() => {
+    cancelStream();
+    setIsLoading(false);
+  }, [cancelStream]);
 
   const isLocked = tier === "none" || tier === "preview";
 
