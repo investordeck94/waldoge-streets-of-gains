@@ -6,6 +6,8 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Button } from "@/components/ui/button";
 import waldogeMascot from "@/assets/waldoge-mascot.png";
 
+// Connect wallet button component
+
 interface LandingPageProps {
   onLearnMore: () => void;
 }
