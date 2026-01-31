@@ -274,18 +274,25 @@ export const ChatTab: FC<ChatTabProps> = ({
           className="pr-12 resize-none bg-card border-border focus:border-primary/50"
           rows={2}
         />
-        <Button
-          size="icon"
-          onClick={() => handleSend()}
-          disabled={!input.trim() || isLocked || isLoading || !canUse}
-          className="absolute right-2 bottom-2"
-        >
-          {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
+        {isLoading ? (
+          <Button
+            size="icon"
+            onClick={handleCancel}
+            className="absolute right-2 bottom-2"
+            variant="destructive"
+          >
+            <StopCircle className="w-4 h-4" />
+          </Button>
+        ) : (
+          <Button
+            size="icon"
+            onClick={() => handleSend()}
+            disabled={!input.trim() || isLocked || !canUse}
+            className="absolute right-2 bottom-2"
+          >
             <Send className="w-4 h-4" />
-          )}
-        </Button>
+          </Button>
+        )}
       </div>
 
       {/* Quick actions bar */}
