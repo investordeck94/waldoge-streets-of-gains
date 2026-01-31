@@ -56,6 +56,7 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
         const tokenBalance = Number(tokenAccount.amount) / 1e9;
         setBalance(tokenBalance);
         setTier(calculateTier(tokenBalance));
+        setIsWhale(tokenBalance >= WHALE_THRESHOLD);
       } catch (tokenError: any) {
         // If token account doesn't exist, balance is 0
         if (tokenError.name === "TokenAccountNotFoundError") {
