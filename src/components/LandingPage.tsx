@@ -1,7 +1,8 @@
 import { FC } from "react";
 import { motion } from "framer-motion";
-import { Wallet, Rocket, Sparkles, Shield } from "lucide-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { Wallet, Rocket, Sparkles, Shield, ArrowRight } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Button } from "@/components/ui/button";
 import waldogeMascot from "@/assets/waldoge-mascot.png";
 
@@ -10,6 +11,13 @@ interface LandingPageProps {
 }
 
 export const LandingPage: FC<LandingPageProps> = ({ onLearnMore }) => {
+  const { connecting } = useWallet();
+  const { setVisible } = useWalletModal();
+
+  const handleConnectWallet = () => {
+    setVisible(true);
+  };
+
   const features = [
     {
       icon: Rocket,
@@ -63,23 +71,42 @@ export const LandingPage: FC<LandingPageProps> = ({ onLearnMore }) => {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col gap-4 justify-center items-center">
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="glow-gold rounded-lg"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <WalletMultiButton />
+              <Button
+                size="lg"
+                onClick={handleConnectWallet}
+                disabled={connecting}
+                className="h-14 px-8 text-lg font-semibold bg-gradient-gold hover:opacity-90 text-primary-foreground shadow-[0_0_30px_hsl(45,95%,55%,0.4)] hover:shadow-[0_0_40px_hsl(45,95%,55%,0.6)] transition-all"
+              >
+                {connecting ? (
+                  <>
+                    <span className="animate-pulse">Connecting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="w-5 h-5 mr-2" />
+                    Connect Wallet
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </>
+                )}
+              </Button>
             </motion.div>
 
+            <p className="text-sm text-muted-foreground">
+              Works with Phantom, Solflare, and other Solana wallets
+            </p>
+
             <Button
-              variant="outline"
-              size="lg"
+              variant="ghost"
+              size="sm"
               onClick={onLearnMore}
-              className="border-border hover:border-primary/50 hover:bg-primary/5"
+              className="text-muted-foreground hover:text-foreground"
             >
-              <Wallet className="w-4 h-4 mr-2" />
-              How to Unlock
+              How does token gating work?
             </Button>
           </div>
         </motion.div>
