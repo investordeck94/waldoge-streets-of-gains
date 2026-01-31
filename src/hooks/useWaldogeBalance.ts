@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { getAccount, getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { WALDOGE_TOKEN_MINT, TIER_THRESHOLDS } from "@/lib/constants";
+import { WALDOGE_TOKEN_MINT, TIER_THRESHOLDS, WHALE_THRESHOLD } from "@/lib/constants";
 
 export type UserTier = "none" | "preview" | "basic" | "chaos";
 
 interface WaldogeBalanceState {
   balance: number;
   tier: UserTier;
+  isWhale: boolean; // Holds >= 1% of supply, waives NFT mint fees
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
