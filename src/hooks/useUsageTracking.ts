@@ -216,16 +216,35 @@ export const useChatHistory = () => {
         timestamp: Date.now(),
       };
 
-      const newMessages = [...messages, newMessage];
-      
-      // Keep only last 50 messages
-      const trimmedMessages = newMessages.slice(-50);
-      
-      const chatKey = getChatHistoryKey(publicKey.toString());
-      localStorage.setItem(chatKey, JSON.stringify(trimmedMessages));
-      setMessages(trimmedMessages);
+      setMessages(prev => {
+        const newMessages = [...prev, newMessage].slice(-50);
+        const chatKey = getChatHistoryKey(publicKey.toString());
+        localStorage.setItem(chatKey, JSON.stringify(newMessages));
+        return newMessages;
+      });
     },
-    [publicKey, messages]
+    [publicKey]
+  );
+
+  const updateLastMessage = useCallback(
+    (content: string) => {
+      if (!publicKey) return;
+
+      setMessages(prev => {
+        if (prev.length === 0) return prev;
+        
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          ...updated[updated.length - 1],
+          content,
+        };
+        
+        const chatKey = getChatHistoryKey(publicKey.toString());
+        localStorage.setItem(chatKey, JSON.stringify(updated));
+        return updated;
+      });
+    },
+    [publicKey]
   );
 
   const clearMessages = useCallback(() => {
@@ -239,6 +258,7 @@ export const useChatHistory = () => {
   return {
     messages,
     addMessage,
+    updateLastMessage,
     clearMessages,
   };
 };
