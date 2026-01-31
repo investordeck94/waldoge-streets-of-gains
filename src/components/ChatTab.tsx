@@ -9,6 +9,7 @@ import { UserTier } from "@/hooks/useWaldogeBalance";
 import { useChatHistory } from "@/hooks/useUsageTracking";
 import { QUICK_ACTIONS, EXAMPLE_CHATS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import waldogeMascot from "@/assets/waldoge-mascot.png";
 
 interface ChatTabProps {
   tier: UserTier;
@@ -154,9 +155,13 @@ export const ChatTab: FC<ChatTabProps> = ({
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ repeat: Infinity, duration: 3 }}
-              className="text-6xl mb-4"
+              className="mb-4"
             >
-              🐕
+              <img 
+                src={waldogeMascot} 
+                alt="WALDOGE" 
+                className="w-24 h-24 object-contain drop-shadow-[0_0_20px_hsl(45,95%,55%,0.3)]"
+              />
             </motion.div>
             <h3 className="font-display text-lg font-semibold mb-2">
               Hey there, space explorer!
