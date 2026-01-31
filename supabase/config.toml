@@ -2,3 +2,9 @@ project_id = "papjgihxdvpzlmydeolk"
 
 [functions.chat]
 verify_jwt = false
+
+[functions.generate-memes]
+verify_jwt = false
+
+[functions.generate-raids]
+verify_jwt = false

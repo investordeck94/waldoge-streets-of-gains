@@ -14,6 +14,7 @@ import {
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { RAID_TONES, PLATFORMS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface RaidTabProps {
   tier: UserTier;
@@ -71,17 +72,40 @@ export const RaidTab: FC<RaidTabProps> = ({
   const isLocked = tier === "none" || tier === "preview";
   const isUnhingedLocked = tier !== "chaos";
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!canUse || !topic.trim()) return;
 
     setIsGenerating(true);
     onUse();
 
-    // Simulate generation
-    setTimeout(() => {
-      setContent(sampleContent);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-raids`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ topic, tone, platform }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to generate");
+      }
+
+      const data = await response.json();
+      setContent({
+        posts: data.posts || [],
+        replies: data.replies || [],
+        oneLiners: data.oneLiners || [],
+      });
+    } catch (error) {
+      console.error("Generation error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate content");
+      setContent(null);
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   const copyToClipboard = async (text: string, id: string) => {
@@ -98,7 +122,7 @@ export const RaidTab: FC<RaidTabProps> = ({
       className="opacity-0 group-hover:opacity-100 transition-opacity"
     >
       {copiedIndex === id ? (
-        <Check className="w-4 h-4 text-green-500" />
+        <Check className="w-4 h-4 text-waldoge-success" />
       ) : (
         <Copy className="w-4 h-4" />
       )}

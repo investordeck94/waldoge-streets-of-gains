@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface MemeTabProps {
   tier: UserTier;
@@ -52,16 +53,36 @@ export const MemeTab: FC<MemeTabProps> = ({
 
   const isLocked = tier === "none" || tier === "preview";
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!canUse || !prompt.trim()) return;
 
     setIsGenerating(true);
     onUse();
 
-    setTimeout(() => {
-      setResults(mode === "caption" ? sampleCaptions : samplePrompts);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-memes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ theme: prompt, mode }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to generate");
+      }
+
+      const data = await response.json();
+      setResults(data.results || []);
+    } catch (error) {
+      console.error("Generation error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate content");
+      setResults(null);
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   const copyToClipboard = async (text: string, index: number) => {
@@ -200,7 +221,7 @@ export const MemeTab: FC<MemeTabProps> = ({
                     className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                   >
                     {copiedIndex === i ? (
-                      <Check className="w-4 h-4 text-green-500" />
+                      <Check className="w-4 h-4 text-waldoge-success" />
                     ) : (
                       <Copy className="w-4 h-4" />
                     )}
