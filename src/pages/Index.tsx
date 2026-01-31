@@ -41,7 +41,7 @@ const Index = () => {
       case "meme":
         return <MemeTab {...tabProps} />;
       case "nft":
-        return <NFTTab {...tabProps} />;
+        return <NFTTab {...tabProps} isWhale={isWhale} />;
       case "about":
         return <AboutTab />;
       default:
