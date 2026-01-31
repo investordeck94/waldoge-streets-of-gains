@@ -171,7 +171,10 @@ export const LandingPage: FC<LandingPageProps> = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-              className="glass-card p-6 text-center group hover:border-primary/30 transition-colors"
+              whileHover={{ scale: 1.02, y: -4 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleFeatureClick(feature.title)}
+              className="glass-card p-6 text-center group hover:border-primary/30 transition-colors cursor-pointer"
             >
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
                 <feature.icon className="w-6 h-6 text-primary" />
@@ -182,6 +185,10 @@ export const LandingPage: FC<LandingPageProps> = () => {
               <p className="text-sm text-muted-foreground">
                 {feature.description}
               </p>
+              <div className="mt-3 flex items-center justify-center gap-1 text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                <Wallet className="w-3 h-3" />
+                <span>Connect to access</span>
+              </div>
             </motion.div>
           ))}
         </motion.div>
