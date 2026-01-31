@@ -74,6 +74,7 @@ export const NFTTab: FC<NFTTabProps> = ({
   canUse,
   remainingUses,
   onUse,
+  isWhale,
 }) => {
   const [imageSource, setImageSource] = useState<ImageSource>("generate");
   const [artStyle, setArtStyle] = useState<ArtStyle>("cosmic");
