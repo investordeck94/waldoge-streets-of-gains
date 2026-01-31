@@ -224,7 +224,13 @@ export const ChatTab: FC<ChatTabProps> = ({
                     message.role === "user" ? "chat-bubble-user" : "chat-bubble-ai"
                   )}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  {message.role === "assistant" ? (
+                    <div className="prose prose-sm prose-invert max-w-none text-foreground">
+                      <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  )}
                 </div>
               </motion.div>
             ))}
