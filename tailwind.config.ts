@@ -70,6 +70,7 @@ export default {
           pink: "hsl(var(--waldoge-pink))",
           space: "hsl(var(--waldoge-space))",
           nebula: "hsl(var(--waldoge-nebula))",
+          success: "hsl(var(--waldoge-success))",
         },
         tier: {
           locked: "hsl(var(--tier-locked))",

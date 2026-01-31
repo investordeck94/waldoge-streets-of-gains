@@ -366,7 +366,7 @@ export const NFTTab: FC<NFTTabProps> = ({
               </div>
 
               {isWhale ? (
-                <div className="flex items-center gap-2 text-xs text-green-500 mb-4">
+                <div className="flex items-center gap-2 text-xs text-waldoge-success mb-4">
                   <Sparkles className="w-4 h-4" />
                   🐋 Whale status! Minting fee waived
                 </div>
