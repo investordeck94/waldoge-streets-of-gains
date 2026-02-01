@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { getAccount, getAssociatedTokenAddressSync, getMint } from "@solana/spl-token";
 import { WALDOGE_TOKEN_MINT, TIER_THRESHOLDS, WHALE_THRESHOLD } from "@/lib/constants";
 
 export type UserTier = "none" | "preview" | "basic" | "chaos";
@@ -14,6 +13,8 @@ interface WaldogeBalanceState {
   error: string | null;
   refetch: () => Promise<void>;
 }
+
+const WALDOGE_MINT = new PublicKey(WALDOGE_TOKEN_MINT);
 
 export const useWaldogeBalance = (): WaldogeBalanceState => {
   const { connection } = useConnection();
@@ -44,50 +45,28 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
     setError(null);
 
     try {
-      const mintPubkey = new PublicKey(WALDOGE_TOKEN_MINT);
       console.log("🐕 Fetching WALDOGE balance for wallet:", publicKey.toBase58());
       console.log("🐕 Token mint:", WALDOGE_TOKEN_MINT);
-      
-      // Fetch mint info to get correct decimals
-      let decimals = 9; // Default to 9
-      try {
-        const mintInfo = await getMint(connection, mintPubkey);
-        decimals = mintInfo.decimals;
-        console.log("🐕 Token decimals:", decimals);
-      } catch (mintError) {
-        console.warn("🐕 Could not fetch mint info, using default 9 decimals:", mintError);
-      }
-      
-      const associatedTokenAddress = getAssociatedTokenAddressSync(
-        mintPubkey,
-        publicKey
-      );
-      console.log("🐕 Associated token address:", associatedTokenAddress.toBase58());
 
-      try {
-        const tokenAccount = await getAccount(connection, associatedTokenAddress);
-        // Use the correct decimals from mint info
-        const divisor = Math.pow(10, decimals);
-        const tokenBalance = Number(tokenAccount.amount) / divisor;
-        console.log("🐕 Raw token amount:", tokenAccount.amount.toString());
-        console.log("🐕 Decimals used:", decimals);
-        console.log("🐕 Calculated balance:", tokenBalance);
-        setBalance(tokenBalance);
-        setTier(calculateTier(tokenBalance));
-        setIsWhale(tokenBalance >= WHALE_THRESHOLD);
-        console.log("🐕 Tier:", calculateTier(tokenBalance), "Is Whale:", tokenBalance >= WHALE_THRESHOLD);
-      } catch (tokenError: any) {
-        console.log("🐕 Token account error:", tokenError.name, tokenError.message);
-        // If token account doesn't exist, balance is 0
-        if (tokenError.name === "TokenAccountNotFoundError") {
-          console.log("🐕 No token account found - user has 0 WALDOGE");
-          setBalance(0);
-          setTier("preview");
-          setIsWhale(false);
-        } else {
-          throw tokenError;
-        }
+      // Use getParsedTokenAccountsByOwner to find ALL token accounts for this mint
+      const res = await connection.getParsedTokenAccountsByOwner(publicKey, {
+        mint: WALDOGE_MINT,
+      });
+
+      // Sum across any accounts that match this mint
+      let uiAmount = 0;
+      for (const acc of res.value) {
+        const amount = acc.account.data.parsed?.info?.tokenAmount?.uiAmount ?? 0;
+        uiAmount += amount;
+        console.log("🐕 Found token account:", acc.pubkey.toBase58(), "Amount:", amount);
       }
+
+      console.log("🐕 Total balance across all accounts:", uiAmount);
+      
+      setBalance(uiAmount);
+      setTier(calculateTier(uiAmount));
+      setIsWhale(uiAmount >= WHALE_THRESHOLD);
+      console.log("🐕 Tier:", calculateTier(uiAmount), "Is Whale:", uiAmount >= WHALE_THRESHOLD);
     } catch (err: any) {
       console.error("🐕 Error fetching WALDOGE balance:", err);
       setError("Failed to fetch token balance");
