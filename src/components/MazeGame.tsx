@@ -17,7 +17,6 @@ interface Position {
 interface LeaderboardEntry {
   id: string;
   player_name: string;
-  wallet_address: string;
   difficulty: number;
   moves: number;
   created_at: string;
@@ -105,15 +104,14 @@ export const MazeGame: FC = () => {
   const fetchLeaderboard = useCallback(async (difficulty: number) => {
     setIsLoadingLeaderboard(true);
     try {
-      const { data, error } = await supabase
-        .from("maze_leaderboard")
-        .select("*")
-        .eq("difficulty", difficulty)
-        .order("moves", { ascending: true })
-        .limit(10);
+      // Use security definer function to read leaderboard without exposing wallet_address
+      const { data, error } = await supabase.rpc("get_leaderboard", {
+        p_difficulty: difficulty,
+        p_limit: 10,
+      });
 
       if (error) throw error;
-      setLeaderboard(data || []);
+      setLeaderboard((data as LeaderboardEntry[]) || []);
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
       toast.error("Failed to load leaderboard");

@@ -73,7 +73,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      maze_leaderboard_public: {
+        Row: {
+          created_at: string | null
+          difficulty: number | null
+          id: string | null
+          moves: number | null
+          player_name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          difficulty?: number | null
+          id?: string | null
+          moves?: number | null
+          player_name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          difficulty?: number | null
+          id?: string | null
+          moves?: number | null
+          player_name?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_and_increment_usage: {
@@ -81,6 +104,16 @@ export type Database = {
         Returns: boolean
       }
       check_maze_rate_limit: { Args: { p_wallet: string }; Returns: boolean }
+      get_leaderboard: {
+        Args: { p_difficulty: number; p_limit?: number }
+        Returns: {
+          created_at: string
+          difficulty: number
+          id: string
+          moves: number
+          player_name: string
+        }[]
+      }
       get_usage_count: {
         Args: { p_feature: string; p_wallet: string }
         Returns: number
