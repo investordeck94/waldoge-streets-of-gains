@@ -130,7 +130,7 @@ export const ChatTab: FC<ChatTabProps> = ({
     setIsLoading(false);
   }, [cancelStream]);
 
-  const isLocked = false; // Token gate removed - chat is now open to all
+  const isLocked = tier === "none" || tier === "preview"; // Requires 100K WALDOGE (TIER_1+)
 
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)] max-h-[700px]">
