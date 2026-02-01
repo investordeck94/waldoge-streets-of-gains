@@ -173,19 +173,21 @@ serve(async (req) => {
       });
     }
 
-    const { theme, mode, walletAddress } = validation.data;
+    const { theme, mode, walletAddress, imageData } = validation.data;
 
-    // Server-side tier verification
-    const tierInfo = await verifyTierAndUsage(walletAddress!, "memeGenerator");
-    
-    if (!tierInfo.allowed) {
-      const errorMsg = tierInfo.limit === 0 
-        ? ERROR_MESSAGES.tier_blocked 
-        : ERROR_MESSAGES.usage_limit;
-      return new Response(JSON.stringify({ error: errorMsg }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Server-side tier verification - skip for anonymous users
+    if (walletAddress !== "anonymous") {
+      const tierInfo = await verifyTierAndUsage(walletAddress, "memeGenerator");
+      
+      if (!tierInfo.allowed) {
+        const errorMsg = tierInfo.limit === 0 
+          ? ERROR_MESSAGES.tier_blocked 
+          : ERROR_MESSAGES.usage_limit;
+        return new Response(JSON.stringify({ error: errorMsg }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const sanitizedTheme = sanitizeContent(theme);
