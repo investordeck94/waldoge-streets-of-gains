@@ -255,6 +255,7 @@ const ChatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
   content: z.string().max(50000),
   timestamp: z.number().int().min(0),
+  image: z.string().optional(),
 });
 
 const ChatHistorySchema = z.array(ChatMessageSchema).max(100);
