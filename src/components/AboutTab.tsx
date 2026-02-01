@@ -20,6 +20,12 @@ export const AboutTab: FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toLocaleString()}M`;
+    if (num >= 1000) return `${(num / 1000).toLocaleString()}K`;
+    return num.toLocaleString();
+  };
+
   const tiers = [
     {
       name: "Preview Mode",
@@ -30,14 +36,18 @@ export const AboutTab: FC = () => {
         "View sample outputs",
         "Connect wallet",
         "Browse all features",
+        "Raid Generator access",
+        "Chat & Meme locked",
       ],
     },
     {
       name: "Tier 1 - Basic",
-      requirement: `≥ ${TIER_THRESHOLDS.TIER_1} WALDOGE`,
+      requirement: `≥ ${formatNumber(TIER_THRESHOLDS.TIER_1)} WALDOGE`,
       color: "text-primary",
       bgColor: "bg-primary/20",
       features: [
+        "Unlock AI Chat",
+        "Unlock Meme Generator",
         `${USAGE_LIMITS.TIER_1.chat} chat messages/day`,
         `${USAGE_LIMITS.TIER_1.raidGenerator} raid generations/day`,
         `${USAGE_LIMITS.TIER_1.memeGenerator} meme generations/day`,
@@ -47,7 +57,7 @@ export const AboutTab: FC = () => {
     },
     {
       name: "Tier 2 - Chaos Mode",
-      requirement: `≥ ${TIER_THRESHOLDS.TIER_2.toLocaleString()} WALDOGE`,
+      requirement: `≥ ${formatNumber(TIER_THRESHOLDS.TIER_2)} WALDOGE`,
       color: "text-purple-400",
       bgColor: "bg-purple-500/20",
       isChaos: true,
