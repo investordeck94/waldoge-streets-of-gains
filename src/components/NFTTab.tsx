@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useState, useRef, useCallback, ChangeEvent } from "react";
 import { motion } from "framer-motion";
 import {
   ImagePlus,
@@ -8,6 +8,7 @@ import {
   Loader2,
   ExternalLink,
   AlertCircle,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
