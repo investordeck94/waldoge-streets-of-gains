@@ -44,12 +44,56 @@ export const ChatTab: FC<ChatTabProps> = ({
     scrollToBottom();
   }, [messages]);
 
+  const handleImageSelect = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return;
+    }
+
+    const preview = URL.createObjectURL(file);
+    setAttachedImage({ file, preview });
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
+  const removeAttachedImage = useCallback(() => {
+    if (attachedImage) {
+      URL.revokeObjectURL(attachedImage.preview);
+      setAttachedImage(null);
+    }
+  }, [attachedImage]);
+
   const handleSend = useCallback(async (messageContent?: string) => {
     const content = messageContent || input.trim();
-    if (!content) return;
+    if (!content && !attachedImage) return;
+
+    // Convert image to base64 if attached
+    let imageData: string | undefined;
+    if (attachedImage) {
+      const reader = new FileReader();
+      imageData = await new Promise((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(attachedImage.file);
+      });
+    }
 
     setInput("");
-    addMessage("user", content);
+    const imagePreview = attachedImage?.preview;
+    removeAttachedImage();
+    
+    // Add user message with image preview for display
+    addMessage("user", content, imagePreview);
     onUse();
     setIsLoading(true);
     assistantContentRef.current = "";
@@ -66,6 +110,7 @@ export const ChatTab: FC<ChatTabProps> = ({
     await streamChat({
       messages: apiMessages,
       chaosMode,
+      imageData,
       onDelta: (chunk) => {
         assistantContentRef.current += chunk;
         updateLastMessage(assistantContentRef.current);
@@ -78,7 +123,7 @@ export const ChatTab: FC<ChatTabProps> = ({
         setIsLoading(false);
       },
     });
-  }, [input, canUse, tier, messages, chaosMode, addMessage, updateLastMessage, onUse, streamChat]);
+  }, [input, attachedImage, messages, chaosMode, addMessage, updateLastMessage, onUse, streamChat, removeAttachedImage]);
 
   const handleCancel = useCallback(() => {
     cancelStream();
