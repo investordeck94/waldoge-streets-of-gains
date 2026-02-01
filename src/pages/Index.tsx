@@ -8,6 +8,7 @@ import { RaidTab } from "@/components/RaidTab";
 import { MemeTab } from "@/components/MemeTab";
 import { NFTTab } from "@/components/NFTTab";
 import { AboutTab } from "@/components/AboutTab";
+import { MazeGame } from "@/components/MazeGame";
 import { useWaldogeBalance } from "@/hooks/useWaldogeBalance";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 
@@ -42,6 +43,12 @@ const Index = () => {
         return <MemeTab {...tabProps} />;
       case "nft":
         return <NFTTab {...tabProps} isWhale={isWhale} />;
+      case "game":
+        return (
+          <div className="max-w-md mx-auto">
+            <MazeGame />
+          </div>
+        );
       case "about":
         return <AboutTab />;
       default:
