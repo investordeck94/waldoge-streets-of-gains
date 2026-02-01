@@ -86,17 +86,23 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
     }
   }, [publicKey, connected, connection, calculateTier]);
 
+  // Fetch balance when wallet connection state changes
   useEffect(() => {
+    console.log("🐕 Effect triggered - connected:", connected, "publicKey:", publicKey?.toBase58());
     fetchBalance();
-  }, [fetchBalance]);
+  }, [fetchBalance, connected, publicKey]);
 
   // Refetch periodically when connected
   useEffect(() => {
-    if (!connected) return;
+    if (!connected || !publicKey) return;
 
+    console.log("🐕 Starting periodic refetch interval");
     const interval = setInterval(fetchBalance, 30000); // Refetch every 30 seconds
-    return () => clearInterval(interval);
-  }, [connected, fetchBalance]);
+    return () => {
+      console.log("🐕 Clearing periodic refetch interval");
+      clearInterval(interval);
+    };
+  }, [connected, publicKey, fetchBalance]);
 
   return {
     balance,
