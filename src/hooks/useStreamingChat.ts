@@ -25,6 +25,7 @@ export function useStreamingChat() {
     messages,
     chaosMode,
     imageData,
+    walletAddress,
     onDelta,
     onDone,
     onError,
@@ -43,7 +44,7 @@ export function useStreamingChat() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages, chaosMode, imageData }),
+        body: JSON.stringify({ messages, chaosMode, imageData, walletAddress }),
         signal: abortControllerRef.current.signal,
       });
 
