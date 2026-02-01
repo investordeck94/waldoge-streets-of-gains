@@ -69,8 +69,8 @@ export const RaidTab: FC<RaidTabProps> = ({
   const [content, setContent] = useState<GeneratedContent | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
 
-  const isLocked = tier === "none" || tier === "preview";
-  const isUnhingedLocked = tier !== "chaos";
+  const isLocked = false; // Token gate removed - raids are now open to all
+  const isUnhingedLocked = tier !== "chaos"; // Chaos tone still requires tier 2
 
   const handleGenerate = async () => {
     if (!canUse || !topic.trim()) return;
