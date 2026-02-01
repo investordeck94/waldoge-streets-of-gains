@@ -299,13 +299,14 @@ export const useChatHistory = () => {
   }, [publicKey]);
 
   const addMessage = useCallback(
-    (role: "user" | "assistant", content: string) => {
+    (role: "user" | "assistant", content: string, image?: string) => {
       if (!publicKey) return;
 
       const newMessage: ChatMessage = {
         role,
         content,
         timestamp: Date.now(),
+        image,
       };
 
       setMessages(prev => {
