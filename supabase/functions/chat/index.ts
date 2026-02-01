@@ -13,6 +13,7 @@ interface ChatMessage {
 interface ChatRequest {
   messages: ChatMessage[];
   chaosMode?: boolean;
+  imageData?: string;
 }
 
 function validateChatRequest(body: unknown): { valid: true; data: ChatRequest } | { valid: false; error: string } {
