@@ -23,6 +23,7 @@ export function useStreamingChat() {
   const streamChat = useCallback(async ({
     messages,
     chaosMode,
+    imageData,
     onDelta,
     onDone,
     onError,
