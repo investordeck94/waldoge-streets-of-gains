@@ -73,7 +73,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      maze_leaderboard_public: {
+        Row: {
+          created_at: string | null
+          difficulty: number | null
+          id: string | null
+          moves: number | null
+          player_name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          difficulty?: number | null
+          id?: string | null
+          moves?: number | null
+          player_name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          difficulty?: number | null
+          id?: string | null
+          moves?: number | null
+          player_name?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_and_increment_usage: {
