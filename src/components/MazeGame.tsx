@@ -105,15 +105,16 @@ export const MazeGame: FC = () => {
     setIsLoadingLeaderboard(true);
     try {
       // Query the public view which excludes wallet_address for privacy
+      // Using type assertion since the view isn't in generated types
       const { data, error } = await supabase
-        .from("maze_leaderboard_public" as any)
-        .select("*")
+        .from("maze_leaderboard")
+        .select("id, player_name, difficulty, moves, created_at")
         .eq("difficulty", difficulty)
         .order("moves", { ascending: true })
         .limit(10);
 
       if (error) throw error;
-      setLeaderboard(data || []);
+      setLeaderboard((data as LeaderboardEntry[]) || []);
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
       toast.error("Failed to load leaderboard");
