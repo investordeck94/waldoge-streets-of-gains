@@ -1,8 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { verifyTierAndUsage, hasChaosAccess } from "../_shared/tierVerification.ts";
 
 // Input validation schemas using simple validation
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_MESSAGES_COUNT = 50;
+const MAX_WALLET_LENGTH = 50;
+const MIN_WALLET_LENGTH = 32;
 const VALID_ROLES = ["user", "assistant"];
 
 interface ChatMessage {
@@ -14,6 +17,7 @@ interface ChatRequest {
   messages: ChatMessage[];
   chaosMode?: boolean;
   imageData?: string;
+  walletAddress?: string;
 }
 
 function validateChatRequest(body: unknown): { valid: true; data: ChatRequest } | { valid: false; error: string } {
@@ -22,6 +26,13 @@ function validateChatRequest(body: unknown): { valid: true; data: ChatRequest } 
   }
 
   const request = body as Record<string, unknown>;
+
+  // Validate wallet address (required for tier verification)
+  if (typeof request.walletAddress !== "string" || 
+      request.walletAddress.length < MIN_WALLET_LENGTH || 
+      request.walletAddress.length > MAX_WALLET_LENGTH) {
+    return { valid: false, error: "Valid wallet address is required" };
+  }
 
   // Validate messages array
   if (!Array.isArray(request.messages)) {
