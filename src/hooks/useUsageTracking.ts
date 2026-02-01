@@ -255,6 +255,7 @@ const ChatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
   content: z.string().max(50000),
   timestamp: z.number().int().min(0),
+  image: z.string().optional(),
 });
 
 const ChatHistorySchema = z.array(ChatMessageSchema).max(100);
@@ -298,13 +299,14 @@ export const useChatHistory = () => {
   }, [publicKey]);
 
   const addMessage = useCallback(
-    (role: "user" | "assistant", content: string) => {
+    (role: "user" | "assistant", content: string, image?: string) => {
       if (!publicKey) return;
 
       const newMessage: ChatMessage = {
         role,
         content,
         timestamp: Date.now(),
+        image,
       };
 
       setMessages(prev => {

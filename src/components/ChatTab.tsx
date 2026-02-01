@@ -1,7 +1,7 @@
-import { FC, useState, useRef, useEffect, useCallback } from "react";
+import { FC, useState, useRef, useEffect, useCallback, ChangeEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Send, Loader2, Trash2, Lock, Sparkles, StopCircle } from "lucide-react";
+import { Send, Loader2, Trash2, Lock, Sparkles, StopCircle, ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -31,7 +31,9 @@ export const ChatTab: FC<ChatTabProps> = ({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chaosMode, setChaosMode] = useState(false);
+  const [attachedImage, setAttachedImage] = useState<{ file: File; preview: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const assistantContentRef = useRef("");
 
   const scrollToBottom = () => {
@@ -42,12 +44,56 @@ export const ChatTab: FC<ChatTabProps> = ({
     scrollToBottom();
   }, [messages]);
 
+  const handleImageSelect = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return;
+    }
+
+    const preview = URL.createObjectURL(file);
+    setAttachedImage({ file, preview });
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
+  const removeAttachedImage = useCallback(() => {
+    if (attachedImage) {
+      URL.revokeObjectURL(attachedImage.preview);
+      setAttachedImage(null);
+    }
+  }, [attachedImage]);
+
   const handleSend = useCallback(async (messageContent?: string) => {
     const content = messageContent || input.trim();
-    if (!content) return;
+    if (!content && !attachedImage) return;
+
+    // Convert image to base64 if attached
+    let imageData: string | undefined;
+    if (attachedImage) {
+      const reader = new FileReader();
+      imageData = await new Promise((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(attachedImage.file);
+      });
+    }
 
     setInput("");
-    addMessage("user", content);
+    const imagePreview = attachedImage?.preview;
+    removeAttachedImage();
+    
+    // Add user message with image preview for display
+    addMessage("user", content, imagePreview);
     onUse();
     setIsLoading(true);
     assistantContentRef.current = "";
@@ -64,6 +110,7 @@ export const ChatTab: FC<ChatTabProps> = ({
     await streamChat({
       messages: apiMessages,
       chaosMode,
+      imageData,
       onDelta: (chunk) => {
         assistantContentRef.current += chunk;
         updateLastMessage(assistantContentRef.current);
@@ -76,7 +123,7 @@ export const ChatTab: FC<ChatTabProps> = ({
         setIsLoading(false);
       },
     });
-  }, [input, canUse, tier, messages, chaosMode, addMessage, updateLastMessage, onUse, streamChat]);
+  }, [input, attachedImage, messages, chaosMode, addMessage, updateLastMessage, onUse, streamChat, removeAttachedImage]);
 
   const handleCancel = useCallback(() => {
     cancelStream();
@@ -229,7 +276,18 @@ export const ChatTab: FC<ChatTabProps> = ({
                       <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
                     </div>
                   ) : (
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    <div className="space-y-2">
+                      {message.image && (
+                        <img
+                          src={message.image}
+                          alt="Attached"
+                          className="max-w-[200px] rounded-lg"
+                        />
+                      )}
+                      {message.content && (
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      )}
+                    </div>
                   )}
                 </div>
               </motion.div>
@@ -254,6 +312,35 @@ export const ChatTab: FC<ChatTabProps> = ({
 
       {/* Input area */}
       <div className="relative">
+        {/* Image preview */}
+        {attachedImage && (
+          <div className="absolute -top-16 left-2 z-10">
+            <div className="relative">
+              <img
+                src={attachedImage.preview}
+                alt="Attached"
+                className="h-14 w-14 object-cover rounded-lg border border-border"
+              />
+              <Button
+                size="icon"
+                variant="destructive"
+                className="absolute -top-2 -right-2 h-5 w-5"
+                onClick={removeAttachedImage}
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          onChange={handleImageSelect}
+          className="hidden"
+        />
+
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -271,28 +358,41 @@ export const ChatTab: FC<ChatTabProps> = ({
               : "Ask WALDOGE anything..."
           }
           disabled={isLocked || isLoading}
-          className="pr-12 resize-none bg-card border-border focus:border-primary/50"
+          className="pr-24 resize-none bg-card border-border focus:border-primary/50"
           rows={2}
         />
-        {isLoading ? (
-          <Button
-            size="icon"
-            onClick={handleCancel}
-            className="absolute right-2 bottom-2"
-            variant="destructive"
-          >
-            <StopCircle className="w-4 h-4" />
-          </Button>
-        ) : (
-          <Button
-            size="icon"
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isLocked || !canUse}
-            className="absolute right-2 bottom-2"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        )}
+        
+        <div className="absolute right-2 bottom-2 flex gap-1">
+          {!isLoading && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLocked || !!attachedImage}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ImagePlus className="w-4 h-4" />
+            </Button>
+          )}
+          
+          {isLoading ? (
+            <Button
+              size="icon"
+              onClick={handleCancel}
+              variant="destructive"
+            >
+              <StopCircle className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Button
+              size="icon"
+              onClick={() => handleSend()}
+              disabled={(!input.trim() && !attachedImage) || isLocked || !canUse}
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Quick actions bar */}

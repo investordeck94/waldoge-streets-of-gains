@@ -11,6 +11,7 @@ export interface ChatMessage {
 interface StreamChatOptions {
   messages: ChatMessage[];
   chaosMode: boolean;
+  imageData?: string;
   onDelta: (deltaText: string) => void;
   onDone: () => void;
   onError: (error: string) => void;
@@ -22,6 +23,7 @@ export function useStreamingChat() {
   const streamChat = useCallback(async ({
     messages,
     chaosMode,
+    imageData,
     onDelta,
     onDone,
     onError,
@@ -40,7 +42,7 @@ export function useStreamingChat() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages, chaosMode }),
+        body: JSON.stringify({ messages, chaosMode, imageData }),
         signal: abortControllerRef.current.signal,
       });
 
