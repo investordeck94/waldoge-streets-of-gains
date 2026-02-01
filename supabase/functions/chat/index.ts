@@ -177,7 +177,7 @@ serve(async (req) => {
       });
     }
 
-    const { messages, chaosMode } = validation.data;
+    const { messages, chaosMode, imageData } = validation.data;
 
     // Sanitize message content
     const sanitizedMessages = messages.map((msg) => ({
