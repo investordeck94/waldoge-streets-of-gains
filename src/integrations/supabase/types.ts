@@ -104,6 +104,16 @@ export type Database = {
         Returns: boolean
       }
       check_maze_rate_limit: { Args: { p_wallet: string }; Returns: boolean }
+      get_leaderboard: {
+        Args: { p_difficulty: number; p_limit?: number }
+        Returns: {
+          created_at: string
+          difficulty: number
+          id: string
+          moves: number
+          player_name: string
+        }[]
+      }
       get_usage_count: {
         Args: { p_feature: string; p_wallet: string }
         Returns: number
