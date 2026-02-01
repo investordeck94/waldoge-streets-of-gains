@@ -67,11 +67,26 @@ function validateChatRequest(body: unknown): { valid: true; data: ChatRequest } 
     return { valid: false, error: "chaosMode must be a boolean" };
   }
 
+  // Validate imageData if present (base64 data URL)
+  if (request.imageData !== undefined) {
+    if (typeof request.imageData !== "string") {
+      return { valid: false, error: "imageData must be a string" };
+    }
+    // Check it's a valid data URL and not too large (max ~5MB base64)
+    if (!request.imageData.startsWith("data:image/")) {
+      return { valid: false, error: "imageData must be a valid image data URL" };
+    }
+    if (request.imageData.length > 7 * 1024 * 1024) { // ~5MB base64 encoded
+      return { valid: false, error: "Image too large. Maximum 5MB allowed" };
+    }
+  }
+
   return {
     valid: true,
     data: {
       messages: request.messages as ChatMessage[],
       chaosMode: request.chaosMode === true,
+      imageData: request.imageData as string | undefined,
     },
   };
 }
