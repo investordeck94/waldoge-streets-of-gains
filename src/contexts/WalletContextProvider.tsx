@@ -1,4 +1,4 @@
-import { FC, ReactNode, useMemo } from "react";
+import { FC, ReactNode, useMemo, useCallback } from "react";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -8,6 +8,7 @@ import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
+import { WalletError } from "@solana/wallet-adapter-base";
 import { SOLANA_RPC_URL } from "@/lib/constants";
 
 // Import wallet adapter styles
@@ -20,7 +21,7 @@ interface WalletContextProviderProps {
 export const WalletContextProvider: FC<WalletContextProviderProps> = ({
   children,
 }) => {
-  // Initialize wallets
+  // Initialize wallets - the adapters auto-detect mobile environments
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
@@ -29,9 +30,18 @@ export const WalletContextProvider: FC<WalletContextProviderProps> = ({
     []
   );
 
+  // Handle wallet errors
+  const onError = useCallback((error: WalletError) => {
+    console.error("🔴 Wallet error:", error.name, error.message);
+  }, []);
+
   return (
     <ConnectionProvider endpoint={SOLANA_RPC_URL}>
-      <WalletProvider wallets={wallets} autoConnect>
+      <WalletProvider 
+        wallets={wallets} 
+        autoConnect
+        onError={onError}
+      >
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
