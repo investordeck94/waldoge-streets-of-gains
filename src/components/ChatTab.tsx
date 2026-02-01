@@ -113,6 +113,7 @@ export const ChatTab: FC<ChatTabProps> = ({
       messages: apiMessages,
       chaosMode,
       imageData,
+      walletAddress: publicKey?.toBase58(),
       onDelta: (chunk) => {
         assistantContentRef.current += chunk;
         updateLastMessage(assistantContentRef.current);
@@ -125,7 +126,7 @@ export const ChatTab: FC<ChatTabProps> = ({
         setIsLoading(false);
       },
     });
-  }, [input, attachedImage, messages, chaosMode, addMessage, updateLastMessage, onUse, streamChat, removeAttachedImage]);
+  }, [input, attachedImage, messages, chaosMode, publicKey, addMessage, updateLastMessage, onUse, streamChat, removeAttachedImage]);
 
   const handleCancel = useCallback(() => {
     cancelStream();
