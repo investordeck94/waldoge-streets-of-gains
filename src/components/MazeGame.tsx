@@ -104,8 +104,9 @@ export const MazeGame: FC = () => {
   const fetchLeaderboard = useCallback(async (difficulty: number) => {
     setIsLoadingLeaderboard(true);
     try {
+      // Query the public view which excludes wallet_address for privacy
       const { data, error } = await supabase
-        .from("maze_leaderboard")
+        .from("maze_leaderboard_public" as any)
         .select("*")
         .eq("difficulty", difficulty)
         .order("moves", { ascending: true })
