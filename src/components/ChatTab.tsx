@@ -133,7 +133,8 @@ export const ChatTab: FC<ChatTabProps> = ({
     setIsLoading(false);
   }, [cancelStream]);
 
-  const isLocked = tier === "none" || tier === "preview"; // Requires 100K WALDOGE (TIER_1+)
+  // Token gates temporarily disabled - only lock if not connected at all
+  const isLocked = tier === "none";
 
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)] max-h-[700px]">

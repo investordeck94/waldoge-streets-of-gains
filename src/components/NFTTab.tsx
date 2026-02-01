@@ -87,7 +87,8 @@ export const NFTTab: FC<NFTTabProps> = ({
   const [isMinting, setIsMinting] = useState(false);
   const [mintSuccess, setMintSuccess] = useState(false);
 
-  const isLocked = tier === "none" || tier === "preview";
+  // Token gates temporarily disabled - only lock if not connected at all
+  const isLocked = tier === "none";
   const isChaosLocked = tier !== "chaos";
 
   const handleMint = async () => {
