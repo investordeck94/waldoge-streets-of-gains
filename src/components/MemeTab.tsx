@@ -1,10 +1,11 @@
-import { FC, useState } from "react";
+import { FC, useState, useRef, useCallback, ChangeEvent } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Copy, Check, Lock, Loader2 } from "lucide-react";
+import { Sparkles, Copy, Check, Lock, Loader2, ImagePlus, X, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -17,7 +18,7 @@ interface MemeTabProps {
   onUse: () => void;
 }
 
-type MemeMode = "caption" | "prompt";
+type MemeMode = "caption" | "prompt" | "image";
 
 const sampleCaptions = [
   "When someone says WALDOGE is just another meme coin 🐕💅",
@@ -30,6 +31,14 @@ const sampleCaptions = [
   "WALDOGE holders at 3am explaining tokenomics to their cat",
   "The council of space doges has convened 🐕🐕🐕",
   "You thought we were going to the moon? That's just the first stop 🚀",
+];
+
+const samplePrompts = [
+  "A yellow cartoon doge wearing a red beanie and striped shirt, floating through a purple nebula with glowing butterfly wings, digital art, cosmic aesthetic, trending on artstation",
+  "Space explorer doge with a backpack full of cryptocurrency coins, standing on an asteroid overlooking Earth, cinematic lighting, 4k, ethereal glow",
+  "Adorable yellow shiba inu in astronaut suit, typing on a holographic keyboard, surrounded by floating memes, vaporwave colors, detailed illustration",
+  "WALDOGE mascot surfing on a golden wave through the galaxy, surrounded by stars and crypto symbols, epic composition, dramatic lighting",
+  "Cute doge character with luminescent wings sitting on the moon, looking at Earth, lo-fi aesthetic, soft pastel colors, peaceful vibes",
 ];
 
 const samplePrompts = [
