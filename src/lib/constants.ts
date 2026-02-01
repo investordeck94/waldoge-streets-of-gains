@@ -19,33 +19,32 @@ export const NFT_MINT_FEE_PERCENT = 10;
 export const FREE_TRIAL_DURATION_MS = 2 * 60 * 1000;
 
 // Usage Limits per tier
-// chat and memeGenerator are now gated - require 100K WALDOGE (TIER_1)
-// raidGenerator remains ungated
+// TOKEN GATES TEMPORARILY DISABLED - all features accessible to connected wallets
 export const USAGE_LIMITS = {
   TIER_0: {
-    chat: 0,           // Gated - requires 100K WALDOGE
-    raidGenerator: 20, // Ungated - generous daily limit
-    memeGenerator: 0,  // Gated - requires 100K WALDOGE
-    nftCreator: 0,     // Gated - requires tokens
+    chat: 50,          // Temporarily ungated
+    raidGenerator: 30, // Ungated
+    memeGenerator: 30, // Temporarily ungated
+    nftCreator: 5,     // Temporarily ungated
   },
-  // Free trial limits (excludes gated features)
+  // Free trial limits (same as TIER_0 while gates are disabled)
   FREE_TRIAL: {
-    chat: 0,
-    raidGenerator: 20,
-    memeGenerator: 0,
-    nftCreator: 0,
+    chat: 50,
+    raidGenerator: 30,
+    memeGenerator: 30,
+    nftCreator: 5,
   },
   TIER_1: {
     chat: 100,
-    raidGenerator: 30,
-    memeGenerator: 30,
-    nftCreator: 1,
-  },
-  TIER_2: {
-    chat: 200,
     raidGenerator: 50,
     memeGenerator: 50,
     nftCreator: 10,
+  },
+  TIER_2: {
+    chat: 200,
+    raidGenerator: 100,
+    memeGenerator: 100,
+    nftCreator: 20,
   },
 };
 
