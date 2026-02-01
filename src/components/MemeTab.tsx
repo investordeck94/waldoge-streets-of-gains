@@ -53,7 +53,8 @@ export const MemeTab: FC<MemeTabProps> = ({
   const [results, setResults] = useState<string[] | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  const isLocked = tier === "none" || tier === "preview"; // Requires 100K WALDOGE (TIER_1+)
+  // Token gates temporarily disabled - only lock if not connected at all
+  const isLocked = tier === "none";
 
   const handleGenerate = async () => {
     if (!canUse || !prompt.trim() || !publicKey) return;
