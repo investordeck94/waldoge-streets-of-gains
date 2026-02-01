@@ -11,6 +11,7 @@ export interface ChatMessage {
 interface StreamChatOptions {
   messages: ChatMessage[];
   chaosMode: boolean;
+  imageData?: string;
   onDelta: (deltaText: string) => void;
   onDone: () => void;
   onError: (error: string) => void;
