@@ -46,7 +46,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_maze_rate_limit: { Args: { p_wallet: string }; Returns: boolean }
+      is_valid_maze_score: {
+        Args: { p_difficulty: number; p_moves: number }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
