@@ -301,6 +301,35 @@ export const ChatTab: FC<ChatTabProps> = ({
 
       {/* Input area */}
       <div className="relative">
+        {/* Image preview */}
+        {attachedImage && (
+          <div className="absolute -top-16 left-2 z-10">
+            <div className="relative">
+              <img
+                src={attachedImage.preview}
+                alt="Attached"
+                className="h-14 w-14 object-cover rounded-lg border border-border"
+              />
+              <Button
+                size="icon"
+                variant="destructive"
+                className="absolute -top-2 -right-2 h-5 w-5"
+                onClick={removeAttachedImage}
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          onChange={handleImageSelect}
+          className="hidden"
+        />
+
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -318,28 +347,41 @@ export const ChatTab: FC<ChatTabProps> = ({
               : "Ask WALDOGE anything..."
           }
           disabled={isLocked || isLoading}
-          className="pr-12 resize-none bg-card border-border focus:border-primary/50"
+          className="pr-24 resize-none bg-card border-border focus:border-primary/50"
           rows={2}
         />
-        {isLoading ? (
-          <Button
-            size="icon"
-            onClick={handleCancel}
-            className="absolute right-2 bottom-2"
-            variant="destructive"
-          >
-            <StopCircle className="w-4 h-4" />
-          </Button>
-        ) : (
-          <Button
-            size="icon"
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isLocked || !canUse}
-            className="absolute right-2 bottom-2"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        )}
+        
+        <div className="absolute right-2 bottom-2 flex gap-1">
+          {!isLoading && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLocked || !!attachedImage}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ImagePlus className="w-4 h-4" />
+            </Button>
+          )}
+          
+          {isLoading ? (
+            <Button
+              size="icon"
+              onClick={handleCancel}
+              variant="destructive"
+            >
+              <StopCircle className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Button
+              size="icon"
+              onClick={() => handleSend()}
+              disabled={(!input.trim() && !attachedImage) || isLocked || !canUse}
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Quick actions bar */}
