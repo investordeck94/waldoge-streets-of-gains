@@ -12,6 +12,7 @@ interface StreamChatOptions {
   messages: ChatMessage[];
   chaosMode: boolean;
   imageData?: string;
+  walletAddress?: string;
   onDelta: (deltaText: string) => void;
   onDone: () => void;
   onError: (error: string) => void;
