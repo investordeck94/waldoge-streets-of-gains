@@ -47,8 +47,8 @@ export const USAGE_LIMITS = {
   },
 };
 
-// RPC URL - defaults to public endpoint
-export const SOLANA_RPC_URL = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
+// RPC URL - defaults to a reliable public endpoint (Helius has better rate limits)
+export const SOLANA_RPC_URL = import.meta.env.VITE_SOLANA_RPC_URL || "https://mainnet.helius-rpc.com/?api-key=1d8740dc-e5f4-421c-b823-e1bad1889eff";
 
 // WALDOGE Mascot System Prompt
 export const WALDOGE_SYSTEM_PROMPT = `You are WALDOGE AI, the official mascot and voice of the WALDOGE token.
