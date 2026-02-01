@@ -26,10 +26,10 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
   const [error, setError] = useState<string | null>(null);
 
   const calculateTier = useCallback((tokenBalance: number): UserTier => {
-    if (tokenBalance >= TIER_THRESHOLDS.TIER_2) return "chaos";
-    if (tokenBalance >= TIER_THRESHOLDS.TIER_1) return "basic";
-    if (tokenBalance === 0) return "preview";
-    return "preview";
+    if (tokenBalance >= TIER_THRESHOLDS.TIER_2) return "chaos";   // 1M+ WALDOGE
+    if (tokenBalance >= TIER_THRESHOLDS.TIER_1) return "basic";   // 100K+ WALDOGE
+    if (tokenBalance > 0) return "preview";                        // Has tokens but < 100K
+    return "preview";                                              // No tokens
   }, []);
 
   const fetchBalance = useCallback(async () => {
