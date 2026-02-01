@@ -92,9 +92,12 @@ export const LandingPage: FC<LandingPageProps> = () => {
               <WalletMultiButton className="!h-14 !px-8 !text-lg !font-semibold !bg-gradient-to-r !from-primary !to-accent !rounded-lg hover:!opacity-90 !shadow-[0_0_30px_hsl(45,95%,55%,0.4)] hover:!shadow-[0_0_40px_hsl(45,95%,55%,0.6)] !transition-all" />
             </motion.div>
 
-            <p className="text-sm text-muted-foreground">
-              Works with Phantom, Solflare, and other Solana wallets
-            </p>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>Works with Phantom, Solflare, and other Solana wallets</p>
+              <p className="text-xs text-primary/80">
+                📱 On mobile? Open this page inside your wallet app's browser
+              </p>
+            </div>
 
             <Button
               variant="ghost"
