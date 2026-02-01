@@ -27,6 +27,7 @@ export const ChatTab: FC<ChatTabProps> = ({
   remainingUses,
   onUse,
 }) => {
+  const { publicKey } = useWallet();
   const { messages, addMessage, updateLastMessage, clearMessages } = useChatHistory();
   const { streamChat, cancelStream } = useStreamingChat();
   const [input, setInput] = useState("");
