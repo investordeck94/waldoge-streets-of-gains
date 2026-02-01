@@ -63,6 +63,7 @@ export const RaidTab: FC<RaidTabProps> = ({
   remainingUses,
   onUse,
 }) => {
+  const { publicKey } = useWallet();
   const [topic, setTopic] = useState("");
   const [tone, setTone] = useState<"clean" | "degen" | "unhinged">("clean");
   const [platform, setPlatform] = useState(PLATFORMS[0]);
