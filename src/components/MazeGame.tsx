@@ -1,8 +1,12 @@
 import { FC, useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, RotateCcw, Trophy, Gamepad2 } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, RotateCcw, Trophy, Gamepad2, Medal, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { toast } from "sonner";
 import waldogeMascot from "@/assets/waldoge-mascot.png";
 
 interface Position {
@@ -10,8 +14,13 @@ interface Position {
   y: number;
 }
 
-interface MazeGameProps {
-  onClose?: () => void;
+interface LeaderboardEntry {
+  id: string;
+  player_name: string;
+  wallet_address: string;
+  difficulty: number;
+  moves: number;
+  created_at: string;
 }
 
 // Maze cell types: 0 = wall, 1 = path
@@ -60,7 +69,10 @@ const MAZE_TEMPLATES = [
   ],
 ];
 
-export const MazeGame: FC<MazeGameProps> = ({ onClose }) => {
+const DIFFICULTY_NAMES = ["Easy", "Medium", "Hard"];
+
+export const MazeGame: FC = () => {
+  const { publicKey } = useWallet();
   const [currentMaze, setCurrentMaze] = useState(0);
   const [maze, setMaze] = useState(MAZE_TEMPLATES[0]);
   const [playerPos, setPlayerPos] = useState<Position>({ x: 1, y: 1 });
@@ -69,6 +81,13 @@ export const MazeGame: FC<MazeGameProps> = ({ onClose }) => {
   const [won, setWon] = useState(false);
   const [bestScores, setBestScores] = useState<number[]>([0, 0, 0]);
   const [gameStarted, setGameStarted] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardDifficulty, setLeaderboardDifficulty] = useState(0);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
+  const [playerName, setPlayerName] = useState("");
+  const [showNameInput, setShowNameInput] = useState(false);
+  const [pendingScore, setPendingScore] = useState<{ difficulty: number; moves: number } | null>(null);
 
   // Find valid positions for Waldoge (far from start)
   const findWaldogePosition = useCallback((mazeGrid: number[][]) => {
@@ -83,6 +102,62 @@ export const MazeGame: FC<MazeGameProps> = ({ onClose }) => {
     return validPositions[Math.floor(Math.random() * validPositions.length)] || { x: 9, y: 9 };
   }, []);
 
+  const fetchLeaderboard = useCallback(async (difficulty: number) => {
+    setIsLoadingLeaderboard(true);
+    try {
+      const { data, error } = await supabase
+        .from("maze_leaderboard")
+        .select("*")
+        .eq("difficulty", difficulty)
+        .order("moves", { ascending: true })
+        .limit(10);
+
+      if (error) throw error;
+      setLeaderboard(data || []);
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      toast.error("Failed to load leaderboard");
+    } finally {
+      setIsLoadingLeaderboard(false);
+    }
+  }, []);
+
+  const submitScore = useCallback(async (name: string, difficulty: number, moveCount: number) => {
+    if (!publicKey) {
+      toast.error("Connect wallet to submit score");
+      return;
+    }
+
+    const trimmedName = name.trim().slice(0, 20);
+    if (!trimmedName) {
+      toast.error("Please enter a name");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("maze_leaderboard")
+        .insert({
+          player_name: trimmedName,
+          wallet_address: publicKey.toBase58(),
+          difficulty,
+          moves: moveCount,
+        });
+
+      if (error) throw error;
+      
+      toast.success("Score submitted to leaderboard! 🏆");
+      setShowNameInput(false);
+      setPendingScore(null);
+      
+      // Refresh leaderboard
+      fetchLeaderboard(difficulty);
+    } catch (error) {
+      console.error("Error submitting score:", error);
+      toast.error("Failed to submit score");
+    }
+  }, [publicKey, fetchLeaderboard]);
+
   const initGame = useCallback((mazeIndex: number) => {
     const selectedMaze = MAZE_TEMPLATES[mazeIndex];
     setMaze(selectedMaze);
@@ -92,6 +167,7 @@ export const MazeGame: FC<MazeGameProps> = ({ onClose }) => {
     setWon(false);
     setCurrentMaze(mazeIndex);
     setGameStarted(true);
+    setShowLeaderboard(false);
   }, [findWaldogePosition]);
 
   // Load best scores from localStorage
@@ -104,11 +180,17 @@ export const MazeGame: FC<MazeGameProps> = ({ onClose }) => {
         // ignore
       }
     }
+    
+    // Load saved player name
+    const savedName = localStorage.getItem("waldoge-player-name");
+    if (savedName) {
+      setPlayerName(savedName);
+    }
   }, []);
 
   // Check win condition
   useEffect(() => {
-    if (playerPos.x === waldogePos.x && playerPos.y === waldogePos.y) {
+    if (playerPos.x === waldogePos.x && playerPos.y === waldogePos.y && !won) {
       setWon(true);
       // Update best score
       const newScores = [...bestScores];
@@ -117,8 +199,12 @@ export const MazeGame: FC<MazeGameProps> = ({ onClose }) => {
         setBestScores(newScores);
         localStorage.setItem("waldoge-maze-scores", JSON.stringify(newScores));
       }
+      
+      // Prompt to submit score
+      setPendingScore({ difficulty: currentMaze, moves });
+      setShowNameInput(true);
     }
-  }, [playerPos, waldogePos, moves, currentMaze, bestScores]);
+  }, [playerPos, waldogePos, moves, currentMaze, bestScores, won]);
 
   const movePlayer = useCallback((dx: number, dy: number) => {
     if (won) return;
@@ -139,7 +225,7 @@ export const MazeGame: FC<MazeGameProps> = ({ onClose }) => {
 
   // Keyboard controls
   useEffect(() => {
-    if (!gameStarted) return;
+    if (!gameStarted || showLeaderboard) return;
     
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
@@ -172,7 +258,89 @@ export const MazeGame: FC<MazeGameProps> = ({ onClose }) => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [movePlayer, gameStarted]);
+  }, [movePlayer, gameStarted, showLeaderboard]);
+
+  // Leaderboard view
+  if (showLeaderboard) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-xl font-bold flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-primary" />
+            Leaderboard
+          </h2>
+          <Button variant="ghost" size="sm" onClick={() => setShowLeaderboard(false)}>
+            <RotateCcw className="w-4 h-4 mr-1" />
+            Back
+          </Button>
+        </div>
+
+        {/* Difficulty tabs */}
+        <div className="flex gap-2">
+          {DIFFICULTY_NAMES.map((name, i) => (
+            <Button
+              key={name}
+              variant={leaderboardDifficulty === i ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setLeaderboardDifficulty(i);
+                fetchLeaderboard(i);
+              }}
+            >
+              {name}
+            </Button>
+          ))}
+        </div>
+
+        {/* Leaderboard list */}
+        <div className="glass-card p-4">
+          {isLoadingLeaderboard ? (
+            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+          ) : leaderboard.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No scores yet. Be the first to complete this level!
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {leaderboard.map((entry, i) => (
+                <motion.div
+                  key={entry.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg",
+                    i === 0 ? "bg-primary/20 border border-primary/30" :
+                    i === 1 ? "bg-muted/50" :
+                    i === 2 ? "bg-accent/10" : "bg-card/50"
+                  )}
+                >
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
+                    i === 0 ? "bg-primary text-primary-foreground" :
+                    i === 1 ? "bg-muted-foreground/30 text-foreground" :
+                    i === 2 ? "bg-accent/30 text-accent-foreground" : "bg-muted text-muted-foreground"
+                  )}>
+                    {i === 0 ? <Medal className="w-4 h-4" /> : i + 1}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">{entry.player_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {entry.wallet_address.slice(0, 4)}...{entry.wallet_address.slice(-4)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-display font-bold text-primary">{entry.moves}</p>
+                    <p className="text-xs text-muted-foreground">moves</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (!gameStarted) {
     return (
@@ -198,7 +366,7 @@ export const MazeGame: FC<MazeGameProps> = ({ onClose }) => {
         </div>
 
         <div className="grid gap-3">
-          {["Easy", "Medium", "Hard"].map((difficulty, i) => (
+          {DIFFICULTY_NAMES.map((difficulty, i) => (
             <Button
               key={difficulty}
               onClick={() => initGame(i)}
@@ -216,6 +384,18 @@ export const MazeGame: FC<MazeGameProps> = ({ onClose }) => {
           ))}
         </div>
 
+        <Button
+          variant="ghost"
+          className="w-full"
+          onClick={() => {
+            setShowLeaderboard(true);
+            fetchLeaderboard(0);
+          }}
+        >
+          <Users className="w-4 h-4 mr-2" />
+          View Leaderboard
+        </Button>
+
         <div className="text-center text-xs text-muted-foreground">
           Use arrow keys or WASD to move
         </div>
@@ -229,7 +409,7 @@ export const MazeGame: FC<MazeGameProps> = ({ onClose }) => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-display font-semibold">
-            Level {currentMaze + 1}: {["Easy", "Medium", "Hard"][currentMaze]}
+            Level {currentMaze + 1}: {DIFFICULTY_NAMES[currentMaze]}
           </h3>
           <p className="text-sm text-muted-foreground">
             Moves: {moves} {bestScores[currentMaze] > 0 && `• Best: ${bestScores[currentMaze]}`}
@@ -369,12 +549,46 @@ export const MazeGame: FC<MazeGameProps> = ({ onClose }) => {
                 )}
               </div>
 
+              {/* Name input for leaderboard */}
+              {showNameInput && publicKey && (
+                <div className="mb-4 space-y-2">
+                  <p className="text-sm text-muted-foreground">Submit your score to the leaderboard!</p>
+                  <Input
+                    placeholder="Enter your name (max 20 chars)"
+                    value={playerName}
+                    onChange={(e) => {
+                      const name = e.target.value.slice(0, 20);
+                      setPlayerName(name);
+                      localStorage.setItem("waldoge-player-name", name);
+                    }}
+                    maxLength={20}
+                  />
+                  <Button 
+                    className="w-full"
+                    onClick={() => pendingScore && submitScore(playerName, pendingScore.difficulty, pendingScore.moves)}
+                    disabled={!playerName.trim()}
+                  >
+                    <Trophy className="w-4 h-4 mr-1" />
+                    Submit to Leaderboard
+                  </Button>
+                </div>
+              )}
+
+              {!publicKey && showNameInput && (
+                <p className="text-sm text-muted-foreground mb-4">
+                  Connect wallet to submit score
+                </p>
+              )}
+
               <div className="flex gap-2 justify-center">
-                <Button onClick={() => initGame(currentMaze)}>
+                <Button onClick={() => initGame(currentMaze)} variant="outline">
                   <RotateCcw className="w-4 h-4 mr-1" />
                   Play Again
                 </Button>
-                <Button variant="outline" onClick={() => setGameStarted(false)}>
+                <Button variant="ghost" onClick={() => {
+                  setGameStarted(false);
+                  setShowNameInput(false);
+                }}>
                   Menu
                 </Button>
               </div>
