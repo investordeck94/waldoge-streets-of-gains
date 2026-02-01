@@ -46,6 +46,7 @@ export const MemeTab: FC<MemeTabProps> = ({
   remainingUses,
   onUse,
 }) => {
+  const { publicKey } = useWallet();
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState<MemeMode>("caption");
   const [isGenerating, setIsGenerating] = useState(false);
