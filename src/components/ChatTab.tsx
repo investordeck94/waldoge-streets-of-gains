@@ -31,7 +31,9 @@ export const ChatTab: FC<ChatTabProps> = ({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chaosMode, setChaosMode] = useState(false);
+  const [attachedImage, setAttachedImage] = useState<{ file: File; preview: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const assistantContentRef = useRef("");
 
   const scrollToBottom = () => {
