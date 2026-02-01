@@ -245,6 +245,8 @@ export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
     getRemainingUses,
     incrementUsage,
     clearHistory,
+    isInFreeTrial,
+    freeTrialTimeRemaining,
   };
 };
 

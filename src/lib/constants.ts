@@ -15,12 +15,22 @@ export const WHALE_THRESHOLD = 10_000_000;
 // NFT Minting fee percentage (waived for whales)
 export const NFT_MINT_FEE_PERCENT = 10;
 
+// Free trial duration in milliseconds (2 minutes)
+export const FREE_TRIAL_DURATION_MS = 2 * 60 * 1000;
+
 // Usage Limits per tier
 export const USAGE_LIMITS = {
   TIER_0: {
     chat: 0,
     raidGenerator: 0,
     memeGenerator: 0,
+    nftCreator: 0,
+  },
+  // Free trial limits (excludes NFT)
+  FREE_TRIAL: {
+    chat: 5,
+    raidGenerator: 2,
+    memeGenerator: 2,
     nftCreator: 0,
   },
   TIER_1: {
