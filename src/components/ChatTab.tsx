@@ -133,8 +133,8 @@ export const ChatTab: FC<ChatTabProps> = ({
     setIsLoading(false);
   }, [cancelStream]);
 
-  // Token gates temporarily disabled - only lock if not connected at all
-  const isLocked = tier === "none";
+  // Token gates temporarily disabled - features unlocked for all connected wallets
+  const isLocked = false;
 
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)] max-h-[700px]">
