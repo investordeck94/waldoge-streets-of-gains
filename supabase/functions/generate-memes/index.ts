@@ -4,13 +4,14 @@ import { verifyTierAndUsage } from "../_shared/tierVerification.ts";
 // Input validation constants
 const MAX_THEME_LENGTH = 500;
 const MAX_WALLET_LENGTH = 50;
-const MIN_WALLET_LENGTH = 32;
-const VALID_MODES = ["caption", "prompt"];
+const MIN_WALLET_LENGTH = 5; // Reduced to allow "anonymous"
+const VALID_MODES = ["caption", "prompt", "image"];
 
 interface MemeRequest {
   theme: string;
   mode: string;
   walletAddress?: string;
+  imageData?: string;
 }
 
 function validateMemeRequest(body: unknown): { valid: true; data: MemeRequest } | { valid: false; error: string } {
@@ -20,10 +21,9 @@ function validateMemeRequest(body: unknown): { valid: true; data: MemeRequest } 
 
   const request = body as Record<string, unknown>;
 
-  // Validate wallet address (required for tier verification)
-  if (typeof request.walletAddress !== "string" || 
-      request.walletAddress.length < MIN_WALLET_LENGTH || 
-      request.walletAddress.length > MAX_WALLET_LENGTH) {
+  // Validate wallet address (allow "anonymous" for non-connected users)
+  const walletAddress = typeof request.walletAddress === "string" ? request.walletAddress : "anonymous";
+  if (walletAddress.length < MIN_WALLET_LENGTH || walletAddress.length > MAX_WALLET_LENGTH) {
     return { valid: false, error: "Valid wallet address is required" };
   }
 
@@ -50,9 +50,12 @@ function validateMemeRequest(body: unknown): { valid: true; data: MemeRequest } 
     return { valid: false, error: `Mode must be one of: ${VALID_MODES.join(", ")}` };
   }
 
+  // Validate imageData if provided
+  const imageData = typeof request.imageData === "string" ? request.imageData : undefined;
+
   return {
     valid: true,
-    data: { theme, mode: request.mode, walletAddress: request.walletAddress },
+    data: { theme, mode: request.mode, walletAddress, imageData },
   };
 }
 
