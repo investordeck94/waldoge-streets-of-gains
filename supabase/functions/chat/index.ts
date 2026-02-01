@@ -192,7 +192,28 @@ serve(async (req) => {
       });
     }
 
-    const { messages, chaosMode, imageData } = validation.data;
+    const { messages, chaosMode, imageData, walletAddress } = validation.data;
+
+    // Server-side tier verification
+    const tierInfo = await verifyTierAndUsage(walletAddress!, "chat");
+    
+    if (!tierInfo.allowed) {
+      const errorMsg = tierInfo.limit === 0 
+        ? ERROR_MESSAGES.tier_blocked 
+        : ERROR_MESSAGES.usage_limit;
+      return new Response(JSON.stringify({ error: errorMsg }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Chaos mode requires TIER_2
+    if (chaosMode && !hasChaosAccess(tierInfo.tier)) {
+      return new Response(JSON.stringify({ error: ERROR_MESSAGES.chaos_locked }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Sanitize message content
     const sanitizedMessages = messages.map((msg) => ({
