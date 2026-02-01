@@ -104,14 +104,11 @@ export const MazeGame: FC = () => {
   const fetchLeaderboard = useCallback(async (difficulty: number) => {
     setIsLoadingLeaderboard(true);
     try {
-      // Query the public view which excludes wallet_address for privacy
-      // Using type assertion since the view isn't in generated types
-      const { data, error } = await supabase
-        .from("maze_leaderboard")
-        .select("id, player_name, difficulty, moves, created_at")
-        .eq("difficulty", difficulty)
-        .order("moves", { ascending: true })
-        .limit(10);
+      // Use security definer function to read leaderboard without exposing wallet_address
+      const { data, error } = await supabase.rpc("get_leaderboard", {
+        p_difficulty: difficulty,
+        p_limit: 10,
+      });
 
       if (error) throw error;
       setLeaderboard((data as LeaderboardEntry[]) || []);
