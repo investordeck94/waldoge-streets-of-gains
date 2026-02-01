@@ -44,7 +44,7 @@ export const ChatTab: FC<ChatTabProps> = ({
 
   const handleSend = useCallback(async (messageContent?: string) => {
     const content = messageContent || input.trim();
-    if (!content || !canUse || tier === "preview" || tier === "none") return;
+    if (!content) return;
 
     setInput("");
     addMessage("user", content);
@@ -83,7 +83,7 @@ export const ChatTab: FC<ChatTabProps> = ({
     setIsLoading(false);
   }, [cancelStream]);
 
-  const isLocked = tier === "none" || tier === "preview";
+  const isLocked = false; // Token gate removed - chat is now open to all
 
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)] max-h-[700px]">

@@ -51,7 +51,7 @@ export const MemeTab: FC<MemeTabProps> = ({
   const [results, setResults] = useState<string[] | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  const isLocked = tier === "none" || tier === "preview";
+  const isLocked = false; // Token gate removed - memes are now open to all
 
   const handleGenerate = async () => {
     if (!canUse || !prompt.trim()) return;
