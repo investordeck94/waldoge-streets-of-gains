@@ -132,6 +132,9 @@ const ERROR_MESSAGES = {
   credits: "The cosmic fuel tank needs a refill! Please try again later. 🚀⛽",
   server_error: "WALDOGE's cosmic transmitter hit some space debris. Please try again! 🌌",
   invalid_request: "Invalid request format. Please try again! 🐕",
+  tier_blocked: "Hold WALDOGE tokens to unlock the cosmic chat! 🐕✨",
+  usage_limit: "Daily cosmic message limit reached! Come back tomorrow, space explorer! 🌌",
+  chaos_locked: "Chaos Mode requires holding 1M+ WALDOGE tokens! 🌌🔥",
 };
 
 // WALDOGE AI personality system prompt
