@@ -123,6 +123,28 @@ RULES:
 Example output:
 ["A yellow cartoon doge with glowing wings floating through a purple nebula, digital art, cosmic aesthetic, 4k", ...]`;
 
+const IMAGE_SYSTEM_PROMPT = `You are WALDOGE, a cosmic doge meme artist. Generate a fun, shareable meme image.
+
+CHARACTER: WALDOGE is a yellow shiba inu doge with:
+- Red beanie hat
+- Striped shirt
+- Glowing butterfly/cosmic wings
+- Adventurer's backpack
+- Cosmic explorer vibes
+
+STYLE: Fun, meme-worthy, internet culture, space/cosmic themes, vibrant colors, cartoon/digital art style.
+
+Generate an image based on the user's prompt. Make it shareable and engaging!`;
+1. Each prompt should be 1-2 sentences, highly descriptive
+2. Include art style keywords (digital art, cinematic, ethereal, etc.)
+3. Feature WALDOGE mascot: yellow doge, red beanie, striped shirt, glowing wings, backpack
+4. Include cosmic/space elements
+5. Add quality modifiers (4k, trending on artstation, detailed illustration)
+6. Format: Return ONLY a JSON array of 5 strings, nothing else
+
+Example output:
+["A yellow cartoon doge with glowing wings floating through a purple nebula, digital art, cosmic aesthetic, 4k", ...]`;
+
 serve(async (req) => {
   const origin = req.headers.get("origin");
   const corsHeaders = getCorsHeaders(origin);
