@@ -1,9 +1,10 @@
-import { FC, useState } from "react";
+import { FC, useState, useRef, useCallback, ChangeEvent } from "react";
 import { motion } from "framer-motion";
-import { Zap, Copy, Check, Lock, Loader2 } from "lucide-react";
+import { Zap, Copy, Check, Lock, Loader2, ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -70,9 +71,40 @@ export const RaidTab: FC<RaidTabProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [content, setContent] = useState<GeneratedContent | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
+  const [attachedImage, setAttachedImage] = useState<{ file: File; preview: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isLocked = false; // Token gate removed - raids are now open to all
   const isUnhingedLocked = tier !== "chaos"; // Chaos tone still requires tier 2
+
+  const handleImageSelect = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+
+    const preview = URL.createObjectURL(file);
+    setAttachedImage({ file, preview });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
+  const removeAttachedImage = useCallback(() => {
+    if (attachedImage) {
+      URL.revokeObjectURL(attachedImage.preview);
+      setAttachedImage(null);
+    }
+  }, [attachedImage]);
 
   const handleGenerate = async () => {
     if (!canUse || !topic.trim() || !publicKey) return;
@@ -148,17 +180,61 @@ export const RaidTab: FC<RaidTabProps> = ({
 
       {/* Controls */}
       <div className="glass-card p-6 space-y-4">
+        {/* Hidden file input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          onChange={handleImageSelect}
+          className="hidden"
+        />
+
+        {/* Attached image preview */}
+        {attachedImage && (
+          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+            <img
+              src={attachedImage.preview}
+              alt="Attached"
+              className="h-16 w-16 object-cover rounded-lg border border-border"
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium">Image attached</p>
+              <p className="text-xs text-muted-foreground">Will be used as context for generation</p>
+            </div>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={removeAttachedImage}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-3">
             <Label htmlFor="topic">Topic / Goal</Label>
-            <Input
-              id="topic"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g., WALDOGE community growth, new partnership..."
-              disabled={isLocked}
-              className="mt-1"
-            />
+            <div className="relative mt-1">
+              <Textarea
+                id="topic"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="e.g., WALDOGE community growth, new partnership..."
+                disabled={isLocked}
+                className="pr-12 resize-none"
+                rows={2}
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLocked || !!attachedImage}
+                className="absolute right-2 bottom-2 text-muted-foreground hover:text-foreground"
+              >
+                <ImagePlus className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           <div>
