@@ -180,17 +180,61 @@ export const RaidTab: FC<RaidTabProps> = ({
 
       {/* Controls */}
       <div className="glass-card p-6 space-y-4">
+        {/* Hidden file input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          onChange={handleImageSelect}
+          className="hidden"
+        />
+
+        {/* Attached image preview */}
+        {attachedImage && (
+          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+            <img
+              src={attachedImage.preview}
+              alt="Attached"
+              className="h-16 w-16 object-cover rounded-lg border border-border"
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium">Image attached</p>
+              <p className="text-xs text-muted-foreground">Will be used as context for generation</p>
+            </div>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={removeAttachedImage}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-3">
             <Label htmlFor="topic">Topic / Goal</Label>
-            <Input
-              id="topic"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g., WALDOGE community growth, new partnership..."
-              disabled={isLocked}
-              className="mt-1"
-            />
+            <div className="relative mt-1">
+              <Textarea
+                id="topic"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="e.g., WALDOGE community growth, new partnership..."
+                disabled={isLocked}
+                className="pr-12 resize-none"
+                rows={2}
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLocked || !!attachedImage}
+                className="absolute right-2 bottom-2 text-muted-foreground hover:text-foreground"
+              >
+                <ImagePlus className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           <div>

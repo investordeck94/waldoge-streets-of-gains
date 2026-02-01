@@ -297,26 +297,77 @@ export const NFTTab: FC<NFTTabProps> = ({
                   </div>
                   <div>
                     <Label>Generation Prompt</Label>
-                    <Textarea
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Describe your unique WALDOGE Space Badge..."
-                      className="mt-1"
-                      rows={3}
-                    />
+                    <div className="relative mt-1">
+                      <Textarea
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="Describe your unique WALDOGE Space Badge..."
+                        className="pr-12 resize-none"
+                        rows={3}
+                      />
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute right-2 bottom-2 text-muted-foreground hover:text-foreground"
+                      >
+                        <ImagePlus className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ) : (
                 <div className="mt-4">
-                  <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
-                    <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Click to upload or drag and drop
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      PNG, JPG, GIF up to 10MB
-                    </p>
-                  </div>
+                  {attachedImage ? (
+                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                      <img
+                        src={attachedImage.preview}
+                        alt="Uploaded"
+                        className="h-20 w-20 object-cover rounded-lg border border-border"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Image uploaded</p>
+                        <p className="text-xs text-muted-foreground">Ready for minting</p>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={removeAttachedImage}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
+                      <div 
+                        className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          Click to upload or drag and drop
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          PNG, JPG, GIF up to 10MB
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
