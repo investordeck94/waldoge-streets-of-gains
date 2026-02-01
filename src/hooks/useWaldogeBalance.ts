@@ -33,7 +33,10 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
   }, []);
 
   const fetchBalance = useCallback(async () => {
+    console.log("🐕 fetchBalance called - publicKey:", publicKey?.toBase58(), "connected:", connected);
+    
     if (!publicKey || !connected) {
+      console.log("🐕 No wallet connected, resetting state");
       setBalance(0);
       setTier("none");
       setIsWhale(false);
@@ -45,13 +48,17 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
     setError(null);
 
     try {
-      console.log("🐕 Fetching WALDOGE balance for wallet:", publicKey.toBase58());
+      const walletAddress = publicKey.toBase58();
+      console.log("🐕 Fetching WALDOGE balance for wallet:", walletAddress);
       console.log("🐕 Token mint:", WALDOGE_TOKEN_MINT);
+      console.log("🐕 RPC endpoint:", (connection as any)._rpcEndpoint || "unknown");
 
       // Use getParsedTokenAccountsByOwner to find ALL token accounts for this mint
       const res = await connection.getParsedTokenAccountsByOwner(publicKey, {
         mint: WALDOGE_MINT,
       });
+
+      console.log("🐕 RPC response received, accounts found:", res.value.length);
 
       // Sum across any accounts that match this mint
       let uiAmount = 0;
@@ -69,6 +76,7 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
       console.log("🐕 Tier:", calculateTier(uiAmount), "Is Whale:", uiAmount >= WHALE_THRESHOLD);
     } catch (err: any) {
       console.error("🐕 Error fetching WALDOGE balance:", err);
+      console.error("🐕 Error details:", err?.message, err?.stack);
       setError("Failed to fetch token balance");
       setBalance(0);
       setTier("preview");
