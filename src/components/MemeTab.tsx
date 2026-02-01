@@ -314,57 +314,87 @@ export const MemeTab: FC<MemeTabProps> = ({
         </Button>
       </div>
 
-      {/* Results */}
-      <div>
-        <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
-          {mode === "caption" ? "📝 Captions" : "🎨 Image Prompts"}
-          {isLocked && (
-            <span className="text-xs text-muted-foreground font-normal">
-              — Sample
-            </span>
-          )}
-        </h3>
+      {/* Generated Image Result */}
+      {mode === "image" && generatedImage && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="glass-card p-4"
+        >
+          <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
+            🖼️ Generated Meme
+          </h3>
+          <div className="relative">
+            <img
+              src={generatedImage}
+              alt="Generated meme"
+              className="w-full max-w-lg mx-auto rounded-xl border border-border"
+            />
+            <Button
+              onClick={downloadImage}
+              className="absolute bottom-4 right-4"
+              size="sm"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download
+            </Button>
+          </div>
+        </motion.div>
+      )}
 
-        <div className="space-y-3">
-          {(results || (mode === "caption" ? sampleCaptions : samplePrompts)).map(
-            (item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className={cn(
-                  "glass-card p-4 group flex justify-between items-start gap-4",
-                  isLocked && "opacity-60"
-                )}
-              >
-                <div className="flex-1">
-                  <span className="text-xs text-muted-foreground mb-1 block">
-                    #{i + 1}
-                  </span>
-                  <p className={cn("text-sm", mode === "prompt" && "font-mono")}>
-                    {item}
-                  </p>
-                </div>
-                {!isLocked && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(item, i)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                  >
-                    {copiedIndex === i ? (
-                      <Check className="w-4 h-4 text-waldoge-success" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </Button>
-                )}
-              </motion.div>
-            )
-          )}
+      {/* Text Results (captions/prompts) */}
+      {mode !== "image" && (
+        <div>
+          <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
+            {mode === "caption" ? "📝 Captions" : "🎨 Image Prompts"}
+            {isLocked && (
+              <span className="text-xs text-muted-foreground font-normal">
+                — Sample
+              </span>
+            )}
+          </h3>
+
+          <div className="space-y-3">
+            {(results || (mode === "caption" ? sampleCaptions : samplePrompts)).map(
+              (item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className={cn(
+                    "glass-card p-4 group flex justify-between items-start gap-4",
+                    isLocked && "opacity-60"
+                  )}
+                >
+                  <div className="flex-1">
+                    <span className="text-xs text-muted-foreground mb-1 block">
+                      #{i + 1}
+                    </span>
+                    <p className={cn("text-sm", mode === "prompt" && "font-mono")}>
+                      {item}
+                    </p>
+                  </div>
+                  {!isLocked && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(item, i)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                    >
+                      {copiedIndex === i ? (
+                        <Check className="w-4 h-4 text-waldoge-success" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  )}
+                </motion.div>
+              )
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {isLocked && (
         <motion.div
@@ -393,11 +423,17 @@ export const MemeTab: FC<MemeTabProps> = ({
               <li>• Mention emotions or reactions you want to capture</li>
               <li>• WALDOGE personality: fun, cosmic, explorer vibes</li>
             </>
-          ) : (
+          ) : mode === "prompt" ? (
             <>
               <li>• Paste these prompts into Midjourney, DALL-E, or any AI image tool</li>
               <li>• Add "WALDOGE mascot" to keep the character consistent</li>
               <li>• Cosmic, space, and explorer themes work best</li>
+            </>
+          ) : (
+            <>
+              <li>• Be descriptive about the scene and style you want</li>
+              <li>• Attach an image for context or style reference</li>
+              <li>• Include WALDOGE character details for best results</li>
             </>
           )}
         </ul>

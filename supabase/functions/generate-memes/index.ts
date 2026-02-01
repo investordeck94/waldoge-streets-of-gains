@@ -201,6 +201,89 @@ serve(async (req) => {
       });
     }
 
+    // Handle image generation mode
+    if (mode === "image") {
+      // Build the messages array for image generation
+      const userContent: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
+        { type: "text", text: `Generate a meme image: ${sanitizedTheme}` }
+      ];
+
+      // Add attached image as context if provided
+      if (imageData) {
+        userContent.push({
+          type: "image_url",
+          image_url: { url: imageData }
+        });
+      }
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-pro-image-preview",
+          messages: [
+            { role: "system", content: IMAGE_SYSTEM_PROMPT },
+            { role: "user", content: userContent },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ error: ERROR_MESSAGES.rate_limit }), {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (response.status === 402) {
+          return new Response(JSON.stringify({ error: ERROR_MESSAGES.credits }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        console.error("[Internal] AI gateway error:", response.status);
+        return new Response(JSON.stringify({ error: ERROR_MESSAGES.server_error }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      
+      // Extract image from response - check for inline_data format
+      const content = data.choices?.[0]?.message?.content;
+      let imageUrl: string | null = null;
+      
+      if (Array.isArray(content)) {
+        for (const part of content) {
+          if (part.type === "image_url" && part.image_url?.url) {
+            imageUrl = part.image_url.url;
+            break;
+          }
+          if (part.inline_data?.data && part.inline_data?.mime_type) {
+            imageUrl = `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`;
+            break;
+          }
+        }
+      }
+
+      if (!imageUrl) {
+        console.error("[Internal] No image in response:", JSON.stringify(data).slice(0, 500));
+        return new Response(JSON.stringify({ error: "Failed to generate image. Please try again." }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ imageUrl }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Handle caption/prompt modes
     const systemPrompt = mode === "caption" ? CAPTION_SYSTEM_PROMPT : PROMPT_SYSTEM_PROMPT;
     const userPrompt = mode === "caption" 
       ? `Generate 10 meme captions for this theme: "${sanitizedTheme}"`
