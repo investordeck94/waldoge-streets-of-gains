@@ -57,7 +57,7 @@ export const MemeTab: FC<MemeTabProps> = ({
   const isLocked = false;
 
   const handleGenerate = async () => {
-    if (!canUse || !prompt.trim() || !publicKey) return;
+    if (!canUse || !prompt.trim()) return;
 
     setIsGenerating(true);
     onUse();

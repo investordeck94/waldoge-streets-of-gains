@@ -32,10 +32,11 @@ const Index = () => {
     setActiveTab("about");
   };
 
-  // Show landing page only if not connected AND not currently connecting
-  if (!connected && !connecting) {
-    return <LandingPage onLearnMore={handleLearnMore} />;
-  }
+  // Token gates temporarily disabled - show main app to everyone
+  // Landing page only shown if user explicitly navigates there
+  // if (!connected && !connecting) {
+  //   return <LandingPage onLearnMore={handleLearnMore} />;
+  // }
 
   const renderTabContent = () => {
     const tabProps = {
