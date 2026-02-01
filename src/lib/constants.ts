@@ -3,9 +3,9 @@ export const WALDOGE_TOKEN_MINT = "D77tASqthikebejDx15MtphmZAbpU4Jxmr1JXgD2doge"
 
 // Tier Thresholds
 export const TIER_THRESHOLDS = {
-  TIER_0: 0,      // No tokens - Preview mode
-  TIER_1: 1,      // Basic features - must hold tokens
-  TIER_2: 10000,  // Chaos Mode unlocked
+  TIER_0: 0,        // No tokens - Preview mode
+  TIER_1: 100000,   // 100K WALDOGE - Basic features unlocked (chat, meme)
+  TIER_2: 1000000,  // 1M WALDOGE - Chaos Mode unlocked
 };
 
 // Whale threshold - 1% of total supply (waives NFT minting fee)
