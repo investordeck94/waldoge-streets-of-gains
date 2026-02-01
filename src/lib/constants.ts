@@ -19,30 +19,32 @@ export const NFT_MINT_FEE_PERCENT = 10;
 export const FREE_TRIAL_DURATION_MS = 2 * 60 * 1000;
 
 // Usage Limits per tier
+// Note: chat, raidGenerator, memeGenerator are now ungated (high limits for all)
+// Only nftCreator remains gated by tier
 export const USAGE_LIMITS = {
   TIER_0: {
-    chat: 0,
-    raidGenerator: 0,
-    memeGenerator: 0,
-    nftCreator: 0,
+    chat: 50,          // Ungated - generous daily limit
+    raidGenerator: 20, // Ungated - generous daily limit
+    memeGenerator: 20, // Ungated - generous daily limit
+    nftCreator: 0,     // Still gated - requires tokens
   },
   // Free trial limits (excludes NFT)
   FREE_TRIAL: {
-    chat: 5,
-    raidGenerator: 2,
-    memeGenerator: 2,
+    chat: 50,
+    raidGenerator: 20,
+    memeGenerator: 20,
     nftCreator: 0,
   },
   TIER_1: {
-    chat: 10,
-    raidGenerator: 3,
-    memeGenerator: 3,
-    nftCreator: 1,
-  },
-  TIER_2: {
     chat: 100,
     raidGenerator: 30,
     memeGenerator: 30,
+    nftCreator: 1,
+  },
+  TIER_2: {
+    chat: 200,
+    raidGenerator: 50,
+    memeGenerator: 50,
     nftCreator: 10,
   },
 };
