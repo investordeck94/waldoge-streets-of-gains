@@ -196,6 +196,30 @@ serve(async (req) => {
 
     const systemPrompt = WALDOGE_SYSTEM_PROMPT + (chaosMode ? CHAOS_MODE_ADDITION : "");
 
+    // Build messages for API - handle image if present
+    const apiMessages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> }> = [
+      { role: "system", content: systemPrompt },
+    ];
+
+    // Add previous messages
+    sanitizedMessages.slice(0, -1).forEach((msg) => {
+      apiMessages.push({ role: msg.role, content: msg.content });
+    });
+
+    // Handle the last message (which may have an image)
+    const lastMessage = sanitizedMessages[sanitizedMessages.length - 1];
+    if (imageData) {
+      apiMessages.push({
+        role: lastMessage.role,
+        content: [
+          { type: "text", text: lastMessage.content || "What do you see in this image?" },
+          { type: "image_url", image_url: { url: imageData } },
+        ],
+      });
+    } else {
+      apiMessages.push({ role: lastMessage.role, content: lastMessage.content });
+    }
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -203,11 +227,8 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...sanitizedMessages,
-        ],
+        model: "google/gemini-2.5-flash",
+        messages: apiMessages,
         stream: true,
       }),
     });
