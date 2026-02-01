@@ -1,9 +1,10 @@
-import { FC, useState } from "react";
+import { FC, useState, useRef, useCallback, ChangeEvent } from "react";
 import { motion } from "framer-motion";
-import { Zap, Copy, Check, Lock, Loader2 } from "lucide-react";
+import { Zap, Copy, Check, Lock, Loader2, ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
