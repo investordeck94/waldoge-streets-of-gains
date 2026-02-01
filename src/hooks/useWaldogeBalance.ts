@@ -45,19 +45,27 @@ export const useWaldogeBalance = (): WaldogeBalanceState => {
 
     try {
       const mintPubkey = new PublicKey(WALDOGE_TOKEN_MINT);
+      console.log("Fetching WALDOGE balance for wallet:", publicKey.toBase58());
+      console.log("Token mint:", WALDOGE_TOKEN_MINT);
+      
       const associatedTokenAddress = getAssociatedTokenAddressSync(
         mintPubkey,
         publicKey
       );
+      console.log("Associated token address:", associatedTokenAddress.toBase58());
 
       try {
         const tokenAccount = await getAccount(connection, associatedTokenAddress);
         // Assuming 9 decimals for the token (standard Solana SPL token)
         const tokenBalance = Number(tokenAccount.amount) / 1e9;
+        console.log("Raw token amount:", tokenAccount.amount.toString());
+        console.log("Calculated balance:", tokenBalance);
         setBalance(tokenBalance);
         setTier(calculateTier(tokenBalance));
         setIsWhale(tokenBalance >= WHALE_THRESHOLD);
+        console.log("Tier:", calculateTier(tokenBalance), "Is Whale:", tokenBalance >= WHALE_THRESHOLD);
       } catch (tokenError: any) {
+        console.log("Token account error:", tokenError.name, tokenError.message);
         // If token account doesn't exist, balance is 0
         if (tokenError.name === "TokenAccountNotFoundError") {
           setBalance(0);
