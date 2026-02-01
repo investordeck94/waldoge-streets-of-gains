@@ -21,16 +21,21 @@ const FreeTrialSchema = z.object({
 
 type DailyUsage = z.infer<typeof DailyUsageSchema>;
 
+type FreeTrial = z.infer<typeof FreeTrialSchema>;
+
 interface UsageTrackingState {
   usage: DailyUsage;
   canUse: (feature: keyof Omit<DailyUsage, "date">) => boolean;
   getRemainingUses: (feature: keyof Omit<DailyUsage, "date">) => number;
   incrementUsage: (feature: keyof Omit<DailyUsage, "date">) => void;
   clearHistory: () => void;
+  isInFreeTrial: boolean;
+  freeTrialTimeRemaining: number;
 }
 
 const getStorageKey = (walletAddress: string) => `waldoge_usage_${walletAddress}`;
 const getChatHistoryKey = (walletAddress: string) => `waldoge_chat_${walletAddress}`;
+const getFreeTrialKey = (walletAddress: string) => `waldoge_trial_${walletAddress}`;
 
 const getTodayString = () => new Date().toISOString().split("T")[0];
 
