@@ -1,4 +1,4 @@
-import { FC, ReactNode, useMemo, useCallback } from "react";
+import { FC, ReactNode, useMemo, useCallback, useEffect } from "react";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -21,6 +21,29 @@ interface WalletContextProviderProps {
 export const WalletContextProvider: FC<WalletContextProviderProps> = ({
   children,
 }) => {
+  // Debug: Check if Phantom is available in window
+  useEffect(() => {
+    const checkWalletAvailability = () => {
+      const hasPhantom = typeof window !== 'undefined' && 'phantom' in window;
+      const hasSolana = typeof window !== 'undefined' && 'solana' in window;
+      const phantomProvider = (window as any)?.phantom?.solana;
+      const solanaProvider = (window as any)?.solana;
+      
+      console.log("🔍 Wallet detection:", {
+        hasPhantom,
+        hasSolana,
+        phantomIsPhantom: phantomProvider?.isPhantom,
+        solanaIsPhantom: solanaProvider?.isPhantom,
+        userAgent: navigator.userAgent.substring(0, 100),
+      });
+    };
+    
+    // Check immediately and after a delay (some wallets inject later)
+    checkWalletAvailability();
+    const timeout = setTimeout(checkWalletAvailability, 1000);
+    return () => clearTimeout(timeout);
+  }, []);
+
   // Initialize wallets - the adapters auto-detect mobile environments
   const wallets = useMemo(
     () => [
