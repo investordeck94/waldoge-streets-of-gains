@@ -41,12 +41,50 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_usage: {
+        Row: {
+          created_at: string
+          feature: string
+          id: string
+          updated_at: string
+          usage_count: number
+          usage_date: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          feature: string
+          id?: string
+          updated_at?: string
+          usage_count?: number
+          usage_date?: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          feature?: string
+          id?: string
+          updated_at?: string
+          usage_count?: number
+          usage_date?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_and_increment_usage: {
+        Args: { p_feature: string; p_tier_limit: number; p_wallet: string }
+        Returns: boolean
+      }
       check_maze_rate_limit: { Args: { p_wallet: string }; Returns: boolean }
+      get_usage_count: {
+        Args: { p_feature: string; p_wallet: string }
+        Returns: number
+      }
       is_valid_maze_score: {
         Args: { p_difficulty: number; p_moves: number }
         Returns: boolean

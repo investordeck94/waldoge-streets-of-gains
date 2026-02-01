@@ -15,6 +15,7 @@ import { UserTier } from "@/hooks/useWaldogeBalance";
 import { RAID_TONES, PLATFORMS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 interface RaidTabProps {
   tier: UserTier;
@@ -62,6 +63,7 @@ export const RaidTab: FC<RaidTabProps> = ({
   remainingUses,
   onUse,
 }) => {
+  const { publicKey } = useWallet();
   const [topic, setTopic] = useState("");
   const [tone, setTone] = useState<"clean" | "degen" | "unhinged">("clean");
   const [platform, setPlatform] = useState(PLATFORMS[0]);
@@ -73,7 +75,7 @@ export const RaidTab: FC<RaidTabProps> = ({
   const isUnhingedLocked = tier !== "chaos"; // Chaos tone still requires tier 2
 
   const handleGenerate = async () => {
-    if (!canUse || !topic.trim()) return;
+    if (!canUse || !topic.trim() || !publicKey) return;
 
     setIsGenerating(true);
     onUse();
@@ -85,7 +87,7 @@ export const RaidTab: FC<RaidTabProps> = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ topic, tone, platform }),
+        body: JSON.stringify({ topic, tone, platform, walletAddress: publicKey.toBase58() }),
       });
 
       if (!response.ok) {

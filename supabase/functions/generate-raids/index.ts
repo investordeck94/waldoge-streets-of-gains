@@ -1,7 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { verifyTierAndUsage, hasChaosAccess } from "../_shared/tierVerification.ts";
 
 // Input validation constants
 const MAX_TOPIC_LENGTH = 500;
+const MAX_WALLET_LENGTH = 50;
+const MIN_WALLET_LENGTH = 32;
 const VALID_TONES = ["clean", "degen", "unhinged"];
 const VALID_PLATFORMS = ["X / Twitter", "Telegram", "Discord"];
 
@@ -9,6 +12,7 @@ interface RaidRequest {
   topic: string;
   tone: string;
   platform: string;
+  walletAddress?: string;
 }
 
 function validateRaidRequest(body: unknown): { valid: true; data: RaidRequest } | { valid: false; error: string } {
@@ -17,6 +21,13 @@ function validateRaidRequest(body: unknown): { valid: true; data: RaidRequest } 
   }
 
   const request = body as Record<string, unknown>;
+
+  // Validate wallet address (required for tier verification)
+  if (typeof request.walletAddress !== "string" || 
+      request.walletAddress.length < MIN_WALLET_LENGTH || 
+      request.walletAddress.length > MAX_WALLET_LENGTH) {
+    return { valid: false, error: "Valid wallet address is required" };
+  }
 
   // Validate topic
   if (typeof request.topic !== "string") {
@@ -52,7 +63,7 @@ function validateRaidRequest(body: unknown): { valid: true; data: RaidRequest } 
 
   return {
     valid: true,
-    data: { topic, tone: request.tone, platform: request.platform },
+    data: { topic, tone: request.tone, platform: request.platform, walletAddress: request.walletAddress },
   };
 }
 
@@ -84,7 +95,9 @@ const ERROR_MESSAGES = {
   rate_limit: "Rate limit reached! Please try again in a moment 🐕",
   credits: "Service temporarily unavailable. Please try again later. 🚀⛽",
   server_error: "Failed to generate content. Please try again! 🌌",
-  invalid_request: "Invalid request. Please provide topic, tone, and platform.",
+  invalid_request: "Invalid request. Please provide topic, tone, platform, and wallet address.",
+  usage_limit: "Daily raid generation limit reached! Come back tomorrow, space explorer! 🌌",
+  chaos_locked: "Unhinged mode requires holding 1M+ WALDOGE tokens! 🌌🔥",
 };
 
 const getSystemPrompt = (tone: string, platform: string) => `You are WALDOGE, a cosmic doge explorer generating social media content for the WALDOGE community.
@@ -141,7 +154,26 @@ serve(async (req) => {
       });
     }
 
-    const { topic, tone, platform } = validation.data;
+    const { topic, tone, platform, walletAddress } = validation.data;
+
+    // Server-side tier verification
+    const tierInfo = await verifyTierAndUsage(walletAddress!, "raidGenerator");
+    
+    if (!tierInfo.allowed) {
+      return new Response(JSON.stringify({ error: ERROR_MESSAGES.usage_limit }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Unhinged mode requires TIER_2
+    if (tone === "unhinged" && !hasChaosAccess(tierInfo.tier)) {
+      return new Response(JSON.stringify({ error: ERROR_MESSAGES.chaos_locked }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const sanitizedTopic = sanitizeContent(topic);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");

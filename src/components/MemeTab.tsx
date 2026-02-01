@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 interface MemeTabProps {
   tier: UserTier;
@@ -45,6 +46,7 @@ export const MemeTab: FC<MemeTabProps> = ({
   remainingUses,
   onUse,
 }) => {
+  const { publicKey } = useWallet();
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState<MemeMode>("caption");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -54,7 +56,7 @@ export const MemeTab: FC<MemeTabProps> = ({
   const isLocked = tier === "none" || tier === "preview"; // Requires 100K WALDOGE (TIER_1+)
 
   const handleGenerate = async () => {
-    if (!canUse || !prompt.trim()) return;
+    if (!canUse || !prompt.trim() || !publicKey) return;
 
     setIsGenerating(true);
     onUse();
@@ -66,7 +68,7 @@ export const MemeTab: FC<MemeTabProps> = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ theme: prompt, mode }),
+        body: JSON.stringify({ theme: prompt, mode, walletAddress: publicKey.toBase58() }),
       });
 
       if (!response.ok) {

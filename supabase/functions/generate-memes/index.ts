@@ -1,12 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { verifyTierAndUsage } from "../_shared/tierVerification.ts";
 
 // Input validation constants
 const MAX_THEME_LENGTH = 500;
+const MAX_WALLET_LENGTH = 50;
+const MIN_WALLET_LENGTH = 32;
 const VALID_MODES = ["caption", "prompt"];
 
 interface MemeRequest {
   theme: string;
   mode: string;
+  walletAddress?: string;
 }
 
 function validateMemeRequest(body: unknown): { valid: true; data: MemeRequest } | { valid: false; error: string } {
@@ -15,6 +19,13 @@ function validateMemeRequest(body: unknown): { valid: true; data: MemeRequest } 
   }
 
   const request = body as Record<string, unknown>;
+
+  // Validate wallet address (required for tier verification)
+  if (typeof request.walletAddress !== "string" || 
+      request.walletAddress.length < MIN_WALLET_LENGTH || 
+      request.walletAddress.length > MAX_WALLET_LENGTH) {
+    return { valid: false, error: "Valid wallet address is required" };
+  }
 
   // Validate theme
   if (typeof request.theme !== "string") {
@@ -41,7 +52,7 @@ function validateMemeRequest(body: unknown): { valid: true; data: MemeRequest } 
 
   return {
     valid: true,
-    data: { theme, mode: request.mode },
+    data: { theme, mode: request.mode, walletAddress: request.walletAddress },
   };
 }
 
@@ -73,7 +84,9 @@ const ERROR_MESSAGES = {
   rate_limit: "Rate limit reached! Please try again in a moment 🐕",
   credits: "Service temporarily unavailable. Please try again later. 🚀⛽",
   server_error: "Failed to generate content. Please try again! 🌌",
-  invalid_request: "Invalid request. Please provide theme and mode.",
+  invalid_request: "Invalid request. Please provide theme, mode, and wallet address.",
+  tier_blocked: "Hold WALDOGE tokens to unlock meme generation! 🐕✨",
+  usage_limit: "Daily meme generation limit reached! Come back tomorrow, space explorer! 🌌",
 };
 
 const CAPTION_SYSTEM_PROMPT = `You are WALDOGE, a cosmic doge explorer generating meme captions. Your personality: playful, degen-aware humor, space explorer vibes, positive energy.
@@ -135,7 +148,21 @@ serve(async (req) => {
       });
     }
 
-    const { theme, mode } = validation.data;
+    const { theme, mode, walletAddress } = validation.data;
+
+    // Server-side tier verification
+    const tierInfo = await verifyTierAndUsage(walletAddress!, "memeGenerator");
+    
+    if (!tierInfo.allowed) {
+      const errorMsg = tierInfo.limit === 0 
+        ? ERROR_MESSAGES.tier_blocked 
+        : ERROR_MESSAGES.usage_limit;
+      return new Response(JSON.stringify({ error: errorMsg }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const sanitizedTheme = sanitizeContent(theme);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");

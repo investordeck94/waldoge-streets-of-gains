@@ -12,6 +12,7 @@ import { useStreamingChat, ChatMessage } from "@/hooks/useStreamingChat";
 import { QUICK_ACTIONS, EXAMPLE_CHATS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import waldogeMascot from "@/assets/waldoge-mascot.png";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 interface ChatTabProps {
   tier: UserTier;
@@ -26,6 +27,7 @@ export const ChatTab: FC<ChatTabProps> = ({
   remainingUses,
   onUse,
 }) => {
+  const { publicKey } = useWallet();
   const { messages, addMessage, updateLastMessage, clearMessages } = useChatHistory();
   const { streamChat, cancelStream } = useStreamingChat();
   const [input, setInput] = useState("");
@@ -111,6 +113,7 @@ export const ChatTab: FC<ChatTabProps> = ({
       messages: apiMessages,
       chaosMode,
       imageData,
+      walletAddress: publicKey?.toBase58(),
       onDelta: (chunk) => {
         assistantContentRef.current += chunk;
         updateLastMessage(assistantContentRef.current);
@@ -123,7 +126,7 @@ export const ChatTab: FC<ChatTabProps> = ({
         setIsLoading(false);
       },
     });
-  }, [input, attachedImage, messages, chaosMode, addMessage, updateLastMessage, onUse, streamChat, removeAttachedImage]);
+  }, [input, attachedImage, messages, chaosMode, publicKey, addMessage, updateLastMessage, onUse, streamChat, removeAttachedImage]);
 
   const handleCancel = useCallback(() => {
     cancelStream();

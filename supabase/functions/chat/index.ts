@@ -1,8 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { verifyTierAndUsage, hasChaosAccess } from "../_shared/tierVerification.ts";
 
 // Input validation schemas using simple validation
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_MESSAGES_COUNT = 50;
+const MAX_WALLET_LENGTH = 50;
+const MIN_WALLET_LENGTH = 32;
 const VALID_ROLES = ["user", "assistant"];
 
 interface ChatMessage {
@@ -14,6 +17,7 @@ interface ChatRequest {
   messages: ChatMessage[];
   chaosMode?: boolean;
   imageData?: string;
+  walletAddress?: string;
 }
 
 function validateChatRequest(body: unknown): { valid: true; data: ChatRequest } | { valid: false; error: string } {
@@ -22,6 +26,13 @@ function validateChatRequest(body: unknown): { valid: true; data: ChatRequest } 
   }
 
   const request = body as Record<string, unknown>;
+
+  // Validate wallet address (required for tier verification)
+  if (typeof request.walletAddress !== "string" || 
+      request.walletAddress.length < MIN_WALLET_LENGTH || 
+      request.walletAddress.length > MAX_WALLET_LENGTH) {
+    return { valid: false, error: "Valid wallet address is required" };
+  }
 
   // Validate messages array
   if (!Array.isArray(request.messages)) {
@@ -87,6 +98,7 @@ function validateChatRequest(body: unknown): { valid: true; data: ChatRequest } 
       messages: request.messages as ChatMessage[],
       chaosMode: request.chaosMode === true,
       imageData: request.imageData as string | undefined,
+      walletAddress: request.walletAddress as string,
     },
   };
 }
@@ -120,6 +132,9 @@ const ERROR_MESSAGES = {
   credits: "The cosmic fuel tank needs a refill! Please try again later. 🚀⛽",
   server_error: "WALDOGE's cosmic transmitter hit some space debris. Please try again! 🌌",
   invalid_request: "Invalid request format. Please try again! 🐕",
+  tier_blocked: "Hold WALDOGE tokens to unlock the cosmic chat! 🐕✨",
+  usage_limit: "Daily cosmic message limit reached! Come back tomorrow, space explorer! 🌌",
+  chaos_locked: "Chaos Mode requires holding 1M+ WALDOGE tokens! 🌌🔥",
 };
 
 // WALDOGE AI personality system prompt
@@ -177,7 +192,28 @@ serve(async (req) => {
       });
     }
 
-    const { messages, chaosMode, imageData } = validation.data;
+    const { messages, chaosMode, imageData, walletAddress } = validation.data;
+
+    // Server-side tier verification
+    const tierInfo = await verifyTierAndUsage(walletAddress!, "chat");
+    
+    if (!tierInfo.allowed) {
+      const errorMsg = tierInfo.limit === 0 
+        ? ERROR_MESSAGES.tier_blocked 
+        : ERROR_MESSAGES.usage_limit;
+      return new Response(JSON.stringify({ error: errorMsg }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Chaos mode requires TIER_2
+    if (chaosMode && !hasChaosAccess(tierInfo.tier)) {
+      return new Response(JSON.stringify({ error: ERROR_MESSAGES.chaos_locked }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Sanitize message content
     const sanitizedMessages = messages.map((msg) => ({
