@@ -98,6 +98,7 @@ function validateChatRequest(body: unknown): { valid: true; data: ChatRequest } 
       messages: request.messages as ChatMessage[],
       chaosMode: request.chaosMode === true,
       imageData: request.imageData as string | undefined,
+      walletAddress: request.walletAddress as string,
     },
   };
 }
