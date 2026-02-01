@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { z } from "zod";
-import { USAGE_LIMITS } from "@/lib/constants";
+import { USAGE_LIMITS, FREE_TRIAL_DURATION_MS } from "@/lib/constants";
 import { UserTier } from "./useWaldogeBalance";
 
 // Zod schemas for localStorage validation
@@ -13,7 +13,15 @@ const DailyUsageSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
+// Schema for free trial tracking
+const FreeTrialSchema = z.object({
+  startTime: z.number().int().min(0),
+  used: z.boolean(),
+});
+
 type DailyUsage = z.infer<typeof DailyUsageSchema>;
+
+type FreeTrial = z.infer<typeof FreeTrialSchema>;
 
 interface UsageTrackingState {
   usage: DailyUsage;
@@ -21,10 +29,13 @@ interface UsageTrackingState {
   getRemainingUses: (feature: keyof Omit<DailyUsage, "date">) => number;
   incrementUsage: (feature: keyof Omit<DailyUsage, "date">) => void;
   clearHistory: () => void;
+  isInFreeTrial: boolean;
+  freeTrialTimeRemaining: number;
 }
 
 const getStorageKey = (walletAddress: string) => `waldoge_usage_${walletAddress}`;
 const getChatHistoryKey = (walletAddress: string) => `waldoge_chat_${walletAddress}`;
+const getFreeTrialKey = (walletAddress: string) => `waldoge_trial_${walletAddress}`;
 
 const getTodayString = () => new Date().toISOString().split("T")[0];
 
@@ -57,14 +68,36 @@ const safeParseUsage = (data: string | null): DailyUsage | null => {
   }
 };
 
+/**
+ * Safely parse and validate free trial from localStorage
+ */
+const safeParseFreeTrial = (data: string | null): FreeTrial | null => {
+  if (!data) return null;
+  
+  try {
+    const parsed = JSON.parse(data);
+    const validated = FreeTrialSchema.safeParse(parsed);
+    
+    if (validated.success) {
+      return validated.data;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
   const { publicKey } = useWallet();
   const [usage, setUsage] = useState<DailyUsage>(getDefaultUsage());
+  const [freeTrial, setFreeTrial] = useState<FreeTrial | null>(null);
+  const [freeTrialTimeRemaining, setFreeTrialTimeRemaining] = useState(0);
 
-  // Load usage from localStorage
+  // Load usage and free trial from localStorage
   useEffect(() => {
     if (!publicKey) {
       setUsage(getDefaultUsage());
+      setFreeTrial(null);
       return;
     }
 
@@ -86,10 +119,66 @@ export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
       localStorage.setItem(storageKey, JSON.stringify(newUsage));
       setUsage(newUsage);
     }
+
+    // Load free trial data
+    const trialKey = getFreeTrialKey(publicKey.toString());
+    const storedTrial = localStorage.getItem(trialKey);
+    const parsedTrial = safeParseFreeTrial(storedTrial);
+    
+    if (parsedTrial) {
+      setFreeTrial(parsedTrial);
+    }
   }, [publicKey]);
+
+  // Start free trial when tier is "preview" (no tokens) and no trial started yet
+  useEffect(() => {
+    if (!publicKey || tier !== "preview") return;
+    
+    const trialKey = getFreeTrialKey(publicKey.toString());
+    const storedTrial = localStorage.getItem(trialKey);
+    
+    if (!storedTrial) {
+      const newTrial: FreeTrial = {
+        startTime: Date.now(),
+        used: true,
+      };
+      localStorage.setItem(trialKey, JSON.stringify(newTrial));
+      setFreeTrial(newTrial);
+    }
+  }, [publicKey, tier]);
+
+  // Update free trial time remaining
+  useEffect(() => {
+    if (!freeTrial) {
+      setFreeTrialTimeRemaining(0);
+      return;
+    }
+
+    const updateRemaining = () => {
+      const elapsed = Date.now() - freeTrial.startTime;
+      const remaining = Math.max(0, FREE_TRIAL_DURATION_MS - elapsed);
+      setFreeTrialTimeRemaining(remaining);
+    };
+
+    updateRemaining();
+    const interval = setInterval(updateRemaining, 1000);
+    return () => clearInterval(interval);
+  }, [freeTrial]);
+
+  // Check if user is currently in an active free trial
+  const isInFreeTrial = Boolean(
+    tier === "preview" && 
+    freeTrial && 
+    freeTrialTimeRemaining > 0
+  );
 
   const getLimit = useCallback(
     (feature: keyof Omit<DailyUsage, "date">): number => {
+      // Free trial limits (excludes NFT)
+      if (isInFreeTrial && feature !== "nftCreator") {
+        return USAGE_LIMITS.FREE_TRIAL[feature];
+      }
+      
       if (tier === "none" || tier === "preview") {
         return USAGE_LIMITS.TIER_0[feature];
       }
@@ -101,7 +190,7 @@ export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
       }
       return 0;
     },
-    [tier]
+    [tier, isInFreeTrial]
   );
 
   const canUse = useCallback(
@@ -156,6 +245,8 @@ export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
     getRemainingUses,
     incrementUsage,
     clearHistory,
+    isInFreeTrial,
+    freeTrialTimeRemaining,
   };
 };
 

@@ -14,7 +14,7 @@ import { useUsageTracking } from "@/hooks/useUsageTracking";
 const Index = () => {
   const { connected } = useWallet();
   const { balance, tier, isWhale, isLoading } = useWaldogeBalance();
-  const { canUse, getRemainingUses, incrementUsage, clearHistory } = useUsageTracking(tier);
+  const { canUse, getRemainingUses, incrementUsage, clearHistory, isInFreeTrial, freeTrialTimeRemaining } = useUsageTracking(tier);
   const [activeTab, setActiveTab] = useState("chat");
 
   const handleLearnMore = () => {
@@ -57,6 +57,8 @@ const Index = () => {
         isLoading={isLoading}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        isInFreeTrial={isInFreeTrial}
+        freeTrialTimeRemaining={freeTrialTimeRemaining}
       />
 
       <main className="flex-1 container mx-auto px-4 py-6 relative z-10">

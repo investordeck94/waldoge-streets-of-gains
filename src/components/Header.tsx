@@ -2,7 +2,7 @@ import { FC } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { motion } from "framer-motion";
-import { Zap, Sparkles, Dog } from "lucide-react";
+import { Zap, Sparkles, Dog, Clock } from "lucide-react";
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { cn } from "@/lib/utils";
 import waldogeMascot from "@/assets/waldoge-mascot.png";
@@ -13,6 +13,8 @@ interface HeaderProps {
   isLoading: boolean;
   activeTab: string;
   onTabChange: (tab: string) => void;
+  isInFreeTrial?: boolean;
+  freeTrialTimeRemaining?: number;
 }
 
 const tabs = [
@@ -48,12 +50,21 @@ const TierBadge: FC<{ tier: UserTier }> = ({ tier }) => {
   );
 };
 
+const formatTimeRemaining = (ms: number): string => {
+  const seconds = Math.floor(ms / 1000);
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
+
 export const Header: FC<HeaderProps> = ({
   balance,
   tier,
   isLoading,
   activeTab,
   onTabChange,
+  isInFreeTrial = false,
+  freeTrialTimeRemaining = 0,
 }) => {
   const { connected } = useWallet();
 
@@ -106,6 +117,18 @@ export const Header: FC<HeaderProps> = ({
                     )}
                   </p>
                 </div>
+                {isInFreeTrial && (
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/20 border border-accent/40 rounded-full"
+                  >
+                    <Clock className="w-3.5 h-3.5 text-accent" />
+                    <span className="text-xs font-semibold text-accent">
+                      Free Trial: {formatTimeRemaining(freeTrialTimeRemaining)}
+                    </span>
+                  </motion.div>
+                )}
                 <TierBadge tier={tier} />
               </motion.div>
             )}
