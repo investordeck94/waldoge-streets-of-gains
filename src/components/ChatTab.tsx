@@ -276,7 +276,18 @@ export const ChatTab: FC<ChatTabProps> = ({
                       <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
                     </div>
                   ) : (
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    <div className="space-y-2">
+                      {message.image && (
+                        <img
+                          src={message.image}
+                          alt="Attached"
+                          className="max-w-[200px] rounded-lg"
+                        />
+                      )}
+                      {message.content && (
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      )}
+                    </div>
                   )}
                 </div>
               </motion.div>
