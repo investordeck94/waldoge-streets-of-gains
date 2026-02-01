@@ -325,9 +325,6 @@ export const MazeGame: FC = () => {
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-sm">{entry.player_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {entry.wallet_address.slice(0, 4)}...{entry.wallet_address.slice(-4)}
-                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-display font-bold text-primary">{entry.moves}</p>
