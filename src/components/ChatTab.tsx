@@ -355,13 +355,11 @@ export const ChatTab: FC<ChatTabProps> = ({
             }
           }}
           placeholder={
-            isLocked
-              ? "Connect wallet & hold WALDOGE to chat..."
-              : chaosMode
+            chaosMode
               ? "Unleash chaos upon the cosmos... 🌌"
               : "Ask WALDOGE anything..."
           }
-          disabled={isLocked || isLoading}
+          disabled={isLoading}
           className="pr-24 resize-none bg-card border-border focus:border-primary/50"
           rows={2}
         />
