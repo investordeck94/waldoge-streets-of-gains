@@ -12,6 +12,7 @@ import { useStreamingChat, ChatMessage } from "@/hooks/useStreamingChat";
 import { QUICK_ACTIONS, EXAMPLE_CHATS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import waldogeMascot from "@/assets/waldoge-mascot.png";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 interface ChatTabProps {
   tier: UserTier;
