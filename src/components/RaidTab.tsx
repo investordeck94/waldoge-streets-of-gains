@@ -71,9 +71,40 @@ export const RaidTab: FC<RaidTabProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [content, setContent] = useState<GeneratedContent | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
+  const [attachedImage, setAttachedImage] = useState<{ file: File; preview: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isLocked = false; // Token gate removed - raids are now open to all
   const isUnhingedLocked = tier !== "chaos"; // Chaos tone still requires tier 2
+
+  const handleImageSelect = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+
+    const preview = URL.createObjectURL(file);
+    setAttachedImage({ file, preview });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
+  const removeAttachedImage = useCallback(() => {
+    if (attachedImage) {
+      URL.revokeObjectURL(attachedImage.preview);
+      setAttachedImage(null);
+    }
+  }, [attachedImage]);
 
   const handleGenerate = async () => {
     if (!canUse || !topic.trim() || !publicKey) return;
