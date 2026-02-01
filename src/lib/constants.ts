@@ -49,8 +49,8 @@ export const USAGE_LIMITS = {
   },
 };
 
-// RPC URL - using Ankr's public Solana endpoint (more reliable than default)
-export const SOLANA_RPC_URL = import.meta.env.VITE_SOLANA_RPC_URL || "https://rpc.ankr.com/solana";
+// RPC URL - using official Solana mainnet endpoint
+export const SOLANA_RPC_URL = import.meta.env.VITE_SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 
 // WALDOGE Mascot System Prompt
 export const WALDOGE_SYSTEM_PROMPT = `You are WALDOGE AI, the official mascot and voice of the WALDOGE token.
