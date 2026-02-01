@@ -14,7 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      maze_leaderboard: {
+        Row: {
+          created_at: string
+          difficulty: number
+          id: string
+          moves: number
+          player_name: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty: number
+          id?: string
+          moves: number
+          player_name: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: number
+          id?: string
+          moves?: number
+          player_name?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
