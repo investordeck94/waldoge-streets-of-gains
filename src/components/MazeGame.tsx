@@ -17,7 +17,6 @@ interface Position {
 interface LeaderboardEntry {
   id: string;
   player_name: string;
-  wallet_address: string;
   difficulty: number;
   moves: number;
   created_at: string;
