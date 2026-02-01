@@ -165,8 +165,20 @@ export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
     return () => clearInterval(interval);
   }, [freeTrial]);
 
+  // Check if user is currently in an active free trial
+  const isInFreeTrial = Boolean(
+    tier === "preview" && 
+    freeTrial && 
+    freeTrialTimeRemaining > 0
+  );
+
   const getLimit = useCallback(
     (feature: keyof Omit<DailyUsage, "date">): number => {
+      // Free trial limits (excludes NFT)
+      if (isInFreeTrial && feature !== "nftCreator") {
+        return USAGE_LIMITS.FREE_TRIAL[feature];
+      }
+      
       if (tier === "none" || tier === "preview") {
         return USAGE_LIMITS.TIER_0[feature];
       }
@@ -178,7 +190,7 @@ export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
       }
       return 0;
     },
-    [tier]
+    [tier, isInFreeTrial]
   );
 
   const canUse = useCallback(
