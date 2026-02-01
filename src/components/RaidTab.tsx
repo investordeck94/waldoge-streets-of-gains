@@ -75,7 +75,7 @@ export const RaidTab: FC<RaidTabProps> = ({
   const isUnhingedLocked = tier !== "chaos"; // Chaos tone still requires tier 2
 
   const handleGenerate = async () => {
-    if (!canUse || !topic.trim()) return;
+    if (!canUse || !topic.trim() || !publicKey) return;
 
     setIsGenerating(true);
     onUse();
@@ -87,7 +87,7 @@ export const RaidTab: FC<RaidTabProps> = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ topic, tone, platform }),
+        body: JSON.stringify({ topic, tone, platform, walletAddress: publicKey.toBase58() }),
       });
 
       if (!response.ok) {
