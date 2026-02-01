@@ -50,12 +50,21 @@ const TierBadge: FC<{ tier: UserTier }> = ({ tier }) => {
   );
 };
 
+const formatTimeRemaining = (ms: number): string => {
+  const seconds = Math.floor(ms / 1000);
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
+
 export const Header: FC<HeaderProps> = ({
   balance,
   tier,
   isLoading,
   activeTab,
   onTabChange,
+  isInFreeTrial = false,
+  freeTrialTimeRemaining = 0,
 }) => {
   const { connected } = useWallet();
 
