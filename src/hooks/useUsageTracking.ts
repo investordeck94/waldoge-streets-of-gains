@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { z } from "zod";
-import { USAGE_LIMITS } from "@/lib/constants";
+import { USAGE_LIMITS, FREE_TRIAL_DURATION_MS } from "@/lib/constants";
 import { UserTier } from "./useWaldogeBalance";
 
 // Zod schemas for localStorage validation
@@ -11,6 +11,12 @@ const DailyUsageSchema = z.object({
   memeGenerator: z.number().int().min(0).max(10000),
   nftCreator: z.number().int().min(0).max(10000),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+// Schema for free trial tracking
+const FreeTrialSchema = z.object({
+  startTime: z.number().int().min(0),
+  used: z.boolean(),
 });
 
 type DailyUsage = z.infer<typeof DailyUsageSchema>;
