@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 interface MemeTabProps {
   tier: UserTier;
