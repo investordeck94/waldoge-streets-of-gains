@@ -60,16 +60,59 @@ export const MemeTab: FC<MemeTabProps> = ({
   const [mode, setMode] = useState<MemeMode>("caption");
   const [isGenerating, setIsGenerating] = useState(false);
   const [results, setResults] = useState<string[] | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [attachedImage, setAttachedImage] = useState<{ file: File; preview: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Token gates temporarily disabled - features unlocked for all connected wallets
   const isLocked = false;
+
+  const handleImageSelect = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+
+    const preview = URL.createObjectURL(file);
+    setAttachedImage({ file, preview });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
+  const removeAttachedImage = useCallback(() => {
+    if (attachedImage) {
+      URL.revokeObjectURL(attachedImage.preview);
+      setAttachedImage(null);
+    }
+  }, [attachedImage]);
 
   const handleGenerate = async () => {
     if (!canUse || !prompt.trim()) return;
 
     setIsGenerating(true);
+    setGeneratedImage(null);
     onUse();
+
+    // Convert attached image to base64 if present
+    let imageData: string | undefined;
+    if (attachedImage) {
+      const reader = new FileReader();
+      imageData = await new Promise((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(attachedImage.file);
+      });
+    }
 
     try {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-memes`, {
@@ -78,7 +121,12 @@ export const MemeTab: FC<MemeTabProps> = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ theme: prompt, mode, walletAddress: publicKey.toBase58() }),
+        body: JSON.stringify({ 
+          theme: prompt, 
+          mode, 
+          walletAddress: publicKey?.toBase58() || "anonymous",
+          imageData,
+        }),
       });
 
       if (!response.ok) {
@@ -87,11 +135,19 @@ export const MemeTab: FC<MemeTabProps> = ({
       }
 
       const data = await response.json();
-      setResults(data.results || []);
+      
+      if (mode === "image" && data.imageUrl) {
+        setGeneratedImage(data.imageUrl);
+        setResults(null);
+      } else {
+        setResults(data.results || []);
+        setGeneratedImage(null);
+      }
     } catch (error) {
       console.error("Generation error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to generate content");
       setResults(null);
+      setGeneratedImage(null);
     } finally {
       setIsGenerating(false);
     }
@@ -100,7 +156,17 @@ export const MemeTab: FC<MemeTabProps> = ({
   const copyToClipboard = async (text: string, index: number) => {
     await navigator.clipboard.writeText(text);
     setCopiedIndex(index);
+    toast.success("Copied to clipboard!");
     setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const downloadImage = () => {
+    if (!generatedImage) return;
+    const link = document.createElement("a");
+    link.href = generatedImage;
+    link.download = `waldoge-meme-${Date.now()}.png`;
+    link.click();
+    toast.success("Image downloaded!");
   };
 
   return (
