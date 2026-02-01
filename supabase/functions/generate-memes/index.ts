@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 // Input validation constants
 const MAX_THEME_LENGTH = 500;
@@ -46,7 +45,7 @@ function validateMemeRequest(body: unknown): { valid: true; data: MemeRequest } 
   };
 }
 
-// Sanitize content
+// Sanitize content - remove control characters
 function sanitizeContent(content: string): string {
   return content.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim();
 }
@@ -74,7 +73,7 @@ const ERROR_MESSAGES = {
   rate_limit: "Rate limit reached! Please try again in a moment 🐕",
   credits: "Service temporarily unavailable. Please try again later. 🚀⛽",
   server_error: "Failed to generate content. Please try again! 🌌",
-  unauthorized: "Connect your wallet to generate memes! 🐕",
+  invalid_request: "Invalid request. Please provide theme and mode.",
 };
 
 const CAPTION_SYSTEM_PROMPT = `You are WALDOGE, a cosmic doge explorer generating meme captions. Your personality: playful, degen-aware humor, space explorer vibes, positive energy.
@@ -117,39 +116,12 @@ serve(async (req) => {
   }
 
   try {
-    // Authentication check
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: ERROR_MESSAGES.unauthorized }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Verify the JWT token
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsError } = await supabase.auth.getClaims(token);
-    
-    if (claimsError || !claims?.claims) {
-      return new Response(JSON.stringify({ error: ERROR_MESSAGES.unauthorized }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // Parse and validate request body
     let body: unknown;
     try {
       body = await req.json();
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+      return new Response(JSON.stringify({ error: ERROR_MESSAGES.invalid_request }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

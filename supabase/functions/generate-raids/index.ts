@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 // Input validation constants
 const MAX_TOPIC_LENGTH = 500;
@@ -57,7 +56,7 @@ function validateRaidRequest(body: unknown): { valid: true; data: RaidRequest } 
   };
 }
 
-// Sanitize content
+// Sanitize content - remove control characters
 function sanitizeContent(content: string): string {
   return content.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim();
 }
@@ -85,7 +84,7 @@ const ERROR_MESSAGES = {
   rate_limit: "Rate limit reached! Please try again in a moment 🐕",
   credits: "Service temporarily unavailable. Please try again later. 🚀⛽",
   server_error: "Failed to generate content. Please try again! 🌌",
-  unauthorized: "Connect your wallet to generate raids! 🐕",
+  invalid_request: "Invalid request. Please provide topic, tone, and platform.",
 };
 
 const getSystemPrompt = (tone: string, platform: string) => `You are WALDOGE, a cosmic doge explorer generating social media content for the WALDOGE community.
@@ -123,39 +122,12 @@ serve(async (req) => {
   }
 
   try {
-    // Authentication check
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: ERROR_MESSAGES.unauthorized }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Verify the JWT token
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsError } = await supabase.auth.getClaims(token);
-    
-    if (claimsError || !claims?.claims) {
-      return new Response(JSON.stringify({ error: ERROR_MESSAGES.unauthorized }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // Parse and validate request body
     let body: unknown;
     try {
       body = await req.json();
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+      return new Response(JSON.stringify({ error: ERROR_MESSAGES.invalid_request }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

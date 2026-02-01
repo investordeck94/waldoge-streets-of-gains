@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-// Input validation schemas using simple validation (Zod not available in Deno edge runtime)
+// Input validation schemas using simple validation
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_MESSAGES_COUNT = 50;
 const VALID_ROLES = ["user", "assistant"];
@@ -76,9 +75,8 @@ function validateChatRequest(body: unknown): { valid: true; data: ChatRequest } 
   };
 }
 
-// Sanitize message content
+// Sanitize message content - remove control characters except newlines and tabs
 function sanitizeContent(content: string): string {
-  // Remove control characters except newlines and tabs
   return content.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim();
 }
 
@@ -105,7 +103,7 @@ const ERROR_MESSAGES = {
   rate_limit: "Whoa there, space explorer! Too many messages too fast. Take a breather and try again in a moment! 🐕💫",
   credits: "The cosmic fuel tank needs a refill! Please try again later. 🚀⛽",
   server_error: "WALDOGE's cosmic transmitter hit some space debris. Please try again! 🌌",
-  unauthorized: "Connect your wallet to chat with WALDOGE! 🐕",
+  invalid_request: "Invalid request format. Please try again! 🐕",
 };
 
 // WALDOGE AI personality system prompt
@@ -144,39 +142,12 @@ serve(async (req) => {
   }
 
   try {
-    // Authentication check
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: ERROR_MESSAGES.unauthorized }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Verify the JWT token
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsError } = await supabase.auth.getClaims(token);
-    
-    if (claimsError || !claims?.claims) {
-      return new Response(JSON.stringify({ error: ERROR_MESSAGES.unauthorized }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // Parse and validate request body
     let body: unknown;
     try {
       body = await req.json();
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+      return new Response(JSON.stringify({ error: ERROR_MESSAGES.invalid_request }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
