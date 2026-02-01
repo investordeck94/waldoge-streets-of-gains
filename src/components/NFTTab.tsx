@@ -87,10 +87,35 @@ export const NFTTab: FC<NFTTabProps> = ({
   const [attributes, setAttributes] = useState(defaultAttributes);
   const [isMinting, setIsMinting] = useState(false);
   const [mintSuccess, setMintSuccess] = useState(false);
+  const [attachedImage, setAttachedImage] = useState<{ file: File; preview: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Token gates temporarily disabled - features unlocked for all connected wallets
   const isLocked = false;
   const isChaosLocked = tier !== "chaos";
+
+  const handleImageSelect = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 10 * 1024 * 1024) return;
+
+    const preview = URL.createObjectURL(file);
+    setAttachedImage({ file, preview });
+    setImageSource("upload");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
+  const removeAttachedImage = useCallback(() => {
+    if (attachedImage) {
+      URL.revokeObjectURL(attachedImage.preview);
+      setAttachedImage(null);
+    }
+  }, [attachedImage]);
 
   const handleMint = async () => {
     if (!canUse) return;
