@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "@/components/Header";
@@ -13,16 +13,27 @@ import { useWaldogeBalance } from "@/hooks/useWaldogeBalance";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 
 const Index = () => {
-  const { connected } = useWallet();
+  const { connected, publicKey, wallet, connecting } = useWallet();
   const { balance, tier, isWhale, isLoading } = useWaldogeBalance();
   const { canUse, getRemainingUses, incrementUsage, clearHistory, isInFreeTrial, freeTrialTimeRemaining } = useUsageTracking(tier);
   const [activeTab, setActiveTab] = useState("chat");
+
+  // Debug wallet state
+  useEffect(() => {
+    console.log("🔌 Index wallet state:", {
+      connected,
+      connecting,
+      publicKey: publicKey?.toBase58() || "null",
+      walletName: wallet?.adapter?.name || "none",
+    });
+  }, [connected, connecting, publicKey, wallet]);
 
   const handleLearnMore = () => {
     setActiveTab("about");
   };
 
-  if (!connected) {
+  // Show landing page only if not connected AND not currently connecting
+  if (!connected && !connecting) {
     return <LandingPage onLearnMore={handleLearnMore} />;
   }
 
