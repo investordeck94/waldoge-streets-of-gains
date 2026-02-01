@@ -41,14 +41,6 @@ const samplePrompts = [
   "Cute doge character with luminescent wings sitting on the moon, looking at Earth, lo-fi aesthetic, soft pastel colors, peaceful vibes",
 ];
 
-const samplePrompts = [
-  "A yellow cartoon doge wearing a red beanie and striped shirt, floating through a purple nebula with glowing butterfly wings, digital art, cosmic aesthetic, trending on artstation",
-  "Space explorer doge with a backpack full of cryptocurrency coins, standing on an asteroid overlooking Earth, cinematic lighting, 4k, ethereal glow",
-  "Adorable yellow shiba inu in astronaut suit, typing on a holographic keyboard, surrounded by floating memes, vaporwave colors, detailed illustration",
-  "WALDOGE mascot surfing on a golden wave through the galaxy, surrounded by stars and crypto symbols, epic composition, dramatic lighting",
-  "Cute doge character with luminescent wings sitting on the moon, looking at Earth, lo-fi aesthetic, soft pastel colors, peaceful vibes",
-];
-
 export const MemeTab: FC<MemeTabProps> = ({
   tier,
   canUse,
