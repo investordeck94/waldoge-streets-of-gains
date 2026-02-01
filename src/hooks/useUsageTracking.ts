@@ -68,14 +68,36 @@ const safeParseUsage = (data: string | null): DailyUsage | null => {
   }
 };
 
+/**
+ * Safely parse and validate free trial from localStorage
+ */
+const safeParseFreeTrial = (data: string | null): FreeTrial | null => {
+  if (!data) return null;
+  
+  try {
+    const parsed = JSON.parse(data);
+    const validated = FreeTrialSchema.safeParse(parsed);
+    
+    if (validated.success) {
+      return validated.data;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
   const { publicKey } = useWallet();
   const [usage, setUsage] = useState<DailyUsage>(getDefaultUsage());
+  const [freeTrial, setFreeTrial] = useState<FreeTrial | null>(null);
+  const [freeTrialTimeRemaining, setFreeTrialTimeRemaining] = useState(0);
 
-  // Load usage from localStorage
+  // Load usage and free trial from localStorage
   useEffect(() => {
     if (!publicKey) {
       setUsage(getDefaultUsage());
+      setFreeTrial(null);
       return;
     }
 
@@ -97,7 +119,51 @@ export const useUsageTracking = (tier: UserTier): UsageTrackingState => {
       localStorage.setItem(storageKey, JSON.stringify(newUsage));
       setUsage(newUsage);
     }
+
+    // Load free trial data
+    const trialKey = getFreeTrialKey(publicKey.toString());
+    const storedTrial = localStorage.getItem(trialKey);
+    const parsedTrial = safeParseFreeTrial(storedTrial);
+    
+    if (parsedTrial) {
+      setFreeTrial(parsedTrial);
+    }
   }, [publicKey]);
+
+  // Start free trial when tier is "preview" (no tokens) and no trial started yet
+  useEffect(() => {
+    if (!publicKey || tier !== "preview") return;
+    
+    const trialKey = getFreeTrialKey(publicKey.toString());
+    const storedTrial = localStorage.getItem(trialKey);
+    
+    if (!storedTrial) {
+      const newTrial: FreeTrial = {
+        startTime: Date.now(),
+        used: true,
+      };
+      localStorage.setItem(trialKey, JSON.stringify(newTrial));
+      setFreeTrial(newTrial);
+    }
+  }, [publicKey, tier]);
+
+  // Update free trial time remaining
+  useEffect(() => {
+    if (!freeTrial) {
+      setFreeTrialTimeRemaining(0);
+      return;
+    }
+
+    const updateRemaining = () => {
+      const elapsed = Date.now() - freeTrial.startTime;
+      const remaining = Math.max(0, FREE_TRIAL_DURATION_MS - elapsed);
+      setFreeTrialTimeRemaining(remaining);
+    };
+
+    updateRemaining();
+    const interval = setInterval(updateRemaining, 1000);
+    return () => clearInterval(interval);
+  }, [freeTrial]);
 
   const getLimit = useCallback(
     (feature: keyof Omit<DailyUsage, "date">): number => {
