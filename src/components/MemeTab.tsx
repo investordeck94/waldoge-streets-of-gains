@@ -53,8 +53,8 @@ export const MemeTab: FC<MemeTabProps> = ({
   const [results, setResults] = useState<string[] | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  // Token gates temporarily disabled - only lock if not connected at all
-  const isLocked = tier === "none";
+  // Token gates temporarily disabled - features unlocked for all connected wallets
+  const isLocked = false;
 
   const handleGenerate = async () => {
     if (!canUse || !prompt.trim() || !publicKey) return;
