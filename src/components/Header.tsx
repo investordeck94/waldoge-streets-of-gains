@@ -117,6 +117,18 @@ export const Header: FC<HeaderProps> = ({
                     )}
                   </p>
                 </div>
+                {isInFreeTrial && (
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/20 border border-accent/40 rounded-full"
+                  >
+                    <Clock className="w-3.5 h-3.5 text-accent" />
+                    <span className="text-xs font-semibold text-accent">
+                      Free Trial: {formatTimeRemaining(freeTrialTimeRemaining)}
+                    </span>
+                  </motion.div>
+                )}
                 <TierBadge tier={tier} />
               </motion.div>
             )}
