@@ -44,7 +44,7 @@ export const ChatTab: FC<ChatTabProps> = ({
 
   const handleSend = useCallback(async (messageContent?: string) => {
     const content = messageContent || input.trim();
-    if (!content || !canUse || tier === "preview" || tier === "none") return;
+    if (!content) return;
 
     setInput("");
     addMessage("user", content);
