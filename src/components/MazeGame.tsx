@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
-import waldogeMascot from "@/assets/waldoge-mascot.png";
+import waldogeMaze from "@/assets/waldoge-maze.png";
 
 interface Position {
   x: number;
