@@ -468,11 +468,12 @@ export const MazeGame: FC = () => {
                     )}
                     {isWaldoge && !isPlayer && (
                       <motion.img
-                        src={waldogeMascot}
+                        src={waldogeMaze}
                         alt="WALDOGE"
-                        className="w-5 h-5 sm:w-7 sm:h-7 object-contain"
-                        animate={{ rotate: [0, 10, -10, 0] }}
-                        transition={{ repeat: Infinity, duration: 2 }}
+                        className="w-4 h-5 sm:w-5 sm:h-6 object-contain object-center"
+                        style={{ transform: "scaleX(0.85)" }}
+                        animate={{ rotate: [0, 8, -8, 0] }}
+                        transition={{ repeat: Infinity, duration: 2.5 }}
                       />
                     )}
                   </AnimatePresence>
