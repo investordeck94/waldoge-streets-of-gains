@@ -543,9 +543,10 @@ export const MazeGame: FC = () => {
                 transition={{ repeat: Infinity, duration: 1.5 }}
               >
                 <img 
-                  src={waldogeMascot} 
+                  src={waldogeMaze} 
                   alt="WALDOGE" 
-                  className="w-24 h-24 mx-auto mb-4 drop-shadow-[0_0_30px_hsl(45,95%,55%,0.5)]"
+                  className="w-20 h-24 mx-auto mb-4 object-contain drop-shadow-[0_0_30px_hsl(45,95%,55%,0.5)]"
+                  style={{ transform: "scaleX(0.85)" }}
                 />
               </motion.div>
               
