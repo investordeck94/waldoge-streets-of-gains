@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
-import waldogeMascot from "@/assets/waldoge-mascot.png";
+import waldogeMaze from "@/assets/waldoge-maze.png";
 
 interface Position {
   x: number;
@@ -24,47 +24,59 @@ interface LeaderboardEntry {
 
 // Maze cell types: 0 = wall, 1 = path
 const MAZE_TEMPLATES = [
-  // Easy maze (11x11)
+  // Easy maze (13x13) - more complex with dead ends
   [
-    [0,0,0,0,0,0,0,0,0,0,0],
-    [0,1,1,1,0,1,1,1,1,1,0],
-    [0,1,0,1,0,1,0,0,0,1,0],
-    [0,1,0,1,1,1,1,1,0,1,0],
-    [0,1,0,0,0,0,0,1,0,1,0],
-    [0,1,1,1,1,1,0,1,1,1,0],
-    [0,0,0,0,0,1,0,0,0,1,0],
-    [0,1,1,1,0,1,1,1,0,1,0],
-    [0,1,0,1,0,0,0,1,0,1,0],
-    [0,1,0,1,1,1,1,1,1,1,0],
-    [0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,1,1,0,1,1,1,0,1,1,1,0],
+    [0,0,0,1,0,1,0,1,0,0,0,1,0],
+    [0,1,1,1,1,1,0,1,1,1,0,1,0],
+    [0,1,0,0,0,0,0,0,0,1,0,1,0],
+    [0,1,0,1,1,1,1,1,0,1,1,1,0],
+    [0,1,0,1,0,0,0,1,0,0,0,0,0],
+    [0,1,1,1,0,1,0,1,1,1,1,1,0],
+    [0,0,0,0,0,1,0,0,0,0,0,1,0],
+    [0,1,1,1,1,1,1,1,1,1,0,1,0],
+    [0,1,0,0,0,0,0,0,0,1,0,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0],
   ],
-  // Medium maze
+  // Medium maze (15x15) - twisty with multiple paths
   [
-    [0,0,0,0,0,0,0,0,0,0,0],
-    [0,1,0,1,1,1,1,1,0,1,0],
-    [0,1,0,1,0,0,0,1,0,1,0],
-    [0,1,1,1,0,1,1,1,1,1,0],
-    [0,0,0,1,0,1,0,0,0,0,0],
-    [0,1,1,1,0,1,1,1,1,1,0],
-    [0,1,0,0,0,0,0,0,0,1,0],
-    [0,1,0,1,1,1,1,1,0,1,0],
-    [0,1,0,1,0,0,0,1,0,1,0],
-    [0,1,1,1,1,1,1,1,1,1,0],
-    [0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,0,1,1,1,0,1,1,1,0,1,1,1,0],
+    [0,1,0,1,0,1,0,1,0,1,0,1,0,0,0],
+    [0,1,1,1,0,1,1,1,0,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,0,1,0],
+    [0,1,0,0,0,0,0,0,0,0,0,1,0,1,0],
+    [0,1,0,1,1,1,1,1,1,1,0,1,1,1,0],
+    [0,1,0,1,0,0,0,0,0,1,0,0,0,0,0],
+    [0,1,0,1,0,1,1,1,0,1,1,1,1,1,0],
+    [0,1,0,1,0,1,0,1,0,0,0,0,0,1,0],
+    [0,1,1,1,0,1,0,1,1,1,1,1,0,1,0],
+    [0,0,0,0,0,1,0,0,0,0,0,1,0,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
   ],
-  // Hard maze
+  // Hard maze (17x17) - very challenging labyrinth
   [
-    [0,0,0,0,0,0,0,0,0,0,0],
-    [0,1,1,1,0,1,0,1,1,1,0],
-    [0,0,0,1,0,1,0,1,0,1,0],
-    [0,1,1,1,1,1,1,1,0,1,0],
-    [0,1,0,0,0,1,0,0,0,1,0],
-    [0,1,0,1,1,1,0,1,1,1,0],
-    [0,1,0,1,0,0,0,1,0,0,0],
-    [0,1,1,1,0,1,1,1,1,1,0],
-    [0,0,0,1,0,1,0,0,0,1,0],
-    [0,1,1,1,1,1,0,1,1,1,0],
-    [0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,1,1,0,1,0,1,1,1,0,1,1,1,1,1,0],
+    [0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,0],
+    [0,1,1,1,0,1,1,1,0,1,0,1,0,1,1,1,0],
+    [0,1,0,0,0,0,0,1,0,1,0,1,0,1,0,0,0],
+    [0,1,1,1,1,1,0,1,0,1,1,1,0,1,1,1,0],
+    [0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0],
+    [0,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0],
+    [0,1,0,1,0,1,0,0,0,0,0,0,0,1,0,1,0],
+    [0,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,0],
+    [0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
+    [0,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0],
+    [0,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0],
+    [0,1,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
   ],
 ];
 
@@ -88,17 +100,23 @@ export const MazeGame: FC = () => {
   const [showNameInput, setShowNameInput] = useState(false);
   const [pendingScore, setPendingScore] = useState<{ difficulty: number; moves: number } | null>(null);
 
-  // Find valid positions for Waldoge (far from start)
+  // Find valid positions for Waldoge (far from start, at least 60% of maze size away)
   const findWaldogePosition = useCallback((mazeGrid: number[][]) => {
     const validPositions: Position[] = [];
+    const minDistance = Math.floor(mazeGrid.length * 0.6);
     for (let y = 0; y < mazeGrid.length; y++) {
       for (let x = 0; x < mazeGrid[y].length; x++) {
-        if (mazeGrid[y][x] === 1 && (x > 5 || y > 5)) {
+        if (mazeGrid[y][x] === 1 && (x >= minDistance || y >= minDistance)) {
           validPositions.push({ x, y });
         }
       }
     }
-    return validPositions[Math.floor(Math.random() * validPositions.length)] || { x: 9, y: 9 };
+    // Prefer corners for maximum challenge
+    const cornerPositions = validPositions.filter(p => 
+      p.x >= mazeGrid[0].length - 3 && p.y >= mazeGrid.length - 3
+    );
+    const positionsToUse = cornerPositions.length > 0 ? cornerPositions : validPositions;
+    return positionsToUse[Math.floor(Math.random() * positionsToUse.length)] || { x: mazeGrid[0].length - 2, y: mazeGrid.length - 2 };
   }, []);
 
   const fetchLeaderboard = useCallback(async (difficulty: number) => {
@@ -347,7 +365,7 @@ export const MazeGame: FC = () => {
             className="inline-block mb-4"
           >
             <img 
-              src={waldogeMascot} 
+              src={waldogeMaze} 
               alt="WALDOGE" 
               className="w-20 h-20 object-contain drop-shadow-[0_0_20px_hsl(45,95%,55%,0.4)]"
             />
@@ -450,11 +468,12 @@ export const MazeGame: FC = () => {
                     )}
                     {isWaldoge && !isPlayer && (
                       <motion.img
-                        src={waldogeMascot}
+                        src={waldogeMaze}
                         alt="WALDOGE"
-                        className="w-5 h-5 sm:w-7 sm:h-7 object-contain"
-                        animate={{ rotate: [0, 10, -10, 0] }}
-                        transition={{ repeat: Infinity, duration: 2 }}
+                        className="w-4 h-5 sm:w-5 sm:h-6 object-contain object-center"
+                        style={{ transform: "scaleX(0.85)" }}
+                        animate={{ rotate: [0, 8, -8, 0] }}
+                        transition={{ repeat: Infinity, duration: 2.5 }}
                       />
                     )}
                   </AnimatePresence>
@@ -524,9 +543,10 @@ export const MazeGame: FC = () => {
                 transition={{ repeat: Infinity, duration: 1.5 }}
               >
                 <img 
-                  src={waldogeMascot} 
+                  src={waldogeMaze} 
                   alt="WALDOGE" 
-                  className="w-24 h-24 mx-auto mb-4 drop-shadow-[0_0_30px_hsl(45,95%,55%,0.5)]"
+                  className="w-20 h-24 mx-auto mb-4 object-contain drop-shadow-[0_0_30px_hsl(45,95%,55%,0.5)]"
+                  style={{ transform: "scaleX(0.85)" }}
                 />
               </motion.div>
               
