@@ -1,6 +1,6 @@
-import { FC, useState, useEffect, useCallback } from "react";
+import { FC, useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, RotateCcw, Trophy, Gamepad2, Medal, Users } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, RotateCcw, Trophy, Gamepad2, Medal, Users, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
 import waldogeMaze from "@/assets/waldoge-maze.png";
+import susdogImage from "@/assets/susdog.png";
 
 interface Position {
   x: number;
@@ -81,15 +82,18 @@ const MAZE_TEMPLATES = [
 ];
 
 const DIFFICULTY_NAMES = ["Easy", "Medium", "Hard"];
+const SUSDOG_SPEEDS = [2500, 1800, 1200]; // ms between moves for each difficulty
 
 export const MazeGame: FC = () => {
   const { publicKey } = useWallet();
   const [currentMaze, setCurrentMaze] = useState(0);
   const [maze, setMaze] = useState(MAZE_TEMPLATES[0]);
   const [playerPos, setPlayerPos] = useState<Position>({ x: 1, y: 1 });
-  const [waldogePos, setWaldogePos] = useState<Position>({ x: 9, y: 9 });
+  const [goalPos, setGoalPos] = useState<Position>({ x: 11, y: 11 });
+  const [susdogPos, setSusdogPos] = useState<Position>({ x: 7, y: 7 });
   const [moves, setMoves] = useState(0);
   const [won, setWon] = useState(false);
+  const [caught, setCaught] = useState(false);
   const [bestScores, setBestScores] = useState<number[]>([0, 0, 0]);
   const [gameStarted, setGameStarted] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
@@ -99,9 +103,53 @@ export const MazeGame: FC = () => {
   const [playerName, setPlayerName] = useState("");
   const [showNameInput, setShowNameInput] = useState(false);
   const [pendingScore, setPendingScore] = useState<{ difficulty: number; moves: number } | null>(null);
+  const susdogIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Find valid positions for Waldoge (far from start, at least 60% of maze size away)
-  const findWaldogePosition = useCallback((mazeGrid: number[][]) => {
+  // BFS pathfinding to find shortest path from susdog to player
+  const findPath = useCallback((from: Position, to: Position, mazeGrid: number[][]): Position[] => {
+    const queue: { pos: Position; path: Position[] }[] = [{ pos: from, path: [] }];
+    const visited = new Set<string>();
+    visited.add(`${from.x},${from.y}`);
+
+    const directions = [
+      { dx: 0, dy: -1 },
+      { dx: 0, dy: 1 },
+      { dx: -1, dy: 0 },
+      { dx: 1, dy: 0 },
+    ];
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      
+      if (current.pos.x === to.x && current.pos.y === to.y) {
+        return current.path;
+      }
+
+      for (const dir of directions) {
+        const newX = current.pos.x + dir.dx;
+        const newY = current.pos.y + dir.dy;
+        const key = `${newX},${newY}`;
+
+        if (
+          newY >= 0 && newY < mazeGrid.length &&
+          newX >= 0 && newX < mazeGrid[0].length &&
+          mazeGrid[newY][newX] === 1 &&
+          !visited.has(key)
+        ) {
+          visited.add(key);
+          queue.push({
+            pos: { x: newX, y: newY },
+            path: [...current.path, { x: newX, y: newY }],
+          });
+        }
+      }
+    }
+
+    return [];
+  }, []);
+
+  // Find goal position (far corner from start)
+  const findGoalPosition = useCallback((mazeGrid: number[][]) => {
     const validPositions: Position[] = [];
     const minDistance = Math.floor(mazeGrid.length * 0.6);
     for (let y = 0; y < mazeGrid.length; y++) {
@@ -111,7 +159,6 @@ export const MazeGame: FC = () => {
         }
       }
     }
-    // Prefer corners for maximum challenge
     const cornerPositions = validPositions.filter(p => 
       p.x >= mazeGrid[0].length - 3 && p.y >= mazeGrid.length - 3
     );
@@ -119,10 +166,48 @@ export const MazeGame: FC = () => {
     return positionsToUse[Math.floor(Math.random() * positionsToUse.length)] || { x: mazeGrid[0].length - 2, y: mazeGrid.length - 2 };
   }, []);
 
+  // Find susdog starting position (middle area, not too close to player or goal)
+  const findSusdogStart = useCallback((mazeGrid: number[][], playerStart: Position, goal: Position) => {
+    const validPositions: Position[] = [];
+    const midX = Math.floor(mazeGrid[0].length / 2);
+    const midY = Math.floor(mazeGrid.length / 2);
+    
+    for (let y = 0; y < mazeGrid.length; y++) {
+      for (let x = 0; x < mazeGrid[y].length; x++) {
+        if (mazeGrid[y][x] === 1) {
+          const distToPlayer = Math.abs(x - playerStart.x) + Math.abs(y - playerStart.y);
+          const distToGoal = Math.abs(x - goal.x) + Math.abs(y - goal.y);
+          // Start in middle area, at least 3 steps from player
+          if (distToPlayer >= 3 && distToGoal >= 2) {
+            const distToMid = Math.abs(x - midX) + Math.abs(y - midY);
+            if (distToMid <= 5) {
+              validPositions.push({ x, y });
+            }
+          }
+        }
+      }
+    }
+    
+    if (validPositions.length === 0) {
+      // Fallback: find any valid position at least 3 steps from player
+      for (let y = 0; y < mazeGrid.length; y++) {
+        for (let x = 0; x < mazeGrid[y].length; x++) {
+          if (mazeGrid[y][x] === 1) {
+            const distToPlayer = Math.abs(x - playerStart.x) + Math.abs(y - playerStart.y);
+            if (distToPlayer >= 3) {
+              validPositions.push({ x, y });
+            }
+          }
+        }
+      }
+    }
+    
+    return validPositions[Math.floor(Math.random() * validPositions.length)] || { x: midX, y: midY };
+  }, []);
+
   const fetchLeaderboard = useCallback(async (difficulty: number) => {
     setIsLoadingLeaderboard(true);
     try {
-      // Use security definer function to read leaderboard without exposing wallet_address
       const { data, error } = await supabase.rpc("get_leaderboard", {
         p_difficulty: difficulty,
         p_limit: 10,
@@ -166,7 +251,6 @@ export const MazeGame: FC = () => {
       setShowNameInput(false);
       setPendingScore(null);
       
-      // Refresh leaderboard
       fetchLeaderboard(difficulty);
     } catch (error) {
       console.error("Error submitting score:", error);
@@ -174,17 +258,62 @@ export const MazeGame: FC = () => {
     }
   }, [publicKey, fetchLeaderboard]);
 
+  const stopSusdog = useCallback(() => {
+    if (susdogIntervalRef.current) {
+      clearInterval(susdogIntervalRef.current);
+      susdogIntervalRef.current = null;
+    }
+  }, []);
+
   const initGame = useCallback((mazeIndex: number) => {
+    stopSusdog();
     const selectedMaze = MAZE_TEMPLATES[mazeIndex];
+    const playerStart = { x: 1, y: 1 };
+    const goal = findGoalPosition(selectedMaze);
+    const susdogStart = findSusdogStart(selectedMaze, playerStart, goal);
+    
     setMaze(selectedMaze);
-    setPlayerPos({ x: 1, y: 1 });
-    setWaldogePos(findWaldogePosition(selectedMaze));
+    setPlayerPos(playerStart);
+    setGoalPos(goal);
+    setSusdogPos(susdogStart);
     setMoves(0);
     setWon(false);
+    setCaught(false);
     setCurrentMaze(mazeIndex);
     setGameStarted(true);
     setShowLeaderboard(false);
-  }, [findWaldogePosition]);
+  }, [findGoalPosition, findSusdogStart, stopSusdog]);
+
+  // Susdog AI movement
+  useEffect(() => {
+    if (!gameStarted || won || caught) {
+      stopSusdog();
+      return;
+    }
+
+    const moveSusdog = () => {
+      setSusdogPos(currentSusdogPos => {
+        // Get current player position
+        const path = findPath(currentSusdogPos, playerPos, maze);
+        if (path.length > 0) {
+          return path[0]; // Move to next position on path
+        }
+        return currentSusdogPos;
+      });
+    };
+
+    susdogIntervalRef.current = setInterval(moveSusdog, SUSDOG_SPEEDS[currentMaze]);
+    
+    return () => stopSusdog();
+  }, [gameStarted, won, caught, currentMaze, playerPos, maze, findPath, stopSusdog]);
+
+  // Check collision with susdog
+  useEffect(() => {
+    if (playerPos.x === susdogPos.x && playerPos.y === susdogPos.y && !won && !caught) {
+      setCaught(true);
+      stopSusdog();
+    }
+  }, [playerPos, susdogPos, won, caught, stopSusdog]);
 
   // Load best scores from localStorage
   useEffect(() => {
@@ -197,7 +326,6 @@ export const MazeGame: FC = () => {
       }
     }
     
-    // Load saved player name
     const savedName = localStorage.getItem("waldoge-player-name");
     if (savedName) {
       setPlayerName(savedName);
@@ -206,9 +334,9 @@ export const MazeGame: FC = () => {
 
   // Check win condition
   useEffect(() => {
-    if (playerPos.x === waldogePos.x && playerPos.y === waldogePos.y && !won) {
+    if (playerPos.x === goalPos.x && playerPos.y === goalPos.y && !won && !caught) {
       setWon(true);
-      // Update best score
+      stopSusdog();
       const newScores = [...bestScores];
       if (newScores[currentMaze] === 0 || moves < newScores[currentMaze]) {
         newScores[currentMaze] = moves;
@@ -216,19 +344,17 @@ export const MazeGame: FC = () => {
         localStorage.setItem("waldoge-maze-scores", JSON.stringify(newScores));
       }
       
-      // Prompt to submit score
       setPendingScore({ difficulty: currentMaze, moves });
       setShowNameInput(true);
     }
-  }, [playerPos, waldogePos, moves, currentMaze, bestScores, won]);
+  }, [playerPos, goalPos, moves, currentMaze, bestScores, won, caught, stopSusdog]);
 
   const movePlayer = useCallback((dx: number, dy: number) => {
-    if (won) return;
+    if (won || caught) return;
     
     const newX = playerPos.x + dx;
     const newY = playerPos.y + dy;
     
-    // Check bounds and walls
     if (
       newY >= 0 && newY < maze.length &&
       newX >= 0 && newX < maze[0].length &&
@@ -237,7 +363,7 @@ export const MazeGame: FC = () => {
       setPlayerPos({ x: newX, y: newY });
       setMoves(m => m + 1);
     }
-  }, [playerPos, maze, won]);
+  }, [playerPos, maze, won, caught]);
 
   // Keyboard controls
   useEffect(() => {
@@ -276,6 +402,11 @@ export const MazeGame: FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [movePlayer, gameStarted, showLeaderboard]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => stopSusdog();
+  }, [stopSusdog]);
+
   // Leaderboard view
   if (showLeaderboard) {
     return (
@@ -291,7 +422,6 @@ export const MazeGame: FC = () => {
           </Button>
         </div>
 
-        {/* Difficulty tabs */}
         <div className="flex gap-2">
           {DIFFICULTY_NAMES.map((name, i) => (
             <Button
@@ -308,13 +438,12 @@ export const MazeGame: FC = () => {
           ))}
         </div>
 
-        {/* Leaderboard list */}
         <div className="glass-card p-4">
           {isLoadingLeaderboard ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : leaderboard.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No scores yet. Be the first to complete this level!
+              No scores yet. Be the first to escape Susdog!
             </div>
           ) : (
             <div className="space-y-2">
@@ -359,22 +488,35 @@ export const MazeGame: FC = () => {
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="inline-block mb-4"
-          >
-            <img 
-              src={waldogeMaze} 
-              alt="WALDOGE" 
-              className="w-20 h-20 object-contain drop-shadow-[0_0_20px_hsl(45,95%,55%,0.4)]"
-            />
-          </motion.div>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+            >
+              <img 
+                src={waldogeMaze} 
+                alt="WALDOGE" 
+                className="w-16 h-16 object-contain drop-shadow-[0_0_20px_hsl(45,95%,55%,0.4)]"
+                style={{ transform: "scaleX(0.85)" }}
+              />
+            </motion.div>
+            <span className="text-2xl">VS</span>
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+            >
+              <img 
+                src={susdogImage} 
+                alt="Susdog" 
+                className="w-16 h-16 object-contain rounded-lg drop-shadow-[0_0_20px_hsl(0,70%,50%,0.4)]"
+              />
+            </motion.div>
+          </div>
           <h2 className="font-display text-2xl font-bold text-gradient-gold mb-2">
-            Find WALDOGE!
+            Escape Susdog!
           </h2>
           <p className="text-muted-foreground text-sm">
-            Navigate the maze and find the cosmic explorer
+            You are WALDOGE 🐕 — Reach the goal 🏆 before Susdog catches you!
           </p>
         </div>
 
@@ -410,7 +552,7 @@ export const MazeGame: FC = () => {
         </Button>
 
         <div className="text-center text-xs text-muted-foreground">
-          Use arrow keys or WASD to move
+          Use arrow keys or WASD to move • Susdog is hunting you!
         </div>
       </div>
     );
@@ -428,7 +570,7 @@ export const MazeGame: FC = () => {
             Moves: {moves} {bestScores[currentMaze] > 0 && `• Best: ${bestScores[currentMaze]}`}
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setGameStarted(false)}>
+        <Button variant="ghost" size="sm" onClick={() => { stopSusdog(); setGameStarted(false); }}>
           <RotateCcw className="w-4 h-4 mr-1" />
           Menu
         </Button>
@@ -445,35 +587,51 @@ export const MazeGame: FC = () => {
           {maze.map((row, y) =>
             row.map((cell, x) => {
               const isPlayer = playerPos.x === x && playerPos.y === y;
-              const isWaldoge = waldogePos.x === x && waldogePos.y === y;
+              const isGoal = goalPos.x === x && goalPos.y === y;
+              const isSusdog = susdogPos.x === x && susdogPos.y === y;
               const isWall = cell === 0;
 
               return (
                 <div
                   key={`${x}-${y}`}
                   className={cn(
-                    "w-6 h-6 sm:w-8 sm:h-8 rounded-sm flex items-center justify-center transition-colors",
-                    isWall ? "bg-muted" : "bg-card border border-border/50"
+                    "w-6 h-6 sm:w-8 sm:h-8 rounded-sm flex items-center justify-center transition-colors relative",
+                    isWall ? "bg-muted" : "bg-card border border-border/50",
+                    isGoal && !isPlayer && "bg-primary/20 border-primary/50"
                   )}
                 >
                   <AnimatePresence>
                     {isPlayer && (
-                      <motion.div
+                      <motion.img
+                        key="player"
+                        src={waldogeMaze}
+                        alt="WALDOGE (You)"
+                        className="w-5 h-6 sm:w-6 sm:h-7 object-contain z-10"
+                        style={{ transform: "scaleX(0.85)" }}
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-primary flex items-center justify-center text-xs"
+                      />
+                    )}
+                    {isGoal && !isPlayer && (
+                      <motion.div
+                        key="goal"
+                        className="text-lg"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ repeat: Infinity, duration: 1 }}
                       >
-                        🎮
+                        🏆
                       </motion.div>
                     )}
-                    {isWaldoge && !isPlayer && (
+                    {isSusdog && !isPlayer && (
                       <motion.img
-                        src={waldogeMaze}
-                        alt="WALDOGE"
-                        className="w-4 h-5 sm:w-5 sm:h-6 object-contain object-center"
-                        style={{ transform: "scaleX(0.85)" }}
-                        animate={{ rotate: [0, 8, -8, 0] }}
-                        transition={{ repeat: Infinity, duration: 2.5 }}
+                        key="susdog"
+                        src={susdogImage}
+                        alt="Susdog"
+                        className="w-5 h-5 sm:w-6 sm:h-6 object-cover rounded-sm"
+                        animate={{ 
+                          scale: [1, 1.05, 1],
+                        }}
+                        transition={{ repeat: Infinity, duration: 0.5 }}
                       />
                     )}
                   </AnimatePresence>
@@ -481,6 +639,22 @@ export const MazeGame: FC = () => {
               );
             })
           )}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex justify-center gap-4 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <img src={waldogeMaze} alt="" className="w-4 h-4 object-contain" style={{ transform: "scaleX(0.85)" }} />
+          <span>You</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span>🏆</span>
+          <span>Goal</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <img src={susdogImage} alt="" className="w-4 h-4 object-cover rounded-sm" />
+          <span>Susdog</span>
         </div>
       </div>
 
@@ -492,7 +666,7 @@ export const MazeGame: FC = () => {
             variant="outline" 
             size="icon" 
             onClick={() => movePlayer(0, -1)}
-            disabled={won}
+            disabled={won || caught}
           >
             <ArrowUp className="w-4 h-4" />
           </Button>
@@ -501,7 +675,7 @@ export const MazeGame: FC = () => {
             variant="outline" 
             size="icon" 
             onClick={() => movePlayer(-1, 0)}
-            disabled={won}
+            disabled={won || caught}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -509,7 +683,7 @@ export const MazeGame: FC = () => {
             variant="outline" 
             size="icon" 
             onClick={() => movePlayer(0, 1)}
-            disabled={won}
+            disabled={won || caught}
           >
             <ArrowDown className="w-4 h-4" />
           </Button>
@@ -517,7 +691,7 @@ export const MazeGame: FC = () => {
             variant="outline" 
             size="icon" 
             onClick={() => movePlayer(1, 0)}
-            disabled={won}
+            disabled={won || caught}
           >
             <ArrowRight className="w-4 h-4" />
           </Button>
@@ -525,7 +699,7 @@ export const MazeGame: FC = () => {
       </div>
 
       <p className="text-center text-xs text-muted-foreground">
-        Arrow keys / WASD to move
+        Arrow keys / WASD to move • Escape Susdog!
       </p>
 
       {/* Win Modal */}
@@ -551,8 +725,12 @@ export const MazeGame: FC = () => {
               </motion.div>
               
               <h2 className="font-display text-2xl font-bold text-gradient-gold mb-2">
-                You Found WALDOGE! 🎉
+                You Escaped! 🎉
               </h2>
+              
+              <p className="text-sm text-muted-foreground mb-4">
+                Susdog couldn't catch you!
+              </p>
               
               <div className="flex items-center justify-center gap-2 mb-4">
                 <Trophy className="w-5 h-5 text-primary" />
@@ -564,7 +742,6 @@ export const MazeGame: FC = () => {
                 )}
               </div>
 
-              {/* Name input for leaderboard */}
               {showNameInput && publicKey && (
                 <div className="mb-4 space-y-2">
                   <p className="text-sm text-muted-foreground">Submit your score to the leaderboard!</p>
@@ -603,6 +780,52 @@ export const MazeGame: FC = () => {
                 <Button variant="ghost" onClick={() => {
                   setGameStarted(false);
                   setShowNameInput(false);
+                }}>
+                  Menu
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Caught Modal */}
+      <AnimatePresence>
+        {caught && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+          >
+            <div className="glass-card p-8 text-center max-w-sm mx-4">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 0.5 }}
+              >
+                <img 
+                  src={susdogImage} 
+                  alt="Susdog" 
+                  className="w-20 h-20 mx-auto mb-4 object-cover rounded-lg drop-shadow-[0_0_30px_hsl(0,70%,50%,0.5)]"
+                />
+              </motion.div>
+              
+              <h2 className="font-display text-2xl font-bold text-destructive mb-2 flex items-center justify-center gap-2">
+                <AlertTriangle className="w-6 h-6" />
+                CAUGHT!
+              </h2>
+              
+              <p className="text-muted-foreground mb-6">
+                Susdog got you after {moves} moves! 😱
+              </p>
+
+              <div className="flex gap-2 justify-center">
+                <Button onClick={() => initGame(currentMaze)} variant="default">
+                  <RotateCcw className="w-4 h-4 mr-1" />
+                  Try Again
+                </Button>
+                <Button variant="ghost" onClick={() => {
+                  setGameStarted(false);
                 }}>
                   Menu
                 </Button>
