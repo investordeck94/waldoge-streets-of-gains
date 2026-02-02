@@ -244,12 +244,23 @@ serve(async (req) => {
 
       const data = await response.json();
       
-      // Extract image from response - check for inline_data format
-      const content = data.choices?.[0]?.message?.content;
+      // Extract image from response - handle multiple response formats
+      const message = data.choices?.[0]?.message;
       let imageUrl: string | null = null;
       
-      if (Array.isArray(content)) {
-        for (const part of content) {
+      // Format 1: images array (newer format)
+      if (message?.images && Array.isArray(message.images)) {
+        for (const img of message.images) {
+          if (img.type === "image_url" && img.image_url?.url) {
+            imageUrl = img.image_url.url;
+            break;
+          }
+        }
+      }
+      
+      // Format 2: content as array with image_url or inline_data
+      if (!imageUrl && Array.isArray(message?.content)) {
+        for (const part of message.content) {
           if (part.type === "image_url" && part.image_url?.url) {
             imageUrl = part.image_url.url;
             break;
@@ -262,7 +273,7 @@ serve(async (req) => {
       }
 
       if (!imageUrl) {
-        console.error("[Internal] No image in response:", JSON.stringify(data).slice(0, 500));
+        console.error("[Internal] No image in response. Full response:", JSON.stringify(data).slice(0, 1000));
         return new Response(JSON.stringify({ error: "Failed to generate image. Please try again." }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
