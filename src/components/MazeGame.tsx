@@ -365,7 +365,7 @@ export const MazeGame: FC = () => {
             className="inline-block mb-4"
           >
             <img 
-              src={waldogeMascot} 
+              src={waldogeMaze} 
               alt="WALDOGE" 
               className="w-20 h-20 object-contain drop-shadow-[0_0_20px_hsl(45,95%,55%,0.4)]"
             />
