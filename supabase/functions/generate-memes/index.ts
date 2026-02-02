@@ -219,6 +219,7 @@ serve(async (req) => {
             { role: "system", content: IMAGE_SYSTEM_PROMPT },
             { role: "user", content: userContent },
           ],
+          modalities: ["image", "text"],
         }),
       });
 
