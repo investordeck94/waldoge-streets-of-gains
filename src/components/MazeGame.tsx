@@ -100,17 +100,23 @@ export const MazeGame: FC = () => {
   const [showNameInput, setShowNameInput] = useState(false);
   const [pendingScore, setPendingScore] = useState<{ difficulty: number; moves: number } | null>(null);
 
-  // Find valid positions for Waldoge (far from start)
+  // Find valid positions for Waldoge (far from start, at least 60% of maze size away)
   const findWaldogePosition = useCallback((mazeGrid: number[][]) => {
     const validPositions: Position[] = [];
+    const minDistance = Math.floor(mazeGrid.length * 0.6);
     for (let y = 0; y < mazeGrid.length; y++) {
       for (let x = 0; x < mazeGrid[y].length; x++) {
-        if (mazeGrid[y][x] === 1 && (x > 5 || y > 5)) {
+        if (mazeGrid[y][x] === 1 && (x >= minDistance || y >= minDistance)) {
           validPositions.push({ x, y });
         }
       }
     }
-    return validPositions[Math.floor(Math.random() * validPositions.length)] || { x: 9, y: 9 };
+    // Prefer corners for maximum challenge
+    const cornerPositions = validPositions.filter(p => 
+      p.x >= mazeGrid[0].length - 3 && p.y >= mazeGrid.length - 3
+    );
+    const positionsToUse = cornerPositions.length > 0 ? cornerPositions : validPositions;
+    return positionsToUse[Math.floor(Math.random() * positionsToUse.length)] || { x: mazeGrid[0].length - 2, y: mazeGrid.length - 2 };
   }, []);
 
   const fetchLeaderboard = useCallback(async (difficulty: number) => {
