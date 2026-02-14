@@ -10,6 +10,8 @@ import woofCommunity4 from "@/assets/woof-community-4.jpeg";
 import woofCommunity5 from "@/assets/woof-community-5.jpeg";
 import woofCommunity6 from "@/assets/woof-community-6.jpeg";
 import woofCommunity7 from "@/assets/woof-community-7.jpeg";
+import anoncoinCommunity1 from "@/assets/anoncoin-community-1.jpeg";
+import anoncoinCommunity2 from "@/assets/anoncoin-community-2.jpeg";
 
 const TokenListings = () => {
   return (
@@ -76,6 +78,21 @@ const TokenListings = () => {
             <div className="bg-muted/50 rounded-lg p-3 mb-4 border border-border/50">
               <p className="text-xs text-muted-foreground mb-1 font-medium">CA (Contract Address):</p>
               <p className="text-sm text-primary font-mono break-all select-all">D25bi7oHQjqkVrzbfuM6k2gzVNHTSpBLhtakDCzCCDUB</p>
+            </div>
+
+            {/* Community Art Gallery */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Community Art</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {[anoncoinCommunity1, anoncoinCommunity2].map((img, i) => (
+                  <img
+                    key={i}
+                    src={img}
+                    alt={`Anoncoin community art ${i + 1}`}
+                    className="w-full aspect-square object-cover rounded-xl border border-border/50 hover:border-primary/50 transition-colors hover:scale-105 transition-transform duration-200"
+                  />
+                ))}
+              </div>
             </div>
 
             <p className="text-sm font-semibold text-accent mb-6">
