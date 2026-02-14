@@ -2,7 +2,8 @@ import { FC } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { motion } from "framer-motion";
-import { Zap, Sparkles, Dog, Clock, Gamepad2 } from "lucide-react";
+import { Zap, Sparkles, Dog, Clock, Gamepad2, Coins } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { cn } from "@/lib/utils";
 import waldogeMascot from "@/assets/waldoge-mascot.png";
@@ -21,7 +22,7 @@ const tabs = [
   { id: "chat", label: "Chat", icon: Dog },
   { id: "raid", label: "Raid Generator", icon: Zap },
   { id: "meme", label: "Meme Generator", icon: Sparkles },
-  { id: "nft", label: "NFT Creator", icon: Sparkles },
+  { id: "tokens", label: "Token Listings", icon: Coins },
   { id: "game", label: "Find Waldoge", icon: Gamepad2 },
   { id: "about", label: "About", icon: null },
 ];
