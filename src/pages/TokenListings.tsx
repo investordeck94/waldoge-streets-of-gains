@@ -3,6 +3,13 @@ import { ArrowLeft, ExternalLink, TrendingUp, Calendar, Users, MessageCircle } f
 import { Link } from "react-router-dom";
 import anoncoinLogo from "@/assets/anoncoin-logo.png";
 import woofLogo from "@/assets/woof-logo.jpeg";
+import woofCommunity1 from "@/assets/woof-community-1.jpeg";
+import woofCommunity2 from "@/assets/woof-community-2.jpeg";
+import woofCommunity3 from "@/assets/woof-community-3.jpeg";
+import woofCommunity4 from "@/assets/woof-community-4.jpeg";
+import woofCommunity5 from "@/assets/woof-community-5.jpeg";
+import woofCommunity6 from "@/assets/woof-community-6.jpeg";
+import woofCommunity7 from "@/assets/woof-community-7.jpeg";
 
 const TokenListings = () => {
   return (
@@ -148,6 +155,21 @@ const TokenListings = () => {
             <p className="text-foreground/90 leading-relaxed mb-6">
               The anonymous dev who launched WooF! believes in the DOGE motto: <span className="font-semibold text-primary">"Do Only Good Everyday"</span>.
             </p>
+
+            {/* Community Art Gallery */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Community Art</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {[woofCommunity1, woofCommunity2, woofCommunity3, woofCommunity4, woofCommunity5, woofCommunity6, woofCommunity7].map((img, i) => (
+                  <img
+                    key={i}
+                    src={img}
+                    alt={`WooF! community art ${i + 1}`}
+                    className="w-full aspect-square object-cover rounded-xl border border-border/50 hover:border-primary/50 transition-colors hover:scale-105 transition-transform duration-200"
+                  />
+                ))}
+              </div>
+            </div>
 
             <div className="bg-muted/50 rounded-lg p-3 mb-4 border border-border/50">
               <p className="text-xs text-muted-foreground mb-1 font-medium">CA (Contract Address):</p>
