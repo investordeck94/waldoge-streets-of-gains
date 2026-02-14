@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, ExternalLink, TrendingUp, Calendar, Users } from "lucide-react";
+import { ArrowLeft, ExternalLink, TrendingUp, Calendar, Users, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import anoncoinLogo from "@/assets/anoncoin-logo.png";
 
@@ -96,6 +96,100 @@ const TokenListings = () => {
                   Ecosystem
                 </div>
                 <p className="text-lg font-bold text-foreground">Solana & Doge</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground mt-6 italic">
+              Disclaimer: The information above is community-sourced. Always do your own research before investing.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* WooF! Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mb-12"
+        >
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-6 flex items-center gap-2">
+            <span className="text-gradient-cosmic">WooF! Listing</span>
+          </h2>
+
+          <div className="glass-card p-6 md:p-8">
+            <div className="flex flex-col sm:flex-row items-start gap-6 mb-6">
+              <div className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center flex-shrink-0 shadow-lg">
+                <span className="text-3xl font-black text-primary">W!</span>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-primary mb-1">WooF!</h3>
+                <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 mb-3">
+                  DOGE Ecosystem Token
+                </span>
+                <p className="text-sm text-muted-foreground italic">"Everyone will WooF!"</p>
+              </div>
+            </div>
+
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              This token is believed to be launched by a Doge or DogeOS insider — no one knows who he is, but the saying "WooF!" is believed to come from people involved in Doge. It could even be the cofounders of DogeOS, though that's just speculation for now.
+            </p>
+
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              It was once said on a space by Doge Takeover that "there was a bunch of Doge insiders in a room together who WooF!" — which he thought could be one of the people who launched the coin in hindsight.
+            </p>
+
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              Even Hoff, one of the co-founders of DogeOS, said on Spaces that "WooF! is a genius idea."
+            </p>
+
+            <p className="text-foreground/90 leading-relaxed mb-6">
+              The anonymous dev who launched WooF! believes in the DOGE motto: <span className="font-semibold text-primary">"Do Only Good Everyday"</span>.
+            </p>
+
+            <div className="bg-muted/50 rounded-lg p-3 mb-4 border border-border/50">
+              <p className="text-xs text-muted-foreground mb-1 font-medium">CA (Contract Address):</p>
+              <p className="text-sm text-primary font-mono break-all select-all">8F6zYQQfiacjyJZjw1J8aP7MbgAewHHKnvLD18xDdoge</p>
+            </div>
+
+            <p className="text-sm font-semibold text-accent mb-6">
+              ⚠️ Always DYOR (Do Your Own Research)
+            </p>
+
+            {/* Key stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Launched
+                </div>
+                <p className="text-lg font-bold text-foreground">Sep–Oct 2025</p>
+              </div>
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                  <Users className="w-3.5 h-3.5" />
+                  Ecosystem
+                </div>
+                <p className="text-lg font-bold text-foreground">Doge / DogeOS</p>
+              </div>
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <a
+                  href="https://t.me/anonwoof"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground text-xs mb-1 hover:text-primary transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Telegram
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                <a
+                  href="https://t.me/anonwoof"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lg font-bold text-primary hover:underline"
+                >
+                  Join Chat
+                </a>
               </div>
             </div>
 
