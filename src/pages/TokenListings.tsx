@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, ExternalLink, TrendingUp, Calendar, Users, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import anoncoinLogo from "@/assets/anoncoin-logo.png";
+import woofLogo from "@/assets/woof-logo.jpeg";
 
 const TokenListings = () => {
   return (
@@ -118,9 +119,11 @@ const TokenListings = () => {
 
           <div className="glass-card p-6 md:p-8">
             <div className="flex flex-col sm:flex-row items-start gap-6 mb-6">
-              <div className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center flex-shrink-0 shadow-lg">
-                <span className="text-3xl font-black text-primary">W!</span>
-              </div>
+              <img
+                src={woofLogo}
+                alt="WooF! logo"
+                className="w-24 h-24 rounded-full object-cover shadow-lg flex-shrink-0"
+              />
               <div>
                 <h3 className="text-2xl font-bold text-primary mb-1">WooF!</h3>
                 <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 mb-3">
