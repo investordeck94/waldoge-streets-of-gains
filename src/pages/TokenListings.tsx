@@ -83,7 +83,7 @@ const TokenListings = () => {
             </p>
 
             {/* Key stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
               <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                   <TrendingUp className="w-3.5 h-3.5" />
@@ -104,6 +104,26 @@ const TokenListings = () => {
                   Ecosystem
                 </div>
                 <p className="text-lg font-bold text-foreground">Solana / DogeOS</p>
+              </div>
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <a
+                  href="https://t.me/AnoncoinIt"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground text-xs mb-1 hover:text-primary transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Telegram
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                <a
+                  href="https://t.me/AnoncoinIt"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lg font-bold text-primary hover:underline"
+                >
+                  Join Chat
+                </a>
               </div>
             </div>
 
