@@ -263,6 +263,99 @@ const TokenListings = () => {
             </p>
           </div>
         </motion.div>
+
+        {/* Vibecoin */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.45 }}
+          className="mb-12"
+        >
+          <div className="glass-card p-6 md:p-8">
+            <div className="flex flex-col sm:flex-row items-start gap-6 mb-6">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-4xl shadow-lg flex-shrink-0">
+                🐱
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-primary mb-1">Vibecoin</h3>
+                <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 mb-3">
+                  Anoncoin Ecosystem
+                </span>
+                <p className="text-sm text-muted-foreground italic">"Don't Doubt Your Vibe" 💫🐱🎧</p>
+              </div>
+            </div>
+
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              VIBECOIN ($VIBECOIN) is a Solana-based meme coin centered around the legendary "Vibing Cat" — an orange, chill, headphone-wearing feline that perfectly captures pure, effortless internet vibes and degen energy. Launched anonymously via @anoncoinit by a high-follower KOL, it exploded as the go-to orange cat meme on the chain.
+            </p>
+
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              Its legendary lore draws from mysterious origins — nobody knows the exact launcher, fueling endless speculation. There are parallels to Dogecoin legends like Dogememegirl, with exchanges mimicking iconic shills and ginger cat vibes. Massive dev buybacks from creator fees (over $120K reported), surprise follows from figures like Elon Musk and DogeOfficialCEO, and a narrative of rising from underdog status to cultural force.
+            </p>
+
+            <p className="text-foreground/90 leading-relaxed mb-6">
+              It's less about utility and more about riding the ultimate good-energy wave in Solana's meme jungle — heading toward "DogeOS" dominance, Mars-level ambitions, and turning raw community belief into unstoppable momentum.
+            </p>
+
+            <div className="bg-muted/50 rounded-lg p-3 mb-4 border border-border/50">
+              <p className="text-xs text-muted-foreground mb-1 font-medium">CA (Contract Address):</p>
+              <p className="text-sm text-primary font-mono break-all select-all">AZbem4s8iLJE5eniDZJ7c8q1ahbfMwWgCA8TxVW2tDUB</p>
+            </div>
+
+            <p className="text-sm font-semibold text-accent mb-6">
+              ⚠️ Always DYOR (Do Your Own Research)
+            </p>
+
+            {/* Key stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  All-Time High
+                </div>
+                <p className="text-lg font-bold text-primary">$5.5M</p>
+              </div>
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Launched
+                </div>
+                <p className="text-lg font-bold text-foreground">Aug–Sep 2025</p>
+              </div>
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                  <Users className="w-3.5 h-3.5" />
+                  Ecosystem
+                </div>
+                <p className="text-lg font-bold text-foreground">Solana / DogeOS</p>
+              </div>
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <a
+                  href="https://t.me/VIBECOINCAT"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground text-xs mb-1 hover:text-primary transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Telegram
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                <a
+                  href="https://t.me/VIBECOINCAT"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lg font-bold text-primary hover:underline"
+                >
+                  Join Chat
+                </a>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground mt-6 italic">
+              Disclaimer: The information above is community-sourced. Always do your own research before investing.
+            </p>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
