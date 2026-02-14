@@ -103,7 +103,7 @@ const TokenListings = () => {
                   <Users className="w-3.5 h-3.5" />
                   Ecosystem
                 </div>
-                <p className="text-lg font-bold text-foreground">Solana & Doge</p>
+                <p className="text-lg font-bold text-foreground">Solana / DogeOS</p>
               </div>
             </div>
 
