@@ -161,11 +161,11 @@ const TokenListings = () => {
             </div>
 
             <p className="text-foreground/90 leading-relaxed mb-4">
-              This token is believed to be launched by a Doge or DogeOS insider — no one knows who he is, but the saying "WooF!" is believed to come from people involved in Doge. It could even be the cofounders of DogeOS, though that's just speculation for now.
+              This token is believed to have been launched by a Doge or DogeOS insider — no one knows who they are, but the saying "WooF!" is believed to come from people involved in Doge. It could even be the cofounders of DogeOS, though that's just speculation for now.
             </p>
 
             <p className="text-foreground/90 leading-relaxed mb-4">
-              It was once said on a space by Doge Takeover that "there was a bunch of Doge insiders in a room together who WooF!" — which he thought could be one of the people who launched the coin in hindsight.
+              It was once said on a Space by Doge Takeover that "there were a bunch of Doge insiders in a room together who WooF'd!" — which he thought could have been one of the people who launched the coin, in hindsight.
             </p>
 
             <p className="text-foreground/90 leading-relaxed mb-4">
@@ -173,7 +173,7 @@ const TokenListings = () => {
             </p>
 
             <p className="text-foreground/90 leading-relaxed mb-6">
-              The anonymous dev who launched WooF! believes in the DOGE motto: <span className="font-semibold text-primary">"Do Only Good Everyday"</span>.
+              The anonymous dev who launched WooF! believes in the DOGE motto: <span className="font-semibold text-primary">"Do Only Good Every Day"</span>.
             </p>
 
             {/* Community Art Gallery */}
