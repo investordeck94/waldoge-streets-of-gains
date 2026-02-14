@@ -214,7 +214,14 @@ const TokenListings = () => {
             </p>
 
             {/* Key stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  All-Time High
+                </div>
+                <p className="text-lg font-bold text-primary">$542.4K</p>
+              </div>
               <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                   <Calendar className="w-3.5 h-3.5" />
