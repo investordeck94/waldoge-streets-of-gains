@@ -48,7 +48,7 @@ const TokenListings = () => {
           className="mb-12"
         >
           <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-6 flex items-center gap-2">
-            <span className="text-gradient-cosmic">Anoncoin Listing</span>
+            <span className="text-gradient-cosmic">Anoncoin Ecosystem</span>
           </h2>
 
           {/* Anoncoin Card */}
@@ -150,17 +150,13 @@ const TokenListings = () => {
           </div>
         </motion.div>
 
-        {/* WooF! Section */}
+        {/* WooF! - Part of Anoncoin Ecosystem */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
           className="mb-12"
         >
-          <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-6 flex items-center gap-2">
-            <span className="text-gradient-cosmic">WooF! Listing</span>
-          </h2>
-
           <div className="glass-card p-6 md:p-8">
             <div className="flex flex-col sm:flex-row items-start gap-6 mb-6">
               <img
@@ -171,7 +167,7 @@ const TokenListings = () => {
               <div>
                 <h3 className="text-2xl font-bold text-primary mb-1">WooF!</h3>
                 <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 mb-3">
-                  DOGE Ecosystem Token
+                  Anoncoin Ecosystem
                 </span>
                 <p className="text-sm text-muted-foreground italic">"Everyone will WooF!"</p>
               </div>
