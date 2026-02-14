@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "@/components/Header";
 import { LandingPage } from "@/components/LandingPage";
 import { ChatTab } from "@/components/ChatTab";
 import { RaidTab } from "@/components/RaidTab";
 import { MemeTab } from "@/components/MemeTab";
-import { NFTTab } from "@/components/NFTTab";
+
 import { AboutTab } from "@/components/AboutTab";
 import { MazeGame } from "@/components/MazeGame";
 import { useWaldogeBalance } from "@/hooks/useWaldogeBalance";
@@ -14,9 +15,18 @@ import { useUsageTracking } from "@/hooks/useUsageTracking";
 
 const Index = () => {
   const { connected, publicKey, wallet, connecting } = useWallet();
+  const navigate = useNavigate();
   const { balance, tier, isWhale, isLoading } = useWaldogeBalance();
   const { canUse, getRemainingUses, incrementUsage, clearHistory, isInFreeTrial, freeTrialTimeRemaining } = useUsageTracking(tier);
   const [activeTab, setActiveTab] = useState("chat");
+
+  const handleTabChange = (tab: string) => {
+    if (tab === "tokens") {
+      navigate("/token-listings");
+      return;
+    }
+    setActiveTab(tab);
+  };
 
   // Debug wallet state
   useEffect(() => {
@@ -39,11 +49,12 @@ const Index = () => {
   // }
 
   const renderTabContent = () => {
+    const featureKey = activeTab === "chat" ? "chat" : activeTab === "raid" ? "raidGenerator" : "memeGenerator";
     const tabProps = {
       tier,
-      canUse: canUse(activeTab === "chat" ? "chat" : activeTab === "raid" ? "raidGenerator" : activeTab === "meme" ? "memeGenerator" : "nftCreator"),
-      remainingUses: getRemainingUses(activeTab === "chat" ? "chat" : activeTab === "raid" ? "raidGenerator" : activeTab === "meme" ? "memeGenerator" : "nftCreator"),
-      onUse: () => incrementUsage(activeTab === "chat" ? "chat" : activeTab === "raid" ? "raidGenerator" : activeTab === "meme" ? "memeGenerator" : "nftCreator"),
+      canUse: canUse(featureKey),
+      remainingUses: getRemainingUses(featureKey),
+      onUse: () => incrementUsage(featureKey),
     };
 
     switch (activeTab) {
@@ -53,8 +64,6 @@ const Index = () => {
         return <RaidTab {...tabProps} />;
       case "meme":
         return <MemeTab {...tabProps} />;
-      case "nft":
-        return <NFTTab {...tabProps} isWhale={isWhale} />;
       case "game":
         return (
           <div className="max-w-md mx-auto">
@@ -75,7 +84,7 @@ const Index = () => {
         tier={tier}
         isLoading={isLoading}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         isInFreeTrial={isInFreeTrial}
         freeTrialTimeRemaining={freeTrialTimeRemaining}
       />
