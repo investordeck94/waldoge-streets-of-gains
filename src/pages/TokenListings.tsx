@@ -61,8 +61,17 @@ const TokenListings = () => {
               This coin is the official token for the Anoncoin ecosystem. Originally, it was known as Dub Dub TV. People like Nikita Bier and many others hold the Anoncoin token. They work closely with Solana & Doge. It was launched in June 2025 — we suspect some really big people are behind this token.
             </p>
 
-            <p className="text-foreground/90 leading-relaxed mb-6">
+            <p className="text-foreground/90 leading-relaxed mb-4">
               Some have even said the owners of Coinbase, Juno & Jupiter Swap are involved — all multi-billion-dollar companies. However, this has not yet been verified.
+            </p>
+
+            <div className="bg-muted/50 rounded-lg p-3 mb-4 border border-border/50">
+              <p className="text-xs text-muted-foreground mb-1 font-medium">CA (Contract Address):</p>
+              <p className="text-sm text-primary font-mono break-all select-all">D25bi7oHQjqkVrzbfuM6k2gzVNHTSpBLhtakDCzCCDUB</p>
+            </div>
+
+            <p className="text-sm font-semibold text-accent mb-6">
+              ⚠️ Always DYOR (Do Your Own Research)
             </p>
 
             {/* Key stats */}
