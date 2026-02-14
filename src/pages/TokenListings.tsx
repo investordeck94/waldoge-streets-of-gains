@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, ExternalLink, TrendingUp, Calendar, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import anoncoinLogo from "@/assets/anoncoin-logo.jpeg";
+import anoncoinLogo from "@/assets/anoncoin-logo.png";
 
 const TokenListings = () => {
   return (
