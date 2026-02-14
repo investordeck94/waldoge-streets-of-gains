@@ -47,7 +47,7 @@ const TokenListings = () => {
               <img
                 src={anoncoinLogo}
                 alt="Anoncoin logo"
-                className="w-24 h-24 rounded-2xl object-cover border-2 border-primary/30 shadow-lg flex-shrink-0"
+                className="w-24 h-24 rounded-2xl object-cover shadow-lg flex-shrink-0 bg-card"
               />
               <div>
                 <h3 className="text-2xl font-bold text-primary mb-1">Anoncoin</h3>
