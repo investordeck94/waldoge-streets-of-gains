@@ -376,6 +376,65 @@ const TokenListings = () => {
             </p>
           </div>
         </motion.div>
+
+        {/* Monko */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="mb-12"
+        >
+          <div className="glass-card p-6 md:p-8">
+            <div className="flex flex-col sm:flex-row items-start gap-6 mb-6">
+              <img src={monkoLogo} alt="Monko logo" className="w-24 h-24 rounded-full shadow-lg flex-shrink-0 object-cover" />
+              <div>
+                <h3 className="text-2xl font-bold text-primary mb-1">Monko</h3>
+                <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 mb-3">
+                  Anoncoin Ecosystem
+                </span>
+                <p className="text-sm text-muted-foreground italic">"Monko your bananas until zillions" 🐒🍌</p>
+              </div>
+            </div>
+
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              Monko is a community token which recently got CTO'd, as they deserved. It was launched around October and embodies the true meaning of community. Day in and day out, they post all over X, do meme competitions, hold regular Spaces on X, and have even created a Monko game most recently — a cross between Super Mario and Jungle Run.
+            </p>
+
+            <p className="text-foreground/90 leading-relaxed mb-4">
+              The community continues to grow with more and more ideas for future games waiting to be unveiled. Even the most recent game was played by people all across the globe. The meme itself is a fun, lovable, cheeky monkey.
+            </p>
+
+            <p className="text-foreground/90 leading-relaxed mb-6">
+              Each member in the Monko community has a different role, and each of them pitches in in their own way. For example, they have multiple people creating the artwork, one person making the Monko music, and a few people who speak on the X Spaces.
+            </p>
+
+            <p className="text-sm font-semibold text-accent mb-6">
+              ⚠️ Always DYOR (Do Your Own Research)
+            </p>
+
+            {/* Key stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Launched
+                </div>
+                <p className="text-lg font-bold text-foreground">Oct 2025</p>
+              </div>
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                  <Users className="w-3.5 h-3.5" />
+                  Ecosystem
+                </div>
+                <p className="text-lg font-bold text-foreground">Solana / DogeOS</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground mt-6 italic">
+              Disclaimer: The information above is community-sourced. Always do your own research before investing.
+            </p>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
