@@ -12,6 +12,7 @@ import woofCommunity6 from "@/assets/woof-community-6.jpeg";
 import woofCommunity7 from "@/assets/woof-community-7.jpeg";
 import anoncoinCommunity1 from "@/assets/anoncoin-community-1.jpeg";
 import anoncoinCommunity2 from "@/assets/anoncoin-community-2.jpeg";
+import vibecoinLogo from "@/assets/vibecoin-logo.jpeg";
 
 const TokenListings = () => {
   return (
