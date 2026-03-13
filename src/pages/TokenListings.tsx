@@ -422,14 +422,6 @@ const TokenListings = () => {
               >
                 <ExternalLink className="w-4 h-4" /> X (Twitter)
               </a>
-              <a
-                href="https://t.me/+cpgDNu_OGGs5YWFh"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border/50 hover:border-primary/50 transition-colors text-sm text-foreground/80 hover:text-foreground"
-              >
-                <MessageCircle className="w-4 h-4" /> Telegram
-              </a>
             </div>
 
             {/* Key stats */}
@@ -454,6 +446,26 @@ const TokenListings = () => {
                   Ecosystem
                 </div>
                 <p className="text-lg font-bold text-foreground">Solana / DogeOS</p>
+              </div>
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <a
+                  href="https://t.me/+cpgDNu_OGGs5YWFh"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground text-xs mb-1 hover:text-primary transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Telegram
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                <a
+                  href="https://t.me/+cpgDNu_OGGs5YWFh"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lg font-bold text-primary hover:underline"
+                >
+                  Join Chat
+                </a>
               </div>
             </div>
 
