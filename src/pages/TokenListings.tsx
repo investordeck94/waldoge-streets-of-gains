@@ -306,6 +306,21 @@ const TokenListings = () => {
               <p className="text-sm text-primary font-mono break-all select-all">AZbem4s8iLJE5eniDZJ7c8q1ahbfMwWgCA8TxVW2tDUB</p>
             </div>
 
+            {/* Community Art Gallery */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Community Art</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {[vibecoinCommunity1, vibecoinCommunity2, vibecoinCommunity3, vibecoinCommunity4, vibecoinCommunity5].map((img, i) => (
+                  <img
+                    key={i}
+                    src={img}
+                    alt={`Vibecoin community art ${i + 1}`}
+                    className="w-full aspect-square object-cover rounded-xl border border-border/50 hover:border-primary/50 transition-colors hover:scale-105 transition-transform duration-200"
+                  />
+                ))}
+              </div>
+            </div>
+
             <p className="text-sm font-semibold text-accent mb-6">
               ⚠️ Always DYOR (Do Your Own Research)
             </p>
