@@ -13,6 +13,11 @@ import woofCommunity7 from "@/assets/woof-community-7.jpeg";
 import anoncoinCommunity1 from "@/assets/anoncoin-community-1.jpeg";
 import anoncoinCommunity2 from "@/assets/anoncoin-community-2.jpeg";
 import vibecoinLogo from "@/assets/vibecoin-logo.jpeg";
+import vibecoinCommunity1 from "@/assets/vibecoin-community-1.jpeg";
+import vibecoinCommunity2 from "@/assets/vibecoin-community-2.jpeg";
+import vibecoinCommunity3 from "@/assets/vibecoin-community-3.jpeg";
+import vibecoinCommunity4 from "@/assets/vibecoin-community-4.jpeg";
+import vibecoinCommunity5 from "@/assets/vibecoin-community-5.jpeg";
 
 const TokenListings = () => {
   return (
@@ -299,6 +304,21 @@ const TokenListings = () => {
             <div className="bg-muted/50 rounded-lg p-3 mb-4 border border-border/50">
               <p className="text-xs text-muted-foreground mb-1 font-medium">CA (Contract Address):</p>
               <p className="text-sm text-primary font-mono break-all select-all">AZbem4s8iLJE5eniDZJ7c8q1ahbfMwWgCA8TxVW2tDUB</p>
+            </div>
+
+            {/* Community Art Gallery */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Community Art</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {[vibecoinCommunity1, vibecoinCommunity2, vibecoinCommunity3, vibecoinCommunity4, vibecoinCommunity5].map((img, i) => (
+                  <img
+                    key={i}
+                    src={img}
+                    alt={`Vibecoin community art ${i + 1}`}
+                    className="w-full aspect-square object-cover rounded-xl border border-border/50 hover:border-primary/50 transition-colors hover:scale-105 transition-transform duration-200"
+                  />
+                ))}
+              </div>
             </div>
 
             <p className="text-sm font-semibold text-accent mb-6">
