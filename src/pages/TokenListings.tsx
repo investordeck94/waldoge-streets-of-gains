@@ -13,6 +13,11 @@ import woofCommunity7 from "@/assets/woof-community-7.jpeg";
 import anoncoinCommunity1 from "@/assets/anoncoin-community-1.jpeg";
 import anoncoinCommunity2 from "@/assets/anoncoin-community-2.jpeg";
 import vibecoinLogo from "@/assets/vibecoin-logo.jpeg";
+import vibecoinCommunity1 from "@/assets/vibecoin-community-1.jpeg";
+import vibecoinCommunity2 from "@/assets/vibecoin-community-2.jpeg";
+import vibecoinCommunity3 from "@/assets/vibecoin-community-3.jpeg";
+import vibecoinCommunity4 from "@/assets/vibecoin-community-4.jpeg";
+import vibecoinCommunity5 from "@/assets/vibecoin-community-5.jpeg";
 
 const TokenListings = () => {
   return (
