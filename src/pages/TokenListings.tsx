@@ -412,8 +412,35 @@ const TokenListings = () => {
               ⚠️ Always DYOR (Do Your Own Research)
             </p>
 
+            {/* Social links */}
+            <div className="flex flex-wrap gap-3 mb-6">
+              <a
+                href="https://x.com/monkocoin?s=21"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border/50 hover:border-primary/50 transition-colors text-sm text-foreground/80 hover:text-foreground"
+              >
+                <ExternalLink className="w-4 h-4" /> X (Twitter)
+              </a>
+              <a
+                href="https://t.me/+cpgDNu_OGGs5YWFh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border/50 hover:border-primary/50 transition-colors text-sm text-foreground/80 hover:text-foreground"
+              >
+                <MessageCircle className="w-4 h-4" /> Telegram
+              </a>
+            </div>
+
             {/* Key stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  ATH
+                </div>
+                <p className="text-lg font-bold text-foreground">$435K</p>
+              </div>
               <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                   <Calendar className="w-3.5 h-3.5" />
