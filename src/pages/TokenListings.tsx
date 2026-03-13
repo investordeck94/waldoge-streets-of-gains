@@ -18,6 +18,7 @@ import vibecoinCommunity2 from "@/assets/vibecoin-community-2.jpeg";
 import vibecoinCommunity3 from "@/assets/vibecoin-community-3.jpeg";
 import vibecoinCommunity4 from "@/assets/vibecoin-community-4.jpeg";
 import vibecoinCommunity5 from "@/assets/vibecoin-community-5.jpeg";
+import monkoLogo from "@/assets/monko-logo.png";
 
 const TokenListings = () => {
   return (
