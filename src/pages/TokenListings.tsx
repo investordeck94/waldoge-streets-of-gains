@@ -474,6 +474,21 @@ const TokenListings = () => {
               Each member in the Monko community has a different role, and each of them pitches in in their own way. For example, they have multiple people creating the artwork, one person making the Monko music, and a few people who speak on the X Spaces.
             </p>
 
+            {/* Community Art Gallery */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Community Art</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {[monkoCommunity1, monkoCommunity2, monkoCommunity3, monkoCommunity4, monkoCommunity5, monkoCommunity6].map((img, i) => (
+                  <img
+                    key={i}
+                    src={img}
+                    alt={`Monko community art ${i + 1}`}
+                    className="w-full aspect-square object-cover rounded-xl border border-border/50 hover:border-primary/50 transition-colors hover:scale-105 transition-transform duration-200"
+                  />
+                ))}
+              </div>
+            </div>
+
             <p className="text-sm font-semibold text-accent mb-6">
               ⚠️ Always DYOR (Do Your Own Research)
             </p>
