@@ -19,6 +19,12 @@ import vibecoinCommunity3 from "@/assets/vibecoin-community-3.jpeg";
 import vibecoinCommunity4 from "@/assets/vibecoin-community-4.jpeg";
 import vibecoinCommunity5 from "@/assets/vibecoin-community-5.jpeg";
 import monkoLogo from "@/assets/monko-logo.png";
+import monkoCommunity1 from "@/assets/monko-community-1.jpeg";
+import monkoCommunity2 from "@/assets/monko-community-2.jpeg";
+import monkoCommunity3 from "@/assets/monko-community-3.jpeg";
+import monkoCommunity4 from "@/assets/monko-community-4.jpeg";
+import monkoCommunity5 from "@/assets/monko-community-5.jpeg";
+import monkoCommunity6 from "@/assets/monko-community-6.jpeg";
 
 const TokenListings = () => {
   return (
