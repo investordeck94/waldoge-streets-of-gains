@@ -12,6 +12,7 @@ import woofCommunity6 from "@/assets/woof-community-6.jpeg";
 import woofCommunity7 from "@/assets/woof-community-7.jpeg";
 import anoncoinCommunity1 from "@/assets/anoncoin-community-1.jpeg";
 import anoncoinCommunity2 from "@/assets/anoncoin-community-2.jpeg";
+import vibecoinLogo from "@/assets/vibecoin-logo.jpeg";
 
 const TokenListings = () => {
   return (
@@ -273,9 +274,7 @@ const TokenListings = () => {
         >
           <div className="glass-card p-6 md:p-8">
             <div className="flex flex-col sm:flex-row items-start gap-6 mb-6">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-4xl shadow-lg flex-shrink-0">
-                🐱
-              </div>
+              <img src={vibecoinLogo} alt="Vibecoin logo" className="w-24 h-24 rounded-full shadow-lg flex-shrink-0 object-cover" />
               <div>
                 <h3 className="text-2xl font-bold text-primary mb-1">Vibecoin</h3>
                 <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 mb-3">
