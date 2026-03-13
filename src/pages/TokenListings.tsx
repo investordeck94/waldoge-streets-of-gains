@@ -107,7 +107,7 @@ const TokenListings = () => {
             </p>
 
             {/* Key stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-6">
               <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                   <TrendingUp className="w-3.5 h-3.5" />
@@ -147,6 +147,26 @@ const TokenListings = () => {
                   className="text-lg font-bold text-primary hover:underline"
                 >
                   Join Chat
+                </a>
+              </div>
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <a
+                  href="https://x.com/anoncoinit?s=21"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground text-xs mb-1 hover:text-primary transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  X (Twitter)
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                <a
+                  href="https://x.com/anoncoinit?s=21"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lg font-bold text-primary hover:underline"
+                >
+                  Follow
                 </a>
               </div>
             </div>
