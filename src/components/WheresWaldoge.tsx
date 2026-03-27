@@ -17,9 +17,12 @@ interface Level {
   id: number;
   name: string;
   scene: string;
-  waldogePosition: { x: number; y: number }; // percentage-based position
-  hitRadius: number; // tap radius in percentage
+  waldogePosition: { x: number; y: number };
+  hitRadius: number;
   hint: string;
+  spriteSize: number; // percentage width of the sprite
+  opacity: number;
+  rotation?: number; // slight rotation to blend in
 }
 
 const LEVELS: Level[] = [
@@ -27,49 +30,67 @@ const LEVELS: Level[] = [
     id: 1,
     name: "🐕 Dog Park",
     scene: level1,
-    waldogePosition: { x: 72, y: 35 },
-    hitRadius: 4,
-    hint: "He's near the playground!",
+    waldogePosition: { x: 14, y: 38 }, // sitting on a bench
+    hitRadius: 3,
+    hint: "Check the benches!",
+    spriteSize: 2.8,
+    opacity: 0.55,
+    rotation: -2,
   },
   {
     id: 2,
     name: "🏖️ Beach",
     scene: level2,
-    waldogePosition: { x: 28, y: 62 },
-    hitRadius: 3.5,
-    hint: "Check near the towels!",
+    waldogePosition: { x: 68, y: 75 }, // among the crowd near umbrellas
+    hitRadius: 2.5,
+    hint: "Near the umbrellas...",
+    spriteSize: 2.2,
+    opacity: 0.5,
+    rotation: 3,
   },
   {
     id: 3,
     name: "🎢 Amusement Park",
     scene: level3,
-    waldogePosition: { x: 55, y: 70 },
-    hitRadius: 3,
-    hint: "He's somewhere in the crowd!",
+    waldogePosition: { x: 38, y: 82 }, // lost in the crowd
+    hitRadius: 2.2,
+    hint: "Down in the crowd near the bumper cars!",
+    spriteSize: 1.8,
+    opacity: 0.45,
+    rotation: -1,
   },
   {
     id: 4,
     name: "👻 Haunted House",
     scene: level4,
-    waldogePosition: { x: 82, y: 45 },
-    hitRadius: 3,
-    hint: "Look near the stairs...",
+    waldogePosition: { x: 25, y: 68 }, // near the suits of armor
+    hitRadius: 2,
+    hint: "Hiding near something metallic...",
+    spriteSize: 1.8,
+    opacity: 0.4,
+    rotation: 5,
   },
   {
     id: 5,
     name: "🌴 Jungle",
     scene: level5,
-    waldogePosition: { x: 40, y: 55 },
-    hitRadius: 2.5,
-    hint: "Hidden among the foliage!",
+    waldogePosition: { x: 62, y: 72 }, // hidden in the foliage near water
+    hitRadius: 1.8,
+    hint: "Near the water's edge!",
+    spriteSize: 1.5,
+    opacity: 0.38,
+    rotation: -3,
   },
   {
     id: 6,
     name: "📈 Wall Street",
     scene: level6,
-    waldogePosition: { x: 18, y: 72 },
-    hitRadius: 2.5,
-    hint: "Lost in the crowd of suits!",
+    waldogePosition: { x: 78, y: 68 }, // blended into the crowd
+    hitRadius: 1.5,
+    hint: "He's near a hot dog stand!",
+    spriteSize: 1.3,
+    opacity: 0.35,
+    rotation: 2,
   },
 ];
 
@@ -428,16 +449,20 @@ export const WheresWaldoge: FC = () => {
             style={{
               left: `${level.waldogePosition.x}%`,
               top: `${level.waldogePosition.y}%`,
-              transform: "translate(-50%, -50%)",
-              width: `${level.hitRadius * 2}%`,
-              height: `${level.hitRadius * 2 * 1.5}%`,
+              transform: `translate(-50%, -50%) rotate(${level.rotation || 0}deg)`,
+              width: `${level.spriteSize}%`,
+              height: `${level.spriteSize * 1.4}%`,
             }}
           >
             <img
               src={waldogeSprite}
               alt="Waldoge"
-              className="w-full h-full object-contain opacity-70"
-              style={{ filter: "brightness(0.9)" }}
+              className="w-full h-full object-contain"
+              style={{
+                opacity: level.opacity,
+                filter: "brightness(0.85) saturate(0.8)",
+                mixBlendMode: "multiply",
+              }}
               draggable={false}
             />
           </div>
