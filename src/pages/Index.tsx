@@ -9,7 +9,7 @@ import { RaidTab } from "@/components/RaidTab";
 import { MemeTab } from "@/components/MemeTab";
 
 import { AboutTab } from "@/components/AboutTab";
-import { MazeGame } from "@/components/MazeGame";
+import { WheresWaldoge } from "@/components/WheresWaldoge";
 import { useWaldogeBalance } from "@/hooks/useWaldogeBalance";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 
