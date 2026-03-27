@@ -65,11 +65,7 @@ const Index = () => {
       case "meme":
         return <MemeTab {...tabProps} />;
       case "game":
-        return (
-          <div className="max-w-md mx-auto">
-            <MazeGame />
-          </div>
-        );
+        return <WheresWaldoge />;
       case "about":
         return <AboutTab />;
       default:
