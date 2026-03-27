@@ -11,7 +11,7 @@ import level3 from "@/assets/level-3-amusement.jpg";
 import level4 from "@/assets/level-4-haunted.jpg";
 import level5 from "@/assets/level-5-jungle.jpg";
 import level6 from "@/assets/level-6-wallstreet.jpg";
-import waldogeSprite from "@/assets/waldoge-find.jpeg";
+import waldogeSprite from "@/assets/waldoge-find.png";
 
 interface Level {
   id: number;
