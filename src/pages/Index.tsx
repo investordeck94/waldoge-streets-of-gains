@@ -9,7 +9,7 @@ import { RaidTab } from "@/components/RaidTab";
 import { MemeTab } from "@/components/MemeTab";
 
 import { AboutTab } from "@/components/AboutTab";
-import { MazeGame } from "@/components/MazeGame";
+import { WheresWaldoge } from "@/components/WheresWaldoge";
 import { useWaldogeBalance } from "@/hooks/useWaldogeBalance";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 
@@ -65,11 +65,7 @@ const Index = () => {
       case "meme":
         return <MemeTab {...tabProps} />;
       case "game":
-        return (
-          <div className="max-w-md mx-auto">
-            <MazeGame />
-          </div>
-        );
+        return <WheresWaldoge />;
       case "about":
         return <AboutTab />;
       default:
