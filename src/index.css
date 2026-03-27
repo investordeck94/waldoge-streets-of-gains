@@ -283,6 +283,32 @@
   }
 }
 
+/* Where's Waldoge scene motion animations */
+@keyframes sceneDrift1 {
+  0% { transform: scale(1.02) translate(0%, 0%); }
+  100% { transform: scale(1.02) translate(-1%, -0.5%); }
+}
+@keyframes sceneDrift2 {
+  0% { transform: scale(1.03) translate(0%, 0%); }
+  100% { transform: scale(1.03) translate(-1.5%, 0.5%); }
+}
+@keyframes sceneDrift3 {
+  0% { transform: scale(1.02) translate(0.5%, 0%); }
+  100% { transform: scale(1.02) translate(-0.5%, -1%); }
+}
+@keyframes sceneDrift4 {
+  0% { transform: scale(1.03) translate(0%, 0.5%); }
+  100% { transform: scale(1.03) translate(-1%, -0.5%); }
+}
+@keyframes sceneDrift5 {
+  0% { transform: scale(1.02) translate(-0.5%, 0%); }
+  100% { transform: scale(1.02) translate(0.5%, -0.8%); }
+}
+@keyframes sceneDrift6 {
+  0% { transform: scale(1.03) translate(0%, -0.5%); }
+  100% { transform: scale(1.03) translate(-1.2%, 0.3%); }
+}
+
 /* Wallet adapter button overrides */
 .wallet-adapter-button {
   @apply !bg-primary !text-primary-foreground !font-semibold !rounded-lg !h-10 !px-4 hover:!bg-primary/90 !transition-all;

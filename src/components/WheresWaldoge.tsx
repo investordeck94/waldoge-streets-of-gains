@@ -20,9 +20,9 @@ interface Level {
   waldogePosition: { x: number; y: number };
   hitRadius: number;
   hint: string;
-  spriteSize: number; // percentage width of the sprite
-  opacity: number;
-  rotation?: number; // slight rotation to blend in
+  spriteSize: number;
+  rotation?: number;
+  sceneMotion: string; // CSS animation for the scene
 }
 
 const LEVELS: Level[] = [
@@ -30,67 +30,67 @@ const LEVELS: Level[] = [
     id: 1,
     name: "🐕 Dog Park",
     scene: level1,
-    waldogePosition: { x: 14, y: 38 }, // sitting on a bench
-    hitRadius: 3,
+    waldogePosition: { x: 14, y: 40 }, // sitting on a bench
+    hitRadius: 3.5,
     hint: "Check the benches!",
-    spriteSize: 2.8,
-    opacity: 0.55,
+    spriteSize: 3.5,
     rotation: -2,
+    sceneMotion: "sceneDrift1",
   },
   {
     id: 2,
     name: "🏖️ Beach",
     scene: level2,
-    waldogePosition: { x: 68, y: 75 }, // among the crowd near umbrellas
-    hitRadius: 2.5,
+    waldogePosition: { x: 72, y: 72 },
+    hitRadius: 3,
     hint: "Near the umbrellas...",
-    spriteSize: 2.2,
-    opacity: 0.5,
+    spriteSize: 3,
     rotation: 3,
+    sceneMotion: "sceneDrift2",
   },
   {
     id: 3,
     name: "🎢 Amusement Park",
     scene: level3,
-    waldogePosition: { x: 38, y: 82 }, // lost in the crowd
-    hitRadius: 2.2,
-    hint: "Down in the crowd near the bumper cars!",
-    spriteSize: 1.8,
-    opacity: 0.45,
+    waldogePosition: { x: 42, y: 78 }, // in one of the bumper cars
+    hitRadius: 2.5,
+    hint: "Check the rides!",
+    spriteSize: 2.5,
     rotation: -1,
+    sceneMotion: "sceneDrift3",
   },
   {
     id: 4,
     name: "👻 Haunted House",
     scene: level4,
-    waldogePosition: { x: 25, y: 68 }, // near the suits of armor
-    hitRadius: 2,
+    waldogePosition: { x: 25, y: 65 },
+    hitRadius: 2.5,
     hint: "Hiding near something metallic...",
-    spriteSize: 1.8,
-    opacity: 0.4,
+    spriteSize: 2.5,
     rotation: 5,
+    sceneMotion: "sceneDrift4",
   },
   {
     id: 5,
     name: "🌴 Jungle",
     scene: level5,
-    waldogePosition: { x: 62, y: 72 }, // hidden in the foliage near water
-    hitRadius: 1.8,
+    waldogePosition: { x: 58, y: 70 },
+    hitRadius: 2,
     hint: "Near the water's edge!",
-    spriteSize: 1.5,
-    opacity: 0.38,
+    spriteSize: 2,
     rotation: -3,
+    sceneMotion: "sceneDrift5",
   },
   {
     id: 6,
     name: "📈 Wall Street",
     scene: level6,
-    waldogePosition: { x: 78, y: 68 }, // blended into the crowd
-    hitRadius: 1.5,
+    waldogePosition: { x: 76, y: 65 },
+    hitRadius: 2,
     hint: "He's near a hot dog stand!",
-    spriteSize: 1.3,
-    opacity: 0.35,
+    spriteSize: 1.8,
     rotation: 2,
+    sceneMotion: "sceneDrift6",
   },
 ];
 
@@ -435,15 +435,18 @@ export const WheresWaldoge: FC = () => {
             height: "100%",
           }}
         >
-          {/* Scene background */}
+          {/* Scene background with motion */}
           <img
             src={level.scene}
             alt={level.name}
             className="w-full h-full object-cover"
+            style={{
+              animation: `${level.sceneMotion} 8s ease-in-out infinite alternate`,
+            }}
             draggable={false}
           />
 
-          {/* Hidden Waldoge */}
+          {/* Hidden Waldoge - fully visible, no transparency */}
           <div
             className="absolute"
             style={{
@@ -451,18 +454,14 @@ export const WheresWaldoge: FC = () => {
               top: `${level.waldogePosition.y}%`,
               transform: `translate(-50%, -50%) rotate(${level.rotation || 0}deg)`,
               width: `${level.spriteSize}%`,
-              height: `${level.spriteSize * 1.4}%`,
+              height: `${level.spriteSize * 1.5}%`,
+              animation: `${level.sceneMotion} 8s ease-in-out infinite alternate`,
             }}
           >
             <img
               src={waldogeSprite}
               alt="Waldoge"
               className="w-full h-full object-contain"
-              style={{
-                opacity: level.opacity,
-                filter: "brightness(0.85) saturate(0.8)",
-                mixBlendMode: "multiply",
-              }}
               draggable={false}
             />
           </div>
