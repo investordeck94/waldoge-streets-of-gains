@@ -435,15 +435,18 @@ export const WheresWaldoge: FC = () => {
             height: "100%",
           }}
         >
-          {/* Scene background */}
+          {/* Scene background with motion */}
           <img
             src={level.scene}
             alt={level.name}
             className="w-full h-full object-cover"
+            style={{
+              animation: `${level.sceneMotion} 8s ease-in-out infinite alternate`,
+            }}
             draggable={false}
           />
 
-          {/* Hidden Waldoge */}
+          {/* Hidden Waldoge - fully visible, no transparency */}
           <div
             className="absolute"
             style={{
@@ -451,18 +454,14 @@ export const WheresWaldoge: FC = () => {
               top: `${level.waldogePosition.y}%`,
               transform: `translate(-50%, -50%) rotate(${level.rotation || 0}deg)`,
               width: `${level.spriteSize}%`,
-              height: `${level.spriteSize * 1.4}%`,
+              height: `${level.spriteSize * 1.5}%`,
+              animation: `${level.sceneMotion} 8s ease-in-out infinite alternate`,
             }}
           >
             <img
               src={waldogeSprite}
               alt="Waldoge"
               className="w-full h-full object-contain"
-              style={{
-                opacity: level.opacity,
-                filter: "brightness(0.85) saturate(0.8)",
-                mixBlendMode: "multiply",
-              }}
               draggable={false}
             />
           </div>
