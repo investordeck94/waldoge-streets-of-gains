@@ -449,16 +449,20 @@ export const WheresWaldoge: FC = () => {
             style={{
               left: `${level.waldogePosition.x}%`,
               top: `${level.waldogePosition.y}%`,
-              transform: "translate(-50%, -50%)",
-              width: `${level.hitRadius * 2}%`,
-              height: `${level.hitRadius * 2 * 1.5}%`,
+              transform: `translate(-50%, -50%) rotate(${level.rotation || 0}deg)`,
+              width: `${level.spriteSize}%`,
+              height: `${level.spriteSize * 1.4}%`,
             }}
           >
             <img
               src={waldogeSprite}
               alt="Waldoge"
-              className="w-full h-full object-contain opacity-70"
-              style={{ filter: "brightness(0.9)" }}
+              className="w-full h-full object-contain"
+              style={{
+                opacity: level.opacity,
+                filter: "brightness(0.85) saturate(0.8)",
+                mixBlendMode: "multiply",
+              }}
               draggable={false}
             />
           </div>
