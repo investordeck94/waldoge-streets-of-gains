@@ -369,7 +369,7 @@ function drawStickFigure(
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(-e.facing * limbLen * 0.6, shoulderY + 10);
     // Draw bat in hand during punch
-    if (hasBat) {
+    if (weaponType) {
       ctx.stroke();
       ctx.beginPath();
       const batX = e.facing * limbLen * 1.5;
@@ -413,7 +413,7 @@ function drawStickFigure(
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(limbLen * 0.7, shoulderY + limbLen * 0.8 - swing);
     // Draw bat held at side when idle/walking
-    if (hasBat) {
+    if (weaponType) {
       ctx.stroke();
       ctx.beginPath();
       const handX = e.facing * limbLen * 0.7;
@@ -1801,7 +1801,7 @@ export const StreetBrawler: FC = () => {
         ctx.fillText(`💥 DMG x1.5 ${Math.ceil(g.dmgBoostTimer / 60)}s`, 20, boostY);
         boostY += 14;
       }
-      if (g.weaponType !== null) {
+      if (g.weaponType) {
         const ws = WEAPON_STATS[g.weaponType];
         ctx.font = "bold 11px monospace";
         ctx.fillStyle = ws.color;
@@ -1835,7 +1835,7 @@ export const StreetBrawler: FC = () => {
         ctx.fillText("🔥", px, py + 4);
       }
 
-      drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType !== null);
+      drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType);
       drawHitEffects(ctx, g.effects, g.camX);
 
       g.animFrame = requestAnimationFrame(tick);
