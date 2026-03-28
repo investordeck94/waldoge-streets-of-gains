@@ -813,7 +813,121 @@ export const StreetBrawler: FC = () => {
         e.attackCooldown = Math.max(-1, e.attackCooldown - 1);
         if (e.state === "hit" && e.stateTimer <= 0) e.state = "idle";
         if ((e.state === "punch" || e.state === "kick") && e.stateTimer <= 0) e.state = "idle";
+        if ((e.state === "boss_charge" || e.state === "boss_slam" || e.state === "boss_throw") && e.stateTimer <= 0) e.state = "idle";
 
+        // Boss AI
+        if (e.isBoss) {
+          // Update boss phase based on HP
+          if (e.hp <= e.maxHp * 0.3) e.bossPhase = 3;
+          else if (e.hp <= e.maxHp * 0.6) e.bossPhase = 2;
+
+          const bossStates: AttackState[] = ["boss_charge", "boss_slam", "boss_throw", "punch", "kick"];
+          const isBossAttacking = bossStates.includes(e.state) || e.state === "hit";
+
+          if (!isBossAttacking) {
+            const dx = p.x - e.x;
+            const dist = Math.abs(dx);
+            e.facing = dx > 0 ? 1 : -1;
+            const phaseSpeed = 1.5 + (e.bossPhase || 1) * 0.5;
+
+            if (e.attackCooldown <= 0) {
+              // Choose attack based on distance and phase
+              const phase = e.bossPhase || 1;
+              if (dist > 250 && phase >= 2) {
+                // Charge attack
+                e.state = "boss_charge";
+                e.stateTimer = 30;
+                e.attackCooldown = 50 - phase * 8;
+              } else if (dist > 150) {
+                // Throw projectile
+                e.state = "boss_throw";
+                e.stateTimer = 20;
+                e.attackCooldown = 40 - phase * 5;
+              } else if (dist < 80) {
+                // Slam (AOE)
+                e.state = "boss_slam";
+                e.stateTimer = 25;
+                e.attackCooldown = 45 - phase * 8;
+              } else {
+                // Regular attacks
+                const atk = Math.random() > 0.5 ? "punch" : "kick";
+                e.state = atk;
+                e.stateTimer = atk === "punch" ? 14 : 17;
+                e.attackCooldown = 25 - phase * 3;
+              }
+            } else {
+              // Walk toward player
+              if (dist > 60) {
+                e.x += e.facing * phaseSpeed;
+                e.state = "walk";
+              } else {
+                e.state = "idle";
+              }
+            }
+          }
+
+          // Boss charge movement
+          if (e.state === "boss_charge" && e.stateTimer > 5) {
+            e.x += e.facing * BOSS_CHARGE_SPEED;
+          }
+
+          // Boss attack hit detection
+          const bossHitFrame = (
+            (e.state === "punch" && e.stateTimer === 9) ||
+            (e.state === "kick" && e.stateTimer === 11) ||
+            (e.state === "boss_charge" && e.stateTimer === 10) ||
+            (e.state === "boss_slam" && e.stateTimer === 12)
+          );
+
+          // Boss throw spawns projectile
+          if (e.state === "boss_throw" && e.stateTimer === 10) {
+            g.projectiles.push({
+              x: e.x + e.facing * 30, y: e.y - 30,
+              vx: e.facing * 7, vy: -2,
+              timer: 120,
+            });
+          }
+
+          if (bossHitFrame) {
+            const range = e.state === "boss_slam" ? 100 : e.state === "boss_charge" ? 60 : 55;
+            const dmg = e.state === "boss_slam" ? 20 : e.state === "boss_charge" ? 15 : e.state === "punch" ? 10 : 12;
+            const edx = p.x - e.x;
+            const inRange = e.state === "boss_slam"
+              ? Math.abs(edx) < range && Math.abs(p.y - e.y) < 70
+              : edx * e.facing > 0 && Math.abs(edx) < range && Math.abs(p.y - e.y) < 60;
+
+            if (inRange && p.state !== "dead") {
+              p.hp -= dmg;
+              p.state = "hit";
+              p.stateTimer = e.state === "boss_slam" ? 15 : 10;
+              p.vx = e.facing * (e.state === "boss_charge" ? 10 : e.state === "boss_slam" ? 6 : 4);
+              if (e.state === "boss_slam") p.vy = -8;
+              c.hitCount = 0;
+              c.multiplier = 1;
+              setComboCount(0);
+              setPlayerHp(Math.max(0, p.hp));
+              g.effects.push({
+                x: p.x, y: p.y - 50, timer: 25,
+                text: `${dmg}`, color: "#ff0000", size: 18,
+              });
+              if (p.hp <= 0) {
+                p.state = "dead";
+                g.running = false;
+                setGameState("gameover");
+                return;
+              }
+            }
+
+            // Boss slam shockwave effect
+            if (e.state === "boss_slam" && e.stateTimer === 12) {
+              g.effects.push({ x: e.x, y: GROUND_Y, timer: 20, text: "💀 SLAM!", color: "#ff0000", size: 22 });
+            }
+          }
+
+          continue; // skip normal enemy AI
+        }
+
+        // Normal enemy AI
         if (e.state !== "hit" && e.state !== "punch" && e.state !== "kick") {
           const dx = p.x - e.x;
           const dist = Math.abs(dx);
@@ -854,6 +968,38 @@ export const StreetBrawler: FC = () => {
         }
       }
 
+      // Projectile physics
+      g.projectiles = g.projectiles.filter(proj => {
+        proj.x += proj.vx;
+        proj.y += proj.vy;
+        proj.vy += 0.15;
+        proj.timer--;
+        if (proj.y >= GROUND_Y) return false;
+
+        // Hit player
+        const dx = Math.abs(p.x - proj.x);
+        const dy = Math.abs(p.y - proj.y);
+        if (dx < 25 && dy < 35 && p.state !== "dead") {
+          p.hp -= 12;
+          p.state = "hit";
+          p.stateTimer = 10;
+          p.vx = proj.vx > 0 ? 4 : -4;
+          c.hitCount = 0;
+          c.multiplier = 1;
+          setComboCount(0);
+          setPlayerHp(Math.max(0, p.hp));
+          g.effects.push({ x: proj.x, y: proj.y - 20, timer: 20, text: "12", color: "#ff4444", size: 14 });
+          if (p.hp <= 0) {
+            p.state = "dead";
+            g.running = false;
+            setGameState("gameover");
+            return false;
+          }
+          return false;
+        }
+        return proj.timer > 0;
+      });
+
       // Power-up physics & collection
       g.speedBoostTimer = Math.max(0, g.speedBoostTimer - 1);
       g.dmgBoostTimer = Math.max(0, g.dmgBoostTimer - 1);
@@ -876,7 +1022,7 @@ export const StreetBrawler: FC = () => {
               g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "+25 HP", color: "#00ff00", size: 16 });
               break;
             case "speed":
-              g.speedBoostTimer = 300; // 5 seconds at 60fps
+              g.speedBoostTimer = 300;
               g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "SPEED UP!", color: "#00ccff", size: 16 });
               break;
             case "energy":
@@ -885,11 +1031,11 @@ export const StreetBrawler: FC = () => {
               g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "+30 ⚡", color: "#ffcc00", size: 16 });
               break;
             case "damage":
-              g.dmgBoostTimer = 300; // 5 seconds
+              g.dmgBoostTimer = 300;
               g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "DMG BOOST!", color: "#ff4444", size: 16 });
               break;
           }
-          return false; // remove collected
+          return false;
         }
         return pu.timer > 0;
       });
@@ -911,7 +1057,14 @@ export const StreetBrawler: FC = () => {
             setGameState("victory");
             return;
           }
-          g.enemies = spawnEnemies(g.wave, p.x);
+          const isBossWave = g.wave === WAVES.length - 1;
+          if (isBossWave) {
+            g.enemies = [spawnBoss(p.x)];
+            g.projectiles = [];
+            g.effects.push({ x: p.x, y: p.y - 100, timer: 90, text: "⚠ BOSS FIGHT! ⚠", color: "#ff0000", size: 24 });
+          } else {
+            g.enemies = spawnEnemies(g.wave, p.x);
+          }
         }
       }
 
