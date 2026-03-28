@@ -684,7 +684,8 @@ export const StreetBrawler: FC = () => {
         setEnergy(c.specialEnergy);
         setComboName("GROUND POUND!");
         g.effects.push({ x: p.x, y: p.y - 80, timer: 40, text: "GROUND POUND!", color: "#ff6600", size: 18 });
-        didSpecial = true;
+         didSpecial = true;
+         sfx(() => SFX.groundPound());
         setTimeout(() => setComboName(""), 1000);
       }
 
