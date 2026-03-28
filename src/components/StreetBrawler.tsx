@@ -976,6 +976,8 @@ export const StreetBrawler: FC = () => {
       { x: 2200, y: GROUND_Y, collected: false },
       { x: 2800, y: GROUND_Y, collected: false },
     ];
+    g.alleyObjects = spawnAlleyObjects();
+    g.animFrameCount = 0;
     setWave(0);
     setScore(0);
     setPlayerHp(100);
