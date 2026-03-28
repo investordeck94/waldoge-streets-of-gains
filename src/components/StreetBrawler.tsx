@@ -780,6 +780,7 @@ export const StreetBrawler: FC = () => {
             setComboCount(c.hitCount);
 
             // Hit effect
+            sfx(() => SFX.comboHit(c.hitCount));
             g.effects.push({
               x: e.x, y: e.y - 50, timer: 25,
               text: c.hitCount > 2 ? `${dmg} x${c.hitCount}` : `${dmg}`,
