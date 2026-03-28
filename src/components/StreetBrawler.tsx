@@ -1802,10 +1802,12 @@ export const StreetBrawler: FC = () => {
         boostY += 14;
       }
       if (g.weaponType !== null) {
+        const ws = WEAPON_STATS[g.weaponType];
         ctx.font = "bold 11px monospace";
-        ctx.fillStyle = "#ff8c00";
+        ctx.fillStyle = ws.color;
         ctx.textAlign = "left";
-        ctx.fillText(`🏏 BAT ${Math.ceil(g.batTimer / 60)}s`, 20, boostY);
+        const ammoText = g.weaponType === "shuriken" ? ` x${g.shurikenAmmo}` : "";
+        ctx.fillText(`${ws.icon} ${ws.name} ${Math.ceil(g.weaponTimer / 60)}s${ammoText}`, 20, boostY);
       }
 
       for (const e of g.enemies) {
