@@ -1006,13 +1006,15 @@ export const StreetBrawler: FC = () => {
     g.projectiles = [];
     g.speedBoostTimer = 0;
     g.dmgBoostTimer = 0;
-    g.batTimer = 0;
-    // Spawn weapon pickups along the level
+    g.weaponType = null;
+    g.weaponTimer = 0;
+    g.shurikenAmmo = 0;
+    // Spawn weapon pickups along the level (varied types)
     g.weapons = [
-      { x: 600, y: GROUND_Y, collected: false },
-      { x: 1400, y: GROUND_Y, collected: false },
-      { x: 2200, y: GROUND_Y, collected: false },
-      { x: 2800, y: GROUND_Y, collected: false },
+      { x: 600, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
+      { x: 1400, y: GROUND_Y, vy: 0, type: "sword", collected: false, timer: 900 },
+      { x: 2200, y: GROUND_Y, vy: 0, type: "shuriken", collected: false, timer: 900 },
+      { x: 2800, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
     ];
     g.alleyObjects = spawnAlleyObjects();
     g.animFrameCount = 0;
