@@ -1305,6 +1305,13 @@ export const StreetBrawler: FC = () => {
                 {wave === WAVES.length - 1 ? "⚠ BOSS" : `Wave ${wave + 1}/${WAVES.length}`}
               </span>
               <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
+              <button
+                onClick={() => { const v = !sfxEnabled; setSfxEnabled(v); sfxRef.current = v; }}
+                className="p-1 rounded hover:bg-muted/50 transition"
+                title={sfxEnabled ? "Mute SFX" : "Unmute SFX"}
+              >
+                {sfxEnabled ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
+              </button>
             </div>
 
             <canvas
