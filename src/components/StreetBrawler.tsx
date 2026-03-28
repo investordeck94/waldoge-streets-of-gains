@@ -1,7 +1,8 @@
 import { FC, useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Swords, Heart, RotateCcw, Play, Trophy, Zap } from "lucide-react";
+import { Swords, Heart, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
+import { SFX } from "@/lib/gameSfx";
 
 type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
   | "uppercut" | "spinkick" | "groundpound" | "dashpunch"
