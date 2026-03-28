@@ -569,6 +569,7 @@ export const StreetBrawler: FC = () => {
     g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
     g.effects = [];
     g.powerups = [];
+    g.projectiles = [];
     g.speedBoostTimer = 0;
     g.dmgBoostTimer = 0;
     setWave(0);
