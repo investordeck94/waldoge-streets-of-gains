@@ -867,6 +867,7 @@ export const StreetBrawler: FC = () => {
                 // Slam (AOE)
                 e.state = "boss_slam";
                 e.stateTimer = 25;
+                sfx(() => SFX.bossSlam());
                 e.attackCooldown = 45 - phase * 8;
               } else {
                 // Regular attacks
