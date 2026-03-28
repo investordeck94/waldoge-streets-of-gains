@@ -270,7 +270,8 @@ function drawStickFigure(
   e: Entity,
   camX: number,
   headImg: HTMLImageElement | null,
-  isPlayer: boolean
+  isPlayer: boolean,
+  hasBat = false,
 ) {
   const sx = e.x - camX;
   const sy = e.y;
