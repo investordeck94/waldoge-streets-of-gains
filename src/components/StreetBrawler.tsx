@@ -1078,10 +1078,16 @@ export const StreetBrawler: FC = () => {
       drawCity(ctx, g.camX, CANVAS_W);
 
       // Wave text
-      ctx.fillStyle = "#ffd70088";
-      ctx.font = "bold 14px monospace";
-      ctx.textAlign = "center";
-      ctx.fillText(`WAVE ${g.wave + 1}/${WAVES.length}`, CANVAS_W / 2, 25);
+      const isBossWave = g.wave === WAVES.length - 1;
+      const boss = g.enemies.find(e => e.isBoss && e.state !== "dead");
+      if (boss) {
+        drawBossHpBar(ctx, boss, CANVAS_W);
+      } else {
+        ctx.fillStyle = "#ffd70088";
+        ctx.font = "bold 14px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(`WAVE ${g.wave + 1}/${WAVES.length}`, CANVAS_W / 2, 25);
+      }
 
       // Combo counter on canvas
       if (c.hitCount > 1) {
