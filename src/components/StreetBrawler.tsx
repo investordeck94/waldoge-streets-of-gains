@@ -614,6 +614,18 @@ export const StreetBrawler: FC = () => {
                 x: e.x, y: e.y - 70, timer: 35,
                 text: `+${killBonus}`, color: "#00ff00", size: 16,
               });
+              // Drop power-up
+              if (Math.random() < DROP_CHANCE) {
+                const types: PowerUp["type"][] = ["health", "speed", "energy", "damage"];
+                const weights = [0.35, 0.25, 0.25, 0.15];
+                let r = Math.random();
+                let pType: PowerUp["type"] = "health";
+                for (let ti = 0; ti < types.length; ti++) {
+                  r -= weights[ti];
+                  if (r <= 0) { pType = types[ti]; break; }
+                }
+                g.powerups.push({ x: e.x, y: e.y - 30, vy: -3, type: pType, timer: 600 });
+              }
             }
           }
         }
