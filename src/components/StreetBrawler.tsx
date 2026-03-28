@@ -2091,7 +2091,7 @@ export const StreetBrawler: FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="space-y-3 w-full"
+            className="game-wrapper space-y-3 w-full"
           >
             <div className="flex justify-between items-center glass-card px-4 py-2 text-sm">
               <div className="flex items-center gap-2">
