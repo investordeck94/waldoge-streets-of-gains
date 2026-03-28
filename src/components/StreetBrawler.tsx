@@ -301,7 +301,7 @@ function drawStickFigure(
   camX: number,
   headImg: HTMLImageElement | null,
   isPlayer: boolean,
-  hasBat = false,
+  weaponType: WeaponType | null = null,
 ) {
   const sx = e.x - camX;
   const sy = e.y;
