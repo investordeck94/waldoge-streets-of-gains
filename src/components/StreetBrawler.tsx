@@ -551,6 +551,8 @@ export const StreetBrawler: FC = () => {
     projectiles: Projectile[];
     speedBoostTimer: number;
     dmgBoostTimer: number;
+    weapons: WeaponPickup[];
+    batTimer: number;
   }>({
     player: createPlayer(),
     enemies: [],
@@ -568,6 +570,8 @@ export const StreetBrawler: FC = () => {
     projectiles: [],
     speedBoostTimer: 0,
     dmgBoostTimer: 0,
+    weapons: [],
+    batTimer: 0,
   });
 
   useEffect(() => {
