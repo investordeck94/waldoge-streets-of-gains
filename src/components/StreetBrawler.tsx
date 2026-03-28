@@ -4,7 +4,8 @@ import { Swords, Heart, RotateCcw, Play, Trophy, Zap } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
 
 type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
-  | "uppercut" | "spinkick" | "groundpound" | "dashpunch";
+  | "uppercut" | "spinkick" | "groundpound" | "dashpunch"
+  | "boss_charge" | "boss_slam" | "boss_throw";
 
 interface Entity {
   x: number;
