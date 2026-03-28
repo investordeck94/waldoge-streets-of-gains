@@ -1680,6 +1680,7 @@ export const StreetBrawler: FC = () => {
           x: p.x + p.facing * 20, y: p.y - 40,
           vx: p.facing * 9, vy: 0,
           timer: 90,
+          isPlayerProjectile: true,
         });
         g.effects.push({ x: p.x, y: p.y - 60, timer: 20, text: "✦", color: "#cc44ff", size: 14 });
         if (g.shurikenAmmo <= 0) { g.weaponType = null; g.weaponTimer = 0; }
