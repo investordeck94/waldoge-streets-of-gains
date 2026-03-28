@@ -1833,25 +1833,57 @@ export const StreetBrawler: FC = () => {
       for (const wp of g.weapons) {
         if (wp.collected) continue;
         const wx = wp.x - g.camX;
+        if (wx < -40 || wx > CANVAS_W + 40) continue;
         const wy = wp.y;
         const bob = Math.sin(Date.now() / 300) * 2;
+        const ws = WEAPON_STATS[wp.type];
+        // Despawn flash
+        if (wp.timer < 120 && Math.floor(wp.timer / 10) % 2 === 0) {
+          ctx.globalAlpha = 0.4;
+        }
         // Glow
         ctx.beginPath();
         ctx.arc(wx, wy - 12 + bob, 16, 0, Math.PI * 2);
         const wGlow = ctx.createRadialGradient(wx, wy - 12 + bob, 3, wx, wy - 12 + bob, 16);
-        wGlow.addColorStop(0, "rgba(255, 140, 0, 0.5)");
-        wGlow.addColorStop(1, "rgba(255, 140, 0, 0)");
+        wGlow.addColorStop(0, ws.color + "88");
+        wGlow.addColorStop(1, ws.color + "00");
         ctx.fillStyle = wGlow;
         ctx.fill();
-        // Draw bat shape
+        // Draw weapon shape
         ctx.save();
         ctx.translate(wx, wy - 12 + bob);
         ctx.rotate(-Math.PI / 4);
-        ctx.fillStyle = "#8B4513";
-        ctx.fillRect(-3, -18, 6, 28);
-        ctx.fillStyle = "#A0522D";
-        ctx.fillRect(-5, -22, 10, 8);
+        if (wp.type === "bat") {
+          ctx.fillStyle = "#8B4513";
+          ctx.fillRect(-3, -18, 6, 28);
+          ctx.fillStyle = "#A0522D";
+          ctx.fillRect(-5, -22, 10, 8);
+        } else if (wp.type === "sword") {
+          ctx.fillStyle = "#ccc";
+          ctx.fillRect(-1.5, -22, 3, 32);
+          ctx.fillStyle = "#888";
+          ctx.fillRect(-5, 7, 10, 4);
+          ctx.fillStyle = "#664400";
+          ctx.fillRect(-2.5, 11, 5, 8);
+        } else if (wp.type === "shuriken") {
+          const spin = Date.now() / 200;
+          ctx.rotate(spin);
+          ctx.fillStyle = "#cc44ff";
+          for (let i = 0; i < 4; i++) {
+            ctx.save();
+            ctx.rotate((i * Math.PI) / 2);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-3, -10);
+            ctx.lineTo(0, -12);
+            ctx.lineTo(3, -10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+        }
         ctx.restore();
+        ctx.globalAlpha = 1;
       }
 
       // Boost indicators
