@@ -1079,10 +1079,14 @@ export const StreetBrawler: FC = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    canvas.width = CANVAS_W;
-    canvas.height = CANVAS_H;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = CANVAS_W * dpr;
+    canvas.height = CANVAS_H * dpr;
+    canvas.style.width = `${CANVAS_W}px`;
+    canvas.style.height = `${CANVAS_H}px`;
     const ctx = canvas.getContext("2d");
     if (ctx) {
+      ctx.scale(dpr, dpr);
       ctx.fillStyle = "#0a0a12";
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     }
