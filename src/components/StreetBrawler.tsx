@@ -924,6 +924,8 @@ export const StreetBrawler: FC = () => {
     dmgBoostTimer: number;
     weapons: WeaponPickup[];
     batTimer: number;
+    alleyObjects: AlleyObject[];
+    animFrameCount: number;
   }>({
     player: createPlayer(),
     enemies: [],
