@@ -663,6 +663,10 @@ export const StreetBrawler: FC = () => {
                 text: combo.name, color: "#FFD700", size: 20,
               });
               didSpecial = true;
+              // SFX for special moves
+              if (combo.move === "uppercut") sfx(() => SFX.uppercut());
+              else if (combo.move === "spinkick") sfx(() => SFX.spinKick());
+              else if (combo.move === "dashpunch") sfx(() => SFX.dashPunch());
               setTimeout(() => setComboName(""), 1000);
               break;
             }
