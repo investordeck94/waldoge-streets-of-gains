@@ -475,9 +475,9 @@ export const WheresWaldoge: FC = () => {
             style={{
               left: `${level.waldogePosition.x}%`,
               top: `${level.waldogePosition.y}%`,
-              transform: `translate(-50%, -50%) rotate(${level.rotation || 0}deg)`,
+              transform: `translate(-50%, -100%)`,
               width: `${level.spriteSize}%`,
-              height: `${level.spriteSize * 1.5}%`,
+              height: `${level.spriteSize}%`,
               animation: `${level.sceneMotion} 12s ease-in-out infinite`,
               opacity: 1,
             }}
