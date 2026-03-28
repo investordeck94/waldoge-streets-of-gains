@@ -1006,6 +1006,7 @@ export const StreetBrawler: FC = () => {
         const dx = Math.abs(p.x - proj.x);
         const dy = Math.abs(p.y - proj.y);
         if (dx < 25 && dy < 35 && p.state !== "dead") {
+          sfx(() => SFX.hit());
           p.hp -= 12;
           p.state = "hit";
           p.stateTimer = 10;
