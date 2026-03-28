@@ -974,6 +974,7 @@ export const StreetBrawler: FC = () => {
           const dmg = e.state === "punch" ? 5 : 8;
           const edx = p.x - e.x;
           if (edx * e.facing > 0 && Math.abs(edx) < range && Math.abs(p.y - e.y) < 50 && p.state !== "dead") {
+            sfx(() => SFX.hit());
             p.hp -= dmg;
             p.state = "hit";
             p.stateTimer = 8;
