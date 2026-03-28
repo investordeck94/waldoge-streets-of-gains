@@ -1082,6 +1082,7 @@ export const StreetBrawler: FC = () => {
           setWave(g.wave);
           if (g.wave >= WAVES.length) {
             g.running = false;
+            sfx(() => SFX.victory());
             setGameState("victory");
             return;
           }
