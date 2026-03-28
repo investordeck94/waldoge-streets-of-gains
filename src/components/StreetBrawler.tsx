@@ -44,6 +44,16 @@ interface PowerUp {
   timer: number;
 }
 
+interface WeaponPickup {
+  x: number;
+  y: number;
+  collected: boolean;
+}
+
+const BAT_DURATION = 600; // frames (~10 seconds at 60fps)
+const BAT_RANGE_BONUS = 25;
+const BAT_DMG_MULTIPLIER = 1.8;
+
 const POWERUP_COLORS: Record<string, string> = {
   health: "#00ff00",
   speed: "#00ccff",
