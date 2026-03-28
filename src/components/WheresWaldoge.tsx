@@ -13,6 +13,22 @@ import level5 from "@/assets/level-5-jungle.jpg";
 import level6 from "@/assets/level-6-wallstreet.jpg";
 import waldogeSprite from "@/assets/waldoge-find.png";
 
+interface SpawnPoint {
+  position: { x: number; y: number };
+  hint: string;
+  rotation: number;
+}
+
+interface LevelConfig {
+  id: number;
+  name: string;
+  scene: string;
+  hitRadius: number;
+  spriteSize: number;
+  sceneMotion: string;
+  spawns: SpawnPoint[];
+}
+
 interface Level {
   id: number;
   name: string;
@@ -22,77 +38,82 @@ interface Level {
   hint: string;
   spriteSize: number;
   rotation?: number;
-  sceneMotion: string; // CSS animation for the scene
+  sceneMotion: string;
 }
 
-const LEVELS: Level[] = [
+const LEVEL_CONFIGS: LevelConfig[] = [
   {
-    id: 1,
-    name: "🐕 Dog Park",
-    scene: level1,
-    waldogePosition: { x: 82, y: 18 }, // tucked behind the playground equipment
-    hitRadius: 3.5,
-    hint: "He's near the playground!",
-    spriteSize: 6,
-    rotation: -3,
-    sceneMotion: "sceneDrift1",
+    id: 1, name: "🐕 Dog Park", scene: level1, hitRadius: 3.5, spriteSize: 6, sceneMotion: "sceneDrift1",
+    spawns: [
+      { position: { x: 82, y: 18 }, hint: "Near the playground!", rotation: -3 },
+      { position: { x: 15, y: 72 }, hint: "By the pond!", rotation: 2 },
+      { position: { x: 50, y: 25 }, hint: "Among the dogs in the middle!", rotation: -1 },
+      { position: { x: 88, y: 75 }, hint: "Bottom right corner!", rotation: 4 },
+    ],
   },
   {
-    id: 2,
-    name: "🏖️ Beach",
-    scene: level2,
-    waldogePosition: { x: 88, y: 55 }, // far right among the crowd
-    hitRadius: 3,
-    hint: "Way down the beach...",
-    spriteSize: 5.5,
-    rotation: 2,
-    sceneMotion: "sceneDrift2",
+    id: 2, name: "🏖️ Beach", scene: level2, hitRadius: 3, spriteSize: 5.5, sceneMotion: "sceneDrift2",
+    spawns: [
+      { position: { x: 88, y: 55 }, hint: "Way down the beach...", rotation: 2 },
+      { position: { x: 20, y: 75 }, hint: "Near the towels!", rotation: -2 },
+      { position: { x: 55, y: 30 }, hint: "Close to the water!", rotation: 3 },
+      { position: { x: 75, y: 82 }, hint: "By the sandcastle!", rotation: -1 },
+    ],
   },
   {
-    id: 3,
-    name: "🎢 Amusement Park",
-    scene: level3,
-    waldogePosition: { x: 12, y: 82 }, // bottom left corner in the crowd
-    hitRadius: 3,
-    hint: "Near the cotton candy!",
-    spriteSize: 5,
-    rotation: -2,
-    sceneMotion: "sceneDrift3",
+    id: 3, name: "🎢 Amusement Park", scene: level3, hitRadius: 3, spriteSize: 5, sceneMotion: "sceneDrift3",
+    spawns: [
+      { position: { x: 12, y: 82 }, hint: "Near the cotton candy!", rotation: -2 },
+      { position: { x: 80, y: 65 }, hint: "By the carousel!", rotation: 3 },
+      { position: { x: 45, y: 45 }, hint: "In the middle of the crowd!", rotation: -1 },
+      { position: { x: 90, y: 85 }, hint: "Far right near the games!", rotation: 2 },
+    ],
   },
   {
-    id: 4,
-    name: "👻 Haunted House",
-    scene: level4,
-    waldogePosition: { x: 88, y: 30 }, // up on the balcony area
-    hitRadius: 2.5,
-    hint: "Look up high...",
-    spriteSize: 5,
-    rotation: 4,
-    sceneMotion: "sceneDrift4",
+    id: 4, name: "👻 Haunted House", scene: level4, hitRadius: 2.5, spriteSize: 5, sceneMotion: "sceneDrift4",
+    spawns: [
+      { position: { x: 88, y: 30 }, hint: "Look up high...", rotation: 4 },
+      { position: { x: 15, y: 55 }, hint: "Near the armor!", rotation: -3 },
+      { position: { x: 55, y: 80 }, hint: "On the ground floor!", rotation: 2 },
+      { position: { x: 75, y: 60 }, hint: "By the doorway!", rotation: -1 },
+    ],
   },
   {
-    id: 5,
-    name: "🌴 Jungle",
-    scene: level5,
-    waldogePosition: { x: 15, y: 82 }, // hidden among flowers at bottom left
-    hitRadius: 2.5,
-    hint: "Down among the flowers!",
-    spriteSize: 4.5,
-    rotation: -5,
-    sceneMotion: "sceneDrift5",
+    id: 5, name: "🌴 Jungle", scene: level5, hitRadius: 2.5, spriteSize: 4.5, sceneMotion: "sceneDrift5",
+    spawns: [
+      { position: { x: 15, y: 82 }, hint: "Among the flowers!", rotation: -5 },
+      { position: { x: 78, y: 40 }, hint: "Near the waterfall!", rotation: 3 },
+      { position: { x: 35, y: 25 }, hint: "Up in the canopy!", rotation: -2 },
+      { position: { x: 85, y: 80 }, hint: "By the tiki masks!", rotation: 4 },
+    ],
   },
   {
-    id: 6,
-    name: "📈 Wall Street",
-    scene: level6,
-    waldogePosition: { x: 92, y: 78 }, // far bottom right in the crowd
-    hitRadius: 2,
-    hint: "At the edge of the crowd!",
-    spriteSize: 4,
-    rotation: 3,
-    sceneMotion: "sceneDrift6",
+    id: 6, name: "📈 Wall Street", scene: level6, hitRadius: 2, spriteSize: 4, sceneMotion: "sceneDrift6",
+    spawns: [
+      { position: { x: 92, y: 78 }, hint: "Edge of the crowd!", rotation: 3 },
+      { position: { x: 15, y: 65 }, hint: "Near a hot dog stand!", rotation: -2 },
+      { position: { x: 50, y: 85 }, hint: "Lost among the suits!", rotation: 1 },
+      { position: { x: 82, y: 35 }, hint: "Near the taxis!", rotation: -3 },
+    ],
   },
 ];
+
+function generateLevels(): Level[] {
+  return LEVEL_CONFIGS.map((config) => {
+    const spawn = config.spawns[Math.floor(Math.random() * config.spawns.length)];
+    return {
+      id: config.id,
+      name: config.name,
+      scene: config.scene,
+      waldogePosition: spawn.position,
+      hitRadius: config.hitRadius,
+      hint: spawn.hint,
+      spriteSize: config.spriteSize,
+      rotation: spawn.rotation,
+      sceneMotion: config.sceneMotion,
+    };
+  });
+}
 
 export const WheresWaldoge: FC = () => {
   const [gameState, setGameState] = useState<"menu" | "playing" | "found" | "complete">("menu");
@@ -103,6 +124,7 @@ export const WheresWaldoge: FC = () => {
   const [hintUsed, setHintUsed] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [levels, setLevels] = useState<Level[]>(generateLevels);
 
   // Pan/drag state
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -115,7 +137,7 @@ export const WheresWaldoge: FC = () => {
   const imageRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<number | null>(null);
 
-  const level = LEVELS[currentLevel];
+  const level = levels[currentLevel];
 
   // Timer
   useEffect(() => {
