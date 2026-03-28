@@ -1150,8 +1150,29 @@ export const StreetBrawler: FC = () => {
 
       for (const e of g.enemies) {
         if (e.state === "dead" && e.stateTimer <= 0) continue;
-        drawStickFigure(ctx, e, g.camX, null, false);
+        if (e.isBoss) {
+          drawBoss(ctx, e, g.camX);
+        } else {
+          drawStickFigure(ctx, e, g.camX, null, false);
+        }
       }
+
+      // Draw projectiles
+      for (const proj of g.projectiles) {
+        const px = proj.x - g.camX;
+        const py = proj.y;
+        ctx.beginPath();
+        ctx.arc(px, py, 8, 0, Math.PI * 2);
+        const projGlow = ctx.createRadialGradient(px, py, 2, px, py, 8);
+        projGlow.addColorStop(0, "#ff4444");
+        projGlow.addColorStop(1, "#ff000044");
+        ctx.fillStyle = projGlow;
+        ctx.fill();
+        ctx.font = "12px serif";
+        ctx.textAlign = "center";
+        ctx.fillText("🔥", px, py + 4);
+      }
+
       drawStickFigure(ctx, p, g.camX, g.headImg, true);
       drawHitEffects(ctx, g.effects, g.camX);
 
