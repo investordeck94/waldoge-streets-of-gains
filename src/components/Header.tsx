@@ -73,8 +73,8 @@ export const Header: FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
-      {/* Construction Notice Banner */}
-      <div className="bg-accent/20 border-b border-accent/30 py-2 px-4">
+      {/* Construction Notice Banner - hidden on very small screens */}
+      <div className="bg-accent/20 border-b border-accent/30 py-1 sm:py-2 px-4 hidden sm:block">
         <p className="text-center text-xs sm:text-sm font-medium text-accent">
           🚧 Website under construction — Token gates temporarily lifted 🚧
         </p>
