@@ -1328,6 +1328,18 @@ export const StreetBrawler: FC = () => {
                 }
                 g.powerups.push({ x: e.x, y: e.y - 30, vy: -3, type: pType, timer: 600 });
               }
+              // Drop weapon (separate from power-ups)
+              if (Math.random() < WEAPON_DROP_CHANCE) {
+                const wTypes: WeaponType[] = ["bat", "sword", "shuriken"];
+                const wWeights = [0.4, 0.3, 0.3];
+                let wr = Math.random();
+                let wType: WeaponType = "bat";
+                for (let wi = 0; wi < wTypes.length; wi++) {
+                  wr -= wWeights[wi];
+                  if (wr <= 0) { wType = wTypes[wi]; break; }
+                }
+                g.weapons.push({ x: e.x + 20, y: e.y - 40, vy: -4, type: wType, collected: false, timer: 600 });
+              }
             }
           }
         }
