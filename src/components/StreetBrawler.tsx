@@ -338,6 +338,22 @@ function drawStickFigure(
     ctx.lineTo(e.facing * limbLen * 1.5, shoulderY - 5);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(-e.facing * limbLen * 0.6, shoulderY + 10);
+    // Draw bat in hand during punch
+    if (hasBat) {
+      ctx.stroke();
+      ctx.beginPath();
+      const batX = e.facing * limbLen * 1.5;
+      const batY = shoulderY - 5;
+      ctx.save();
+      ctx.translate(batX, batY);
+      ctx.rotate(e.facing * -0.3);
+      ctx.fillStyle = "#8B4513";
+      ctx.fillRect(-2, -22, 5, 24);
+      ctx.fillStyle = "#A0522D";
+      ctx.fillRect(-4, -26, 9, 8);
+      ctx.restore();
+      ctx.beginPath();
+    }
   } else if (e.state === "kick") {
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(-e.facing * limbLen * 0.5, shoulderY - 8);
