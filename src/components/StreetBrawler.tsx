@@ -919,6 +919,7 @@ export const StreetBrawler: FC = () => {
               : edx * e.facing > 0 && Math.abs(edx) < range && Math.abs(p.y - e.y) < 60;
 
             if (inRange && p.state !== "dead") {
+              sfx(() => SFX.hit());
               p.hp -= dmg;
               p.state = "hit";
               p.stateTimer = e.state === "boss_slam" ? 15 : 10;
