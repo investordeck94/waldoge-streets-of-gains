@@ -971,6 +971,8 @@ export const StreetBrawler: FC = () => {
     batTimer: 0,
     alleyObjects: [],
     animFrameCount: 0,
+    rain: [],
+    splashes: [],
   });
 
   useEffect(() => {
