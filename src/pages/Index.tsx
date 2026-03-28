@@ -67,6 +67,8 @@ const Index = () => {
         return <MemeTab {...tabProps} />;
       case "game":
         return <WheresWaldoge />;
+      case "brawler":
+        return <StreetBrawler />;
       case "about":
         return <AboutTab />;
       default:
