@@ -685,6 +685,51 @@ export const StreetBrawler: FC = () => {
         }
       }
 
+      // Power-up physics & collection
+      g.speedBoostTimer = Math.max(0, g.speedBoostTimer - 1);
+      g.dmgBoostTimer = Math.max(0, g.dmgBoostTimer - 1);
+
+      g.powerups = g.powerups.filter(pu => {
+        pu.vy += 0.3;
+        pu.y += pu.vy;
+        if (pu.y >= GROUND_Y) { pu.y = GROUND_Y; pu.vy = 0; }
+        pu.timer--;
+
+        // Check player pickup (30px radius)
+        const dx = Math.abs(p.x - pu.x);
+        const dy = Math.abs(p.y - pu.y);
+        if (dx < 30 && dy < 40 && p.state !== "dead") {
+          // Apply power-up
+          switch (pu.type) {
+            case "health":
+              p.hp = Math.min(p.maxHp, p.hp + 25);
+              setPlayerHp(p.hp);
+              g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "+25 HP", color: "#00ff00", size: 16 });
+              break;
+            case "speed":
+              g.speedBoostTimer = 300; // 5 seconds at 60fps
+              g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "SPEED UP!", color: "#00ccff", size: 16 });
+              break;
+            case "energy":
+              c.specialEnergy = Math.min(MAX_ENERGY, c.specialEnergy + 30);
+              setEnergy(c.specialEnergy);
+              g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "+30 ⚡", color: "#ffcc00", size: 16 });
+              break;
+            case "damage":
+              g.dmgBoostTimer = 300; // 5 seconds
+              g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "DMG BOOST!", color: "#ff4444", size: 16 });
+              break;
+          }
+          return false; // remove collected
+        }
+        return pu.timer > 0;
+      });
+
+      // Apply speed boost to player movement
+      if (g.speedBoostTimer > 0) {
+        // Speed boost handled by multiplying movement in the movement section
+      }
+
       // Wave progression
       const alive = g.enemies.filter(e => e.state !== "dead");
       if (alive.length === 0) {
