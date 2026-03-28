@@ -2023,11 +2023,17 @@ export const StreetBrawler: FC = () => {
     if (dir === "right") g.keys.add("d");
   }, []);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-4xl mx-auto">
-      <div className="flex items-center gap-3">
-        <Swords className="w-6 h-6 text-primary" />
-        <h2 className="text-xl font-bold text-primary font-heading">Street Brawler</h2>
+    <div ref={containerRef} className="flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl mx-auto">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+        <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Street Brawler</h2>
       </div>
 
       <AnimatePresence mode="wait">
