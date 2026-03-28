@@ -1092,6 +1092,20 @@ export const StreetBrawler: FC = () => {
         return pu.timer > 0;
       });
 
+      // Weapon pickup collection & bat timer
+      g.batTimer = Math.max(0, g.batTimer - 1);
+      for (const wp of g.weapons) {
+        if (wp.collected) continue;
+        const dx = Math.abs(p.x - wp.x);
+        const dy = Math.abs(p.y - wp.y);
+        if (dx < 35 && dy < 40 && p.state !== "dead") {
+          wp.collected = true;
+          g.batTimer = BAT_DURATION;
+          sfx(() => SFX.weaponPickup());
+          g.effects.push({ x: wp.x, y: wp.y - 30, timer: 40, text: "🏏 BAT EQUIPPED!", color: "#ff8c00", size: 16 });
+        }
+      }
+
       // Apply speed boost to player movement
       if (g.speedBoostTimer > 0) {
         // Speed boost handled by multiplying movement in the movement section
