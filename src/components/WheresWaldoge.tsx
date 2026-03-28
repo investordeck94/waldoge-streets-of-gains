@@ -479,6 +479,7 @@ export const WheresWaldoge: FC = () => {
               width: `${level.spriteSize}%`,
               height: `${level.spriteSize * 1.5}%`,
               animation: `${level.sceneMotion} 12s ease-in-out infinite`,
+              opacity: 1,
             }}
           >
             <img
