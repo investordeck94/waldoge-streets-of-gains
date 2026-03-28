@@ -770,9 +770,10 @@ export const StreetBrawler: FC = () => {
 
       if (hitFrame) {
         const spec = SPECIAL_ATTACKS[p.state];
-        const range = spec ? spec.range : (p.state === "punch" ? 45 : 55);
+        const baseRange = spec ? spec.range : (p.state === "punch" ? 45 : 55);
+        const range = baseRange + (g.batTimer > 0 ? BAT_RANGE_BONUS : 0);
         const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
-        const dmgMult = g.dmgBoostTimer > 0 ? 1.5 : 1;
+        const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.batTimer > 0 ? BAT_DMG_MULTIPLIER : 1);
         const kb = spec ? spec.knockback : (p.state === "punch" ? 5 : 6);
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult);
 
