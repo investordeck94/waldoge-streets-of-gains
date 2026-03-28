@@ -593,6 +593,14 @@ export const StreetBrawler: FC = () => {
     g.projectiles = [];
     g.speedBoostTimer = 0;
     g.dmgBoostTimer = 0;
+    g.batTimer = 0;
+    // Spawn weapon pickups along the level
+    g.weapons = [
+      { x: 600, y: GROUND_Y, collected: false },
+      { x: 1400, y: GROUND_Y, collected: false },
+      { x: 2200, y: GROUND_Y, collected: false },
+      { x: 2800, y: GROUND_Y, collected: false },
+    ];
     setWave(0);
     setScore(0);
     setPlayerHp(100);
