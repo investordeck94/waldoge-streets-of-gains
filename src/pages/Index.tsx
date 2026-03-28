@@ -77,7 +77,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col space-bg">
+    <div className="min-h-[100dvh] flex flex-col space-bg overflow-y-auto overflow-x-hidden">
       <Header
         balance={balance}
         tier={tier}
