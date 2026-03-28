@@ -948,6 +948,8 @@ export const StreetBrawler: FC = () => {
     batTimer: number;
     alleyObjects: AlleyObject[];
     animFrameCount: number;
+    rain: RainDrop[];
+    splashes: Splash[];
   }>({
     player: createPlayer(),
     enemies: [],
