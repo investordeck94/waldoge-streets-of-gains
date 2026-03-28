@@ -1079,10 +1079,14 @@ export const StreetBrawler: FC = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    canvas.width = CANVAS_W;
-    canvas.height = CANVAS_H;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = CANVAS_W * dpr;
+    canvas.height = CANVAS_H * dpr;
+    canvas.style.width = `${CANVAS_W}px`;
+    canvas.style.height = `${CANVAS_H}px`;
     const ctx = canvas.getContext("2d");
     if (ctx) {
+      ctx.scale(dpr, dpr);
       ctx.fillStyle = "#0a0a12";
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     }
@@ -1115,11 +1119,15 @@ export const StreetBrawler: FC = () => {
     const startTimeout = setTimeout(() => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      // Force canvas dimensions
-      canvas.width = CANVAS_W;
-      canvas.height = CANVAS_H;
+      // Force canvas dimensions with DPR scaling
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = CANVAS_W * dpr;
+      canvas.height = CANVAS_H * dpr;
+      canvas.style.width = `${CANVAS_W}px`;
+      canvas.style.height = `${CANVAS_H}px`;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
+      ctx.scale(dpr, dpr);
       const g = gameRef.current;
       g.running = true;
 
@@ -2134,10 +2142,8 @@ export const StreetBrawler: FC = () => {
 
             <canvas
               ref={canvasRef}
-              width={CANVAS_W}
-              height={CANVAS_H}
               className="w-full rounded-lg border border-border/50"
-              style={{ imageRendering: "pixelated" }}
+              style={{ imageRendering: "pixelated", maxWidth: `${CANVAS_W}px` }}
             />
 
             {/* Mobile touch controls */}
