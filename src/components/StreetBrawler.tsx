@@ -1960,16 +1960,37 @@ export const StreetBrawler: FC = () => {
       for (const proj of g.projectiles) {
         const px = proj.x - g.camX;
         const py = proj.y;
-        ctx.beginPath();
-        ctx.arc(px, py, 8, 0, Math.PI * 2);
-        const projGlow = ctx.createRadialGradient(px, py, 2, px, py, 8);
-        projGlow.addColorStop(0, "#ff4444");
-        projGlow.addColorStop(1, "#ff000044");
-        ctx.fillStyle = projGlow;
-        ctx.fill();
-        ctx.font = "12px serif";
-        ctx.textAlign = "center";
-        ctx.fillText("🔥", px, py + 4);
+        if (proj.isPlayerProjectile) {
+          // Spinning shuriken
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(Date.now() / 80);
+          ctx.fillStyle = "#cc44ff";
+          for (let i = 0; i < 4; i++) {
+            ctx.save();
+            ctx.rotate((i * Math.PI) / 2);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-2, -7);
+            ctx.lineTo(0, -9);
+            ctx.lineTo(2, -7);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+          ctx.restore();
+        } else {
+          ctx.beginPath();
+          ctx.arc(px, py, 8, 0, Math.PI * 2);
+          const projGlow = ctx.createRadialGradient(px, py, 2, px, py, 8);
+          projGlow.addColorStop(0, "#ff4444");
+          projGlow.addColorStop(1, "#ff000044");
+          ctx.fillStyle = projGlow;
+          ctx.fill();
+          ctx.font = "12px serif";
+          ctx.textAlign = "center";
+          ctx.fillText("🔥", px, py + 4);
+        }
       }
 
       drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType);
