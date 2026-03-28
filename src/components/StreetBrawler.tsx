@@ -74,7 +74,6 @@ interface Splash {
 
 const RAIN_COUNT = 120;
 const PUDDLE_POSITIONS = [200, 700, 1200, 1700, 2200, 2700]; // approximate puddle X coords
-const BAT_DMG_MULTIPLIER = 1.8;
 
 const POWERUP_COLORS: Record<string, string> = {
   health: "#00ff00",
