@@ -133,6 +133,7 @@ const BOSS_CHARGE_SPEED = 6;
 
 interface Projectile {
   x: number; y: number; vx: number; vy: number; timer: number;
+  isPlayerProjectile?: boolean;
 }
 
 function spawnBoss(playerX: number): Entity {
