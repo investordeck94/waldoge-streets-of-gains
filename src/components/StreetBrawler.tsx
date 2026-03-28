@@ -856,6 +856,7 @@ export const StreetBrawler: FC = () => {
                 // Charge attack
                 e.state = "boss_charge";
                 e.stateTimer = 30;
+                sfx(() => SFX.bossCharge());
                 e.attackCooldown = 50 - phase * 8;
               } else if (dist > 150) {
                 // Throw projectile
