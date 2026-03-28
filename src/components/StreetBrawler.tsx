@@ -1203,18 +1203,52 @@ export const StreetBrawler: FC = () => {
         ctx.globalAlpha = 1;
       }
 
+      // Draw weapon pickups on ground
+      for (const wp of g.weapons) {
+        if (wp.collected) continue;
+        const wx = wp.x - g.camX;
+        const wy = wp.y;
+        const bob = Math.sin(Date.now() / 300) * 2;
+        // Glow
+        ctx.beginPath();
+        ctx.arc(wx, wy - 12 + bob, 16, 0, Math.PI * 2);
+        const wGlow = ctx.createRadialGradient(wx, wy - 12 + bob, 3, wx, wy - 12 + bob, 16);
+        wGlow.addColorStop(0, "rgba(255, 140, 0, 0.5)");
+        wGlow.addColorStop(1, "rgba(255, 140, 0, 0)");
+        ctx.fillStyle = wGlow;
+        ctx.fill();
+        // Draw bat shape
+        ctx.save();
+        ctx.translate(wx, wy - 12 + bob);
+        ctx.rotate(-Math.PI / 4);
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(-3, -18, 6, 28);
+        ctx.fillStyle = "#A0522D";
+        ctx.fillRect(-5, -22, 10, 8);
+        ctx.restore();
+      }
+
       // Boost indicators
+      let boostY = 60;
       if (g.speedBoostTimer > 0) {
         ctx.font = "bold 11px monospace";
         ctx.fillStyle = "#00ccff";
         ctx.textAlign = "left";
-        ctx.fillText(`⚡ SPEED ${Math.ceil(g.speedBoostTimer / 60)}s`, 20, 60);
+        ctx.fillText(`⚡ SPEED ${Math.ceil(g.speedBoostTimer / 60)}s`, 20, boostY);
+        boostY += 14;
       }
       if (g.dmgBoostTimer > 0) {
         ctx.font = "bold 11px monospace";
         ctx.fillStyle = "#ff4444";
         ctx.textAlign = "left";
-        ctx.fillText(`💥 DMG x1.5 ${Math.ceil(g.dmgBoostTimer / 60)}s`, 20, g.speedBoostTimer > 0 ? 74 : 60);
+        ctx.fillText(`💥 DMG x1.5 ${Math.ceil(g.dmgBoostTimer / 60)}s`, 20, boostY);
+        boostY += 14;
+      }
+      if (g.batTimer > 0) {
+        ctx.font = "bold 11px monospace";
+        ctx.fillStyle = "#ff8c00";
+        ctx.textAlign = "left";
+        ctx.fillText(`🏏 BAT ${Math.ceil(g.batTimer / 60)}s`, 20, boostY);
       }
 
       for (const e of g.enemies) {
