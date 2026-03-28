@@ -1574,6 +1574,12 @@ export const StreetBrawler: FC = () => {
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
       drawCity(ctx, g.camX, CANVAS_W, g.animFrameCount);
 
+      // Draw alley objects (crates, trash cans)
+      for (const obj of g.alleyObjects) {
+        if (obj.broken && obj.breakTimer <= 0) continue;
+        drawAlleyObject(ctx, obj, g.camX);
+      }
+
       // Wave text
       const isBossWave = g.wave === WAVES.length - 1;
       const boss = g.enemies.find(e => e.isBoss && e.state !== "dead");
