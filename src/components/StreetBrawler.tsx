@@ -1,7 +1,10 @@
 import { FC, useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Swords, Heart, RotateCcw, Play, Trophy } from "lucide-react";
+import { Swords, Heart, RotateCcw, Play, Trophy, Zap } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
+
+type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
+  | "uppercut" | "spinkick" | "groundpound" | "dashpunch";
 
 interface Entity {
   x: number;
@@ -13,11 +16,30 @@ interface Entity {
   facing: 1 | -1;
   hp: number;
   maxHp: number;
-  state: "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead";
+  state: AttackState;
   stateTimer: number;
   attackCooldown: number;
   isPlayer?: boolean;
   aiTimer?: number;
+}
+
+interface HitEffect {
+  x: number;
+  y: number;
+  timer: number;
+  text: string;
+  color: string;
+  size: number;
+}
+
+interface ComboState {
+  inputs: string[];
+  timer: number;
+  hitCount: number;
+  hitTimer: number;
+  multiplier: number;
+  specialCooldown: number;
+  specialEnergy: number;
 }
 
 const CANVAS_W = 800;
@@ -27,12 +49,22 @@ const GRAVITY = 0.6;
 const PLAYER_SPEED = 3.5;
 const JUMP_FORCE = -12;
 const LEVEL_WIDTH = 3200;
+const COMBO_WINDOW = 25; // frames to chain inputs
+const COMBO_HIT_WINDOW = 40; // frames before combo resets
+const MAX_ENERGY = 100;
 
 const WAVES: { count: number; hp: number; speed: number }[] = [
   { count: 3, hp: 30, speed: 1.2 },
   { count: 4, hp: 40, speed: 1.5 },
   { count: 5, hp: 50, speed: 1.8 },
   { count: 3, hp: 80, speed: 2 },
+];
+
+// Combo recipes: input sequence → special move
+const COMBOS: { inputs: string[]; move: AttackState; name: string }[] = [
+  { inputs: ["j", "j", "k"], move: "uppercut", name: "UPPERCUT!" },
+  { inputs: ["k", "k", "j"], move: "spinkick", name: "SPIN KICK!" },
+  { inputs: ["j", "k", "j"], move: "dashpunch", name: "DASH PUNCH!" },
 ];
 
 function drawStickFigure(
@@ -55,6 +87,12 @@ function drawStickFigure(
   if (e.state === "dead") {
     ctx.rotate((e.facing * Math.PI) / 3);
     ctx.globalAlpha = 0.4;
+  }
+
+  // Spin kick rotation
+  if (e.state === "spinkick") {
+    const spinProgress = e.stateTimer / 18;
+    ctx.rotate(spinProgress * Math.PI * 2 * e.facing);
   }
 
   const headCY = -bodyLen - limbLen - headR;
@@ -106,6 +144,23 @@ function drawStickFigure(
     ctx.lineTo(-e.facing * limbLen * 0.5, shoulderY - 8);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(e.facing * limbLen * 0.3, shoulderY + 5);
+  } else if (e.state === "uppercut") {
+    // Both arms up
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(e.facing * limbLen * 0.8, shoulderY - limbLen * 1.5);
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(-e.facing * limbLen * 0.3, shoulderY - limbLen);
+  } else if (e.state === "dashpunch") {
+    // Extended forward punch with both arms
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(e.facing * limbLen * 2, shoulderY);
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(e.facing * limbLen * 1.5, shoulderY - 8);
+  } else if (e.state === "spinkick" || e.state === "groundpound") {
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(-limbLen * 0.8, shoulderY + limbLen * 0.3);
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(limbLen * 0.8, shoulderY + limbLen * 0.3);
   } else {
     const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
     ctx.moveTo(0, shoulderY);
@@ -114,7 +169,7 @@ function drawStickFigure(
     ctx.lineTo(limbLen * 0.7, shoulderY + limbLen * 0.8 - swing);
   }
   ctx.strokeStyle = isPlayer ? "#FFD700" : "#ff4444";
-  ctx.lineWidth = 3;
+  ctx.lineWidth = e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 4 : 3;
   ctx.stroke();
 
   // Legs
@@ -124,11 +179,21 @@ function drawStickFigure(
     ctx.lineTo(e.facing * limbLen * 1.5, hipY - 5);
     ctx.moveTo(0, hipY);
     ctx.lineTo(-e.facing * limbLen * 0.5, hipY + limbLen);
-  } else if (e.state === "jump") {
+  } else if (e.state === "jump" || e.state === "uppercut") {
     ctx.moveTo(0, hipY);
     ctx.lineTo(-limbLen * 0.6, hipY + limbLen * 0.5);
     ctx.moveTo(0, hipY);
     ctx.lineTo(limbLen * 0.6, hipY + limbLen * 0.5);
+  } else if (e.state === "spinkick") {
+    ctx.moveTo(0, hipY);
+    ctx.lineTo(e.facing * limbLen * 1.8, hipY);
+    ctx.moveTo(0, hipY);
+    ctx.lineTo(-e.facing * limbLen * 0.6, hipY + limbLen * 0.8);
+  } else if (e.state === "groundpound") {
+    ctx.moveTo(0, hipY);
+    ctx.lineTo(-limbLen, hipY + limbLen * 0.3);
+    ctx.moveTo(0, hipY);
+    ctx.lineTo(limbLen, hipY + limbLen * 0.3);
   } else {
     const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 12 : 0;
     ctx.moveTo(0, hipY);
@@ -137,8 +202,19 @@ function drawStickFigure(
     ctx.lineTo(limbLen * 0.5 - swing, hipY + limbLen);
   }
   ctx.strokeStyle = isPlayer ? "#FFD700" : "#ff4444";
-  ctx.lineWidth = 3;
+  ctx.lineWidth = e.state === "spinkick" ? 4 : 3;
   ctx.stroke();
+
+  // Special move glow
+  if (["uppercut", "spinkick", "dashpunch", "groundpound"].includes(e.state)) {
+    ctx.beginPath();
+    ctx.arc(0, headCY + headR + bodyLen / 2, 35, 0, Math.PI * 2);
+    const glow = ctx.createRadialGradient(0, headCY + headR + bodyLen / 2, 5, 0, headCY + headR + bodyLen / 2, 35);
+    glow.addColorStop(0, "rgba(255, 215, 0, 0.4)");
+    glow.addColorStop(1, "rgba(255, 215, 0, 0)");
+    ctx.fillStyle = glow;
+    ctx.fill();
+  }
 
   ctx.restore();
 
@@ -197,6 +273,23 @@ function drawCity(ctx: CanvasRenderingContext2D, camX: number, canvasW: number) 
   }
 }
 
+function drawHitEffects(ctx: CanvasRenderingContext2D, effects: HitEffect[], camX: number) {
+  for (const fx of effects) {
+    const alpha = fx.timer / 30;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = `bold ${fx.size}px monospace`;
+    ctx.textAlign = "center";
+    ctx.fillStyle = fx.color;
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 3;
+    const fxY = fx.y - (30 - fx.timer) * 1.5;
+    ctx.strokeText(fx.text, fx.x - camX, fxY);
+    ctx.fillText(fx.text, fx.x - camX, fxY);
+    ctx.restore();
+  }
+}
+
 function createPlayer(): Entity {
   return {
     x: 200, y: GROUND_Y, vy: 0, vx: 0,
@@ -215,10 +308,17 @@ function spawnEnemies(waveIndex: number, playerX: number): Entity[] {
     y: GROUND_Y, vy: 0, vx: 0,
     width: 30, height: 70, facing: -1 as const,
     hp: w.hp, maxHp: w.hp,
-    state: "idle" as const, stateTimer: 0, attackCooldown: 0,
+    state: "idle" as AttackState, stateTimer: 0, attackCooldown: 0,
     aiTimer: Math.random() * 60,
   }));
 }
+
+const SPECIAL_ATTACKS: Record<string, { frames: number; range: number; dmg: number; knockback: number; energyCost: number }> = {
+  uppercut: { frames: 18, range: 50, dmg: 30, knockback: 8, energyCost: 25 },
+  spinkick: { frames: 20, range: 65, dmg: 25, knockback: 6, energyCost: 20 },
+  dashpunch: { frames: 14, range: 70, dmg: 22, knockback: 12, energyCost: 20 },
+  groundpound: { frames: 22, range: 80, dmg: 40, knockback: 10, energyCost: 40 },
+};
 
 export const StreetBrawler: FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -226,30 +326,38 @@ export const StreetBrawler: FC = () => {
   const [wave, setWave] = useState(0);
   const [score, setScore] = useState(0);
   const [playerHp, setPlayerHp] = useState(100);
+  const [comboCount, setComboCount] = useState(0);
+  const [comboName, setComboName] = useState("");
+  const [energy, setEnergy] = useState(0);
 
   const gameRef = useRef<{
     player: Entity;
     enemies: Entity[];
     keys: Set<string>;
+    keyJustPressed: Set<string>;
     camX: number;
     wave: number;
     score: number;
     headImg: HTMLImageElement | null;
     animFrame: number;
     running: boolean;
+    combo: ComboState;
+    effects: HitEffect[];
   }>({
     player: createPlayer(),
     enemies: [],
     keys: new Set(),
+    keyJustPressed: new Set(),
     camX: 0,
     wave: 0,
     score: 0,
     headImg: null,
     animFrame: 0,
     running: false,
+    combo: { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 0 },
+    effects: [],
   });
 
-  // Load head image
   useEffect(() => {
     const img = new Image();
     img.src = waldogeHead;
@@ -263,9 +371,14 @@ export const StreetBrawler: FC = () => {
     g.score = 0;
     g.camX = 0;
     g.enemies = spawnEnemies(0, 200);
+    g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
+    g.effects = [];
     setWave(0);
     setScore(0);
     setPlayerHp(100);
+    setComboCount(0);
+    setComboName("");
+    setEnergy(50);
     setGameState("playing");
   }, []);
 
@@ -274,10 +387,10 @@ export const StreetBrawler: FC = () => {
     if (gameState !== "playing") return;
     const g = gameRef.current;
     const onDown = (e: KeyboardEvent) => {
-      g.keys.add(e.key.toLowerCase());
-      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(e.key.toLowerCase())) {
-        e.preventDefault();
-      }
+      const key = e.key.toLowerCase();
+      if (!g.keys.has(key)) g.keyJustPressed.add(key);
+      g.keys.add(key);
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) e.preventDefault();
     };
     const onUp = (e: KeyboardEvent) => g.keys.delete(e.key.toLowerCase());
     window.addEventListener("keydown", onDown);
@@ -300,52 +413,171 @@ export const StreetBrawler: FC = () => {
     const tick = () => {
       if (!g.running) return;
       const p = g.player;
+      const c = g.combo;
+
+      // Combo timers
+      c.timer = Math.max(0, c.timer - 1);
+      c.hitTimer = Math.max(0, c.hitTimer - 1);
+      c.specialCooldown = Math.max(0, c.specialCooldown - 1);
+      if (c.timer === 0) c.inputs = [];
+      if (c.hitTimer === 0 && c.hitCount > 0) {
+        c.hitCount = 0;
+        c.multiplier = 1;
+        setComboCount(0);
+      }
+
+      // Update effects
+      g.effects = g.effects.filter(fx => { fx.timer--; return fx.timer > 0; });
+
+      const isAttacking = ["punch", "kick", "uppercut", "spinkick", "dashpunch", "groundpound"].includes(p.state);
 
       // Player movement
-      if (p.state !== "hit" && p.state !== "dead") {
+      if (p.state !== "hit" && p.state !== "dead" && !isAttacking) {
         let moving = false;
         if (g.keys.has("a") || g.keys.has("arrowleft")) { p.x -= PLAYER_SPEED; p.facing = -1; moving = true; }
         if (g.keys.has("d") || g.keys.has("arrowright")) { p.x += PLAYER_SPEED; p.facing = 1; moving = true; }
         if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && p.y >= GROUND_Y) p.vy = JUMP_FORCE;
 
-        if (g.keys.has("j") && p.attackCooldown <= 0 && p.state !== "punch" && p.state !== "kick") {
-          p.state = "punch"; p.stateTimer = 12; p.attackCooldown = 18;
-        } else if (g.keys.has("k") && p.attackCooldown <= 0 && p.state !== "punch" && p.state !== "kick") {
-          p.state = "kick"; p.stateTimer = 15; p.attackCooldown = 22;
-        } else if (p.stateTimer <= 0 && p.state !== "punch" && p.state !== "kick") {
-          p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
+        // Check for combo special move first
+        let didSpecial = false;
+        if (g.keyJustPressed.has("j") || g.keyJustPressed.has("k")) {
+          const newInput = g.keyJustPressed.has("j") ? "j" : "k";
+          c.inputs.push(newInput);
+          c.timer = COMBO_WINDOW;
+
+          // Check combos
+          for (const combo of COMBOS) {
+            const len = combo.inputs.length;
+            const recent = c.inputs.slice(-len);
+            if (recent.length === len && recent.every((v, i) => v === combo.inputs[i])) {
+              const spec = SPECIAL_ATTACKS[combo.move];
+              if (spec && c.specialEnergy >= spec.energyCost) {
+                p.state = combo.move;
+                p.stateTimer = spec.frames;
+                p.attackCooldown = spec.frames + 5;
+                c.specialEnergy -= spec.energyCost;
+                c.inputs = [];
+                setEnergy(c.specialEnergy);
+                setComboName(combo.name);
+                g.effects.push({
+                  x: p.x, y: p.y - 80, timer: 40,
+                  text: combo.name, color: "#FFD700", size: 20,
+                });
+                didSpecial = true;
+                setTimeout(() => setComboName(""), 1000);
+                break;
+              }
+            }
+          }
+        }
+
+        // Ground Pound: press L while airborne
+        if (g.keyJustPressed.has("l") && p.y < GROUND_Y && c.specialEnergy >= SPECIAL_ATTACKS.groundpound.energyCost) {
+          p.state = "groundpound";
+          p.stateTimer = SPECIAL_ATTACKS.groundpound.frames;
+          p.attackCooldown = SPECIAL_ATTACKS.groundpound.frames + 5;
+          p.vy = 15; // slam down
+          c.specialEnergy -= SPECIAL_ATTACKS.groundpound.energyCost;
+          setEnergy(c.specialEnergy);
+          setComboName("GROUND POUND!");
+          g.effects.push({ x: p.x, y: p.y - 80, timer: 40, text: "GROUND POUND!", color: "#ff6600", size: 18 });
+          didSpecial = true;
+          setTimeout(() => setComboName(""), 1000);
+        }
+
+        if (!didSpecial) {
+          if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
+            p.state = "punch"; p.stateTimer = 12; p.attackCooldown = 14;
+          } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
+            p.state = "kick"; p.stateTimer = 15; p.attackCooldown = 17;
+          } else if (p.stateTimer <= 0) {
+            p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
+          }
         }
       }
+
+      g.keyJustPressed.clear();
 
       // Player physics
       p.vy += GRAVITY;
       p.y += p.vy;
-      if (p.y >= GROUND_Y) { p.y = GROUND_Y; p.vy = 0; }
+      if (p.y >= GROUND_Y) {
+        // Ground pound shockwave on landing
+        if (p.state === "groundpound" && p.vy > 5) {
+          g.effects.push({ x: p.x, y: GROUND_Y, timer: 15, text: "💥", color: "#ff6600", size: 24 });
+        }
+        p.y = GROUND_Y;
+        p.vy = 0;
+      }
       p.x = Math.max(20, Math.min(LEVEL_WIDTH - 20, p.x));
       p.x += p.vx || 0;
+      if (p.state === "dashpunch" && p.stateTimer > 5) p.x += p.facing * 6; // dash forward
       p.vx = (p.vx || 0) * 0.85;
       p.stateTimer = Math.max(-1, p.stateTimer - 1);
       p.attackCooldown = Math.max(-1, p.attackCooldown - 1);
       if (p.state === "hit" && p.stateTimer <= 0) p.state = "idle";
-      if ((p.state === "punch" || p.state === "kick") && p.stateTimer <= 0) p.state = "idle";
+      if (isAttacking && p.stateTimer <= 0) p.state = "idle";
 
-      // Player attack hit detection
-      if ((p.state === "punch" && p.stateTimer === 8) || (p.state === "kick" && p.stateTimer === 10)) {
-        const range = p.state === "punch" ? 45 : 55;
-        const dmg = p.state === "punch" ? 12 : 18;
+      // Player attack hit detection (all attack types)
+      const hitFrame = (
+        (p.state === "punch" && p.stateTimer === 8) ||
+        (p.state === "kick" && p.stateTimer === 10) ||
+        (p.state === "uppercut" && p.stateTimer === 12) ||
+        (p.state === "spinkick" && (p.stateTimer === 14 || p.stateTimer === 8)) ||
+        (p.state === "dashpunch" && p.stateTimer === 8) ||
+        (p.state === "groundpound" && p.y >= GROUND_Y - 5 && p.stateTimer > 5)
+      );
+
+      if (hitFrame) {
+        const spec = SPECIAL_ATTACKS[p.state];
+        const range = spec ? spec.range : (p.state === "punch" ? 45 : 55);
+        const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
+        const kb = spec ? spec.knockback : (p.state === "punch" ? 5 : 6);
+        const dmg = Math.round(baseDmg * c.multiplier);
+
         for (const e of g.enemies) {
           if (e.state === "dead") continue;
           const dx = e.x - p.x;
-          if (dx * p.facing > 0 && Math.abs(dx) < range && Math.abs(e.y - p.y) < 50) {
+          const isGroundPound = p.state === "groundpound";
+          const inRange = isGroundPound
+            ? Math.abs(dx) < range && Math.abs(e.y - p.y) < 60
+            : dx * p.facing > 0 && Math.abs(dx) < range && Math.abs(e.y - p.y) < 50;
+
+          if (inRange) {
             e.hp -= dmg;
             e.state = "hit";
-            e.stateTimer = 10;
-            e.vx = p.facing * 5;
+            e.stateTimer = spec ? 15 : 10;
+            e.vx = (isGroundPound ? (dx > 0 ? 1 : -1) : p.facing) * kb;
+            if (p.state === "uppercut") e.vy = -10;
+
+            // Combo counter
+            c.hitCount++;
+            c.hitTimer = COMBO_HIT_WINDOW;
+            c.multiplier = 1 + Math.min(c.hitCount * 0.15, 2);
+
+            // Gain energy on hits
+            c.specialEnergy = Math.min(MAX_ENERGY, c.specialEnergy + 5);
+            setEnergy(c.specialEnergy);
+            setComboCount(c.hitCount);
+
+            // Hit effect
+            g.effects.push({
+              x: e.x, y: e.y - 50, timer: 25,
+              text: c.hitCount > 2 ? `${dmg} x${c.hitCount}` : `${dmg}`,
+              color: c.hitCount > 4 ? "#ff00ff" : c.hitCount > 2 ? "#FFD700" : "#ffffff",
+              size: Math.min(14 + c.hitCount * 2, 24),
+            });
+
             if (e.hp <= 0) {
               e.state = "dead";
               e.stateTimer = 60;
-              g.score += 100;
+              const killBonus = Math.round(100 * c.multiplier);
+              g.score += killBonus;
               setScore(g.score);
+              g.effects.push({
+                x: e.x, y: e.y - 70, timer: 35,
+                text: `+${killBonus}`, color: "#00ff00", size: 16,
+              });
             }
           }
         }
@@ -391,6 +623,9 @@ export const StreetBrawler: FC = () => {
             p.state = "hit";
             p.stateTimer = 8;
             p.vx = e.facing * 3;
+            c.hitCount = 0;
+            c.multiplier = 1;
+            setComboCount(0);
             setPlayerHp(Math.max(0, p.hp));
             if (p.hp <= 0) {
               p.state = "dead";
@@ -433,11 +668,33 @@ export const StreetBrawler: FC = () => {
       ctx.textAlign = "center";
       ctx.fillText(`WAVE ${g.wave + 1}/${WAVES.length}`, CANVAS_W / 2, 25);
 
+      // Combo counter on canvas
+      if (c.hitCount > 1) {
+        ctx.font = `bold ${16 + c.hitCount}px monospace`;
+        ctx.fillStyle = c.hitCount > 4 ? "#ff00ff" : "#FFD700";
+        ctx.textAlign = "right";
+        ctx.fillText(`${c.hitCount} HIT COMBO!`, CANVAS_W - 20, 50);
+        ctx.font = "12px monospace";
+        ctx.fillStyle = "#ffd700aa";
+        ctx.fillText(`x${c.multiplier.toFixed(1)} damage`, CANVAS_W - 20, 68);
+      }
+
+      // Energy bar on canvas
+      ctx.fillStyle = "#333";
+      ctx.fillRect(20, 40, 100, 8);
+      ctx.fillStyle = c.specialEnergy > 20 ? "#00ccff" : "#ff6600";
+      ctx.fillRect(20, 40, (c.specialEnergy / MAX_ENERGY) * 100, 8);
+      ctx.font = "10px monospace";
+      ctx.fillStyle = "#ffffffaa";
+      ctx.textAlign = "left";
+      ctx.fillText("⚡ ENERGY", 20, 36);
+
       for (const e of g.enemies) {
         if (e.state === "dead" && e.stateTimer <= 0) continue;
         drawStickFigure(ctx, e, g.camX, null, false);
       }
       drawStickFigure(ctx, p, g.camX, g.headImg, true);
+      drawHitEffects(ctx, g.effects, g.camX);
 
       g.animFrame = requestAnimationFrame(tick);
     };
@@ -452,9 +709,10 @@ export const StreetBrawler: FC = () => {
   // Touch controls
   const touchAction = useCallback((action: string) => {
     const g = gameRef.current;
-    if (action === "punch") { g.keys.add("j"); setTimeout(() => g.keys.delete("j"), 100); }
-    else if (action === "kick") { g.keys.add("k"); setTimeout(() => g.keys.delete("k"), 100); }
+    if (action === "punch") { g.keyJustPressed.add("j"); g.keys.add("j"); setTimeout(() => g.keys.delete("j"), 100); }
+    else if (action === "kick") { g.keyJustPressed.add("k"); g.keys.add("k"); setTimeout(() => g.keys.delete("k"), 100); }
     else if (action === "jump") { g.keys.add("w"); setTimeout(() => g.keys.delete("w"), 150); }
+    else if (action === "special") { g.keyJustPressed.add("l"); g.keys.add("l"); setTimeout(() => g.keys.delete("l"), 100); }
   }, []);
 
   const touchMove = useCallback((dir: "left" | "right" | "stop") => {
@@ -484,13 +742,22 @@ export const StreetBrawler: FC = () => {
             <img src={waldogeHead} alt="Waldoge" className="w-24 h-24 mx-auto object-contain" />
             <h3 className="text-2xl font-bold text-primary font-heading">WALDOGE STREET BRAWLER</h3>
             <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              Fight through waves of thugs on the mean streets! Use WASD to move, J to punch, K to kick.
+              Fight through waves of thugs! Chain attacks for combos and unleash devastating special moves!
             </p>
-            <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto text-xs text-muted-foreground">
+            <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto text-xs text-muted-foreground">
               <div className="glass-card p-2">A/D — Move</div>
               <div className="glass-card p-2">W/Space — Jump</div>
               <div className="glass-card p-2">J — Punch</div>
               <div className="glass-card p-2">K — Kick</div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-primary">⚡ SPECIAL COMBOS</p>
+              <div className="grid grid-cols-1 gap-1 max-w-sm mx-auto text-xs text-muted-foreground">
+                <div className="glass-card p-2 flex justify-between"><span>J → J → K</span><span className="text-primary">Uppercut</span></div>
+                <div className="glass-card p-2 flex justify-between"><span>K → K → J</span><span className="text-primary">Spin Kick</span></div>
+                <div className="glass-card p-2 flex justify-between"><span>J → K → J</span><span className="text-primary">Dash Punch</span></div>
+                <div className="glass-card p-2 flex justify-between"><span>L (in air)</span><span className="text-primary">Ground Pound</span></div>
+              </div>
             </div>
             <button
               onClick={startGame}
@@ -511,14 +778,17 @@ export const StreetBrawler: FC = () => {
           >
             <div className="flex justify-between items-center glass-card px-4 py-2 text-sm">
               <div className="flex items-center gap-2">
-                <Heart className="w-4 h-4 text-red-500" />
-                <div className="w-32 h-3 bg-muted rounded-full overflow-hidden">
+                <Heart className="w-4 h-4 text-destructive" />
+                <div className="w-24 h-3 bg-muted rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-red-500 to-green-500 transition-all"
+                    className="h-full bg-gradient-to-r from-destructive to-green-500 transition-all"
                     style={{ width: `${playerHp}%` }}
                   />
                 </div>
               </div>
+              {comboCount > 1 && (
+                <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
+              )}
               <span className="text-primary font-bold">Wave {wave + 1}/{WAVES.length}</span>
               <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
             </div>
@@ -532,32 +802,36 @@ export const StreetBrawler: FC = () => {
             />
 
             {/* Mobile touch controls */}
-            <div className="flex justify-between items-center gap-2 md:hidden">
+            <div className="flex justify-between items-center gap-1 md:hidden">
               <div className="flex gap-1">
                 <button
                   onTouchStart={() => touchMove("left")}
                   onTouchEnd={() => touchMove("stop")}
-                  className="w-12 h-12 glass-card flex items-center justify-center text-lg font-bold text-primary active:bg-primary/20"
+                  className="w-11 h-11 glass-card flex items-center justify-center text-lg font-bold text-primary active:bg-primary/20"
                 >◀</button>
                 <button
                   onTouchStart={() => touchMove("right")}
                   onTouchEnd={() => touchMove("stop")}
-                  className="w-12 h-12 glass-card flex items-center justify-center text-lg font-bold text-primary active:bg-primary/20"
+                  className="w-11 h-11 glass-card flex items-center justify-center text-lg font-bold text-primary active:bg-primary/20"
                 >▶</button>
               </div>
               <button
                 onTouchStart={() => touchAction("jump")}
-                className="w-12 h-12 glass-card flex items-center justify-center text-xs font-bold text-primary active:bg-primary/20"
-              >JUMP</button>
+                className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-primary active:bg-primary/20"
+              >⬆</button>
               <div className="flex gap-1">
                 <button
                   onTouchStart={() => touchAction("punch")}
-                  className="w-12 h-12 glass-card flex items-center justify-center text-xs font-bold text-red-400 active:bg-red-500/20"
+                  className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-destructive active:bg-destructive/20"
                 >👊</button>
                 <button
                   onTouchStart={() => touchAction("kick")}
-                  className="w-12 h-12 glass-card flex items-center justify-center text-xs font-bold text-red-400 active:bg-red-500/20"
+                  className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-destructive active:bg-destructive/20"
                 >🦵</button>
+                <button
+                  onTouchStart={() => touchAction("special")}
+                  className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-accent active:bg-accent/20"
+                >⚡</button>
               </div>
             </div>
           </motion.div>
