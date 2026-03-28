@@ -368,19 +368,36 @@ function drawStickFigure(
     ctx.lineTo(e.facing * limbLen * 1.5, shoulderY - 5);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(-e.facing * limbLen * 0.6, shoulderY + 10);
-    // Draw bat in hand during punch
+    // Draw weapon in hand during punch
     if (weaponType) {
       ctx.stroke();
       ctx.beginPath();
-      const batX = e.facing * limbLen * 1.5;
-      const batY = shoulderY - 5;
+      const wX = e.facing * limbLen * 1.5;
+      const wY = shoulderY - 5;
       ctx.save();
-      ctx.translate(batX, batY);
+      ctx.translate(wX, wY);
       ctx.rotate(e.facing * -0.3);
-      ctx.fillStyle = "#8B4513";
-      ctx.fillRect(-2, -22, 5, 24);
-      ctx.fillStyle = "#A0522D";
-      ctx.fillRect(-4, -26, 9, 8);
+      if (weaponType === "bat") {
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(-2, -22, 5, 24);
+        ctx.fillStyle = "#A0522D";
+        ctx.fillRect(-4, -26, 9, 8);
+      } else if (weaponType === "sword") {
+        ctx.fillStyle = "#ccc";
+        ctx.fillRect(-1.5, -28, 3, 30);
+        ctx.fillStyle = "#888";
+        ctx.fillRect(-4, -1, 8, 4);
+        ctx.fillStyle = "#664400";
+        ctx.fillRect(-2, 3, 4, 7);
+      } else if (weaponType === "shuriken") {
+        ctx.fillStyle = "#cc44ff";
+        for (let i = 0; i < 4; i++) {
+          ctx.save();
+          ctx.rotate((i * Math.PI) / 2);
+          ctx.fillRect(-1, -8, 2, 8);
+          ctx.restore();
+        }
+      }
       ctx.restore();
       ctx.beginPath();
     }
