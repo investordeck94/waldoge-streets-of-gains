@@ -1309,7 +1309,7 @@ export const StreetBrawler: FC = () => {
         ctx.fillText("🔥", px, py + 4);
       }
 
-      drawStickFigure(ctx, p, g.camX, g.headImg, true);
+      drawStickFigure(ctx, p, g.camX, g.headImg, true, g.batTimer > 0);
       drawHitEffects(ctx, g.effects, g.camX);
 
       g.animFrame = requestAnimationFrame(tick);
