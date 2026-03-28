@@ -791,6 +791,7 @@ export const StreetBrawler: FC = () => {
             if (e.hp <= 0) {
               e.state = "dead";
               e.stateTimer = 60;
+              sfx(() => e.isBoss ? SFX.victory() : SFX.enemyDeath());
               const killBonus = e.isBoss ? Math.round(1000 * c.multiplier) : Math.round(100 * c.multiplier);
               g.score += killBonus;
               setScore(g.score);
