@@ -30,7 +30,28 @@ interface HitEffect {
   text: string;
   color: string;
   size: number;
+interface PowerUp {
+  x: number;
+  y: number;
+  vy: number;
+  type: "health" | "speed" | "energy" | "damage";
+  timer: number;
 }
+
+const POWERUP_COLORS: Record<string, string> = {
+  health: "#00ff00",
+  speed: "#00ccff",
+  energy: "#ffcc00",
+  damage: "#ff4444",
+};
+const POWERUP_ICONS: Record<string, string> = {
+  health: "❤️",
+  speed: "⚡",
+  energy: "🔋",
+  damage: "💥",
+};
+const DROP_CHANCE = 0.5;
+
 
 interface ComboState {
   inputs: string[];
