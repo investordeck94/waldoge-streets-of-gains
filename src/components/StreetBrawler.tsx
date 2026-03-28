@@ -902,6 +902,7 @@ export const StreetBrawler: FC = () => {
 
           // Boss throw spawns projectile
           if (e.state === "boss_throw" && e.stateTimer === 10) {
+            sfx(() => SFX.bossThrow());
             g.projectiles.push({
               x: e.x + e.facing * 30, y: e.y - 30,
               vx: e.facing * 7, vy: -2,
