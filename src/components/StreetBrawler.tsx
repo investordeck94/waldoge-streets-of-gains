@@ -50,9 +50,30 @@ interface WeaponPickup {
   collected: boolean;
 }
 
-const BAT_DURATION = 600; // frames (~10 seconds at 60fps)
+const BAT_DURATION = 600;
 const BAT_RANGE_BONUS = 25;
 const BAT_DMG_MULTIPLIER = 1.8;
+
+interface RainDrop {
+  x: number;
+  y: number;
+  speed: number;
+  length: number;
+  opacity: number;
+  wind: number;
+}
+
+interface Splash {
+  x: number;
+  y: number;
+  timer: number;
+  maxTimer: number;
+  size: number;
+  inPuddle: boolean;
+}
+
+const RAIN_COUNT = 120;
+const PUDDLE_POSITIONS = [200, 700, 1200, 1700, 2200, 2700]; // approximate puddle X coords
 
 const POWERUP_COLORS: Record<string, string> = {
   health: "#00ff00",
@@ -926,6 +947,8 @@ export const StreetBrawler: FC = () => {
     batTimer: number;
     alleyObjects: AlleyObject[];
     animFrameCount: number;
+    rain: RainDrop[];
+    splashes: Splash[];
   }>({
     player: createPlayer(),
     enemies: [],
@@ -947,6 +970,8 @@ export const StreetBrawler: FC = () => {
     batTimer: 0,
     alleyObjects: [],
     animFrameCount: 0,
+    rain: [],
+    splashes: [],
   });
 
   useEffect(() => {
@@ -978,6 +1003,19 @@ export const StreetBrawler: FC = () => {
     ];
     g.alleyObjects = spawnAlleyObjects();
     g.animFrameCount = 0;
+    // Initialize rain
+    g.rain = [];
+    for (let i = 0; i < RAIN_COUNT; i++) {
+      g.rain.push({
+        x: Math.random() * (CANVAS_W + 200) - 100,
+        y: Math.random() * (GROUND_Y + 40),
+        speed: 6 + Math.random() * 6,
+        length: 8 + Math.random() * 12,
+        opacity: 0.15 + Math.random() * 0.25,
+        wind: -1.5 - Math.random() * 1,
+      });
+    }
+    g.splashes = [];
     setWave(0);
     setScore(0);
     setPlayerHp(100);
@@ -1034,6 +1072,32 @@ export const StreetBrawler: FC = () => {
 
       // Update effects
       g.effects = g.effects.filter(fx => { fx.timer--; return fx.timer > 0; });
+
+      // Update rain particles
+      for (const drop of g.rain) {
+        drop.y += drop.speed;
+        drop.x += drop.wind;
+        if (drop.y >= GROUND_Y + 5) {
+          // Check if landing in puddle area
+          const worldX = drop.x + g.camX;
+          const inPuddle = PUDDLE_POSITIONS.some(px => Math.abs(worldX - px) < 40);
+          g.splashes.push({
+            x: drop.x, y: GROUND_Y + 2,
+            timer: inPuddle ? 12 : 8,
+            maxTimer: inPuddle ? 12 : 8,
+            size: inPuddle ? 4 + Math.random() * 3 : 2 + Math.random() * 2,
+            inPuddle,
+          });
+          // Reset drop to top
+          drop.y = -10 - Math.random() * 30;
+          drop.x = Math.random() * (CANVAS_W + 200) - 100;
+          drop.speed = 6 + Math.random() * 6;
+          drop.length = 8 + Math.random() * 12;
+          drop.opacity = 0.15 + Math.random() * 0.25;
+        }
+      }
+      // Update splashes
+      g.splashes = g.splashes.filter(s => { s.timer--; return s.timer > 0; });
 
       const isAttacking = ["punch", "kick", "uppercut", "spinkick", "dashpunch", "groundpound"].includes(p.state);
 
@@ -1579,6 +1643,50 @@ export const StreetBrawler: FC = () => {
         if (obj.broken && obj.breakTimer <= 0) continue;
         drawAlleyObject(ctx, obj, g.camX);
       }
+
+      // Draw rain
+      ctx.save();
+      for (const drop of g.rain) {
+        ctx.globalAlpha = drop.opacity;
+        ctx.strokeStyle = "#aaccff";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(drop.x, drop.y);
+        ctx.lineTo(drop.x + drop.wind * 0.5, drop.y - drop.length);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Draw splashes
+      ctx.save();
+      for (const s of g.splashes) {
+        const progress = 1 - s.timer / s.maxTimer;
+        ctx.globalAlpha = (1 - progress) * 0.5;
+        if (s.inPuddle) {
+          ctx.strokeStyle = "#8899cc";
+          ctx.lineWidth = 0.8;
+          const r = s.size * (1 + progress * 3);
+          ctx.beginPath();
+          ctx.ellipse(s.x, s.y + 8, r, r * 0.3, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          if (progress < 0.5) {
+            ctx.beginPath();
+            ctx.ellipse(s.x, s.y + 8, r * 0.5, r * 0.15, 0, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        } else {
+          ctx.fillStyle = "#8899cc";
+          const spread = s.size * (1 + progress * 2);
+          for (let i = 0; i < 3; i++) {
+            const angle = (i / 3) * Math.PI - Math.PI * 0.1;
+            const dist = spread * (0.5 + progress);
+            const sx = s.x + Math.cos(angle) * dist;
+            const sy = s.y - Math.sin(angle) * dist * 0.8;
+            ctx.fillRect(sx - 0.5, sy - 0.5, 1.5, 1.5);
+          }
+        }
+      }
+      ctx.restore();
 
       // Wave text
       const isBossWave = g.wave === WAVES.length - 1;
