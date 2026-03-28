@@ -146,7 +146,7 @@ export const Header: FC<HeaderProps> = ({
         </div>
 
         {/* Navigation tabs */}
-        <nav className="flex gap-1 pb-1 sm:pb-2 overflow-x-auto custom-scrollbar">
+        <nav className="flex gap-0.5 sm:gap-1 pb-1 sm:pb-2 overflow-x-auto custom-scrollbar">
           {tabs.map((tab) => (
             <motion.button
               key={tab.id}
@@ -154,15 +154,17 @@ export const Header: FC<HeaderProps> = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={cn(
-                "relative px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors",
+                "relative px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap transition-colors",
                 activeTab === tab.id
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
+              title={tab.label}
             >
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-1 sm:gap-2">
                 {tab.icon && <tab.icon className="w-4 h-4" />}
-                {tab.label}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.id === "about" ? "About" : ""}</span>
               </span>
               {activeTab === tab.id && (
                 <motion.div
