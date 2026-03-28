@@ -1017,6 +1017,7 @@ export const StreetBrawler: FC = () => {
 
     const tick = () => {
       if (!g.running) return;
+      g.animFrameCount++;
       const p = g.player;
       const c = g.combo;
 
