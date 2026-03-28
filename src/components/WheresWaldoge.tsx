@@ -455,7 +455,7 @@ export const WheresWaldoge: FC = () => {
               transform: `translate(-50%, -50%) rotate(${level.rotation || 0}deg)`,
               width: `${level.spriteSize}%`,
               height: `${level.spriteSize * 1.5}%`,
-              animation: `${level.sceneMotion} 8s ease-in-out infinite alternate`,
+              animation: `${level.sceneMotion} 12s ease-in-out infinite`,
             }}
           >
             <img
