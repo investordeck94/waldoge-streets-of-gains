@@ -1644,6 +1644,50 @@ export const StreetBrawler: FC = () => {
         drawAlleyObject(ctx, obj, g.camX);
       }
 
+      // Draw rain
+      ctx.save();
+      for (const drop of g.rain) {
+        ctx.globalAlpha = drop.opacity;
+        ctx.strokeStyle = "#aaccff";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(drop.x, drop.y);
+        ctx.lineTo(drop.x + drop.wind * 0.5, drop.y - drop.length);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Draw splashes
+      ctx.save();
+      for (const s of g.splashes) {
+        const progress = 1 - s.timer / s.maxTimer;
+        ctx.globalAlpha = (1 - progress) * 0.5;
+        if (s.inPuddle) {
+          ctx.strokeStyle = "#8899cc";
+          ctx.lineWidth = 0.8;
+          const r = s.size * (1 + progress * 3);
+          ctx.beginPath();
+          ctx.ellipse(s.x, s.y + 8, r, r * 0.3, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          if (progress < 0.5) {
+            ctx.beginPath();
+            ctx.ellipse(s.x, s.y + 8, r * 0.5, r * 0.15, 0, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        } else {
+          ctx.fillStyle = "#8899cc";
+          const spread = s.size * (1 + progress * 2);
+          for (let i = 0; i < 3; i++) {
+            const angle = (i / 3) * Math.PI - Math.PI * 0.1;
+            const dist = spread * (0.5 + progress);
+            const sx = s.x + Math.cos(angle) * dist;
+            const sy = s.y - Math.sin(angle) * dist * 0.8;
+            ctx.fillRect(sx - 0.5, sy - 0.5, 1.5, 1.5);
+          }
+        }
+      }
+      ctx.restore();
+
       // Wave text
       const isBossWave = g.wave === WAVES.length - 1;
       const boss = g.enemies.find(e => e.isBoss && e.state !== "dead");
