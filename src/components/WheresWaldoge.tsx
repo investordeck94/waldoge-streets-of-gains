@@ -239,6 +239,7 @@ export const WheresWaldoge: FC = () => {
   };
 
   const startGame = () => {
+    setLevels(generateLevels()); // randomize Waldoge positions
     setGameState("playing");
     setCurrentLevel(0);
     setCompletedLevels([]);
