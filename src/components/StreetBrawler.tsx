@@ -1041,6 +1041,7 @@ export const StreetBrawler: FC = () => {
         const dx = Math.abs(p.x - pu.x);
         const dy = Math.abs(p.y - pu.y);
         if (dx < 30 && dy < 40 && p.state !== "dead") {
+          sfx(() => SFX.powerupPickup());
           // Apply power-up
           switch (pu.type) {
             case "health":
