@@ -784,6 +784,44 @@ export const StreetBrawler: FC = () => {
       ctx.textAlign = "left";
       ctx.fillText("⚡ ENERGY", 20, 36);
 
+      // Draw power-ups
+      for (const pu of g.powerups) {
+        const px = pu.x - g.camX;
+        const py = pu.y;
+        const bob = Math.sin(Date.now() / 200) * 3;
+        // Glow
+        ctx.beginPath();
+        ctx.arc(px, py - 10 + bob, 14, 0, Math.PI * 2);
+        const glow = ctx.createRadialGradient(px, py - 10 + bob, 2, px, py - 10 + bob, 14);
+        glow.addColorStop(0, POWERUP_COLORS[pu.type] + "88");
+        glow.addColorStop(1, POWERUP_COLORS[pu.type] + "00");
+        ctx.fillStyle = glow;
+        ctx.fill();
+        // Icon
+        ctx.font = "16px serif";
+        ctx.textAlign = "center";
+        ctx.fillText(POWERUP_ICONS[pu.type], px, py - 5 + bob);
+        // Despawn warning flash
+        if (pu.timer < 120 && Math.floor(pu.timer / 10) % 2 === 0) {
+          ctx.globalAlpha = 0.3;
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // Boost indicators
+      if (g.speedBoostTimer > 0) {
+        ctx.font = "bold 11px monospace";
+        ctx.fillStyle = "#00ccff";
+        ctx.textAlign = "left";
+        ctx.fillText(`⚡ SPEED ${Math.ceil(g.speedBoostTimer / 60)}s`, 20, 60);
+      }
+      if (g.dmgBoostTimer > 0) {
+        ctx.font = "bold 11px monospace";
+        ctx.fillStyle = "#ff4444";
+        ctx.textAlign = "left";
+        ctx.fillText(`💥 DMG x1.5 ${Math.ceil(g.dmgBoostTimer / 60)}s`, 20, g.speedBoostTimer > 0 ? 74 : 60);
+      }
+
       for (const e of g.enemies) {
         if (e.state === "dead" && e.stateTimer <= 0) continue;
         drawStickFigure(ctx, e, g.camX, null, false);
