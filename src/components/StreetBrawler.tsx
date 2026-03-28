@@ -431,69 +431,73 @@ export const StreetBrawler: FC = () => {
 
       const isAttacking = ["punch", "kick", "uppercut", "spinkick", "dashpunch", "groundpound"].includes(p.state);
 
-      // Player movement
-      if (p.state !== "hit" && p.state !== "dead" && !isAttacking) {
+      // Always buffer combo inputs, even during attacks
+      let didSpecial = false;
+      if (p.state !== "dead" && (g.keyJustPressed.has("j") || g.keyJustPressed.has("k"))) {
+        const newInput = g.keyJustPressed.has("j") ? "j" : "k";
+        c.inputs.push(newInput);
+        c.timer = COMBO_WINDOW;
+
+        // Check combos
+        for (const combo of COMBOS) {
+          const len = combo.inputs.length;
+          const recent = c.inputs.slice(-len);
+          if (recent.length === len && recent.every((v, i) => v === combo.inputs[i])) {
+            const spec = SPECIAL_ATTACKS[combo.move];
+            if (spec && c.specialEnergy >= spec.energyCost) {
+              p.state = combo.move;
+              p.stateTimer = spec.frames;
+              p.attackCooldown = spec.frames + 5;
+              c.specialEnergy -= spec.energyCost;
+              c.inputs = [];
+              setEnergy(c.specialEnergy);
+              setComboName(combo.name);
+              g.effects.push({
+                x: p.x, y: p.y - 80, timer: 40,
+                text: combo.name, color: "#FFD700", size: 20,
+              });
+              didSpecial = true;
+              setTimeout(() => setComboName(""), 1000);
+              break;
+            }
+          }
+        }
+      }
+
+      // Ground Pound: press L while airborne
+      if (!didSpecial && g.keyJustPressed.has("l") && p.y < GROUND_Y && c.specialEnergy >= SPECIAL_ATTACKS.groundpound.energyCost) {
+        p.state = "groundpound";
+        p.stateTimer = SPECIAL_ATTACKS.groundpound.frames;
+        p.attackCooldown = SPECIAL_ATTACKS.groundpound.frames + 5;
+        p.vy = 15;
+        c.specialEnergy -= SPECIAL_ATTACKS.groundpound.energyCost;
+        setEnergy(c.specialEnergy);
+        setComboName("GROUND POUND!");
+        g.effects.push({ x: p.x, y: p.y - 80, timer: 40, text: "GROUND POUND!", color: "#ff6600", size: 18 });
+        didSpecial = true;
+        setTimeout(() => setComboName(""), 1000);
+      }
+
+      // Player movement & basic attacks (blocked during attack animations)
+      if (p.state !== "hit" && p.state !== "dead" && !isAttacking && !didSpecial) {
         let moving = false;
         if (g.keys.has("a") || g.keys.has("arrowleft")) { p.x -= PLAYER_SPEED; p.facing = -1; moving = true; }
         if (g.keys.has("d") || g.keys.has("arrowright")) { p.x += PLAYER_SPEED; p.facing = 1; moving = true; }
         if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && p.y >= GROUND_Y) p.vy = JUMP_FORCE;
 
-        // Check for combo special move first
-        let didSpecial = false;
-        if (g.keyJustPressed.has("j") || g.keyJustPressed.has("k")) {
-          const newInput = g.keyJustPressed.has("j") ? "j" : "k";
-          c.inputs.push(newInput);
-          c.timer = COMBO_WINDOW;
-
-          // Check combos
-          for (const combo of COMBOS) {
-            const len = combo.inputs.length;
-            const recent = c.inputs.slice(-len);
-            if (recent.length === len && recent.every((v, i) => v === combo.inputs[i])) {
-              const spec = SPECIAL_ATTACKS[combo.move];
-              if (spec && c.specialEnergy >= spec.energyCost) {
-                p.state = combo.move;
-                p.stateTimer = spec.frames;
-                p.attackCooldown = spec.frames + 5;
-                c.specialEnergy -= spec.energyCost;
-                c.inputs = [];
-                setEnergy(c.specialEnergy);
-                setComboName(combo.name);
-                g.effects.push({
-                  x: p.x, y: p.y - 80, timer: 40,
-                  text: combo.name, color: "#FFD700", size: 20,
-                });
-                didSpecial = true;
-                setTimeout(() => setComboName(""), 1000);
-                break;
-              }
-            }
-          }
+        if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
+          p.state = "punch"; p.stateTimer = 12; p.attackCooldown = 14;
+        } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
+          p.state = "kick"; p.stateTimer = 15; p.attackCooldown = 17;
+        } else if (p.stateTimer <= 0) {
+          p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
         }
-
-        // Ground Pound: press L while airborne
-        if (g.keyJustPressed.has("l") && p.y < GROUND_Y && c.specialEnergy >= SPECIAL_ATTACKS.groundpound.energyCost) {
-          p.state = "groundpound";
-          p.stateTimer = SPECIAL_ATTACKS.groundpound.frames;
-          p.attackCooldown = SPECIAL_ATTACKS.groundpound.frames + 5;
-          p.vy = 15; // slam down
-          c.specialEnergy -= SPECIAL_ATTACKS.groundpound.energyCost;
-          setEnergy(c.specialEnergy);
-          setComboName("GROUND POUND!");
-          g.effects.push({ x: p.x, y: p.y - 80, timer: 40, text: "GROUND POUND!", color: "#ff6600", size: 18 });
-          didSpecial = true;
-          setTimeout(() => setComboName(""), 1000);
-        }
-
-        if (!didSpecial) {
-          if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
-            p.state = "punch"; p.stateTimer = 12; p.attackCooldown = 14;
-          } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
-            p.state = "kick"; p.stateTimer = 15; p.attackCooldown = 17;
-          } else if (p.stateTimer <= 0) {
-            p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
-          }
-        }
+      } else if (p.state !== "hit" && p.state !== "dead" && !isAttacking && didSpecial) {
+        // Special move was triggered, movement already handled by the special
+      } else if (p.state !== "hit" && p.state !== "dead" && isAttacking) {
+        // Allow movement during attacks (for dash punch etc)
+        if (g.keys.has("a") || g.keys.has("arrowleft")) p.facing = -1;
+        if (g.keys.has("d") || g.keys.has("arrowright")) p.facing = 1;
       }
 
       g.keyJustPressed.clear();
