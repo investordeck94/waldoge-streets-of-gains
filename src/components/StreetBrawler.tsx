@@ -50,8 +50,30 @@ interface WeaponPickup {
   collected: boolean;
 }
 
-const BAT_DURATION = 600; // frames (~10 seconds at 60fps)
+const BAT_DURATION = 600;
 const BAT_RANGE_BONUS = 25;
+const BAT_DMG_MULTIPLIER = 1.8;
+
+interface RainDrop {
+  x: number;
+  y: number;
+  speed: number;
+  length: number;
+  opacity: number;
+  wind: number;
+}
+
+interface Splash {
+  x: number;
+  y: number;
+  timer: number;
+  maxTimer: number;
+  size: number;
+  inPuddle: boolean;
+}
+
+const RAIN_COUNT = 120;
+const PUDDLE_POSITIONS = [200, 700, 1200, 1700, 2200, 2700]; // approximate puddle X coords
 const BAT_DMG_MULTIPLIER = 1.8;
 
 const POWERUP_COLORS: Record<string, string> = {
