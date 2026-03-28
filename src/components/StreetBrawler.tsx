@@ -531,6 +531,7 @@ export const StreetBrawler: FC = () => {
     combo: ComboState;
     effects: HitEffect[];
     powerups: PowerUp[];
+    projectiles: Projectile[];
     speedBoostTimer: number;
     dmgBoostTimer: number;
   }>({
@@ -547,6 +548,7 @@ export const StreetBrawler: FC = () => {
     combo: { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 0 },
     effects: [],
     powerups: [],
+    projectiles: [],
     speedBoostTimer: 0,
     dmgBoostTimer: 0,
   });
