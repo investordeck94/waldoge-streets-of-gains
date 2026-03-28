@@ -1645,21 +1645,44 @@ export const StreetBrawler: FC = () => {
         return pu.timer > 0;
       });
 
-      // Weapon pickup collection & bat timer
-      g.weaponTimer = Math.max(0, g.weaponTimer - 1); if (g.weaponTimer === 0) g.weaponType = null;
-      for (const wp of g.weapons) {
-        if (wp.collected) continue;
+      // Weapon pickup collection & weapon timer
+      g.weaponTimer = Math.max(0, g.weaponTimer - 1);
+      if (g.weaponTimer === 0 && g.weaponType) { g.weaponType = null; g.shurikenAmmo = 0; }
+
+      g.weapons = g.weapons.filter(wp => {
+        if (wp.collected) return false;
+        // Physics for dropped weapons
+        wp.vy += 0.3;
+        wp.y += wp.vy;
+        if (wp.y >= GROUND_Y) { wp.y = GROUND_Y; wp.vy = 0; }
+        wp.timer--;
+        // Check player pickup
         const dx = Math.abs(p.x - wp.x);
         const dy = Math.abs(p.y - wp.y);
         if (dx < 35 && dy < 40 && p.state !== "dead") {
-          wp.collected = true;
-          g.weaponType = wp.type; g.weaponTimer = WEAPON_STATS[wp.type].duration; if (wp.type === "shuriken") g.shurikenAmmo = SHURIKEN_AMMO;
+          const ws = WEAPON_STATS[wp.type];
+          g.weaponType = wp.type;
+          g.weaponTimer = ws.duration;
+          if (wp.type === "shuriken") g.shurikenAmmo = SHURIKEN_AMMO;
           sfx(() => SFX.weaponPickup());
-          const ws = WEAPON_STATS[wp.type]; g.effects.push({ x: wp.x, y: wp.y - 30, timer: 40, text: `${ws.icon} ${ws.name} EQUIPPED!`, color: ws.color, size: 16 });
+          g.effects.push({ x: wp.x, y: wp.y - 30, timer: 40, text: `${ws.icon} ${ws.name} EQUIPPED!`, color: ws.color, size: 16 });
+          return false;
         }
-      }
+        return wp.timer > 0;
+      });
 
-      // Apply speed boost to player movement
+      // Shuriken throw: press L on ground with shuriken equipped
+      if (g.weaponType === "shuriken" && g.shurikenAmmo > 0 && g.keyJustPressed.has("l") && p.y >= GROUND_Y - 5 && p.state !== "dead") {
+        g.shurikenAmmo--;
+        sfx(() => SFX.shurikenThrow());
+        g.projectiles.push({
+          x: p.x + p.facing * 20, y: p.y - 40,
+          vx: p.facing * 9, vy: 0,
+          timer: 90,
+        });
+        g.effects.push({ x: p.x, y: p.y - 60, timer: 20, text: "✦", color: "#cc44ff", size: 14 });
+        if (g.shurikenAmmo <= 0) { g.weaponType = null; g.weaponTimer = 0; }
+      }
       if (g.speedBoostTimer > 0) {
         // Speed boost handled by multiplying movement in the movement section
       }
