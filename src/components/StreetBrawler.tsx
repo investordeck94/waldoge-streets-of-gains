@@ -44,15 +44,24 @@ interface PowerUp {
   timer: number;
 }
 
+type WeaponType = "bat" | "sword" | "shuriken";
+
 interface WeaponPickup {
   x: number;
   y: number;
+  vy: number;
+  type: WeaponType;
   collected: boolean;
+  timer: number;
 }
 
-const BAT_DURATION = 600;
-const BAT_RANGE_BONUS = 25;
-const BAT_DMG_MULTIPLIER = 1.8;
+const WEAPON_STATS: Record<WeaponType, { duration: number; rangeBonus: number; dmgMult: number; color: string; icon: string; name: string }> = {
+  bat:      { duration: 600, rangeBonus: 25, dmgMult: 1.8, color: "#ff8c00", icon: "🏏", name: "BAT" },
+  sword:    { duration: 480, rangeBonus: 35, dmgMult: 2.2, color: "#00ccff", icon: "⚔️", name: "SWORD" },
+  shuriken: { duration: 360, rangeBonus: 10, dmgMult: 1.3, color: "#cc44ff", icon: "✦", name: "SHURIKEN" },
+};
+const SHURIKEN_AMMO = 5;
+const WEAPON_DROP_CHANCE = 0.25;
 
 interface RainDrop {
   x: number;
