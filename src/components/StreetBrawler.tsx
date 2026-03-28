@@ -1091,7 +1091,9 @@ export const StreetBrawler: FC = () => {
             g.enemies = [spawnBoss(p.x)];
             g.projectiles = [];
             g.effects.push({ x: p.x, y: p.y - 100, timer: 90, text: "⚠ BOSS FIGHT! ⚠", color: "#ff0000", size: 24 });
+            sfx(() => SFX.bossEntrance());
           } else {
+            sfx(() => SFX.waveStart());
             g.enemies = spawnEnemies(g.wave, p.x);
           }
         }
