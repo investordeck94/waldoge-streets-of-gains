@@ -77,7 +77,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col space-bg">
+    <div className="min-h-[100dvh] flex flex-col space-bg overflow-y-auto overflow-x-hidden">
       <Header
         balance={balance}
         tier={tier}
@@ -88,7 +88,7 @@ const Index = () => {
         freeTrialTimeRemaining={freeTrialTimeRemaining}
       />
 
-      <main className="flex-1 container mx-auto px-4 py-6 relative z-10">
+      <main className="flex-1 min-h-0 container mx-auto px-2 sm:px-4 py-3 sm:py-6 relative z-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}

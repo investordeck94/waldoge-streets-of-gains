@@ -73,15 +73,15 @@ export const Header: FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
-      {/* Construction Notice Banner */}
-      <div className="bg-accent/20 border-b border-accent/30 py-2 px-4">
+      {/* Construction Notice Banner - hidden on very small screens */}
+      <div className="bg-accent/20 border-b border-accent/30 py-1 sm:py-2 px-4 hidden sm:block">
         <p className="text-center text-xs sm:text-sm font-medium text-accent">
           🚧 Website under construction — Token gates temporarily lifted 🚧
         </p>
       </div>
       <div className="container mx-auto px-4">
         {/* Top row - Logo, Balance, Wallet */}
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-12 sm:h-16">
           {/* Logo */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -146,7 +146,7 @@ export const Header: FC<HeaderProps> = ({
         </div>
 
         {/* Navigation tabs */}
-        <nav className="flex gap-1 pb-2 overflow-x-auto custom-scrollbar">
+        <nav className="flex gap-1 pb-1 sm:pb-2 overflow-x-auto custom-scrollbar">
           {tabs.map((tab) => (
             <motion.button
               key={tab.id}
