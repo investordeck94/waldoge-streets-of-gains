@@ -1272,7 +1272,9 @@ export const StreetBrawler: FC = () => {
               {comboCount > 1 && (
                 <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
               )}
-              <span className="text-primary font-bold">Wave {wave + 1}/{WAVES.length}</span>
+              <span className="text-primary font-bold">
+                {wave === WAVES.length - 1 ? "⚠ BOSS" : `Wave ${wave + 1}/${WAVES.length}`}
+              </span>
               <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
             </div>
 
