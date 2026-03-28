@@ -986,6 +986,7 @@ export const StreetBrawler: FC = () => {
             if (p.hp <= 0) {
               p.state = "dead";
               g.running = false;
+              sfx(() => SFX.gameOver());
               setGameState("gameover");
               return;
             }
