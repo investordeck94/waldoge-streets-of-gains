@@ -441,7 +441,7 @@ export const WheresWaldoge: FC = () => {
             alt={level.name}
             className="w-full h-full object-cover"
             style={{
-              animation: `${level.sceneMotion} 8s ease-in-out infinite alternate`,
+              animation: `${level.sceneMotion} 12s ease-in-out infinite`,
             }}
             draggable={false}
           />
