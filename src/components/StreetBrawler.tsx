@@ -1073,6 +1073,32 @@ export const StreetBrawler: FC = () => {
       // Update effects
       g.effects = g.effects.filter(fx => { fx.timer--; return fx.timer > 0; });
 
+      // Update rain particles
+      for (const drop of g.rain) {
+        drop.y += drop.speed;
+        drop.x += drop.wind;
+        if (drop.y >= GROUND_Y + 5) {
+          // Check if landing in puddle area
+          const worldX = drop.x + g.camX;
+          const inPuddle = PUDDLE_POSITIONS.some(px => Math.abs(worldX - px) < 40);
+          g.splashes.push({
+            x: drop.x, y: GROUND_Y + 2,
+            timer: inPuddle ? 12 : 8,
+            maxTimer: inPuddle ? 12 : 8,
+            size: inPuddle ? 4 + Math.random() * 3 : 2 + Math.random() * 2,
+            inPuddle,
+          });
+          // Reset drop to top
+          drop.y = -10 - Math.random() * 30;
+          drop.x = Math.random() * (CANVAS_W + 200) - 100;
+          drop.speed = 6 + Math.random() * 6;
+          drop.length = 8 + Math.random() * 12;
+          drop.opacity = 0.15 + Math.random() * 0.25;
+        }
+      }
+      // Update splashes
+      g.splashes = g.splashes.filter(s => { s.timer--; return s.timer > 0; });
+
       const isAttacking = ["punch", "kick", "uppercut", "spinkick", "dashpunch", "groundpound"].includes(p.state);
 
       // Always buffer combo inputs, even during attacks
