@@ -953,7 +953,9 @@ export const StreetBrawler: FC = () => {
     speedBoostTimer: number;
     dmgBoostTimer: number;
     weapons: WeaponPickup[];
-    batTimer: number;
+    weaponType: WeaponType | null;
+    weaponTimer: number;
+    shurikenAmmo: number;
     alleyObjects: AlleyObject[];
     animFrameCount: number;
     rain: RainDrop[];
