@@ -146,7 +146,7 @@ export const Header: FC<HeaderProps> = ({
         </div>
 
         {/* Navigation tabs */}
-        <nav className="flex gap-1 pb-2 overflow-x-auto custom-scrollbar">
+        <nav className="flex gap-1 pb-1 sm:pb-2 overflow-x-auto custom-scrollbar">
           {tabs.map((tab) => (
             <motion.button
               key={tab.id}
