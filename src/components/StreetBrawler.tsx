@@ -1220,6 +1220,56 @@ export const StreetBrawler: FC = () => {
         }
       }
 
+      // Hit detection on alley objects (crates, trash cans)
+      if (hitFrame) {
+        const spec = SPECIAL_ATTACKS[p.state];
+        const baseRange = spec ? spec.range : (p.state === "punch" ? 45 : 55);
+        const objRange = baseRange + (g.batTimer > 0 ? BAT_RANGE_BONUS : 0);
+        const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
+        const objDmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.batTimer > 0 ? BAT_DMG_MULTIPLIER : 1);
+        const objDmg = Math.round(baseDmg * objDmgMult);
+
+        for (const obj of g.alleyObjects) {
+          if (obj.broken) continue;
+          const dx = obj.x - p.x;
+          const isGP = p.state === "groundpound";
+          const inRange = isGP
+            ? Math.abs(dx) < objRange && Math.abs(obj.y - p.y) < 60
+            : dx * p.facing > 0 && Math.abs(dx) < objRange && Math.abs(obj.y - p.y) < 50;
+          if (inRange) {
+            obj.hp -= objDmg;
+            sfx(() => SFX.hit());
+            g.effects.push({
+              x: obj.x, y: obj.y - 30, timer: 20,
+              text: `${objDmg}`, color: "#ccaa44", size: 12,
+            });
+            if (obj.hp <= 0) {
+              obj.broken = true;
+              obj.breakTimer = 40;
+              sfx(() => SFX.enemyDeath());
+              const bonus = obj.type === "trashcan" ? 25 : 15;
+              g.score += bonus;
+              setScore(g.score);
+              g.effects.push({
+                x: obj.x, y: obj.y - 50, timer: 30,
+                text: `+${bonus}`, color: "#ffaa00", size: 14,
+              });
+              // Chance to drop power-up from objects
+              if (Math.random() < 0.3) {
+                const types: PowerUp["type"][] = ["health", "energy"];
+                const pType = types[Math.floor(Math.random() * types.length)];
+                g.powerups.push({ x: obj.x, y: obj.y - 20, vy: -3, type: pType, timer: 600 });
+              }
+            }
+          }
+        }
+      }
+
+      // Update broken object timers
+      for (const obj of g.alleyObjects) {
+        if (obj.broken && obj.breakTimer > 0) obj.breakTimer--;
+      }
+
       // Enemy AI
       for (const e of g.enemies) {
         if (e.state === "dead") { e.stateTimer--; continue; }
