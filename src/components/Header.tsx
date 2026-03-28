@@ -81,7 +81,7 @@ export const Header: FC<HeaderProps> = ({
       </div>
       <div className="container mx-auto px-4">
         {/* Top row - Logo, Balance, Wallet */}
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-12 sm:h-16">
           {/* Logo */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
