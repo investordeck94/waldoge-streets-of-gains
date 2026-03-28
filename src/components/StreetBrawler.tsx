@@ -44,6 +44,16 @@ interface PowerUp {
   timer: number;
 }
 
+interface WeaponPickup {
+  x: number;
+  y: number;
+  collected: boolean;
+}
+
+const BAT_DURATION = 600; // frames (~10 seconds at 60fps)
+const BAT_RANGE_BONUS = 25;
+const BAT_DMG_MULTIPLIER = 1.8;
+
 const POWERUP_COLORS: Record<string, string> = {
   health: "#00ff00",
   speed: "#00ccff",
@@ -260,7 +270,8 @@ function drawStickFigure(
   e: Entity,
   camX: number,
   headImg: HTMLImageElement | null,
-  isPlayer: boolean
+  isPlayer: boolean,
+  hasBat = false,
 ) {
   const sx = e.x - camX;
   const sy = e.y;
@@ -327,6 +338,22 @@ function drawStickFigure(
     ctx.lineTo(e.facing * limbLen * 1.5, shoulderY - 5);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(-e.facing * limbLen * 0.6, shoulderY + 10);
+    // Draw bat in hand during punch
+    if (hasBat) {
+      ctx.stroke();
+      ctx.beginPath();
+      const batX = e.facing * limbLen * 1.5;
+      const batY = shoulderY - 5;
+      ctx.save();
+      ctx.translate(batX, batY);
+      ctx.rotate(e.facing * -0.3);
+      ctx.fillStyle = "#8B4513";
+      ctx.fillRect(-2, -22, 5, 24);
+      ctx.fillStyle = "#A0522D";
+      ctx.fillRect(-4, -26, 9, 8);
+      ctx.restore();
+      ctx.beginPath();
+    }
   } else if (e.state === "kick") {
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(-e.facing * limbLen * 0.5, shoulderY - 8);
@@ -355,6 +382,22 @@ function drawStickFigure(
     ctx.lineTo(-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(limbLen * 0.7, shoulderY + limbLen * 0.8 - swing);
+    // Draw bat held at side when idle/walking
+    if (hasBat) {
+      ctx.stroke();
+      ctx.beginPath();
+      const handX = e.facing * limbLen * 0.7;
+      const handY = shoulderY + limbLen * 0.8 - swing;
+      ctx.save();
+      ctx.translate(handX, handY);
+      ctx.rotate(e.facing * 0.3);
+      ctx.fillStyle = "#8B4513";
+      ctx.fillRect(-2, -2, 5, 22);
+      ctx.fillStyle = "#A0522D";
+      ctx.fillRect(-3, 18, 7, 6);
+      ctx.restore();
+      ctx.beginPath();
+    }
   }
   ctx.strokeStyle = isPlayer ? "#FFD700" : "#ff4444";
   ctx.lineWidth = e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 4 : 3;
@@ -541,6 +584,8 @@ export const StreetBrawler: FC = () => {
     projectiles: Projectile[];
     speedBoostTimer: number;
     dmgBoostTimer: number;
+    weapons: WeaponPickup[];
+    batTimer: number;
   }>({
     player: createPlayer(),
     enemies: [],
@@ -558,6 +603,8 @@ export const StreetBrawler: FC = () => {
     projectiles: [],
     speedBoostTimer: 0,
     dmgBoostTimer: 0,
+    weapons: [],
+    batTimer: 0,
   });
 
   useEffect(() => {
@@ -579,6 +626,14 @@ export const StreetBrawler: FC = () => {
     g.projectiles = [];
     g.speedBoostTimer = 0;
     g.dmgBoostTimer = 0;
+    g.batTimer = 0;
+    // Spawn weapon pickups along the level
+    g.weapons = [
+      { x: 600, y: GROUND_Y, collected: false },
+      { x: 1400, y: GROUND_Y, collected: false },
+      { x: 2200, y: GROUND_Y, collected: false },
+      { x: 2800, y: GROUND_Y, collected: false },
+    ];
     setWave(0);
     setScore(0);
     setPlayerHp(100);
@@ -699,10 +754,10 @@ export const StreetBrawler: FC = () => {
 
         if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
           p.state = "punch"; p.stateTimer = 12; p.attackCooldown = 14;
-          sfx(() => SFX.punch());
+          sfx(() => g.batTimer > 0 ? SFX.batSwing() : SFX.punch());
         } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
           p.state = "kick"; p.stateTimer = 15; p.attackCooldown = 17;
-          sfx(() => SFX.kick());
+          sfx(() => g.batTimer > 0 ? SFX.batSwing() : SFX.kick());
         } else if (p.stateTimer <= 0) {
           p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
         }
@@ -748,9 +803,10 @@ export const StreetBrawler: FC = () => {
 
       if (hitFrame) {
         const spec = SPECIAL_ATTACKS[p.state];
-        const range = spec ? spec.range : (p.state === "punch" ? 45 : 55);
+        const baseRange = spec ? spec.range : (p.state === "punch" ? 45 : 55);
+        const range = baseRange + (g.batTimer > 0 ? BAT_RANGE_BONUS : 0);
         const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
-        const dmgMult = g.dmgBoostTimer > 0 ? 1.5 : 1;
+        const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.batTimer > 0 ? BAT_DMG_MULTIPLIER : 1);
         const kb = spec ? spec.knockback : (p.state === "punch" ? 5 : 6);
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult);
 
@@ -1069,6 +1125,20 @@ export const StreetBrawler: FC = () => {
         return pu.timer > 0;
       });
 
+      // Weapon pickup collection & bat timer
+      g.batTimer = Math.max(0, g.batTimer - 1);
+      for (const wp of g.weapons) {
+        if (wp.collected) continue;
+        const dx = Math.abs(p.x - wp.x);
+        const dy = Math.abs(p.y - wp.y);
+        if (dx < 35 && dy < 40 && p.state !== "dead") {
+          wp.collected = true;
+          g.batTimer = BAT_DURATION;
+          sfx(() => SFX.weaponPickup());
+          g.effects.push({ x: wp.x, y: wp.y - 30, timer: 40, text: "🏏 BAT EQUIPPED!", color: "#ff8c00", size: 16 });
+        }
+      }
+
       // Apply speed boost to player movement
       if (g.speedBoostTimer > 0) {
         // Speed boost handled by multiplying movement in the movement section
@@ -1166,18 +1236,52 @@ export const StreetBrawler: FC = () => {
         ctx.globalAlpha = 1;
       }
 
+      // Draw weapon pickups on ground
+      for (const wp of g.weapons) {
+        if (wp.collected) continue;
+        const wx = wp.x - g.camX;
+        const wy = wp.y;
+        const bob = Math.sin(Date.now() / 300) * 2;
+        // Glow
+        ctx.beginPath();
+        ctx.arc(wx, wy - 12 + bob, 16, 0, Math.PI * 2);
+        const wGlow = ctx.createRadialGradient(wx, wy - 12 + bob, 3, wx, wy - 12 + bob, 16);
+        wGlow.addColorStop(0, "rgba(255, 140, 0, 0.5)");
+        wGlow.addColorStop(1, "rgba(255, 140, 0, 0)");
+        ctx.fillStyle = wGlow;
+        ctx.fill();
+        // Draw bat shape
+        ctx.save();
+        ctx.translate(wx, wy - 12 + bob);
+        ctx.rotate(-Math.PI / 4);
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(-3, -18, 6, 28);
+        ctx.fillStyle = "#A0522D";
+        ctx.fillRect(-5, -22, 10, 8);
+        ctx.restore();
+      }
+
       // Boost indicators
+      let boostY = 60;
       if (g.speedBoostTimer > 0) {
         ctx.font = "bold 11px monospace";
         ctx.fillStyle = "#00ccff";
         ctx.textAlign = "left";
-        ctx.fillText(`⚡ SPEED ${Math.ceil(g.speedBoostTimer / 60)}s`, 20, 60);
+        ctx.fillText(`⚡ SPEED ${Math.ceil(g.speedBoostTimer / 60)}s`, 20, boostY);
+        boostY += 14;
       }
       if (g.dmgBoostTimer > 0) {
         ctx.font = "bold 11px monospace";
         ctx.fillStyle = "#ff4444";
         ctx.textAlign = "left";
-        ctx.fillText(`💥 DMG x1.5 ${Math.ceil(g.dmgBoostTimer / 60)}s`, 20, g.speedBoostTimer > 0 ? 74 : 60);
+        ctx.fillText(`💥 DMG x1.5 ${Math.ceil(g.dmgBoostTimer / 60)}s`, 20, boostY);
+        boostY += 14;
+      }
+      if (g.batTimer > 0) {
+        ctx.font = "bold 11px monospace";
+        ctx.fillStyle = "#ff8c00";
+        ctx.textAlign = "left";
+        ctx.fillText(`🏏 BAT ${Math.ceil(g.batTimer / 60)}s`, 20, boostY);
       }
 
       for (const e of g.enemies) {
@@ -1205,7 +1309,7 @@ export const StreetBrawler: FC = () => {
         ctx.fillText("🔥", px, py + 4);
       }
 
-      drawStickFigure(ctx, p, g.camX, g.headImg, true);
+      drawStickFigure(ctx, p, g.camX, g.headImg, true, g.batTimer > 0);
       drawHitEffects(ctx, g.effects, g.camX);
 
       g.animFrame = requestAnimationFrame(tick);
