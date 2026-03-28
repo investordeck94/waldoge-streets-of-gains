@@ -512,9 +512,10 @@ export const StreetBrawler: FC = () => {
 
       // Player movement & basic attacks (blocked during attack animations)
       if (p.state !== "hit" && p.state !== "dead" && !isAttacking && !didSpecial) {
+        const speed = PLAYER_SPEED * (g.speedBoostTimer > 0 ? 1.6 : 1);
         let moving = false;
-        if (g.keys.has("a") || g.keys.has("arrowleft")) { p.x -= PLAYER_SPEED; p.facing = -1; moving = true; }
-        if (g.keys.has("d") || g.keys.has("arrowright")) { p.x += PLAYER_SPEED; p.facing = 1; moving = true; }
+        if (g.keys.has("a") || g.keys.has("arrowleft")) { p.x -= speed; p.facing = -1; moving = true; }
+        if (g.keys.has("d") || g.keys.has("arrowright")) { p.x += speed; p.facing = 1; moving = true; }
         if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && p.y >= GROUND_Y) p.vy = JUMP_FORCE;
 
         if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
