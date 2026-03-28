@@ -10,6 +10,7 @@ import { MemeTab } from "@/components/MemeTab";
 
 import { AboutTab } from "@/components/AboutTab";
 import { WheresWaldoge } from "@/components/WheresWaldoge";
+import { StreetBrawler } from "@/components/StreetBrawler";
 import { useWaldogeBalance } from "@/hooks/useWaldogeBalance";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 
@@ -66,6 +67,8 @@ const Index = () => {
         return <MemeTab {...tabProps} />;
       case "game":
         return <WheresWaldoge />;
+      case "brawler":
+        return <StreetBrawler />;
       case "about":
         return <AboutTab />;
       default:

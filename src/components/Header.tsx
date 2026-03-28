@@ -2,7 +2,7 @@ import { FC } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { motion } from "framer-motion";
-import { Zap, Sparkles, Dog, Clock, Gamepad2, Coins } from "lucide-react";
+import { Zap, Sparkles, Dog, Clock, Gamepad2, Coins, Swords } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ const tabs = [
   { id: "meme", label: "Meme Generator", icon: Sparkles },
   { id: "tokens", label: "Token Listings", icon: Coins },
   { id: "game", label: "Find Waldoge", icon: Gamepad2 },
+  { id: "brawler", label: "Street Brawler", icon: Swords },
   { id: "about", label: "About", icon: null },
 ];
 
