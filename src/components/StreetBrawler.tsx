@@ -462,46 +462,384 @@ function drawStickFigure(
   }
 }
 
-function drawCity(ctx: CanvasRenderingContext2D, camX: number, canvasW: number) {
+interface AlleyObject {
+  x: number;
+  y: number;
+  type: "crate" | "trashcan";
+  hp: number;
+  maxHp: number;
+  broken: boolean;
+  breakTimer: number;
+}
+
+function spawnAlleyObjects(): AlleyObject[] {
+  const objs: AlleyObject[] = [];
+  for (let i = 0; i < 12; i++) {
+    const x = 350 + i * 250 + Math.random() * 100;
+    const type = Math.random() > 0.4 ? "crate" : "trashcan";
+    objs.push({
+      x, y: GROUND_Y,
+      type,
+      hp: type === "crate" ? 15 : 25,
+      maxHp: type === "crate" ? 15 : 25,
+      broken: false,
+      breakTimer: 0,
+    });
+  }
+  return objs;
+}
+
+function drawAlleyObject(ctx: CanvasRenderingContext2D, obj: AlleyObject, camX: number) {
+  const sx = obj.x - camX;
+  if (sx < -60 || sx > CANVAS_W + 60) return;
+  ctx.save();
+
+  if (obj.broken) {
+    ctx.globalAlpha = Math.max(0, obj.breakTimer / 40);
+    // Debris
+    ctx.translate(sx, obj.y);
+    ctx.fillStyle = obj.type === "crate" ? "#8B6914" : "#666";
+    for (let i = 0; i < 5; i++) {
+      const dx = (i - 2) * 10;
+      const dy = -(obj.breakTimer / 40) * (10 + i * 5);
+      ctx.fillRect(dx - 3, dy - 3, 6 + (i % 3), 5);
+    }
+    ctx.restore();
+    return;
+  }
+
+  ctx.translate(sx, obj.y);
+
+  if (obj.type === "crate") {
+    // Wooden crate
+    const w = 28, h = 26;
+    ctx.fillStyle = "#8B6914";
+    ctx.fillRect(-w / 2, -h, w, h);
+    ctx.strokeStyle = "#6B4F12";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-w / 2, -h, w, h);
+    // Planks
+    ctx.beginPath();
+    ctx.moveTo(-w / 2, -h / 2);
+    ctx.lineTo(w / 2, -h / 2);
+    ctx.moveTo(0, -h);
+    ctx.lineTo(0, 0);
+    ctx.strokeStyle = "#5C4010";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // X marks
+    ctx.beginPath();
+    ctx.moveTo(-w / 2 + 3, -h + 3);
+    ctx.lineTo(w / 2 - 3, -3);
+    ctx.moveTo(w / 2 - 3, -h + 3);
+    ctx.lineTo(-w / 2 + 3, -3);
+    ctx.strokeStyle = "#5C401044";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Damage cracks
+    if (obj.hp < obj.maxHp) {
+      ctx.strokeStyle = "#00000066";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-5, -h + 2);
+      ctx.lineTo(-2, -h / 2);
+      ctx.lineTo(4, -h / 2 + 3);
+      ctx.stroke();
+    }
+  } else {
+    // Metal trash can
+    const w = 22, h = 34;
+    ctx.fillStyle = "#555";
+    ctx.beginPath();
+    ctx.moveTo(-w / 2, 0);
+    ctx.lineTo(-w / 2 - 2, -h);
+    ctx.lineTo(w / 2 + 2, -h);
+    ctx.lineTo(w / 2, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#777";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Lid
+    ctx.fillStyle = "#666";
+    ctx.fillRect(-w / 2 - 4, -h - 4, w + 8, 5);
+    ctx.strokeStyle = "#888";
+    ctx.strokeRect(-w / 2 - 4, -h - 4, w + 8, 5);
+    // Handle
+    ctx.beginPath();
+    ctx.arc(0, -h - 6, 4, Math.PI, 0);
+    ctx.strokeStyle = "#888";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Ridges
+    for (let ry = -h + 8; ry < -4; ry += 10) {
+      ctx.beginPath();
+      ctx.moveTo(-w / 2, ry);
+      ctx.lineTo(w / 2, ry);
+      ctx.strokeStyle = "#4a4a4a";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    // Dent on damage
+    if (obj.hp < obj.maxHp) {
+      ctx.fillStyle = "#44444488";
+      ctx.beginPath();
+      ctx.ellipse(5, -h / 2, 6, 4, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawCity(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, frameCount: number) {
+  // === LAYER 0: Sky with gradient ===
   const skyGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
-  skyGrad.addColorStop(0, "#1a1a2e");
-  skyGrad.addColorStop(1, "#16213e");
+  skyGrad.addColorStop(0, "#0a0a18");
+  skyGrad.addColorStop(0.4, "#12102a");
+  skyGrad.addColorStop(1, "#1a1530");
   ctx.fillStyle = skyGrad;
   ctx.fillRect(0, 0, canvasW, GROUND_Y);
 
+  // Stars
+  ctx.fillStyle = "#ffffff22";
+  for (let i = 0; i < 40; i++) {
+    const sx = (i * 127 + 50) % canvasW;
+    const sy = (i * 73 + 10) % (GROUND_Y * 0.4);
+    const sz = ((i * 31) % 3) + 1;
+    const twinkle = Math.sin(frameCount / 30 + i) * 0.3 + 0.7;
+    ctx.globalAlpha = twinkle * 0.4;
+    ctx.fillRect(sx, sy, sz, sz);
+  }
+  ctx.globalAlpha = 1;
+
+  // === LAYER 1: Far skyline (slowest parallax 0.15) ===
+  for (let i = 0; i < 25; i++) {
+    const bx = i * 180 - (camX * 0.15) % 180;
+    const bh = 60 + (i * 41) % 100;
+    ctx.fillStyle = "#0d0b1e";
+    ctx.fillRect(bx, GROUND_Y - bh, 100, bh);
+    // Tiny windows
+    ctx.fillStyle = "#ffd70015";
+    for (let wy = GROUND_Y - bh + 8; wy < GROUND_Y - 8; wy += 14) {
+      for (let wx = bx + 8; wx < bx + 92; wx += 18) {
+        if ((wx * 7 + wy * 11) % 4 !== 0) ctx.fillRect(wx, wy, 5, 6);
+      }
+    }
+  }
+
+  // === LAYER 2: Mid buildings (parallax 0.4) ===
   for (let i = 0; i < 20; i++) {
-    const bx = i * 200 - (camX * 0.3) % 200;
-    const bh = 80 + (i * 37) % 120;
-    ctx.fillStyle = "#0f1729";
-    ctx.fillRect(bx, GROUND_Y - bh, 120, bh);
-    ctx.fillStyle = "#ffd70033";
-    for (let wy = GROUND_Y - bh + 10; wy < GROUND_Y - 10; wy += 20) {
-      for (let wx = bx + 10; wx < bx + 110; wx += 25) {
-        if ((wx * 7 + wy * 13) % 5 !== 0) ctx.fillRect(wx, wy, 10, 12);
+    const bx = i * 160 - (camX * 0.4) % 160;
+    const bh = 80 + (i * 59) % 130;
+    ctx.fillStyle = "#15112a";
+    ctx.fillRect(bx, GROUND_Y - bh, 90, bh);
+    // Bigger windows
+    ctx.fillStyle = "#ffd70028";
+    for (let wy = GROUND_Y - bh + 10; wy < GROUND_Y - 10; wy += 18) {
+      for (let wx = bx + 8; wx < bx + 82; wx += 22) {
+        const lit = (wx * 13 + wy * 7) % 6 !== 0;
+        if (lit) {
+          ctx.fillStyle = ((wx + wy) % 3 === 0) ? "#ff66cc20" : "#ffd70028";
+          ctx.fillRect(wx, wy, 8, 10);
+        }
+      }
+    }
+    // Fire escape lines
+    if (i % 3 === 0) {
+      ctx.strokeStyle = "#1a1535";
+      ctx.lineWidth = 1;
+      for (let fy = GROUND_Y - bh + 30; fy < GROUND_Y - 10; fy += 35) {
+        ctx.beginPath();
+        ctx.moveTo(bx + 85, fy);
+        ctx.lineTo(bx + 95, fy);
+        ctx.lineTo(bx + 95, fy + 30);
+        ctx.stroke();
       }
     }
   }
 
+  // === LAYER 3: Foreground alley walls (parallax 0.75) ===
+  // Left alley wall
   for (let i = 0; i < 30; i++) {
-    const bx = i * 140 - (camX * 0.6) % 140;
-    const bh = 50 + (i * 53) % 80;
-    ctx.fillStyle = "#1a2744";
-    ctx.fillRect(bx, GROUND_Y - bh, 80, bh);
-    ctx.fillStyle = "#ffd70055";
-    for (let wy = GROUND_Y - bh + 8; wy < GROUND_Y - 8; wy += 16) {
-      for (let wx = bx + 8; wx < bx + 72; wx += 20) {
-        ctx.fillRect(wx, wy, 8, 10);
+    const bx = i * 200 - (camX * 0.75) % 200;
+    const bh = GROUND_Y - 20; // Tall walls
+    // Brick wall
+    ctx.fillStyle = "#1e1832";
+    ctx.fillRect(bx, GROUND_Y - bh, 40, bh);
+    // Brick pattern
+    ctx.strokeStyle = "#16102a";
+    ctx.lineWidth = 0.5;
+    for (let by = GROUND_Y - bh; by < GROUND_Y; by += 8) {
+      ctx.beginPath();
+      ctx.moveTo(bx, by);
+      ctx.lineTo(bx + 40, by);
+      ctx.stroke();
+      const offset = (Math.floor(by / 8) % 2) * 10;
+      for (let bxi = bx + offset; bxi < bx + 40; bxi += 20) {
+        ctx.beginPath();
+        ctx.moveTo(bxi, by);
+        ctx.lineTo(bxi, by + 8);
+        ctx.stroke();
       }
+    }
+    // Right wall on other side
+    ctx.fillStyle = "#1e1832";
+    ctx.fillRect(bx + 160, GROUND_Y - bh, 40, bh);
+    ctx.strokeStyle = "#16102a";
+    ctx.lineWidth = 0.5;
+    for (let by = GROUND_Y - bh; by < GROUND_Y; by += 8) {
+      ctx.beginPath();
+      ctx.moveTo(bx + 160, by);
+      ctx.lineTo(bx + 200, by);
+      ctx.stroke();
     }
   }
 
-  ctx.fillStyle = "#2d3748";
-  ctx.fillRect(0, GROUND_Y, canvasW, canvasW - GROUND_Y);
-  ctx.fillStyle = "#ffd70044";
+  // === Neon signs (parallax 0.75, on walls) ===
+  for (let i = 0; i < 8; i++) {
+    const nx = i * 400 + 60 - (camX * 0.75) % 400;
+    if (nx < -100 || nx > canvasW + 100) continue;
+    const ny = GROUND_Y - 200 + (i % 3) * 30;
+
+    // Flickering intensity
+    const flicker = Math.sin(frameCount / 3 + i * 100) * 0.15
+      + Math.sin(frameCount / 7 + i * 50) * 0.1
+      + Math.sin(frameCount / 13 + i * 200) * 0.05;
+    const intensity = Math.max(0.3, Math.min(1, 0.7 + flicker));
+
+    const neonColor = i % 3 === 0 ? [255, 50, 150] : i % 3 === 1 ? [50, 200, 255] : [255, 100, 50];
+
+    // Glow halo
+    ctx.save();
+    ctx.globalAlpha = intensity * 0.25;
+    const glow = ctx.createRadialGradient(nx, ny, 5, nx, ny, 60);
+    glow.addColorStop(0, `rgba(${neonColor.join(",")}, 0.6)`);
+    glow.addColorStop(1, `rgba(${neonColor.join(",")}, 0)`);
+    ctx.fillStyle = glow;
+    ctx.fillRect(nx - 60, ny - 60, 120, 120);
+    ctx.restore();
+
+    // Sign box
+    ctx.save();
+    ctx.globalAlpha = intensity;
+    ctx.strokeStyle = `rgb(${neonColor.join(",")})`;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = `rgb(${neonColor.join(",")})`;
+    ctx.shadowBlur = 8;
+    const signs = ["BAR", "OPEN", "XXX", "24h", "EAT", "酒", "LIVE", "DOGE"];
+    ctx.strokeRect(nx - 20, ny - 10, 40, 18);
+    ctx.font = "bold 10px monospace";
+    ctx.fillStyle = `rgb(${neonColor.join(",")})`;
+    ctx.textAlign = "center";
+    ctx.fillText(signs[i % signs.length], nx, ny + 4);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // === Atmospheric overlay ===
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  const atmosGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  atmosGrad.addColorStop(0, "#2a1050");
+  atmosGrad.addColorStop(0.5, "#1a0a40");
+  atmosGrad.addColorStop(1, "#0a0520");
+  ctx.fillStyle = atmosGrad;
+  ctx.fillRect(0, 0, canvasW, GROUND_Y);
+  ctx.restore();
+
+  // === FLOOR: Cracked asphalt ===
+  const floorGrad = ctx.createLinearGradient(0, GROUND_Y, 0, GROUND_Y + 80);
+  floorGrad.addColorStop(0, "#1a1a22");
+  floorGrad.addColorStop(0.3, "#151518");
+  floorGrad.addColorStop(1, "#0e0e12");
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, GROUND_Y, canvasW, 80);
+
+  // Road markings (cracked)
+  ctx.strokeStyle = "#ffd70025";
+  ctx.lineWidth = 3;
   for (let i = 0; i < 40; i++) {
     const mx = i * 100 - (camX * 0.95) % 100;
-    ctx.fillRect(mx, GROUND_Y + 30, 40, 4);
+    ctx.beginPath();
+    ctx.moveTo(mx, GROUND_Y + 35);
+    ctx.lineTo(mx + 35, GROUND_Y + 35);
+    ctx.stroke();
   }
+
+  // Cracks in asphalt
+  ctx.strokeStyle = "#0a0a0e";
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 20; i++) {
+    const cx = i * 170 - (camX * 0.95) % 170 + 30;
+    ctx.beginPath();
+    ctx.moveTo(cx, GROUND_Y + 2);
+    const seed = (i * 137) % 100;
+    ctx.lineTo(cx + (seed % 15) - 7, GROUND_Y + 15);
+    ctx.lineTo(cx + (seed % 20) - 10, GROUND_Y + 30);
+    ctx.lineTo(cx + (seed % 10) - 5, GROUND_Y + 45);
+    ctx.stroke();
+    // Branch crack
+    if (seed > 40) {
+      ctx.beginPath();
+      ctx.moveTo(cx + (seed % 15) - 7, GROUND_Y + 15);
+      ctx.lineTo(cx + 15, GROUND_Y + 25);
+      ctx.stroke();
+    }
+  }
+
+  // === Puddles with neon reflections ===
+  for (let i = 0; i < 6; i++) {
+    const px = i * 500 + 200 - (camX * 0.95) % 500;
+    if (px < -80 || px > canvasW + 80) continue;
+    const pw = 50 + (i * 23) % 40;
+    const ph = 6;
+    const py = GROUND_Y + 10 + (i % 3) * 15;
+
+    // Puddle base (dark reflective)
+    ctx.save();
+    ctx.globalAlpha = 0.6;
+    const pudGrad = ctx.createRadialGradient(px, py, 2, px, py, pw / 2);
+    pudGrad.addColorStop(0, "#1a1530");
+    pudGrad.addColorStop(1, "#0e0a1a");
+    ctx.fillStyle = pudGrad;
+    ctx.beginPath();
+    ctx.ellipse(px, py, pw / 2, ph, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Neon reflection in puddle
+    const reflectColor = i % 3 === 0 ? "255, 50, 150" : i % 3 === 1 ? "50, 200, 255" : "255, 100, 50";
+    const reflFlicker = Math.sin(frameCount / 5 + i * 80) * 0.1 + 0.15;
+    ctx.save();
+    ctx.globalAlpha = reflFlicker;
+    const reflGrad = ctx.createRadialGradient(px, py, 1, px, py, pw / 3);
+    reflGrad.addColorStop(0, `rgba(${reflectColor}, 0.5)`);
+    reflGrad.addColorStop(1, `rgba(${reflectColor}, 0)`);
+    ctx.fillStyle = reflGrad;
+    ctx.beginPath();
+    ctx.ellipse(px, py, pw / 3, ph * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Shimmer ripple
+    ctx.save();
+    ctx.globalAlpha = 0.1;
+    ctx.strokeStyle = `rgba(${reflectColor}, 0.3)`;
+    ctx.lineWidth = 0.5;
+    const rippleR = (frameCount / 20 + i * 10) % 20;
+    ctx.beginPath();
+    ctx.ellipse(px, py, rippleR, rippleR * 0.3, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Gutter line at ground level
+  ctx.strokeStyle = "#252530";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, GROUND_Y);
+  ctx.lineTo(canvasW, GROUND_Y);
+  ctx.stroke();
 }
 
 function drawHitEffects(ctx: CanvasRenderingContext2D, effects: HitEffect[], camX: number) {
