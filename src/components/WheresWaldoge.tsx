@@ -220,7 +220,7 @@ export const WheresWaldoge: FC = () => {
       setTotalTime((t) => t + timer);
       setCompletedLevels((prev) => [...prev, currentLevel]);
       
-      if (currentLevel === LEVELS.length - 1) {
+      if (currentLevel === levels.length - 1) {
         setGameState("complete");
         toast.success("🎉 You found Waldoge in all levels!");
       } else {
@@ -286,7 +286,7 @@ export const WheresWaldoge: FC = () => {
         </p>
 
         <div className="grid grid-cols-2 gap-2 mb-6">
-          {LEVELS.map((lvl, i) => (
+          {levels.map((lvl, i) => (
             <div
               key={lvl.id}
               className="bg-muted/30 rounded-lg p-3 text-left border border-border/50"
@@ -369,7 +369,7 @@ export const WheresWaldoge: FC = () => {
         </p>
 
         <div className="flex items-center justify-center gap-2 mb-6">
-          {LEVELS.map((_, i) => (
+          {levels.map((_, i) => (
             <div
               key={i}
               className={cn(
@@ -401,7 +401,7 @@ export const WheresWaldoge: FC = () => {
         <div className="flex items-center gap-3">
           <span className="font-bold text-primary">{level.name}</span>
           <span className="text-muted-foreground">
-            Lv {level.id}/{LEVELS.length}
+            Lv {level.id}/{levels.length}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -532,7 +532,7 @@ export const WheresWaldoge: FC = () => {
 
       {/* Progress dots */}
       <div className="flex items-center justify-center gap-2">
-        {LEVELS.map((_, i) => (
+        {levels.map((_, i) => (
           <div
             key={i}
             className={cn(
