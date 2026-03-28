@@ -1575,32 +1575,66 @@ export const StreetBrawler: FC = () => {
       g.projectiles = g.projectiles.filter(proj => {
         proj.x += proj.vx;
         proj.y += proj.vy;
-        proj.vy += 0.15;
+        if (!proj.isPlayerProjectile) proj.vy += 0.15;
         proj.timer--;
         if (proj.y >= GROUND_Y) return false;
 
-        // Hit player
-        const dx = Math.abs(p.x - proj.x);
-        const dy = Math.abs(p.y - proj.y);
-        if (dx < 25 && dy < 35 && p.state !== "dead") {
-          sfx(() => SFX.hit());
-          p.hp -= 12;
-          p.state = "hit";
-          p.stateTimer = 10;
-          p.vx = proj.vx > 0 ? 4 : -4;
-          c.hitCount = 0;
-          c.multiplier = 1;
-          setComboCount(0);
-          setPlayerHp(Math.max(0, p.hp));
-          g.effects.push({ x: proj.x, y: proj.y - 20, timer: 20, text: "12", color: "#ff4444", size: 14 });
-          if (p.hp <= 0) {
-            p.state = "dead";
-            g.running = false;
-            sfx(() => SFX.gameOver());
-            setGameState("gameover");
+        if (proj.isPlayerProjectile) {
+          // Player shuriken hits enemies
+          for (const e of g.enemies) {
+            if (e.state === "dead") continue;
+            const edx = Math.abs(e.x - proj.x);
+            const edy = Math.abs(e.y - proj.y);
+            if (edx < 30 && edy < 40) {
+              const shurikenDmg = 20;
+              e.hp -= shurikenDmg;
+              e.state = "hit";
+              e.stateTimer = 8;
+              e.vx = (proj.vx > 0 ? 1 : -1) * 4;
+              sfx(() => SFX.hit());
+              c.hitCount++;
+              c.hitTimer = COMBO_HIT_WINDOW;
+              c.multiplier = 1 + Math.min(c.hitCount * 0.15, 2);
+              c.specialEnergy = Math.min(MAX_ENERGY, c.specialEnergy + 3);
+              setEnergy(c.specialEnergy);
+              setComboCount(c.hitCount);
+              g.effects.push({ x: e.x, y: e.y - 50, timer: 20, text: `${shurikenDmg}`, color: "#cc44ff", size: 14 });
+              if (e.hp <= 0) {
+                e.state = "dead";
+                e.stateTimer = 60;
+                sfx(() => SFX.enemyDeath());
+                const killBonus = Math.round(100 * c.multiplier);
+                g.score += killBonus;
+                setScore(g.score);
+                g.effects.push({ x: e.x, y: e.y - 70, timer: 35, text: `+${killBonus}`, color: "#00ff00", size: 16 });
+              }
+              return false;
+            }
+          }
+        } else {
+          // Boss projectile hits player
+          const dx = Math.abs(p.x - proj.x);
+          const dy = Math.abs(p.y - proj.y);
+          if (dx < 25 && dy < 35 && p.state !== "dead") {
+            sfx(() => SFX.hit());
+            p.hp -= 12;
+            p.state = "hit";
+            p.stateTimer = 10;
+            p.vx = proj.vx > 0 ? 4 : -4;
+            c.hitCount = 0;
+            c.multiplier = 1;
+            setComboCount(0);
+            setPlayerHp(Math.max(0, p.hp));
+            g.effects.push({ x: proj.x, y: proj.y - 20, timer: 20, text: "12", color: "#ff4444", size: 14 });
+            if (p.hp <= 0) {
+              p.state = "dead";
+              g.running = false;
+              sfx(() => SFX.gameOver());
+              setGameState("gameover");
+              return false;
+            }
             return false;
           }
-          return false;
         }
         return proj.timer > 0;
       });
