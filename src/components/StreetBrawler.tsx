@@ -30,6 +30,8 @@ interface HitEffect {
   text: string;
   color: string;
   size: number;
+}
+
 interface PowerUp {
   x: number;
   y: number;
