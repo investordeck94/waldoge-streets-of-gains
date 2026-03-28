@@ -44,15 +44,24 @@ interface PowerUp {
   timer: number;
 }
 
+type WeaponType = "bat" | "sword" | "shuriken";
+
 interface WeaponPickup {
   x: number;
   y: number;
+  vy: number;
+  type: WeaponType;
   collected: boolean;
+  timer: number;
 }
 
-const BAT_DURATION = 600;
-const BAT_RANGE_BONUS = 25;
-const BAT_DMG_MULTIPLIER = 1.8;
+const WEAPON_STATS: Record<WeaponType, { duration: number; rangeBonus: number; dmgMult: number; color: string; icon: string; name: string }> = {
+  bat:      { duration: 600, rangeBonus: 25, dmgMult: 1.8, color: "#ff8c00", icon: "🏏", name: "BAT" },
+  sword:    { duration: 480, rangeBonus: 35, dmgMult: 2.2, color: "#00ccff", icon: "⚔️", name: "SWORD" },
+  shuriken: { duration: 360, rangeBonus: 10, dmgMult: 1.3, color: "#cc44ff", icon: "✦", name: "SHURIKEN" },
+};
+const SHURIKEN_AMMO = 5;
+const WEAPON_DROP_CHANCE = 0.25;
 
 interface RainDrop {
   x: number;
@@ -124,6 +133,7 @@ const BOSS_CHARGE_SPEED = 6;
 
 interface Projectile {
   x: number; y: number; vx: number; vy: number; timer: number;
+  isPlayerProjectile?: boolean;
 }
 
 function spawnBoss(playerX: number): Entity {
@@ -292,7 +302,7 @@ function drawStickFigure(
   camX: number,
   headImg: HTMLImageElement | null,
   isPlayer: boolean,
-  hasBat = false,
+  weaponType: WeaponType | null = null,
 ) {
   const sx = e.x - camX;
   const sy = e.y;
@@ -359,19 +369,36 @@ function drawStickFigure(
     ctx.lineTo(e.facing * limbLen * 1.5, shoulderY - 5);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(-e.facing * limbLen * 0.6, shoulderY + 10);
-    // Draw bat in hand during punch
-    if (hasBat) {
+    // Draw weapon in hand during punch
+    if (weaponType) {
       ctx.stroke();
       ctx.beginPath();
-      const batX = e.facing * limbLen * 1.5;
-      const batY = shoulderY - 5;
+      const wX = e.facing * limbLen * 1.5;
+      const wY = shoulderY - 5;
       ctx.save();
-      ctx.translate(batX, batY);
+      ctx.translate(wX, wY);
       ctx.rotate(e.facing * -0.3);
-      ctx.fillStyle = "#8B4513";
-      ctx.fillRect(-2, -22, 5, 24);
-      ctx.fillStyle = "#A0522D";
-      ctx.fillRect(-4, -26, 9, 8);
+      if (weaponType === "bat") {
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(-2, -22, 5, 24);
+        ctx.fillStyle = "#A0522D";
+        ctx.fillRect(-4, -26, 9, 8);
+      } else if (weaponType === "sword") {
+        ctx.fillStyle = "#ccc";
+        ctx.fillRect(-1.5, -28, 3, 30);
+        ctx.fillStyle = "#888";
+        ctx.fillRect(-4, -1, 8, 4);
+        ctx.fillStyle = "#664400";
+        ctx.fillRect(-2, 3, 4, 7);
+      } else if (weaponType === "shuriken") {
+        ctx.fillStyle = "#cc44ff";
+        for (let i = 0; i < 4; i++) {
+          ctx.save();
+          ctx.rotate((i * Math.PI) / 2);
+          ctx.fillRect(-1, -8, 2, 8);
+          ctx.restore();
+        }
+      }
       ctx.restore();
       ctx.beginPath();
     }
@@ -403,8 +430,8 @@ function drawStickFigure(
     ctx.lineTo(-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(limbLen * 0.7, shoulderY + limbLen * 0.8 - swing);
-    // Draw bat held at side when idle/walking
-    if (hasBat) {
+    // Draw weapon held at side when idle/walking
+    if (weaponType) {
       ctx.stroke();
       ctx.beginPath();
       const handX = e.facing * limbLen * 0.7;
@@ -412,10 +439,27 @@ function drawStickFigure(
       ctx.save();
       ctx.translate(handX, handY);
       ctx.rotate(e.facing * 0.3);
-      ctx.fillStyle = "#8B4513";
-      ctx.fillRect(-2, -2, 5, 22);
-      ctx.fillStyle = "#A0522D";
-      ctx.fillRect(-3, 18, 7, 6);
+      if (weaponType === "bat") {
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(-2, -2, 5, 22);
+        ctx.fillStyle = "#A0522D";
+        ctx.fillRect(-3, 18, 7, 6);
+      } else if (weaponType === "sword") {
+        ctx.fillStyle = "#ccc";
+        ctx.fillRect(-1.5, -2, 3, 26);
+        ctx.fillStyle = "#888";
+        ctx.fillRect(-4, -3, 8, 3);
+        ctx.fillStyle = "#664400";
+        ctx.fillRect(-2, 24, 4, 5);
+      } else if (weaponType === "shuriken") {
+        ctx.fillStyle = "#cc44ff";
+        for (let i = 0; i < 4; i++) {
+          ctx.save();
+          ctx.rotate((i * Math.PI) / 2);
+          ctx.fillRect(-1, -6, 2, 6);
+          ctx.restore();
+        }
+      }
       ctx.restore();
       ctx.beginPath();
     }
@@ -944,7 +988,9 @@ export const StreetBrawler: FC = () => {
     speedBoostTimer: number;
     dmgBoostTimer: number;
     weapons: WeaponPickup[];
-    batTimer: number;
+    weaponType: WeaponType | null;
+    weaponTimer: number;
+    shurikenAmmo: number;
     alleyObjects: AlleyObject[];
     animFrameCount: number;
     rain: RainDrop[];
@@ -967,7 +1013,9 @@ export const StreetBrawler: FC = () => {
     speedBoostTimer: 0,
     dmgBoostTimer: 0,
     weapons: [],
-    batTimer: 0,
+    weaponType: null,
+    weaponTimer: 0,
+    shurikenAmmo: 0,
     alleyObjects: [],
     animFrameCount: 0,
     rain: [],
@@ -993,13 +1041,15 @@ export const StreetBrawler: FC = () => {
     g.projectiles = [];
     g.speedBoostTimer = 0;
     g.dmgBoostTimer = 0;
-    g.batTimer = 0;
-    // Spawn weapon pickups along the level
+    g.weaponType = null;
+    g.weaponTimer = 0;
+    g.shurikenAmmo = 0;
+    // Spawn weapon pickups along the level (varied types)
     g.weapons = [
-      { x: 600, y: GROUND_Y, collected: false },
-      { x: 1400, y: GROUND_Y, collected: false },
-      { x: 2200, y: GROUND_Y, collected: false },
-      { x: 2800, y: GROUND_Y, collected: false },
+      { x: 600, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
+      { x: 1400, y: GROUND_Y, vy: 0, type: "sword", collected: false, timer: 900 },
+      { x: 2200, y: GROUND_Y, vy: 0, type: "shuriken", collected: false, timer: 900 },
+      { x: 2800, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
     ];
     g.alleyObjects = spawnAlleyObjects();
     g.animFrameCount = 0;
@@ -1163,10 +1213,10 @@ export const StreetBrawler: FC = () => {
 
         if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
           p.state = "punch"; p.stateTimer = 12; p.attackCooldown = 14;
-          sfx(() => g.batTimer > 0 ? SFX.batSwing() : SFX.punch());
+          sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.punch());
         } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
           p.state = "kick"; p.stateTimer = 15; p.attackCooldown = 17;
-          sfx(() => g.batTimer > 0 ? SFX.batSwing() : SFX.kick());
+          sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.kick());
         } else if (p.stateTimer <= 0) {
           p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
         }
@@ -1213,9 +1263,9 @@ export const StreetBrawler: FC = () => {
       if (hitFrame) {
         const spec = SPECIAL_ATTACKS[p.state];
         const baseRange = spec ? spec.range : (p.state === "punch" ? 45 : 55);
-        const range = baseRange + (g.batTimer > 0 ? BAT_RANGE_BONUS : 0);
+        const range = baseRange + (g.weaponType ? WEAPON_STATS[g.weaponType].rangeBonus : 0);
         const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
-        const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.batTimer > 0 ? BAT_DMG_MULTIPLIER : 1);
+        const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
         const kb = spec ? spec.knockback : (p.state === "punch" ? 5 : 6);
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult);
 
@@ -1279,6 +1329,18 @@ export const StreetBrawler: FC = () => {
                 }
                 g.powerups.push({ x: e.x, y: e.y - 30, vy: -3, type: pType, timer: 600 });
               }
+              // Drop weapon (separate from power-ups)
+              if (Math.random() < WEAPON_DROP_CHANCE) {
+                const wTypes: WeaponType[] = ["bat", "sword", "shuriken"];
+                const wWeights = [0.4, 0.3, 0.3];
+                let wr = Math.random();
+                let wType: WeaponType = "bat";
+                for (let wi = 0; wi < wTypes.length; wi++) {
+                  wr -= wWeights[wi];
+                  if (wr <= 0) { wType = wTypes[wi]; break; }
+                }
+                g.weapons.push({ x: e.x + 20, y: e.y - 40, vy: -4, type: wType, collected: false, timer: 600 });
+              }
             }
           }
         }
@@ -1288,9 +1350,9 @@ export const StreetBrawler: FC = () => {
       if (hitFrame) {
         const spec = SPECIAL_ATTACKS[p.state];
         const baseRange = spec ? spec.range : (p.state === "punch" ? 45 : 55);
-        const objRange = baseRange + (g.batTimer > 0 ? BAT_RANGE_BONUS : 0);
+        const objRange = baseRange + (g.weaponType ? WEAPON_STATS[g.weaponType].rangeBonus : 0);
         const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
-        const objDmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.batTimer > 0 ? BAT_DMG_MULTIPLIER : 1);
+        const objDmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
         const objDmg = Math.round(baseDmg * objDmgMult);
 
         for (const obj of g.alleyObjects) {
@@ -1513,32 +1575,66 @@ export const StreetBrawler: FC = () => {
       g.projectiles = g.projectiles.filter(proj => {
         proj.x += proj.vx;
         proj.y += proj.vy;
-        proj.vy += 0.15;
+        if (!proj.isPlayerProjectile) proj.vy += 0.15;
         proj.timer--;
         if (proj.y >= GROUND_Y) return false;
 
-        // Hit player
-        const dx = Math.abs(p.x - proj.x);
-        const dy = Math.abs(p.y - proj.y);
-        if (dx < 25 && dy < 35 && p.state !== "dead") {
-          sfx(() => SFX.hit());
-          p.hp -= 12;
-          p.state = "hit";
-          p.stateTimer = 10;
-          p.vx = proj.vx > 0 ? 4 : -4;
-          c.hitCount = 0;
-          c.multiplier = 1;
-          setComboCount(0);
-          setPlayerHp(Math.max(0, p.hp));
-          g.effects.push({ x: proj.x, y: proj.y - 20, timer: 20, text: "12", color: "#ff4444", size: 14 });
-          if (p.hp <= 0) {
-            p.state = "dead";
-            g.running = false;
-            sfx(() => SFX.gameOver());
-            setGameState("gameover");
+        if (proj.isPlayerProjectile) {
+          // Player shuriken hits enemies
+          for (const e of g.enemies) {
+            if (e.state === "dead") continue;
+            const edx = Math.abs(e.x - proj.x);
+            const edy = Math.abs(e.y - proj.y);
+            if (edx < 30 && edy < 40) {
+              const shurikenDmg = 20;
+              e.hp -= shurikenDmg;
+              e.state = "hit";
+              e.stateTimer = 8;
+              e.vx = (proj.vx > 0 ? 1 : -1) * 4;
+              sfx(() => SFX.hit());
+              c.hitCount++;
+              c.hitTimer = COMBO_HIT_WINDOW;
+              c.multiplier = 1 + Math.min(c.hitCount * 0.15, 2);
+              c.specialEnergy = Math.min(MAX_ENERGY, c.specialEnergy + 3);
+              setEnergy(c.specialEnergy);
+              setComboCount(c.hitCount);
+              g.effects.push({ x: e.x, y: e.y - 50, timer: 20, text: `${shurikenDmg}`, color: "#cc44ff", size: 14 });
+              if (e.hp <= 0) {
+                e.state = "dead";
+                e.stateTimer = 60;
+                sfx(() => SFX.enemyDeath());
+                const killBonus = Math.round(100 * c.multiplier);
+                g.score += killBonus;
+                setScore(g.score);
+                g.effects.push({ x: e.x, y: e.y - 70, timer: 35, text: `+${killBonus}`, color: "#00ff00", size: 16 });
+              }
+              return false;
+            }
+          }
+        } else {
+          // Boss projectile hits player
+          const dx = Math.abs(p.x - proj.x);
+          const dy = Math.abs(p.y - proj.y);
+          if (dx < 25 && dy < 35 && p.state !== "dead") {
+            sfx(() => SFX.hit());
+            p.hp -= 12;
+            p.state = "hit";
+            p.stateTimer = 10;
+            p.vx = proj.vx > 0 ? 4 : -4;
+            c.hitCount = 0;
+            c.multiplier = 1;
+            setComboCount(0);
+            setPlayerHp(Math.max(0, p.hp));
+            g.effects.push({ x: proj.x, y: proj.y - 20, timer: 20, text: "12", color: "#ff4444", size: 14 });
+            if (p.hp <= 0) {
+              p.state = "dead";
+              g.running = false;
+              sfx(() => SFX.gameOver());
+              setGameState("gameover");
+              return false;
+            }
             return false;
           }
-          return false;
         }
         return proj.timer > 0;
       });
@@ -1584,21 +1680,45 @@ export const StreetBrawler: FC = () => {
         return pu.timer > 0;
       });
 
-      // Weapon pickup collection & bat timer
-      g.batTimer = Math.max(0, g.batTimer - 1);
-      for (const wp of g.weapons) {
-        if (wp.collected) continue;
+      // Weapon pickup collection & weapon timer
+      g.weaponTimer = Math.max(0, g.weaponTimer - 1);
+      if (g.weaponTimer === 0 && g.weaponType) { g.weaponType = null; g.shurikenAmmo = 0; }
+
+      g.weapons = g.weapons.filter(wp => {
+        if (wp.collected) return false;
+        // Physics for dropped weapons
+        wp.vy += 0.3;
+        wp.y += wp.vy;
+        if (wp.y >= GROUND_Y) { wp.y = GROUND_Y; wp.vy = 0; }
+        wp.timer--;
+        // Check player pickup
         const dx = Math.abs(p.x - wp.x);
         const dy = Math.abs(p.y - wp.y);
         if (dx < 35 && dy < 40 && p.state !== "dead") {
-          wp.collected = true;
-          g.batTimer = BAT_DURATION;
+          const ws = WEAPON_STATS[wp.type];
+          g.weaponType = wp.type;
+          g.weaponTimer = ws.duration;
+          if (wp.type === "shuriken") g.shurikenAmmo = SHURIKEN_AMMO;
           sfx(() => SFX.weaponPickup());
-          g.effects.push({ x: wp.x, y: wp.y - 30, timer: 40, text: "🏏 BAT EQUIPPED!", color: "#ff8c00", size: 16 });
+          g.effects.push({ x: wp.x, y: wp.y - 30, timer: 40, text: `${ws.icon} ${ws.name} EQUIPPED!`, color: ws.color, size: 16 });
+          return false;
         }
-      }
+        return wp.timer > 0;
+      });
 
-      // Apply speed boost to player movement
+      // Shuriken throw: press L on ground with shuriken equipped
+      if (g.weaponType === "shuriken" && g.shurikenAmmo > 0 && g.keyJustPressed.has("l") && p.y >= GROUND_Y - 5 && p.state !== "dead") {
+        g.shurikenAmmo--;
+        sfx(() => SFX.shurikenThrow());
+        g.projectiles.push({
+          x: p.x + p.facing * 20, y: p.y - 40,
+          vx: p.facing * 9, vy: 0,
+          timer: 90,
+          isPlayerProjectile: true,
+        });
+        g.effects.push({ x: p.x, y: p.y - 60, timer: 20, text: "✦", color: "#cc44ff", size: 14 });
+        if (g.shurikenAmmo <= 0) { g.weaponType = null; g.weaponTimer = 0; }
+      }
       if (g.speedBoostTimer > 0) {
         // Speed boost handled by multiplying movement in the movement section
       }
@@ -1749,25 +1869,57 @@ export const StreetBrawler: FC = () => {
       for (const wp of g.weapons) {
         if (wp.collected) continue;
         const wx = wp.x - g.camX;
+        if (wx < -40 || wx > CANVAS_W + 40) continue;
         const wy = wp.y;
         const bob = Math.sin(Date.now() / 300) * 2;
+        const ws = WEAPON_STATS[wp.type];
+        // Despawn flash
+        if (wp.timer < 120 && Math.floor(wp.timer / 10) % 2 === 0) {
+          ctx.globalAlpha = 0.4;
+        }
         // Glow
         ctx.beginPath();
         ctx.arc(wx, wy - 12 + bob, 16, 0, Math.PI * 2);
         const wGlow = ctx.createRadialGradient(wx, wy - 12 + bob, 3, wx, wy - 12 + bob, 16);
-        wGlow.addColorStop(0, "rgba(255, 140, 0, 0.5)");
-        wGlow.addColorStop(1, "rgba(255, 140, 0, 0)");
+        wGlow.addColorStop(0, ws.color + "88");
+        wGlow.addColorStop(1, ws.color + "00");
         ctx.fillStyle = wGlow;
         ctx.fill();
-        // Draw bat shape
+        // Draw weapon shape
         ctx.save();
         ctx.translate(wx, wy - 12 + bob);
         ctx.rotate(-Math.PI / 4);
-        ctx.fillStyle = "#8B4513";
-        ctx.fillRect(-3, -18, 6, 28);
-        ctx.fillStyle = "#A0522D";
-        ctx.fillRect(-5, -22, 10, 8);
+        if (wp.type === "bat") {
+          ctx.fillStyle = "#8B4513";
+          ctx.fillRect(-3, -18, 6, 28);
+          ctx.fillStyle = "#A0522D";
+          ctx.fillRect(-5, -22, 10, 8);
+        } else if (wp.type === "sword") {
+          ctx.fillStyle = "#ccc";
+          ctx.fillRect(-1.5, -22, 3, 32);
+          ctx.fillStyle = "#888";
+          ctx.fillRect(-5, 7, 10, 4);
+          ctx.fillStyle = "#664400";
+          ctx.fillRect(-2.5, 11, 5, 8);
+        } else if (wp.type === "shuriken") {
+          const spin = Date.now() / 200;
+          ctx.rotate(spin);
+          ctx.fillStyle = "#cc44ff";
+          for (let i = 0; i < 4; i++) {
+            ctx.save();
+            ctx.rotate((i * Math.PI) / 2);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-3, -10);
+            ctx.lineTo(0, -12);
+            ctx.lineTo(3, -10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+        }
         ctx.restore();
+        ctx.globalAlpha = 1;
       }
 
       // Boost indicators
@@ -1786,11 +1938,13 @@ export const StreetBrawler: FC = () => {
         ctx.fillText(`💥 DMG x1.5 ${Math.ceil(g.dmgBoostTimer / 60)}s`, 20, boostY);
         boostY += 14;
       }
-      if (g.batTimer > 0) {
+      if (g.weaponType) {
+        const ws = WEAPON_STATS[g.weaponType];
         ctx.font = "bold 11px monospace";
-        ctx.fillStyle = "#ff8c00";
+        ctx.fillStyle = ws.color;
         ctx.textAlign = "left";
-        ctx.fillText(`🏏 BAT ${Math.ceil(g.batTimer / 60)}s`, 20, boostY);
+        const ammoText = g.weaponType === "shuriken" ? ` x${g.shurikenAmmo}` : "";
+        ctx.fillText(`${ws.icon} ${ws.name} ${Math.ceil(g.weaponTimer / 60)}s${ammoText}`, 20, boostY);
       }
 
       for (const e of g.enemies) {
@@ -1806,19 +1960,40 @@ export const StreetBrawler: FC = () => {
       for (const proj of g.projectiles) {
         const px = proj.x - g.camX;
         const py = proj.y;
-        ctx.beginPath();
-        ctx.arc(px, py, 8, 0, Math.PI * 2);
-        const projGlow = ctx.createRadialGradient(px, py, 2, px, py, 8);
-        projGlow.addColorStop(0, "#ff4444");
-        projGlow.addColorStop(1, "#ff000044");
-        ctx.fillStyle = projGlow;
-        ctx.fill();
-        ctx.font = "12px serif";
-        ctx.textAlign = "center";
-        ctx.fillText("🔥", px, py + 4);
+        if (proj.isPlayerProjectile) {
+          // Spinning shuriken
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(Date.now() / 80);
+          ctx.fillStyle = "#cc44ff";
+          for (let i = 0; i < 4; i++) {
+            ctx.save();
+            ctx.rotate((i * Math.PI) / 2);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-2, -7);
+            ctx.lineTo(0, -9);
+            ctx.lineTo(2, -7);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+          ctx.restore();
+        } else {
+          ctx.beginPath();
+          ctx.arc(px, py, 8, 0, Math.PI * 2);
+          const projGlow = ctx.createRadialGradient(px, py, 2, px, py, 8);
+          projGlow.addColorStop(0, "#ff4444");
+          projGlow.addColorStop(1, "#ff000044");
+          ctx.fillStyle = projGlow;
+          ctx.fill();
+          ctx.font = "12px serif";
+          ctx.textAlign = "center";
+          ctx.fillText("🔥", px, py + 4);
+        }
       }
 
-      drawStickFigure(ctx, p, g.camX, g.headImg, true, g.batTimer > 0);
+      drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType);
       drawHitEffects(ctx, g.effects, g.camX);
 
       g.animFrame = requestAnimationFrame(tick);
