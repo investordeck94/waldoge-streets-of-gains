@@ -21,6 +21,8 @@ interface Entity {
   stateTimer: number;
   attackCooldown: number;
   isPlayer?: boolean;
+  isBoss?: boolean;
+  bossPhase?: number;
   aiTimer?: number;
 }
 
