@@ -444,7 +444,7 @@ export const WheresWaldoge: FC = () => {
       <div
         ref={containerRef}
         className="relative overflow-hidden rounded-xl border-2 border-border/50 bg-muted/20 touch-none select-none"
-        style={{ height: "60vh", cursor: isDragging ? "grabbing" : "grab" }}
+        style={{ height: "60vh", cursor: "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"white\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg>') 16 16, crosshair" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
