@@ -486,6 +486,7 @@ export const WheresWaldoge: FC = () => {
               alt="Waldoge"
               className="w-full h-full object-contain"
               draggable={false}
+              style={{ opacity: 1, mixBlendMode: 'normal', filter: 'none' }}
             />
           </div>
         </div>
