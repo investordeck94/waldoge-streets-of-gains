@@ -2,7 +2,7 @@ import { FC } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { motion } from "framer-motion";
-import { Zap, Sparkles, Dog, Clock, Gamepad2, Coins } from "lucide-react";
+import { Zap, Sparkles, Dog, Clock, Gamepad2, Coins, Swords } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { cn } from "@/lib/utils";
