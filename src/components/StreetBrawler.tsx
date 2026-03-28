@@ -382,6 +382,22 @@ function drawStickFigure(
     ctx.lineTo(-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(limbLen * 0.7, shoulderY + limbLen * 0.8 - swing);
+    // Draw bat held at side when idle/walking
+    if (hasBat) {
+      ctx.stroke();
+      ctx.beginPath();
+      const handX = e.facing * limbLen * 0.7;
+      const handY = shoulderY + limbLen * 0.8 - swing;
+      ctx.save();
+      ctx.translate(handX, handY);
+      ctx.rotate(e.facing * 0.3);
+      ctx.fillStyle = "#8B4513";
+      ctx.fillRect(-2, -2, 5, 22);
+      ctx.fillStyle = "#A0522D";
+      ctx.fillRect(-3, 18, 7, 6);
+      ctx.restore();
+      ctx.beginPath();
+    }
   }
   ctx.strokeStyle = isPlayer ? "#FFD700" : "#ff4444";
   ctx.lineWidth = e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 4 : 3;
