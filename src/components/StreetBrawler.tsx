@@ -1119,11 +1119,15 @@ export const StreetBrawler: FC = () => {
     const startTimeout = setTimeout(() => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      // Force canvas dimensions
-      canvas.width = CANVAS_W;
-      canvas.height = CANVAS_H;
+      // Force canvas dimensions with DPR scaling
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = CANVAS_W * dpr;
+      canvas.height = CANVAS_H * dpr;
+      canvas.style.width = `${CANVAS_W}px`;
+      canvas.style.height = `${CANVAS_H}px`;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
+      ctx.scale(dpr, dpr);
       const g = gameRef.current;
       g.running = true;
 
