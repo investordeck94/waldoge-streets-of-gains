@@ -1,7 +1,8 @@
 import { FC, useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Swords, Heart, RotateCcw, Play, Trophy, Zap } from "lucide-react";
+import { Swords, Heart, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
+import { SFX } from "@/lib/gameSfx";
 
 type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
   | "uppercut" | "spinkick" | "groundpound" | "dashpunch"
@@ -516,6 +517,12 @@ export const StreetBrawler: FC = () => {
   const [comboCount, setComboCount] = useState(0);
   const [comboName, setComboName] = useState("");
   const [energy, setEnergy] = useState(0);
+  const [sfxEnabled, setSfxEnabled] = useState(true);
+  const sfxRef = useRef(true);
+
+  const sfx = useCallback((fn: () => void) => {
+    if (sfxRef.current) fn();
+  }, []);
 
   const gameRef = useRef<{
     player: Entity;
@@ -656,6 +663,10 @@ export const StreetBrawler: FC = () => {
                 text: combo.name, color: "#FFD700", size: 20,
               });
               didSpecial = true;
+              // SFX for special moves
+              if (combo.move === "uppercut") sfx(() => SFX.uppercut());
+              else if (combo.move === "spinkick") sfx(() => SFX.spinKick());
+              else if (combo.move === "dashpunch") sfx(() => SFX.dashPunch());
               setTimeout(() => setComboName(""), 1000);
               break;
             }
@@ -673,7 +684,8 @@ export const StreetBrawler: FC = () => {
         setEnergy(c.specialEnergy);
         setComboName("GROUND POUND!");
         g.effects.push({ x: p.x, y: p.y - 80, timer: 40, text: "GROUND POUND!", color: "#ff6600", size: 18 });
-        didSpecial = true;
+         didSpecial = true;
+         sfx(() => SFX.groundPound());
         setTimeout(() => setComboName(""), 1000);
       }
 
@@ -687,8 +699,10 @@ export const StreetBrawler: FC = () => {
 
         if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
           p.state = "punch"; p.stateTimer = 12; p.attackCooldown = 14;
+          sfx(() => SFX.punch());
         } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
           p.state = "kick"; p.stateTimer = 15; p.attackCooldown = 17;
+          sfx(() => SFX.kick());
         } else if (p.stateTimer <= 0) {
           p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
         }
@@ -766,6 +780,7 @@ export const StreetBrawler: FC = () => {
             setComboCount(c.hitCount);
 
             // Hit effect
+            sfx(() => SFX.comboHit(c.hitCount));
             g.effects.push({
               x: e.x, y: e.y - 50, timer: 25,
               text: c.hitCount > 2 ? `${dmg} x${c.hitCount}` : `${dmg}`,
@@ -776,6 +791,7 @@ export const StreetBrawler: FC = () => {
             if (e.hp <= 0) {
               e.state = "dead";
               e.stateTimer = 60;
+              sfx(() => e.isBoss ? SFX.victory() : SFX.enemyDeath());
               const killBonus = e.isBoss ? Math.round(1000 * c.multiplier) : Math.round(100 * c.multiplier);
               g.score += killBonus;
               setScore(g.score);
@@ -840,6 +856,7 @@ export const StreetBrawler: FC = () => {
                 // Charge attack
                 e.state = "boss_charge";
                 e.stateTimer = 30;
+                sfx(() => SFX.bossCharge());
                 e.attackCooldown = 50 - phase * 8;
               } else if (dist > 150) {
                 // Throw projectile
@@ -850,6 +867,7 @@ export const StreetBrawler: FC = () => {
                 // Slam (AOE)
                 e.state = "boss_slam";
                 e.stateTimer = 25;
+                sfx(() => SFX.bossSlam());
                 e.attackCooldown = 45 - phase * 8;
               } else {
                 // Regular attacks
@@ -884,6 +902,7 @@ export const StreetBrawler: FC = () => {
 
           // Boss throw spawns projectile
           if (e.state === "boss_throw" && e.stateTimer === 10) {
+            sfx(() => SFX.bossThrow());
             g.projectiles.push({
               x: e.x + e.facing * 30, y: e.y - 30,
               vx: e.facing * 7, vy: -2,
@@ -900,6 +919,7 @@ export const StreetBrawler: FC = () => {
               : edx * e.facing > 0 && Math.abs(edx) < range && Math.abs(p.y - e.y) < 60;
 
             if (inRange && p.state !== "dead") {
+              sfx(() => SFX.hit());
               p.hp -= dmg;
               p.state = "hit";
               p.stateTimer = e.state === "boss_slam" ? 15 : 10;
@@ -916,6 +936,7 @@ export const StreetBrawler: FC = () => {
               if (p.hp <= 0) {
                 p.state = "dead";
                 g.running = false;
+                sfx(() => SFX.gameOver());
                 setGameState("gameover");
                 return;
               }
@@ -953,6 +974,7 @@ export const StreetBrawler: FC = () => {
           const dmg = e.state === "punch" ? 5 : 8;
           const edx = p.x - e.x;
           if (edx * e.facing > 0 && Math.abs(edx) < range && Math.abs(p.y - e.y) < 50 && p.state !== "dead") {
+            sfx(() => SFX.hit());
             p.hp -= dmg;
             p.state = "hit";
             p.stateTimer = 8;
@@ -964,6 +986,7 @@ export const StreetBrawler: FC = () => {
             if (p.hp <= 0) {
               p.state = "dead";
               g.running = false;
+              sfx(() => SFX.gameOver());
               setGameState("gameover");
               return;
             }
@@ -983,6 +1006,7 @@ export const StreetBrawler: FC = () => {
         const dx = Math.abs(p.x - proj.x);
         const dy = Math.abs(p.y - proj.y);
         if (dx < 25 && dy < 35 && p.state !== "dead") {
+          sfx(() => SFX.hit());
           p.hp -= 12;
           p.state = "hit";
           p.stateTimer = 10;
@@ -995,6 +1019,7 @@ export const StreetBrawler: FC = () => {
           if (p.hp <= 0) {
             p.state = "dead";
             g.running = false;
+            sfx(() => SFX.gameOver());
             setGameState("gameover");
             return false;
           }
@@ -1017,6 +1042,7 @@ export const StreetBrawler: FC = () => {
         const dx = Math.abs(p.x - pu.x);
         const dy = Math.abs(p.y - pu.y);
         if (dx < 30 && dy < 40 && p.state !== "dead") {
+          sfx(() => SFX.powerupPickup());
           // Apply power-up
           switch (pu.type) {
             case "health":
@@ -1057,6 +1083,7 @@ export const StreetBrawler: FC = () => {
           setWave(g.wave);
           if (g.wave >= WAVES.length) {
             g.running = false;
+            sfx(() => SFX.victory());
             setGameState("victory");
             return;
           }
@@ -1065,7 +1092,9 @@ export const StreetBrawler: FC = () => {
             g.enemies = [spawnBoss(p.x)];
             g.projectiles = [];
             g.effects.push({ x: p.x, y: p.y - 100, timer: 90, text: "⚠ BOSS FIGHT! ⚠", color: "#ff0000", size: 24 });
+            sfx(() => SFX.bossEntrance());
           } else {
+            sfx(() => SFX.waveStart());
             g.enemies = spawnEnemies(g.wave, p.x);
           }
         }
@@ -1276,6 +1305,13 @@ export const StreetBrawler: FC = () => {
                 {wave === WAVES.length - 1 ? "⚠ BOSS" : `Wave ${wave + 1}/${WAVES.length}`}
               </span>
               <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
+              <button
+                onClick={() => { const v = !sfxEnabled; setSfxEnabled(v); sfxRef.current = v; }}
+                className="p-1 rounded hover:bg-muted/50 transition"
+                title={sfxEnabled ? "Mute SFX" : "Unmute SFX"}
+              >
+                {sfxEnabled ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
+              </button>
             </div>
 
             <canvas
