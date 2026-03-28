@@ -10,6 +10,7 @@ import { MemeTab } from "@/components/MemeTab";
 
 import { AboutTab } from "@/components/AboutTab";
 import { WheresWaldoge } from "@/components/WheresWaldoge";
+import { StreetBrawler } from "@/components/StreetBrawler";
 import { useWaldogeBalance } from "@/hooks/useWaldogeBalance";
 import { useUsageTracking } from "@/hooks/useUsageTracking";
 
