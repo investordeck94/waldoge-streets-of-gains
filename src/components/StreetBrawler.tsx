@@ -2142,10 +2142,8 @@ export const StreetBrawler: FC = () => {
 
             <canvas
               ref={canvasRef}
-              width={CANVAS_W}
-              height={CANVAS_H}
               className="w-full rounded-lg border border-border/50"
-              style={{ imageRendering: "pixelated" }}
+              style={{ imageRendering: "pixelated", maxWidth: `${CANVAS_W}px` }}
             />
 
             {/* Mobile touch controls */}
