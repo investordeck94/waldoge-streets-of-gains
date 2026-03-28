@@ -366,6 +366,9 @@ export const StreetBrawler: FC = () => {
     running: boolean;
     combo: ComboState;
     effects: HitEffect[];
+    powerups: PowerUp[];
+    speedBoostTimer: number;
+    dmgBoostTimer: number;
   }>({
     player: createPlayer(),
     enemies: [],
@@ -379,6 +382,9 @@ export const StreetBrawler: FC = () => {
     running: false,
     combo: { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 0 },
     effects: [],
+    powerups: [],
+    speedBoostTimer: 0,
+    dmgBoostTimer: 0,
   });
 
   useEffect(() => {
