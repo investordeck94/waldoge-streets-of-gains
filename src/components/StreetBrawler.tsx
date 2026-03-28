@@ -1515,7 +1515,7 @@ export const StreetBrawler: FC = () => {
 
       // Draw
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-      drawCity(ctx, g.camX, CANVAS_W);
+      drawCity(ctx, g.camX, CANVAS_W, g.animFrameCount);
 
       // Wave text
       const isBossWave = g.wave === WAVES.length - 1;
