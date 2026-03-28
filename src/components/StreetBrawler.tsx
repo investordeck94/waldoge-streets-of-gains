@@ -776,15 +776,18 @@ export const StreetBrawler: FC = () => {
             if (e.hp <= 0) {
               e.state = "dead";
               e.stateTimer = 60;
-              const killBonus = Math.round(100 * c.multiplier);
+              const killBonus = e.isBoss ? Math.round(1000 * c.multiplier) : Math.round(100 * c.multiplier);
               g.score += killBonus;
               setScore(g.score);
               g.effects.push({
-                x: e.x, y: e.y - 70, timer: 35,
-                text: `+${killBonus}`, color: "#00ff00", size: 16,
+                x: e.x, y: e.y - 70, timer: e.isBoss ? 60 : 35,
+                text: e.isBoss ? `BOSS DEFEATED! +${killBonus}` : `+${killBonus}`,
+                color: e.isBoss ? "#FFD700" : "#00ff00",
+                size: e.isBoss ? 22 : 16,
               });
-              // Drop power-up
-              if (Math.random() < DROP_CHANCE) {
+              // Drop power-up (boss always drops)
+              const dropChance = e.isBoss ? 1 : DROP_CHANCE;
+              if (Math.random() < dropChance) {
                 const types: PowerUp["type"][] = ["health", "speed", "energy", "damage"];
                 const weights = [0.35, 0.25, 0.25, 0.15];
                 let r = Math.random();
