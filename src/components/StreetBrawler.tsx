@@ -1003,6 +1003,19 @@ export const StreetBrawler: FC = () => {
     ];
     g.alleyObjects = spawnAlleyObjects();
     g.animFrameCount = 0;
+    // Initialize rain
+    g.rain = [];
+    for (let i = 0; i < RAIN_COUNT; i++) {
+      g.rain.push({
+        x: Math.random() * (CANVAS_W + 200) - 100,
+        y: Math.random() * (GROUND_Y + 40),
+        speed: 6 + Math.random() * 6,
+        length: 8 + Math.random() * 12,
+        opacity: 0.15 + Math.random() * 0.25,
+        wind: -1.5 - Math.random() * 1,
+      });
+    }
+    g.splashes = [];
     setWave(0);
     setScore(0);
     setPlayerHp(100);
