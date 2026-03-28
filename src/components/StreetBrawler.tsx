@@ -32,6 +32,29 @@ interface HitEffect {
   size: number;
 }
 
+interface PowerUp {
+  x: number;
+  y: number;
+  vy: number;
+  type: "health" | "speed" | "energy" | "damage";
+  timer: number;
+}
+
+const POWERUP_COLORS: Record<string, string> = {
+  health: "#00ff00",
+  speed: "#00ccff",
+  energy: "#ffcc00",
+  damage: "#ff4444",
+};
+const POWERUP_ICONS: Record<string, string> = {
+  health: "❤️",
+  speed: "⚡",
+  energy: "🔋",
+  damage: "💥",
+};
+const DROP_CHANCE = 0.5;
+
+
 interface ComboState {
   inputs: string[];
   timer: number;
@@ -343,6 +366,9 @@ export const StreetBrawler: FC = () => {
     running: boolean;
     combo: ComboState;
     effects: HitEffect[];
+    powerups: PowerUp[];
+    speedBoostTimer: number;
+    dmgBoostTimer: number;
   }>({
     player: createPlayer(),
     enemies: [],
@@ -356,6 +382,9 @@ export const StreetBrawler: FC = () => {
     running: false,
     combo: { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 0 },
     effects: [],
+    powerups: [],
+    speedBoostTimer: 0,
+    dmgBoostTimer: 0,
   });
 
   useEffect(() => {
@@ -373,6 +402,9 @@ export const StreetBrawler: FC = () => {
     g.enemies = spawnEnemies(0, 200);
     g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
     g.effects = [];
+    g.powerups = [];
+    g.speedBoostTimer = 0;
+    g.dmgBoostTimer = 0;
     setWave(0);
     setScore(0);
     setPlayerHp(100);
@@ -480,9 +512,10 @@ export const StreetBrawler: FC = () => {
 
       // Player movement & basic attacks (blocked during attack animations)
       if (p.state !== "hit" && p.state !== "dead" && !isAttacking && !didSpecial) {
+        const speed = PLAYER_SPEED * (g.speedBoostTimer > 0 ? 1.6 : 1);
         let moving = false;
-        if (g.keys.has("a") || g.keys.has("arrowleft")) { p.x -= PLAYER_SPEED; p.facing = -1; moving = true; }
-        if (g.keys.has("d") || g.keys.has("arrowright")) { p.x += PLAYER_SPEED; p.facing = 1; moving = true; }
+        if (g.keys.has("a") || g.keys.has("arrowleft")) { p.x -= speed; p.facing = -1; moving = true; }
+        if (g.keys.has("d") || g.keys.has("arrowright")) { p.x += speed; p.facing = 1; moving = true; }
         if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && p.y >= GROUND_Y) p.vy = JUMP_FORCE;
 
         if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
@@ -536,8 +569,9 @@ export const StreetBrawler: FC = () => {
         const spec = SPECIAL_ATTACKS[p.state];
         const range = spec ? spec.range : (p.state === "punch" ? 45 : 55);
         const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
+        const dmgMult = g.dmgBoostTimer > 0 ? 1.5 : 1;
         const kb = spec ? spec.knockback : (p.state === "punch" ? 5 : 6);
-        const dmg = Math.round(baseDmg * c.multiplier);
+        const dmg = Math.round(baseDmg * c.multiplier * dmgMult);
 
         for (const e of g.enemies) {
           if (e.state === "dead") continue;
@@ -582,6 +616,18 @@ export const StreetBrawler: FC = () => {
                 x: e.x, y: e.y - 70, timer: 35,
                 text: `+${killBonus}`, color: "#00ff00", size: 16,
               });
+              // Drop power-up
+              if (Math.random() < DROP_CHANCE) {
+                const types: PowerUp["type"][] = ["health", "speed", "energy", "damage"];
+                const weights = [0.35, 0.25, 0.25, 0.15];
+                let r = Math.random();
+                let pType: PowerUp["type"] = "health";
+                for (let ti = 0; ti < types.length; ti++) {
+                  r -= weights[ti];
+                  if (r <= 0) { pType = types[ti]; break; }
+                }
+                g.powerups.push({ x: e.x, y: e.y - 30, vy: -3, type: pType, timer: 600 });
+              }
             }
           }
         }
@@ -641,6 +687,51 @@ export const StreetBrawler: FC = () => {
         }
       }
 
+      // Power-up physics & collection
+      g.speedBoostTimer = Math.max(0, g.speedBoostTimer - 1);
+      g.dmgBoostTimer = Math.max(0, g.dmgBoostTimer - 1);
+
+      g.powerups = g.powerups.filter(pu => {
+        pu.vy += 0.3;
+        pu.y += pu.vy;
+        if (pu.y >= GROUND_Y) { pu.y = GROUND_Y; pu.vy = 0; }
+        pu.timer--;
+
+        // Check player pickup (30px radius)
+        const dx = Math.abs(p.x - pu.x);
+        const dy = Math.abs(p.y - pu.y);
+        if (dx < 30 && dy < 40 && p.state !== "dead") {
+          // Apply power-up
+          switch (pu.type) {
+            case "health":
+              p.hp = Math.min(p.maxHp, p.hp + 25);
+              setPlayerHp(p.hp);
+              g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "+25 HP", color: "#00ff00", size: 16 });
+              break;
+            case "speed":
+              g.speedBoostTimer = 300; // 5 seconds at 60fps
+              g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "SPEED UP!", color: "#00ccff", size: 16 });
+              break;
+            case "energy":
+              c.specialEnergy = Math.min(MAX_ENERGY, c.specialEnergy + 30);
+              setEnergy(c.specialEnergy);
+              g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "+30 ⚡", color: "#ffcc00", size: 16 });
+              break;
+            case "damage":
+              g.dmgBoostTimer = 300; // 5 seconds
+              g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "DMG BOOST!", color: "#ff4444", size: 16 });
+              break;
+          }
+          return false; // remove collected
+        }
+        return pu.timer > 0;
+      });
+
+      // Apply speed boost to player movement
+      if (g.speedBoostTimer > 0) {
+        // Speed boost handled by multiplying movement in the movement section
+      }
+
       // Wave progression
       const alive = g.enemies.filter(e => e.state !== "dead");
       if (alive.length === 0) {
@@ -692,6 +783,44 @@ export const StreetBrawler: FC = () => {
       ctx.fillStyle = "#ffffffaa";
       ctx.textAlign = "left";
       ctx.fillText("⚡ ENERGY", 20, 36);
+
+      // Draw power-ups
+      for (const pu of g.powerups) {
+        const px = pu.x - g.camX;
+        const py = pu.y;
+        const bob = Math.sin(Date.now() / 200) * 3;
+        // Glow
+        ctx.beginPath();
+        ctx.arc(px, py - 10 + bob, 14, 0, Math.PI * 2);
+        const glow = ctx.createRadialGradient(px, py - 10 + bob, 2, px, py - 10 + bob, 14);
+        glow.addColorStop(0, POWERUP_COLORS[pu.type] + "88");
+        glow.addColorStop(1, POWERUP_COLORS[pu.type] + "00");
+        ctx.fillStyle = glow;
+        ctx.fill();
+        // Icon
+        ctx.font = "16px serif";
+        ctx.textAlign = "center";
+        ctx.fillText(POWERUP_ICONS[pu.type], px, py - 5 + bob);
+        // Despawn warning flash
+        if (pu.timer < 120 && Math.floor(pu.timer / 10) % 2 === 0) {
+          ctx.globalAlpha = 0.3;
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // Boost indicators
+      if (g.speedBoostTimer > 0) {
+        ctx.font = "bold 11px monospace";
+        ctx.fillStyle = "#00ccff";
+        ctx.textAlign = "left";
+        ctx.fillText(`⚡ SPEED ${Math.ceil(g.speedBoostTimer / 60)}s`, 20, 60);
+      }
+      if (g.dmgBoostTimer > 0) {
+        ctx.font = "bold 11px monospace";
+        ctx.fillStyle = "#ff4444";
+        ctx.textAlign = "left";
+        ctx.fillText(`💥 DMG x1.5 ${Math.ceil(g.dmgBoostTimer / 60)}s`, 20, g.speedBoostTimer > 0 ? 74 : 60);
+      }
 
       for (const e of g.enemies) {
         if (e.state === "dead" && e.stateTimer <= 0) continue;
