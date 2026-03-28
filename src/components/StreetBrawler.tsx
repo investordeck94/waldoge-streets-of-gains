@@ -517,6 +517,12 @@ export const StreetBrawler: FC = () => {
   const [comboCount, setComboCount] = useState(0);
   const [comboName, setComboName] = useState("");
   const [energy, setEnergy] = useState(0);
+  const [sfxEnabled, setSfxEnabled] = useState(true);
+  const sfxRef = useRef(true);
+
+  const sfx = useCallback((fn: () => void) => {
+    if (sfxRef.current) fn();
+  }, []);
 
   const gameRef = useRef<{
     player: Entity;
