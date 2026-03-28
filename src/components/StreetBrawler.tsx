@@ -1097,11 +1097,18 @@ export const StreetBrawler: FC = () => {
   // Game loop
   useEffect(() => {
     if (gameState !== "playing") return;
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!ctx) return;
-    const g = gameRef.current;
-    g.running = true;
+    
+    // Small delay to ensure canvas is mounted after AnimatePresence transition
+    const startTimeout = setTimeout(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      // Force canvas dimensions
+      canvas.width = CANVAS_W;
+      canvas.height = CANVAS_H;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const g = gameRef.current;
+      g.running = true;
 
     const tick = () => {
       if (!g.running) return;
@@ -2000,7 +2007,11 @@ export const StreetBrawler: FC = () => {
     };
 
     g.animFrame = requestAnimationFrame(tick);
+    }, 50); // end startTimeout
+
     return () => {
+      clearTimeout(startTimeout);
+      const g = gameRef.current;
       g.running = false;
       cancelAnimationFrame(g.animFrame);
     };
