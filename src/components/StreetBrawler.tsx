@@ -721,10 +721,10 @@ export const StreetBrawler: FC = () => {
 
         if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
           p.state = "punch"; p.stateTimer = 12; p.attackCooldown = 14;
-          sfx(() => SFX.punch());
+          sfx(() => g.batTimer > 0 ? SFX.batSwing() : SFX.punch());
         } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
           p.state = "kick"; p.stateTimer = 15; p.attackCooldown = 17;
-          sfx(() => SFX.kick());
+          sfx(() => g.batTimer > 0 ? SFX.batSwing() : SFX.kick());
         } else if (p.stateTimer <= 0) {
           p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
         }
