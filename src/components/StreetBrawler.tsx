@@ -1178,10 +1178,10 @@ export const StreetBrawler: FC = () => {
 
         if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
           p.state = "punch"; p.stateTimer = 12; p.attackCooldown = 14;
-          sfx(() => g.batTimer > 0 ? SFX.batSwing() : SFX.punch());
+          sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.punch());
         } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
           p.state = "kick"; p.stateTimer = 15; p.attackCooldown = 17;
-          sfx(() => g.batTimer > 0 ? SFX.batSwing() : SFX.kick());
+          sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.kick());
         } else if (p.stateTimer <= 0) {
           p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
         }
@@ -1228,9 +1228,9 @@ export const StreetBrawler: FC = () => {
       if (hitFrame) {
         const spec = SPECIAL_ATTACKS[p.state];
         const baseRange = spec ? spec.range : (p.state === "punch" ? 45 : 55);
-        const range = baseRange + (g.batTimer > 0 ? BAT_RANGE_BONUS : 0);
+        const range = baseRange + (g.weaponType ? WEAPON_STATS[g.weaponType].rangeBonus : 0);
         const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
-        const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.batTimer > 0 ? BAT_DMG_MULTIPLIER : 1);
+        const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
         const kb = spec ? spec.knockback : (p.state === "punch" ? 5 : 6);
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult);
 
@@ -1303,9 +1303,9 @@ export const StreetBrawler: FC = () => {
       if (hitFrame) {
         const spec = SPECIAL_ATTACKS[p.state];
         const baseRange = spec ? spec.range : (p.state === "punch" ? 45 : 55);
-        const objRange = baseRange + (g.batTimer > 0 ? BAT_RANGE_BONUS : 0);
+        const objRange = baseRange + (g.weaponType ? WEAPON_STATS[g.weaponType].rangeBonus : 0);
         const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
-        const objDmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.batTimer > 0 ? BAT_DMG_MULTIPLIER : 1);
+        const objDmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
         const objDmg = Math.round(baseDmg * objDmgMult);
 
         for (const obj of g.alleyObjects) {
@@ -1600,16 +1600,16 @@ export const StreetBrawler: FC = () => {
       });
 
       // Weapon pickup collection & bat timer
-      g.batTimer = Math.max(0, g.batTimer - 1);
+      g.weaponTimer = Math.max(0, g.weaponTimer - 1); if (g.weaponTimer === 0) g.weaponType = null;
       for (const wp of g.weapons) {
         if (wp.collected) continue;
         const dx = Math.abs(p.x - wp.x);
         const dy = Math.abs(p.y - wp.y);
         if (dx < 35 && dy < 40 && p.state !== "dead") {
           wp.collected = true;
-          g.batTimer = BAT_DURATION;
+          g.weaponType = wp.type; g.weaponTimer = WEAPON_STATS[wp.type].duration; if (wp.type === "shuriken") g.shurikenAmmo = SHURIKEN_AMMO;
           sfx(() => SFX.weaponPickup());
-          g.effects.push({ x: wp.x, y: wp.y - 30, timer: 40, text: "🏏 BAT EQUIPPED!", color: "#ff8c00", size: 16 });
+          const ws = WEAPON_STATS[wp.type]; g.effects.push({ x: wp.x, y: wp.y - 30, timer: 40, text: `${ws.icon} ${ws.name} EQUIPPED!`, color: ws.color, size: 16 });
         }
       }
 
@@ -1801,7 +1801,7 @@ export const StreetBrawler: FC = () => {
         ctx.fillText(`💥 DMG x1.5 ${Math.ceil(g.dmgBoostTimer / 60)}s`, 20, boostY);
         boostY += 14;
       }
-      if (g.batTimer > 0) {
+      if (g.weaponType !== null) {
         ctx.font = "bold 11px monospace";
         ctx.fillStyle = "#ff8c00";
         ctx.textAlign = "left";
@@ -1833,7 +1833,7 @@ export const StreetBrawler: FC = () => {
         ctx.fillText("🔥", px, py + 4);
       }
 
-      drawStickFigure(ctx, p, g.camX, g.headImg, true, g.batTimer > 0);
+      drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType !== null);
       drawHitEffects(ctx, g.effects, g.camX);
 
       g.animFrame = requestAnimationFrame(tick);
