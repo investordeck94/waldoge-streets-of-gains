@@ -84,7 +84,168 @@ const WAVES: { count: number; hp: number; speed: number }[] = [
   { count: 4, hp: 40, speed: 1.5 },
   { count: 5, hp: 50, speed: 1.8 },
   { count: 3, hp: 80, speed: 2 },
+  { count: 0, hp: 0, speed: 0 }, // Boss wave
 ];
+
+const BOSS_HP = 500;
+const BOSS_CHARGE_SPEED = 6;
+
+interface Projectile {
+  x: number; y: number; vx: number; vy: number; timer: number;
+}
+
+function spawnBoss(playerX: number): Entity {
+  return {
+    x: playerX + 500, y: GROUND_Y, vy: 0, vx: 0,
+    width: 50, height: 90, facing: -1,
+    hp: BOSS_HP, maxHp: BOSS_HP,
+    state: "idle", stateTimer: 0, attackCooldown: 60,
+    isBoss: true, bossPhase: 1, aiTimer: 90,
+  };
+}
+
+function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
+  const sx = e.x - camX;
+  const sy = e.y;
+  const scale = 1.8;
+  const headR = 20;
+  const bodyLen = 40;
+  const limbLen = 28;
+
+  ctx.save();
+  ctx.translate(sx, sy);
+  if (e.state === "hit") ctx.globalAlpha = 0.6;
+  if (e.state === "dead") { ctx.rotate(e.facing * Math.PI / 3); ctx.globalAlpha = 0.4; }
+
+  const headCY = -bodyLen - limbLen - headR;
+
+  // Boss aura
+  if (e.state !== "dead") {
+    ctx.beginPath();
+    ctx.arc(0, headCY + headR + bodyLen / 2, 50, 0, Math.PI * 2);
+    const aura = ctx.createRadialGradient(0, headCY + headR + bodyLen / 2, 5, 0, headCY + headR + bodyLen / 2, 50);
+    const phase = e.bossPhase || 1;
+    const auraColor = phase >= 3 ? "255, 0, 0" : phase >= 2 ? "255, 100, 0" : "200, 0, 255";
+    aura.addColorStop(0, `rgba(${auraColor}, 0.3)`);
+    aura.addColorStop(1, `rgba(${auraColor}, 0)`);
+    ctx.fillStyle = aura;
+    ctx.fill();
+  }
+
+  // Head — skull-like
+  ctx.beginPath();
+  ctx.arc(0, headCY, headR, 0, Math.PI * 2);
+  ctx.fillStyle = e.state === "dead" ? "#444" : "#8b0000";
+  ctx.fill();
+  ctx.strokeStyle = "#ff0000";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  // Eyes
+  ctx.fillStyle = "#ff4444";
+  ctx.fillRect(-8, headCY - 5, 6, 5);
+  ctx.fillRect(3, headCY - 5, 6, 5);
+  // Mouth
+  ctx.beginPath();
+  ctx.moveTo(-8, headCY + 8);
+  for (let i = 0; i < 5; i++) {
+    ctx.lineTo(-6 + i * 3, headCY + (i % 2 === 0 ? 8 : 14));
+  }
+  ctx.strokeStyle = "#ff0000";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Body
+  const neckY = headCY + headR;
+  const hipY = neckY + bodyLen;
+  ctx.beginPath();
+  ctx.moveTo(0, neckY);
+  ctx.lineTo(0, hipY);
+  ctx.strokeStyle = "#8b0000";
+  ctx.lineWidth = 5;
+  ctx.stroke();
+
+  // Arms
+  const shoulderY = neckY + 10;
+  ctx.beginPath();
+  if (e.state === "boss_slam") {
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(e.facing * limbLen * 1.8, shoulderY - limbLen);
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(-e.facing * limbLen, shoulderY - limbLen * 0.5);
+  } else if (e.state === "boss_charge") {
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(e.facing * limbLen * 1.5, shoulderY);
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(e.facing * limbLen, shoulderY - limbLen * 0.8);
+  } else if (e.state === "boss_throw") {
+    const prog = e.stateTimer / 20;
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(e.facing * limbLen * (1 + prog), shoulderY - limbLen * prog);
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(-e.facing * limbLen * 0.5, shoulderY + limbLen * 0.5);
+  } else if (e.state === "punch") {
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(e.facing * limbLen * 1.5, shoulderY - 5);
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(-e.facing * limbLen * 0.5, shoulderY + 10);
+  } else {
+    const swing = e.state === "walk" ? Math.sin(Date.now() / 200) * 12 : 0;
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(-limbLen * 0.8, shoulderY + limbLen * 0.8 + swing);
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(limbLen * 0.8, shoulderY + limbLen * 0.8 - swing);
+  }
+  ctx.strokeStyle = "#8b0000";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // Legs
+  ctx.beginPath();
+  const legSwing = e.state === "walk" || e.state === "boss_charge" ? Math.sin(Date.now() / 120) * 15 : 0;
+  ctx.moveTo(0, hipY);
+  ctx.lineTo(-limbLen * 0.6 + legSwing, hipY + limbLen);
+  ctx.moveTo(0, hipY);
+  ctx.lineTo(limbLen * 0.6 - legSwing, hipY + limbLen);
+  ctx.strokeStyle = "#8b0000";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  ctx.restore();
+
+  // Boss HP bar — large, at top of screen (drawn separately)
+}
+
+function drawBossHpBar(ctx: CanvasRenderingContext2D, boss: Entity, canvasW: number) {
+  const barW = canvasW * 0.6;
+  const barH = 12;
+  const barX = (canvasW - barW) / 2;
+  const barY = 8;
+  const hpPct = Math.max(0, boss.hp / boss.maxHp);
+
+  // Background
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
+  ctx.fillStyle = "#333";
+  ctx.fillRect(barX, barY, barW, barH);
+
+  // HP fill with color based on phase
+  const phase = boss.bossPhase || 1;
+  const hpColor = phase >= 3 ? "#ff0000" : phase >= 2 ? "#ff6600" : "#cc00ff";
+  ctx.fillStyle = hpColor;
+  ctx.fillRect(barX, barY, barW * hpPct, barH);
+
+  // Border
+  ctx.strokeStyle = "#ff4444";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(barX - 2, barY - 2, barW + 4, barH + 4);
+
+  // Name
+  ctx.font = "bold 10px monospace";
+  ctx.fillStyle = "#ff4444";
+  ctx.textAlign = "center";
+  const phaseText = phase >= 3 ? "ENRAGED" : phase >= 2 ? "FURIOUS" : "BOSS";
+  ctx.fillText(`☠ ${phaseText} — DARK DOGE ☠`, canvasW / 2, barY + barH + 14);
+}
 
 // Combo recipes: input sequence → special move
 const COMBOS: { inputs: string[]; move: AttackState; name: string }[] = [
