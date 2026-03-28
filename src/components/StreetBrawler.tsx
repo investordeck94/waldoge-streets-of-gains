@@ -429,7 +429,7 @@ function drawStickFigure(
     ctx.lineTo(-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(limbLen * 0.7, shoulderY + limbLen * 0.8 - swing);
-    // Draw bat held at side when idle/walking
+    // Draw weapon held at side when idle/walking
     if (weaponType) {
       ctx.stroke();
       ctx.beginPath();
@@ -438,10 +438,27 @@ function drawStickFigure(
       ctx.save();
       ctx.translate(handX, handY);
       ctx.rotate(e.facing * 0.3);
-      ctx.fillStyle = "#8B4513";
-      ctx.fillRect(-2, -2, 5, 22);
-      ctx.fillStyle = "#A0522D";
-      ctx.fillRect(-3, 18, 7, 6);
+      if (weaponType === "bat") {
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(-2, -2, 5, 22);
+        ctx.fillStyle = "#A0522D";
+        ctx.fillRect(-3, 18, 7, 6);
+      } else if (weaponType === "sword") {
+        ctx.fillStyle = "#ccc";
+        ctx.fillRect(-1.5, -2, 3, 26);
+        ctx.fillStyle = "#888";
+        ctx.fillRect(-4, -3, 8, 3);
+        ctx.fillStyle = "#664400";
+        ctx.fillRect(-2, 24, 4, 5);
+      } else if (weaponType === "shuriken") {
+        ctx.fillStyle = "#cc44ff";
+        for (let i = 0; i < 4; i++) {
+          ctx.save();
+          ctx.rotate((i * Math.PI) / 2);
+          ctx.fillRect(-1, -6, 2, 6);
+          ctx.restore();
+        }
+      }
       ctx.restore();
       ctx.beginPath();
     }
