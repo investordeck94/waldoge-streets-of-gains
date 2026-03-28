@@ -49,7 +49,7 @@ const GRAVITY = 0.6;
 const PLAYER_SPEED = 3.5;
 const JUMP_FORCE = -12;
 const LEVEL_WIDTH = 3200;
-const COMBO_WINDOW = 25; // frames to chain inputs
+const COMBO_WINDOW = 40; // frames to chain inputs (generous window)
 const COMBO_HIT_WINDOW = 40; // frames before combo resets
 const MAX_ENERGY = 100;
 
