@@ -2003,6 +2003,18 @@ export const StreetBrawler: FC = () => {
         <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Street Brawler</h2>
       </div>
 
+      <canvas
+        ref={canvasRef}
+        className="rounded-lg border border-border/50"
+        style={{
+          width: "100%",
+          maxWidth: `${CANVAS_W}px`,
+          height: `${CANVAS_H}px`,
+          imageRendering: "pixelated",
+          display: gameState === "playing" ? "block" : "none",
+        }}
+      />
+
       {gameState === "playing" && (
         <div className="game-wrapper space-y-3 w-full">
           <div className="flex justify-between items-center glass-card px-4 py-2 text-sm">
@@ -2030,12 +2042,6 @@ export const StreetBrawler: FC = () => {
               {sfxEnabled ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
             </button>
           </div>
-
-          <canvas
-            ref={canvasRef}
-            className="w-full rounded-lg border border-border/50"
-            style={{ imageRendering: "pixelated", maxWidth: `${CANVAS_W}px` }}
-          />
 
           {/* Mobile touch controls */}
           <div className="flex justify-between items-center gap-1 md:hidden">
