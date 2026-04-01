@@ -1061,6 +1061,9 @@ export const StreetBrawler: FC = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.scale(dpr, dpr);
+    // Diagnostic: bright lime square to confirm canvas renders
+    ctx.fillStyle = "lime";
+    ctx.fillRect(20, 20, 60, 60);
     const g = gameRef.current;
     g.running = true;
 
