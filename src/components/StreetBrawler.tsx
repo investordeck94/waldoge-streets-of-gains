@@ -1713,9 +1713,10 @@ export const StreetBrawler: FC = () => {
         }
       }
 
-      // Camera
-      const targetCam = p.x - CANVAS_W / 3;
-      g.camX += (targetCam - g.camX) * 0.1;
+      // Camera — lead ahead in movement direction
+      const lookAhead = p.vx > 0.5 ? CANVAS_W * 0.25 : p.vx < -0.5 ? -CANVAS_W * 0.1 : 0;
+      const targetCam = p.x - CANVAS_W / 3 + lookAhead;
+      g.camX += (targetCam - g.camX) * 0.06;
       g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
 
       // Draw
