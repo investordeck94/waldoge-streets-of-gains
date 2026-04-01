@@ -1725,6 +1725,13 @@ export const StreetBrawler: FC = () => {
 
       // Draw
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+      // DIAGNOSTIC: Fill bright red to test visibility
+      ctx.fillStyle = "#ff0000";
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 40px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("GAME ACTIVE", CANVAS_W / 2, CANVAS_H / 2);
       drawCity(ctx, g.camX, CANVAS_W, g.animFrameCount);
 
       // Draw alley objects (crates, trash cans)
