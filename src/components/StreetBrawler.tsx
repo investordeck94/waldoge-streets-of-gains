@@ -1959,10 +1959,8 @@ export const StreetBrawler: FC = () => {
     };
 
     g.animFrame = requestAnimationFrame(tick);
-    }, 50); // end startTimeout
 
     return () => {
-      clearTimeout(startTimeout);
       const g = gameRef.current;
       g.running = false;
       cancelAnimationFrame(g.animFrame);
