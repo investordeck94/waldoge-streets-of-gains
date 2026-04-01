@@ -657,34 +657,39 @@ function drawAlleyObject(ctx: CanvasRenderingContext2D, obj: AlleyObject, camX: 
 }
 
 function drawCity(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, frameCount: number) {
-  // === LAYER 0: Sky with gradient ===
+  // === LAYER 0: Daytime sky gradient ===
   const skyGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
-  skyGrad.addColorStop(0, "#0a0a18");
-  skyGrad.addColorStop(0.4, "#12102a");
-  skyGrad.addColorStop(1, "#1a1530");
+  skyGrad.addColorStop(0, "#4a90d9");
+  skyGrad.addColorStop(0.5, "#87ceeb");
+  skyGrad.addColorStop(1, "#b0d4f1");
   ctx.fillStyle = skyGrad;
   ctx.fillRect(0, 0, canvasW, GROUND_Y);
 
-  // Stars
-  ctx.fillStyle = "#ffffff22";
-  for (let i = 0; i < 40; i++) {
-    const sx = (i * 127 + 50) % canvasW;
-    const sy = (i * 73 + 10) % (GROUND_Y * 0.4);
-    const sz = ((i * 31) % 3) + 1;
-    const twinkle = Math.sin(frameCount / 30 + i) * 0.3 + 0.7;
-    ctx.globalAlpha = twinkle * 0.4;
-    ctx.fillRect(sx, sy, sz, sz);
+  // Clouds instead of stars
+  ctx.fillStyle = "#ffffffcc";
+  for (let i = 0; i < 8; i++) {
+    const cx = (i * 250 + 80 + Math.sin(frameCount / 200 + i) * 20) % (canvasW + 100) - 50;
+    const cy = 30 + (i * 37) % 60;
+    const cw = 60 + (i * 19) % 40;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, cw / 2, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx - 15, cy + 5, cw / 3, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 18, cy + 3, cw / 3, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
-  ctx.globalAlpha = 1;
 
   // === LAYER 1: Far skyline (slowest parallax 0.15) ===
   for (let i = 0; i < 25; i++) {
     const bx = i * 180 - (camX * 0.15) % 180;
     const bh = 60 + (i * 41) % 100;
-    ctx.fillStyle = "#0d0b1e";
+    ctx.fillStyle = "#8899aa";
     ctx.fillRect(bx, GROUND_Y - bh, 100, bh);
-    // Tiny windows
-    ctx.fillStyle = "#ffd70015";
+    // Windows
+    ctx.fillStyle = "#aaddff88";
     for (let wy = GROUND_Y - bh + 8; wy < GROUND_Y - 8; wy += 14) {
       for (let wx = bx + 8; wx < bx + 92; wx += 18) {
         if ((wx * 7 + wy * 11) % 4 !== 0) ctx.fillRect(wx, wy, 5, 6);
@@ -696,22 +701,21 @@ function drawCity(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, 
   for (let i = 0; i < 20; i++) {
     const bx = i * 160 - (camX * 0.4) % 160;
     const bh = 80 + (i * 59) % 130;
-    ctx.fillStyle = "#15112a";
+    ctx.fillStyle = "#7a8a9a";
     ctx.fillRect(bx, GROUND_Y - bh, 90, bh);
-    // Bigger windows
-    ctx.fillStyle = "#ffd70028";
+    // Windows
     for (let wy = GROUND_Y - bh + 10; wy < GROUND_Y - 10; wy += 18) {
       for (let wx = bx + 8; wx < bx + 82; wx += 22) {
         const lit = (wx * 13 + wy * 7) % 6 !== 0;
         if (lit) {
-          ctx.fillStyle = ((wx + wy) % 3 === 0) ? "#ff66cc20" : "#ffd70028";
+          ctx.fillStyle = ((wx + wy) % 3 === 0) ? "#66bbee88" : "#aaddff66";
           ctx.fillRect(wx, wy, 8, 10);
         }
       }
     }
     // Fire escape lines
     if (i % 3 === 0) {
-      ctx.strokeStyle = "#1a1535";
+      ctx.strokeStyle = "#5a6a7a";
       ctx.lineWidth = 1;
       for (let fy = GROUND_Y - bh + 30; fy < GROUND_Y - 10; fy += 35) {
         ctx.beginPath();
@@ -724,15 +728,14 @@ function drawCity(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, 
   }
 
   // === LAYER 3: Foreground alley walls (parallax 0.75) ===
-  // Left alley wall
   for (let i = 0; i < 30; i++) {
     const bx = i * 200 - (camX * 0.75) % 200;
-    const bh = GROUND_Y - 20; // Tall walls
+    const bh = GROUND_Y - 20;
     // Brick wall
-    ctx.fillStyle = "#1e1832";
+    ctx.fillStyle = "#b8785a";
     ctx.fillRect(bx, GROUND_Y - bh, 40, bh);
     // Brick pattern
-    ctx.strokeStyle = "#16102a";
+    ctx.strokeStyle = "#9a6248";
     ctx.lineWidth = 0.5;
     for (let by = GROUND_Y - bh; by < GROUND_Y; by += 8) {
       ctx.beginPath();
@@ -747,10 +750,10 @@ function drawCity(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, 
         ctx.stroke();
       }
     }
-    // Right wall on other side
-    ctx.fillStyle = "#1e1832";
+    // Right wall
+    ctx.fillStyle = "#b8785a";
     ctx.fillRect(bx + 160, GROUND_Y - bh, 40, bh);
-    ctx.strokeStyle = "#16102a";
+    ctx.strokeStyle = "#9a6248";
     ctx.lineWidth = 0.5;
     for (let by = GROUND_Y - bh; by < GROUND_Y; by += 8) {
       ctx.beginPath();
@@ -760,68 +763,48 @@ function drawCity(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, 
     }
   }
 
-  // === Neon signs (parallax 0.75, on walls) ===
+  // === Shop signs (parallax 0.75) ===
   for (let i = 0; i < 8; i++) {
     const nx = i * 400 + 60 - (camX * 0.75) % 400;
     if (nx < -100 || nx > canvasW + 100) continue;
     const ny = GROUND_Y - 200 + (i % 3) * 30;
 
-    // Flickering intensity
-    const flicker = Math.sin(frameCount / 3 + i * 100) * 0.15
-      + Math.sin(frameCount / 7 + i * 50) * 0.1
-      + Math.sin(frameCount / 13 + i * 200) * 0.05;
-    const intensity = Math.max(0.3, Math.min(1, 0.7 + flicker));
-
-    const neonColor = i % 3 === 0 ? [255, 50, 150] : i % 3 === 1 ? [50, 200, 255] : [255, 100, 50];
-
-    // Glow halo
     ctx.save();
-    ctx.globalAlpha = intensity * 0.25;
-    const glow = ctx.createRadialGradient(nx, ny, 5, nx, ny, 60);
-    glow.addColorStop(0, `rgba(${neonColor.join(",")}, 0.6)`);
-    glow.addColorStop(1, `rgba(${neonColor.join(",")}, 0)`);
-    ctx.fillStyle = glow;
-    ctx.fillRect(nx - 60, ny - 60, 120, 120);
-    ctx.restore();
-
-    // Sign box
-    ctx.save();
-    ctx.globalAlpha = intensity;
-    ctx.strokeStyle = `rgb(${neonColor.join(",")})`;
-    ctx.lineWidth = 2;
-    ctx.shadowColor = `rgb(${neonColor.join(",")})`;
-    ctx.shadowBlur = 8;
-    const signs = ["BAR", "OPEN", "XXX", "24h", "EAT", "酒", "LIVE", "DOGE"];
-    ctx.strokeRect(nx - 20, ny - 10, 40, 18);
+    // Sign background
+    ctx.fillStyle = "#e8d8a0";
+    ctx.fillRect(nx - 22, ny - 12, 44, 22);
+    ctx.strokeStyle = "#8a7a50";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(nx - 22, ny - 12, 44, 22);
+    // Sign text
+    const signs = ["CAFE", "SHOP", "DELI", "24h", "EAT", "DOGE", "PIZZA", "NEWS"];
     ctx.font = "bold 10px monospace";
-    ctx.fillStyle = `rgb(${neonColor.join(",")})`;
+    ctx.fillStyle = "#4a3a20";
     ctx.textAlign = "center";
     ctx.fillText(signs[i % signs.length], nx, ny + 4);
-    ctx.shadowBlur = 0;
     ctx.restore();
   }
 
-  // === Atmospheric overlay ===
+  // === Atmospheric haze ===
   ctx.save();
-  ctx.globalAlpha = 0.12;
+  ctx.globalAlpha = 0.05;
   const atmosGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
-  atmosGrad.addColorStop(0, "#2a1050");
-  atmosGrad.addColorStop(0.5, "#1a0a40");
-  atmosGrad.addColorStop(1, "#0a0520");
+  atmosGrad.addColorStop(0, "#ffffff");
+  atmosGrad.addColorStop(1, "#e0d8c0");
   ctx.fillStyle = atmosGrad;
   ctx.fillRect(0, 0, canvasW, GROUND_Y);
   ctx.restore();
 
-  // === FLOOR: Cracked asphalt ===
+  // === FLOOR: Concrete sidewalk ===
   const floorGrad = ctx.createLinearGradient(0, GROUND_Y, 0, GROUND_Y + 80);
-  floorGrad.addColorStop(0, "#1a1a22");
-  floorGrad.addColorStop(0.3, "#151518");
-  floorGrad.addColorStop(1, "#0e0e12");
+  floorGrad.addColorStop(0, "#9a9a9a");
+  floorGrad.addColorStop(0.3, "#8a8a8a");
+  floorGrad.addColorStop(1, "#7a7a7a");
   ctx.fillStyle = floorGrad;
   ctx.fillRect(0, GROUND_Y, canvasW, 80);
 
-  // Road markings (cracked)
-  ctx.strokeStyle = "#ffd70025";
+  // Road markings
+  ctx.strokeStyle = "#ffd70088";
   ctx.lineWidth = 3;
   for (let i = 0; i < 40; i++) {
     const mx = i * 100 - (camX * 0.95) % 100;
@@ -831,8 +814,8 @@ function drawCity(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, 
     ctx.stroke();
   }
 
-  // Cracks in asphalt
-  ctx.strokeStyle = "#0a0a0e";
+  // Cracks
+  ctx.strokeStyle = "#6a6a6a";
   ctx.lineWidth = 1;
   for (let i = 0; i < 20; i++) {
     const cx = i * 170 - (camX * 0.95) % 170 + 30;
@@ -843,7 +826,6 @@ function drawCity(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, 
     ctx.lineTo(cx + (seed % 20) - 10, GROUND_Y + 30);
     ctx.lineTo(cx + (seed % 10) - 5, GROUND_Y + 45);
     ctx.stroke();
-    // Branch crack
     if (seed > 40) {
       ctx.beginPath();
       ctx.moveTo(cx + (seed % 15) - 7, GROUND_Y + 15);
@@ -852,54 +834,24 @@ function drawCity(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, 
     }
   }
 
-  // === Puddles with neon reflections ===
+  // === Shadows on ground instead of puddles ===
   for (let i = 0; i < 6; i++) {
     const px = i * 500 + 200 - (camX * 0.95) % 500;
     if (px < -80 || px > canvasW + 80) continue;
     const pw = 50 + (i * 23) % 40;
-    const ph = 6;
     const py = GROUND_Y + 10 + (i % 3) * 15;
 
-    // Puddle base (dark reflective)
     ctx.save();
-    ctx.globalAlpha = 0.6;
-    const pudGrad = ctx.createRadialGradient(px, py, 2, px, py, pw / 2);
-    pudGrad.addColorStop(0, "#1a1530");
-    pudGrad.addColorStop(1, "#0e0a1a");
-    ctx.fillStyle = pudGrad;
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = "#444";
     ctx.beginPath();
-    ctx.ellipse(px, py, pw / 2, ph, 0, 0, Math.PI * 2);
+    ctx.ellipse(px, py, pw / 2, 4, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
-
-    // Neon reflection in puddle
-    const reflectColor = i % 3 === 0 ? "255, 50, 150" : i % 3 === 1 ? "50, 200, 255" : "255, 100, 50";
-    const reflFlicker = Math.sin(frameCount / 5 + i * 80) * 0.1 + 0.15;
-    ctx.save();
-    ctx.globalAlpha = reflFlicker;
-    const reflGrad = ctx.createRadialGradient(px, py, 1, px, py, pw / 3);
-    reflGrad.addColorStop(0, `rgba(${reflectColor}, 0.5)`);
-    reflGrad.addColorStop(1, `rgba(${reflectColor}, 0)`);
-    ctx.fillStyle = reflGrad;
-    ctx.beginPath();
-    ctx.ellipse(px, py, pw / 3, ph * 0.7, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    // Shimmer ripple
-    ctx.save();
-    ctx.globalAlpha = 0.1;
-    ctx.strokeStyle = `rgba(${reflectColor}, 0.3)`;
-    ctx.lineWidth = 0.5;
-    const rippleR = (frameCount / 20 + i * 10) % 20;
-    ctx.beginPath();
-    ctx.ellipse(px, py, rippleR, rippleR * 0.3, 0, 0, Math.PI * 2);
-    ctx.stroke();
     ctx.restore();
   }
 
-  // Gutter line at ground level
-  ctx.strokeStyle = "#252530";
+  // Ground line
+  ctx.strokeStyle = "#888888";
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(0, GROUND_Y);
