@@ -1,6 +1,6 @@
 import { FC, useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Swords, Heart, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX } from "lucide-react";
+import { Swords, Heart, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
 import { SFX } from "@/lib/gameSfx";
 
@@ -1714,16 +1714,19 @@ export const StreetBrawler: FC = () => {
       }
 
       // Camera — smooth predictive look-ahead
-      // Predict where player will be based on velocity (look ~20 frames ahead)
-      const predictX = p.x + p.vx * 20;
-      // Offset: player sits at 30% from left when moving right, 70% when moving left
-      const facingRight = p.facing > 0;
-      const anchorRatio = facingRight ? 0.3 : 0.7;
-      const baseCam = predictX - CANVAS_W * anchorRatio;
-      // Smooth interpolation — faster catchup when far, gentle when close
-      const dist = Math.abs(baseCam - g.camX);
-      const lerpSpeed = Math.min(0.12, 0.03 + dist * 0.0003);
-      g.camX += (baseCam - g.camX) * lerpSpeed;
+      // Use velocity to predict where player is heading
+      const velLookAhead = p.vx * 25;
+      // Anchor: when moving right, player sits at 25% from left (shows 75% ahead)
+      // When moving left, player sits at 75% from left (shows 75% behind = ahead in left dir)
+      // When idle, center at 40%
+      let anchorRatio = 0.4;
+      if (p.facing > 0) anchorRatio = 0.25;
+      else if (p.facing < 0) anchorRatio = 0.75;
+      const targetCam = (p.x + velLookAhead) - CANVAS_W * anchorRatio;
+      // Adaptive lerp: snappier when far away
+      const dist = Math.abs(targetCam - g.camX);
+      const lerpSpeed = Math.min(0.15, 0.04 + dist * 0.0004);
+      g.camX += (targetCam - g.camX) * lerpSpeed;
       g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
 
       // Draw
@@ -2004,7 +2007,26 @@ export const StreetBrawler: FC = () => {
   }, []);
 
   return (
-    <div ref={containerRef} className="flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl mx-auto">
+    <div ref={containerRef} className="flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl mx-auto relative">
+      {gameState === "playing" && (
+        <button
+          onClick={() => {
+            const el = containerRef.current;
+            if (!el) return;
+            if (document.fullscreenElement) {
+              document.exitFullscreen();
+            } else {
+              el.requestFullscreen().catch(() => {});
+            }
+          }}
+          className="absolute top-2 right-2 z-20 p-1.5 rounded glass-card hover:bg-muted/50 transition"
+          title={document.fullscreenElement ? "Exit Fullscreen" : "Fullscreen"}
+        >
+          {document.fullscreenElement
+            ? <Minimize className="w-4 h-4 text-primary" />
+            : <Maximize className="w-4 h-4 text-primary" />}
+        </button>
+      )}
       <div className="flex items-center gap-2 sm:gap-3">
         <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
         <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Street Brawler</h2>
