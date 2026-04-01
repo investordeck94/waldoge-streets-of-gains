@@ -1054,9 +1054,7 @@ export const StreetBrawler: FC = () => {
     // Small delay to ensure canvas is mounted after AnimatePresence transition
     const startTimeout = setTimeout(() => {
       const canvas = canvasRef.current;
-      console.log("[StreetBrawler] canvas ref:", canvas, "offsetW:", canvas?.offsetWidth, "offsetH:", canvas?.offsetHeight);
       if (!canvas) return;
-      // Force canvas dimensions with DPR scaling
       const dpr = window.devicePixelRatio || 1;
       canvas.width = CANVAS_W * dpr;
       canvas.height = CANVAS_H * dpr;
@@ -1065,10 +1063,6 @@ export const StreetBrawler: FC = () => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
       ctx.scale(dpr, dpr);
-      // Diagnostic: draw bright test rect
-      ctx.fillStyle = "red";
-      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-      console.log("[StreetBrawler] Drew red diagnostic rect, dpr:", dpr);
       const g = gameRef.current;
       g.running = true;
 
