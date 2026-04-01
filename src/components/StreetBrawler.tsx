@@ -1055,7 +1055,6 @@ export const StreetBrawler: FC = () => {
     const startTimeout = setTimeout(() => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      // Force canvas dimensions with DPR scaling
       const dpr = window.devicePixelRatio || 1;
       canvas.width = CANVAS_W * dpr;
       canvas.height = CANVAS_H * dpr;
