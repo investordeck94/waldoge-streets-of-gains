@@ -1713,10 +1713,17 @@ export const StreetBrawler: FC = () => {
         }
       }
 
-      // Camera — lead ahead in movement direction
-      const lookAhead = p.vx > 0.5 ? CANVAS_W * 0.25 : p.vx < -0.5 ? -CANVAS_W * 0.1 : 0;
-      const targetCam = p.x - CANVAS_W / 3 + lookAhead;
-      g.camX += (targetCam - g.camX) * 0.06;
+      // Camera — smooth predictive look-ahead
+      // Predict where player will be based on velocity (look ~20 frames ahead)
+      const predictX = p.x + p.vx * 20;
+      // Offset: player sits at 30% from left when moving right, 70% when moving left
+      const facingRight = p.facing > 0;
+      const anchorRatio = facingRight ? 0.3 : 0.7;
+      const baseCam = predictX - CANVAS_W * anchorRatio;
+      // Smooth interpolation — faster catchup when far, gentle when close
+      const dist = Math.abs(baseCam - g.camX);
+      const lerpSpeed = Math.min(0.12, 0.03 + dist * 0.0003);
+      g.camX += (baseCam - g.camX) * lerpSpeed;
       g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
 
       // Draw
