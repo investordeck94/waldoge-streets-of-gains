@@ -1,83 +1,25 @@
 
 
-# Plan: Add WALDOGE Mascot Image & Fix Build Errors
+## Problem: Canvas rendering bug from double DPR scaling
 
-## Summary
+The canvas context gets `ctx.scale(dpr, dpr)` applied **twice**:
+1. First in the mount initialization effect (line 1089)
+2. Again when the game loop starts (line 1130)
 
-This plan addresses two things:
-1. **Fix build errors** that are preventing the app from working
-2. **Add the custom WALDOGE mascot illustration** as the hero image
+Since `canvas.width` is reset at line 1124 (which clears the context transform), the second `scale` call actually resets and re-applies correctly. However, there's a subtler issue: **`getContext("2d")` returns the same context object** — but setting `canvas.width` resets the transform matrix, so the second `scale` is fine.
 
----
+The real value of the user's diagnostic pattern is as a **minimal test to confirm the canvas draws anything at all**. Here's the plan:
 
-## What's Breaking Right Now
+### Changes to `src/components/StreetBrawler.tsx`
 
-### Issue 1: Missing `framer-motion` Package
-The code uses animations from `framer-motion` but this package isn't installed. It's used in 6 components:
-- Index.tsx (page transitions)
-- LandingPage.tsx (hero animations)
-- Header.tsx (logo and tab animations)
-- ChatTab.tsx (message bubbles)
-- RaidTab.tsx (generated content)
-- MemeTab.tsx (results list)
-- NFTTab.tsx (minting states)
+1. **Add a diagnostic test draw in the mount effect** (lines 1078-1093): After the DPR setup, draw a visible red rectangle as a sanity check that the canvas context is working. This confirms rendering before the game loop starts.
 
-### Issue 2: CSS Import Order
-The Google Fonts `@import` statement is placed after Tailwind directives, but CSS requires `@import` to come first.
+2. **Ensure `clearRect` uses correct dimensions**: The current `clearRect(0, 0, CANVAS_W, CANVAS_H)` at line 1786 is correct with DPR scaling (since `ctx.scale` maps logical to physical), so no change needed there.
 
----
+3. **Simplify the dual-initialization**: Remove the redundant DPR setup from the mount effect (lines 1078-1093) since the game loop effect (line 1115) already does the full setup. The mount effect was only drawing a dark background that gets immediately overwritten. This eliminates the double-init pattern entirely.
 
-## The Fix
-
-### Step 1: Install framer-motion
-Add `framer-motion` to the project dependencies.
-
-### Step 2: Fix CSS Import Order
-Move the Google Fonts import to the top of the CSS file, before the Tailwind directives.
-
-### Step 3: Add the WALDOGE Mascot Image
-Copy your uploaded mascot illustration to the project and use it in:
-
-1. **Landing Page Hero** - Replace the emoji placeholder with the actual mascot image
-2. **Chat Empty State** - Show the mascot when starting a new conversation  
-3. **Header Logo** - Small mascot icon next to "WALDOGE AI"
-
-The mascot will have a subtle floating animation to match the cosmic theme.
-
----
-
-## Files to Change
-
-| File | Change |
-|------|--------|
-| `package.json` | Add framer-motion dependency |
-| `src/index.css` | Move @import to top of file |
-| `src/assets/waldoge-mascot.png` | Add the mascot image |
-| `src/components/LandingPage.tsx` | Replace emoji with mascot image |
-| `src/components/ChatTab.tsx` | Use mascot in empty state |
-| `src/components/Header.tsx` | Small mascot in logo area |
-
----
-
-## Technical Details
-
-```text
-Before (broken CSS):
-+---------------------------+
-| @tailwind base;           |
-| @tailwind components;     |
-| @tailwind utilities;      |
-| @import url(...fonts...); | <-- Error here
-+---------------------------+
-
-After (fixed CSS):
-+---------------------------+
-| @import url(...fonts...); | <-- Moved to top
-| @tailwind base;           |
-| @tailwind components;     |
-| @tailwind utilities;      |
-+---------------------------+
-```
-
-The mascot image will be imported as an ES6 module from `src/assets/` for proper bundling and optimization. The floating animation will use the existing `float` keyframe animation already defined in your CSS.
+### Summary
+- Remove the mount-only canvas init effect (lines 1078-1093) — it's redundant
+- The game loop effect already handles full DPR setup + rendering
+- Optionally add a brief diagnostic fill (red rect) at the start of the game loop to verify rendering, removable once confirmed
 
