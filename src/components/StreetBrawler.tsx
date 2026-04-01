@@ -2007,7 +2007,26 @@ export const StreetBrawler: FC = () => {
   }, []);
 
   return (
-    <div ref={containerRef} className="flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl mx-auto">
+    <div ref={containerRef} className="flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl mx-auto relative">
+      {gameState === "playing" && (
+        <button
+          onClick={() => {
+            const el = containerRef.current;
+            if (!el) return;
+            if (document.fullscreenElement) {
+              document.exitFullscreen();
+            } else {
+              el.requestFullscreen().catch(() => {});
+            }
+          }}
+          className="absolute top-2 right-2 z-20 p-1.5 rounded glass-card hover:bg-muted/50 transition"
+          title={document.fullscreenElement ? "Exit Fullscreen" : "Fullscreen"}
+        >
+          {document.fullscreenElement
+            ? <Minimize className="w-4 h-4 text-primary" />
+            : <Maximize className="w-4 h-4 text-primary" />}
+        </button>
+      )}
       <div className="flex items-center gap-2 sm:gap-3">
         <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
         <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Street Brawler</h2>
