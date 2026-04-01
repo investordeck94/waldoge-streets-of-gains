@@ -1105,8 +1105,10 @@ export const StreetBrawler: FC = () => {
       if (!canvas) return;
       // Force canvas dimensions with DPR scaling
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
+      canvas.width = CANVAS_W * dpr;
+      canvas.height = CANVAS_H * dpr;
+      canvas.style.width = `${CANVAS_W}px`;
+      canvas.style.height = `${CANVAS_H}px`;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
       ctx.scale(dpr, dpr);
