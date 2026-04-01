@@ -2003,6 +2003,87 @@ export const StreetBrawler: FC = () => {
         <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Street Brawler</h2>
       </div>
 
+      {gameState === "playing" && (
+        <div className="game-wrapper space-y-3 w-full">
+          <div className="flex justify-between items-center glass-card px-4 py-2 text-sm">
+            <div className="flex items-center gap-2">
+              <Heart className="w-4 h-4 text-destructive" />
+              <div className="w-24 h-3 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-destructive to-green-500 transition-all"
+                  style={{ width: `${playerHp}%` }}
+                />
+              </div>
+            </div>
+            {comboCount > 1 && (
+              <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
+            )}
+            <span className="text-primary font-bold">
+              {wave === WAVES.length - 1 ? "⚠ BOSS" : `Wave ${wave + 1}/${WAVES.length}`}
+            </span>
+            <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
+            <button
+              onClick={() => { const v = !sfxEnabled; setSfxEnabled(v); sfxRef.current = v; }}
+              className="p-1 rounded hover:bg-muted/50 transition"
+              title={sfxEnabled ? "Mute SFX" : "Unmute SFX"}
+            >
+              {sfxEnabled ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
+            </button>
+          </div>
+
+          <canvas
+            ref={canvasRef}
+            className="w-full rounded-lg border border-border/50"
+            style={{ imageRendering: "pixelated", maxWidth: `${CANVAS_W}px` }}
+          />
+
+          {/* Mobile touch controls */}
+          <div className="flex justify-between items-center gap-1 md:hidden">
+            <div className="flex gap-1">
+              <button
+                onTouchStart={() => touchMove("left")}
+                onTouchEnd={() => touchMove("stop")}
+                className="w-11 h-11 glass-card flex items-center justify-center text-lg font-bold text-primary active:bg-primary/20"
+              >◀</button>
+              <button
+                onTouchStart={() => touchMove("right")}
+                onTouchEnd={() => touchMove("stop")}
+                className="w-11 h-11 glass-card flex items-center justify-center text-lg font-bold text-primary active:bg-primary/20"
+              >▶</button>
+            </div>
+            <div className="flex gap-1">
+              <button
+                onTouchStart={() => touchAction("jump")}
+                className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-primary active:bg-primary/20"
+              >JUMP</button>
+              <button
+                onTouchStart={() => touchAction("punch")}
+                className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-primary active:bg-primary/20"
+              >👊</button>
+              <button
+                onTouchStart={() => touchAction("kick")}
+                className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-primary active:bg-primary/20"
+              >🦶</button>
+              <button
+                onTouchStart={() => touchAction("special")}
+                className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-yellow-400 active:bg-yellow-400/20"
+              >⚡</button>
+            </div>
+          </div>
+
+          {comboName && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-center"
+            >
+              <span className="text-primary font-bold text-lg animate-pulse">⚡ {comboName}!</span>
+            </motion.div>
+          )}
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
         {gameState === "menu" && (
           <motion.div
@@ -2041,81 +2122,6 @@ export const StreetBrawler: FC = () => {
           </motion.div>
         )}
 
-        {gameState === "playing" && (
-          <motion.div
-            key="playing"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="game-wrapper space-y-3 w-full"
-          >
-            <div className="flex justify-between items-center glass-card px-4 py-2 text-sm">
-              <div className="flex items-center gap-2">
-                <Heart className="w-4 h-4 text-destructive" />
-                <div className="w-24 h-3 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-destructive to-green-500 transition-all"
-                    style={{ width: `${playerHp}%` }}
-                  />
-                </div>
-              </div>
-              {comboCount > 1 && (
-                <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
-              )}
-              <span className="text-primary font-bold">
-                {wave === WAVES.length - 1 ? "⚠ BOSS" : `Wave ${wave + 1}/${WAVES.length}`}
-              </span>
-              <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
-              <button
-                onClick={() => { const v = !sfxEnabled; setSfxEnabled(v); sfxRef.current = v; }}
-                className="p-1 rounded hover:bg-muted/50 transition"
-                title={sfxEnabled ? "Mute SFX" : "Unmute SFX"}
-              >
-                {sfxEnabled ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
-              </button>
-            </div>
-
-            <canvas
-              ref={canvasRef}
-              className="w-full rounded-lg border border-border/50"
-              style={{ imageRendering: "pixelated", maxWidth: `${CANVAS_W}px` }}
-            />
-
-            {/* Mobile touch controls */}
-            <div className="flex justify-between items-center gap-1 md:hidden">
-              <div className="flex gap-1">
-                <button
-                  onTouchStart={() => touchMove("left")}
-                  onTouchEnd={() => touchMove("stop")}
-                  className="w-11 h-11 glass-card flex items-center justify-center text-lg font-bold text-primary active:bg-primary/20"
-                >◀</button>
-                <button
-                  onTouchStart={() => touchMove("right")}
-                  onTouchEnd={() => touchMove("stop")}
-                  className="w-11 h-11 glass-card flex items-center justify-center text-lg font-bold text-primary active:bg-primary/20"
-                >▶</button>
-              </div>
-              <button
-                onTouchStart={() => touchAction("jump")}
-                className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-primary active:bg-primary/20"
-              >⬆</button>
-              <div className="flex gap-1">
-                <button
-                  onTouchStart={() => touchAction("punch")}
-                  className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-destructive active:bg-destructive/20"
-                >👊</button>
-                <button
-                  onTouchStart={() => touchAction("kick")}
-                  className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-destructive active:bg-destructive/20"
-                >🦵</button>
-                <button
-                  onTouchStart={() => touchAction("special")}
-                  className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-accent active:bg-accent/20"
-                >⚡</button>
-              </div>
-            </div>
-          </motion.div>
-        )}
 
         {(gameState === "gameover" || gameState === "victory") && (
           <motion.div
