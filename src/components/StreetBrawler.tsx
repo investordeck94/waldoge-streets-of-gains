@@ -1075,22 +1075,6 @@ export const StreetBrawler: FC = () => {
     setGameState("playing");
   }, []);
 
-  // Initialize canvas on mount to ensure context is ready
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = CANVAS_W * dpr;
-    canvas.height = CANVAS_H * dpr;
-    canvas.style.width = `${CANVAS_W}px`;
-    canvas.style.height = `${CANVAS_H}px`;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.scale(dpr, dpr);
-      ctx.fillStyle = "#0a0a12";
-      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-    }
-  }, []);
 
   // Input handling
   useEffect(() => {
