@@ -2737,22 +2737,33 @@ export const StreetBrawler: FC = () => {
       }
 
       // Camera — smooth predictive look-ahead
-      // Anchor based on actual MOVEMENT direction (vx), not facing direction.
-      // This prevents the camera from snapping backwards when the player runs
-      // forward while facing an enemy behind them (vx and facing can differ).
-      // Keep player centered-ish so the world clearly scrolls with him.
-      const velLookAhead = p.vx * 18;
-      let anchorRatio = 0.5;
-      const MOVE_THRESHOLD = 0.5;
-      if (p.vx > MOVE_THRESHOLD) anchorRatio = 0.4;       // moving right → show more ahead
-      else if (p.vx < -MOVE_THRESHOLD) anchorRatio = 0.6;  // moving left → show more ahead
-      else if (p.facing > 0) anchorRatio = 0.45;
-      else if (p.facing < 0) anchorRatio = 0.55;
-      const targetCam = (p.x + velLookAhead) - CANVAS_W * anchorRatio;
-      // Adaptive lerp: snappier overall so the world clearly tracks the player
+      // Camera follow:
+      // - Snappy when moving (player stays near center, slight look-ahead).
+      // - Sticky when stopped (deadzone + held anchor) so it doesn't jitter
+      //   as residual vx flips between tiny positive/negative values.
+      const MOVE_THRESHOLD = 0.6;
+      const moving = Math.abs(p.vx) > MOVE_THRESHOLD;
+
+      // Persist last "moving" anchor so stopping doesn't re-snap the camera.
+      if (moving) {
+        g.camAnchor = p.vx > 0 ? 0.42 : 0.58;
+      } else if (g.camAnchor === undefined) {
+        g.camAnchor = p.facing > 0 ? 0.46 : 0.54;
+      }
+
+      const velLookAhead = moving ? p.vx * 14 : 0;
+      const targetCam = (p.x + velLookAhead) - CANVAS_W * g.camAnchor;
+
       const dist = Math.abs(targetCam - g.camX);
-      const lerpSpeed = Math.min(0.25, 0.12 + dist * 0.0006);
-      g.camX += (targetCam - g.camX) * lerpSpeed;
+      // Deadzone: when stopped and within a few px, don't move at all.
+      if (!moving && dist < 4) {
+        // hold camera — prevents idle jitter
+      } else {
+        // Snappier lerp while moving; gentler when only correcting small drift.
+        const baseLerp = moving ? 0.22 : 0.08;
+        const lerpSpeed = Math.min(0.4, baseLerp + dist * 0.0008);
+        g.camX += (targetCam - g.camX) * lerpSpeed;
+      }
       g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
 
       // Draw
