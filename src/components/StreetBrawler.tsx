@@ -2504,7 +2504,7 @@ export const StreetBrawler: FC = () => {
               <>
                 <Trophy className="w-16 h-16 text-primary mx-auto" />
                 <h3 className="text-2xl font-bold text-primary font-heading">VICTORY!</h3>
-                <p className="text-muted-foreground">You cleared all waves!</p>
+                <p className="text-muted-foreground">You conquered all 7 levels! 🔥</p>
               </>
             ) : (
               <>
