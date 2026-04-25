@@ -1915,6 +1915,7 @@ export const StreetBrawler: FC = () => {
     bossIntro: BossIntro;
     healFlash: number;
     camAnchor: number;
+    camLookAhead: number;
     camPreset: "snappy" | "buttery";
     vxAvg: number;
     vxHistory: number[];
