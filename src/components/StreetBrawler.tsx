@@ -2674,6 +2674,8 @@ export const StreetBrawler: FC = () => {
               p.hp = Math.min(p.maxHp, p.hp + 25);
               setPlayerHp(p.hp);
               g.effects.push({ x: pu.x, y: pu.y - 20, timer: 30, text: "+25 HP", color: "#00ff00", size: 16 });
+              // BULLISH callout above the player
+              g.effects.push({ x: p.x, y: p.y - 110, timer: 75, text: "BULLISH", color: "#00ff66", size: 36 });
               break;
             case "speed":
               g.speedBoostTimer = 300;
