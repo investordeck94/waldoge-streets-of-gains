@@ -1750,28 +1750,54 @@ export const StreetBrawler: FC = () => {
         // Speed boost handled by multiplying movement in the movement section
       }
 
-      // Wave progression
+      // Wave / Level progression
       const alive = g.enemies.filter(e => e.state !== "dead");
       if (alive.length === 0) {
         g.enemies = g.enemies.filter(e => e.stateTimer > 0);
         if (g.enemies.length === 0) {
-          g.wave++;
-          setWave(g.wave);
-          if (g.wave >= WAVES.length) {
-            g.running = false;
-            sfx(() => SFX.victory());
-            setGameState("victory");
-            return;
-          }
-          const isBossWave = g.wave === WAVES.length - 1;
-          if (isBossWave) {
-            g.enemies = [spawnBoss(p.x)];
-            g.projectiles = [];
-            g.effects.push({ x: p.x, y: p.y - 100, timer: 90, text: "⚠ BOSS FIGHT! ⚠", color: "#ff0000", size: 24 });
-            sfx(() => SFX.bossEntrance());
-          } else {
+          // Was the just-cleared wave the boss wave (index === waves.length)?
+          const justClearedBoss = g.wave >= LEVELS[g.level].waves.length;
+
+          if (justClearedBoss) {
+            // Advance to next level
+            g.level++;
+            g.wave = 0;
+            setLevel(g.level);
+            setWave(0);
+            if (g.level >= TOTAL_LEVELS) {
+              g.running = false;
+              sfx(() => SFX.victory());
+              setGameState("victory");
+              return;
+            }
+            // Heal player slightly between levels (reward)
+            p.hp = Math.min(p.maxHp, p.hp + 30);
+            setPlayerHp(p.hp);
+            g.effects.push({
+              x: p.x, y: p.y - 110, timer: 120,
+              text: `LEVEL ${g.level + 1}: ${LEVELS[g.level].name}`,
+              color: "#FFD700", size: 22,
+            });
             sfx(() => SFX.waveStart());
-            g.enemies = spawnEnemies(g.wave, p.x);
+            g.enemies = spawnEnemies(g.level, 0, p.x);
+          } else {
+            // Next wave within current level
+            g.wave++;
+            setWave(g.wave);
+            const isBossWave = g.wave === LEVELS[g.level].waves.length;
+            if (isBossWave) {
+              g.enemies = [spawnBoss(p.x, g.level)];
+              g.projectiles = [];
+              g.effects.push({
+                x: p.x, y: p.y - 100, timer: 90,
+                text: `⚠ BOSS — ${LEVELS[g.level].name} ⚠`,
+                color: "#ff0000", size: 22,
+              });
+              sfx(() => SFX.bossEntrance());
+            } else {
+              sfx(() => SFX.waveStart());
+              g.enemies = spawnEnemies(g.level, g.wave, p.x);
+            }
           }
         }
       }
