@@ -1562,7 +1562,7 @@ export const StreetBrawler: FC = () => {
           e.facing = dx > 0 ? 1 : -1;
 
           if (dist > 50) {
-            e.x += e.facing * (WAVES[g.wave]?.speed || 1.5);
+            e.x += e.facing * (LEVELS[g.level]?.waves[g.wave]?.speed || 1.5);
             e.state = "walk";
           } else if (e.attackCooldown <= 0) {
             const atk = Math.random() > 0.5 ? "punch" : "kick";
