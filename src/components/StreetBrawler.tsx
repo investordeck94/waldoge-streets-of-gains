@@ -2270,6 +2270,11 @@ export const StreetBrawler: FC = () => {
         const kb = spec ? spec.knockback : (p.state === "punch" ? 5 : 6);
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult);
 
+        // Heavy-impact screen shake on groundpound landing
+        if (p.state === "groundpound" && g.camShake.timer < 6) {
+          g.camShake = { x: 0, y: 0, magnitude: 9, timer: 18 };
+        }
+
         for (const e of g.enemies) {
           if (e.state === "dead") continue;
           const dx = e.x - p.x;
