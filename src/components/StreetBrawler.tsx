@@ -25,6 +25,7 @@ interface Entity {
   isBoss?: boolean;
   bossPhase?: number;
   aiTimer?: number;
+  bossName?: string;
 }
 
 interface HitEffect {
@@ -123,7 +124,7 @@ const MAX_ENERGY = 100;
 // Each level: 2 minion waves followed by a boss. Difficulty scales per level.
 interface LevelConfig {
   waves: { count: number; hp: number; speed: number }[]; // minion waves before boss
-  boss: { hp: number; chargeSpeed: number; aiSpeed: number; dmgMult: number };
+  boss: { hp: number; chargeSpeed: number; aiSpeed: number; dmgMult: number; name: string };
   name: string;
 }
 
@@ -135,7 +136,7 @@ const LEVELS: LevelConfig[] = [
       { count: 2, hp: 20, speed: 1.0 },
       { count: 3, hp: 25, speed: 1.2 },
     ],
-    boss: { hp: 220, chargeSpeed: 4, aiSpeed: 1.2, dmgMult: 0.6 },
+    boss: { hp: 220, chargeSpeed: 4, aiSpeed: 1.2, dmgMult: 0.6, name: "JEET" },
   },
   {
     name: "BACKSTREET BRAWLER",
@@ -143,7 +144,7 @@ const LEVELS: LevelConfig[] = [
       { count: 3, hp: 30, speed: 1.3 },
       { count: 3, hp: 35, speed: 1.5 },
     ],
-    boss: { hp: 300, chargeSpeed: 4.5, aiSpeed: 1.5, dmgMult: 0.75 },
+    boss: { hp: 300, chargeSpeed: 4.5, aiSpeed: 1.5, dmgMult: 0.75, name: "RUGGER" },
   },
   {
     name: "DOCKSIDE ENFORCER",
@@ -151,7 +152,7 @@ const LEVELS: LevelConfig[] = [
       { count: 3, hp: 40, speed: 1.5 },
       { count: 4, hp: 45, speed: 1.7 },
     ],
-    boss: { hp: 380, chargeSpeed: 5, aiSpeed: 1.8, dmgMult: 0.9 },
+    boss: { hp: 380, chargeSpeed: 5, aiSpeed: 1.8, dmgMult: 0.9, name: "BAD ACTOR" },
   },
   {
     name: "NEON KINGPIN",
@@ -159,7 +160,7 @@ const LEVELS: LevelConfig[] = [
       { count: 4, hp: 50, speed: 1.7 },
       { count: 4, hp: 55, speed: 1.9 },
     ],
-    boss: { hp: 460, chargeSpeed: 5.5, aiSpeed: 2.0, dmgMult: 1.0 },
+    boss: { hp: 460, chargeSpeed: 5.5, aiSpeed: 2.0, dmgMult: 1.0, name: "FUDDER" },
   },
   {
     name: "ROOFTOP REAPER",
@@ -167,7 +168,7 @@ const LEVELS: LevelConfig[] = [
       { count: 4, hp: 60, speed: 1.9 },
       { count: 5, hp: 65, speed: 2.1 },
     ],
-    boss: { hp: 560, chargeSpeed: 6, aiSpeed: 2.2, dmgMult: 1.15 },
+    boss: { hp: 560, chargeSpeed: 6, aiSpeed: 2.2, dmgMult: 1.15, name: "EXIT LIQUIDITY" },
   },
   {
     name: "UNDERGROUND WARLORD",
@@ -175,7 +176,7 @@ const LEVELS: LevelConfig[] = [
       { count: 5, hp: 70, speed: 2.1 },
       { count: 5, hp: 80, speed: 2.3 },
     ],
-    boss: { hp: 680, chargeSpeed: 6.5, aiSpeed: 2.5, dmgMult: 1.3 },
+    boss: { hp: 680, chargeSpeed: 6.5, aiSpeed: 2.5, dmgMult: 1.3, name: "ROTATOR" },
   },
   // Level 7 — final hardest boss
   {
@@ -184,7 +185,7 @@ const LEVELS: LevelConfig[] = [
       { count: 5, hp: 90, speed: 2.3 },
       { count: 6, hp: 100, speed: 2.5 },
     ],
-    boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5 },
+    boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5, name: "MR 57 SECONDS" },
   },
 ];
 
@@ -204,6 +205,7 @@ function spawnBoss(playerX: number, levelIndex: number): Entity {
     hp: cfg.hp, maxHp: cfg.hp,
     state: "idle", stateTimer: 0, attackCooldown: 60,
     isBoss: true, bossPhase: 1, aiTimer: 90,
+    bossName: cfg.name,
   };
 }
 
@@ -319,10 +321,10 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
 }
 
 function drawBossHpBar(ctx: CanvasRenderingContext2D, boss: Entity, canvasW: number) {
-  const barW = canvasW * 0.6;
-  const barH = 12;
+  const barW = canvasW * 0.7;
+  const barH = 16;
   const barX = (canvasW - barW) / 2;
-  const barY = 8;
+  const barY = 10;
   const hpPct = Math.max(0, boss.hp / boss.maxHp);
 
   // Background
@@ -337,17 +339,24 @@ function drawBossHpBar(ctx: CanvasRenderingContext2D, boss: Entity, canvasW: num
   ctx.fillStyle = hpColor;
   ctx.fillRect(barX, barY, barW * hpPct, barH);
 
+  // HP numeric
+  ctx.font = "bold 10px monospace";
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.fillText(`${Math.max(0, Math.ceil(boss.hp))} / ${boss.maxHp}`, canvasW / 2, barY + barH - 4);
+
   // Border
   ctx.strokeStyle = "#ff4444";
   ctx.lineWidth = 2;
   ctx.strokeRect(barX - 2, barY - 2, barW + 4, barH + 4);
 
   // Name
-  ctx.font = "bold 10px monospace";
+  ctx.font = "bold 12px monospace";
   ctx.fillStyle = "#ff4444";
   ctx.textAlign = "center";
   const phaseText = phase >= 3 ? "ENRAGED" : phase >= 2 ? "FURIOUS" : "BOSS";
-  ctx.fillText(`☠ ${phaseText} — DARK DOGE ☠`, canvasW / 2, barY + barH + 14);
+  const name = boss.bossName || "BOSS";
+  ctx.fillText(`☠ ${phaseText} — ${name} ☠`, canvasW / 2, barY + barH + 16);
 }
 
 // Combo recipes: input sequence → special move
@@ -587,14 +596,23 @@ function drawCandleMinion(ctx: CanvasRenderingContext2D, e: Entity, camX: number
 
   // HP bar above flame
   if (e.state !== "dead") {
-    const barW = 36;
-    const barH = 3;
+    const barW = 50;
+    const barH = 5;
     const barX = sx - barW / 2;
-    const barY = sy + wickTop - 14;
+    const barY = sy + wickTop - 18;
+    // Background + border
+    ctx.fillStyle = "#000";
+    ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
     ctx.fillStyle = "#1a0000";
     ctx.fillRect(barX, barY, barW, barH);
+    // Fill
     ctx.fillStyle = e.hp > e.maxHp * 0.4 ? "#ff4040" : "#ffaa00";
     ctx.fillRect(barX, barY, barW * (e.hp / e.maxHp), barH);
+    // HP number
+    ctx.font = "bold 8px monospace";
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.fillText(`${Math.max(0, Math.ceil(e.hp))}`, sx, barY - 2);
   }
 }
 
@@ -2433,14 +2451,14 @@ export const StreetBrawler: FC = () => {
         <div className="game-wrapper space-y-3 w-full">
           <div className="flex justify-between items-center glass-card px-4 py-2 text-sm">
             <div className="flex items-center gap-2">
-              {/* Green candle HP bar */}
+              {/* Green candle HP bar — enlarged */}
               <div
-                className="relative h-4 w-32 rounded-sm overflow-hidden border"
+                className="relative h-6 w-56 sm:w-72 rounded-sm overflow-hidden border-2"
                 style={{
                   borderColor: "#0d3a14",
                   background:
                     "repeating-linear-gradient(90deg, #0a1f0c 0px, #0a1f0c 4px, #0d2a10 4px, #0d2a10 8px)",
-                  boxShadow: "inset 0 0 4px rgba(0,0,0,0.6)",
+                  boxShadow: "inset 0 0 6px rgba(0,0,0,0.7)",
                 }}
                 title={`HP: ${Math.round(playerHp)}/100`}
               >
@@ -2459,24 +2477,30 @@ export const StreetBrawler: FC = () => {
                 <div
                   className="absolute top-0 bottom-0 pointer-events-none"
                   style={{
-                    width: "2px",
+                    width: "3px",
                     left: `calc(${Math.max(0, playerHp - 6)}% + 2px)`,
                     background: "rgba(255,255,255,0.5)",
                     display: playerHp > 4 ? "block" : "none",
                   }}
                 />
+                {/* HP number overlay */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span className="text-[11px] font-bold font-mono text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)] tabular-nums">
+                    {Math.max(0, Math.round(playerHp))} / 100
+                  </span>
+                </div>
                 {/* Flame at the tip of the wax */}
                 {playerHp > 2 && (
                   <div
                     className="absolute pointer-events-none"
                     style={{
-                      left: `calc(${playerHp}% - 6px)`,
-                      top: "-7px",
-                      width: "12px",
-                      height: "14px",
+                      left: `calc(${playerHp}% - 8px)`,
+                      top: "-10px",
+                      width: "16px",
+                      height: "18px",
                     }}
                   >
-                    <svg viewBox="0 0 12 14" width="12" height="14">
+                    <svg viewBox="0 0 12 14" width="16" height="18">
                       <path
                         d="M6 0 C8 4 10 6 8 10 C7 12 5 13 6 14 C2 13 1 9 3 6 C4 4 5 3 6 0 Z"
                         fill="#ff8a1a"
@@ -2496,9 +2520,6 @@ export const StreetBrawler: FC = () => {
                   </div>
                 )}
               </div>
-              <span className="text-[10px] font-mono text-green-400/80 tabular-nums">
-                {Math.max(0, Math.round(playerHp))}
-              </span>
             </div>
             {comboCount > 1 && (
               <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
