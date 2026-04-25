@@ -1049,9 +1049,10 @@ export const StreetBrawler: FC = () => {
     const g = gameRef.current;
     g.player = createPlayer();
     g.wave = 0;
+    g.level = 0;
     g.score = 0;
     g.camX = 0;
-    g.enemies = spawnEnemies(0, 200);
+    g.enemies = spawnEnemies(0, 0, 200);
     g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
     g.effects = [];
     g.powerups = [];
