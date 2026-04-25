@@ -1,6 +1,6 @@
 import { FC, useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
+import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize, Pause } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
 import jeetBossHead from "@/assets/jeet-boss-head.png";
 import badActorBossHead from "@/assets/badactor-boss-head.png";
