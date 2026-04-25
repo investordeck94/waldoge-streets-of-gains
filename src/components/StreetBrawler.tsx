@@ -2616,10 +2616,15 @@ export const StreetBrawler: FC = () => {
             // Fully heal player between levels (reward)
             p.hp = p.maxHp;
             setPlayerHp(p.hp);
+            g.healFlash = 60;
             g.effects.push({
               x: p.x, y: p.y - 110, timer: 120,
               text: `LEVEL ${g.level + 1}: ${LEVELS[g.level].name}`,
               color: "#FFD700", size: 22,
+            });
+            g.effects.push({
+              x: p.x, y: p.y - 80, timer: 90,
+              text: "♥ FULL HP", color: "#22ff66", size: 18,
             });
             sfx(() => SFX.waveStart());
             g.enemies = spawnEnemies(g.level, 0, p.x);
