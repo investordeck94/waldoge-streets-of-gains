@@ -25,6 +25,7 @@ interface Entity {
   isBoss?: boolean;
   bossPhase?: number;
   aiTimer?: number;
+  bossName?: string;
 }
 
 interface HitEffect {
@@ -204,6 +205,7 @@ function spawnBoss(playerX: number, levelIndex: number): Entity {
     hp: cfg.hp, maxHp: cfg.hp,
     state: "idle", stateTimer: 0, attackCooldown: 60,
     isBoss: true, bossPhase: 1, aiTimer: 90,
+    bossName: cfg.name,
   };
 }
 
@@ -319,10 +321,10 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
 }
 
 function drawBossHpBar(ctx: CanvasRenderingContext2D, boss: Entity, canvasW: number) {
-  const barW = canvasW * 0.6;
-  const barH = 12;
+  const barW = canvasW * 0.7;
+  const barH = 16;
   const barX = (canvasW - barW) / 2;
-  const barY = 8;
+  const barY = 10;
   const hpPct = Math.max(0, boss.hp / boss.maxHp);
 
   // Background
@@ -337,17 +339,24 @@ function drawBossHpBar(ctx: CanvasRenderingContext2D, boss: Entity, canvasW: num
   ctx.fillStyle = hpColor;
   ctx.fillRect(barX, barY, barW * hpPct, barH);
 
+  // HP numeric
+  ctx.font = "bold 10px monospace";
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.fillText(`${Math.max(0, Math.ceil(boss.hp))} / ${boss.maxHp}`, canvasW / 2, barY + barH - 4);
+
   // Border
   ctx.strokeStyle = "#ff4444";
   ctx.lineWidth = 2;
   ctx.strokeRect(barX - 2, barY - 2, barW + 4, barH + 4);
 
   // Name
-  ctx.font = "bold 10px monospace";
+  ctx.font = "bold 12px monospace";
   ctx.fillStyle = "#ff4444";
   ctx.textAlign = "center";
   const phaseText = phase >= 3 ? "ENRAGED" : phase >= 2 ? "FURIOUS" : "BOSS";
-  ctx.fillText(`☠ ${phaseText} — DARK DOGE ☠`, canvasW / 2, barY + barH + 14);
+  const name = boss.bossName || "BOSS";
+  ctx.fillText(`☠ ${phaseText} — ${name} ☠`, canvasW / 2, barY + barH + 16);
 }
 
 // Combo recipes: input sequence → special move
