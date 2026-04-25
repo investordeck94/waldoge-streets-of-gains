@@ -2520,9 +2520,6 @@ export const StreetBrawler: FC = () => {
                   </div>
                 )}
               </div>
-              <span className="text-[10px] font-mono text-green-400/80 tabular-nums">
-                {Math.max(0, Math.round(playerHp))}
-              </span>
             </div>
             {comboCount > 1 && (
               <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
