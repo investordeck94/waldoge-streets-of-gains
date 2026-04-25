@@ -2230,7 +2230,7 @@ export const StreetBrawler: FC = () => {
 
           if (bossHitFrame) {
             const range = e.state === "boss_slam" ? 100 : e.state === "boss_charge" ? 60 : 55;
-            const baseDmg = e.state === "boss_slam" ? 20 : e.state === "boss_charge" ? 15 : e.state === "punch" ? 10 : 12;
+            const baseDmg = e.state === "boss_slam" ? 10 : e.state === "boss_charge" ? 8 : e.state === "punch" ? 5 : 6;
             const dmg = Math.max(2, Math.round(baseDmg * bossCfg.dmgMult));
             const edx = p.x - e.x;
             const inRange = e.state === "boss_slam"
