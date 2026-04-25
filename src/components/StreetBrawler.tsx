@@ -596,14 +596,23 @@ function drawCandleMinion(ctx: CanvasRenderingContext2D, e: Entity, camX: number
 
   // HP bar above flame
   if (e.state !== "dead") {
-    const barW = 36;
-    const barH = 3;
+    const barW = 50;
+    const barH = 5;
     const barX = sx - barW / 2;
-    const barY = sy + wickTop - 14;
+    const barY = sy + wickTop - 18;
+    // Background + border
+    ctx.fillStyle = "#000";
+    ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
     ctx.fillStyle = "#1a0000";
     ctx.fillRect(barX, barY, barW, barH);
+    // Fill
     ctx.fillStyle = e.hp > e.maxHp * 0.4 ? "#ff4040" : "#ffaa00";
     ctx.fillRect(barX, barY, barW * (e.hp / e.maxHp), barH);
+    // HP number
+    ctx.font = "bold 8px monospace";
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.fillText(`${Math.max(0, Math.ceil(e.hp))}`, sx, barY - 2);
   }
 }
 
@@ -2442,14 +2451,14 @@ export const StreetBrawler: FC = () => {
         <div className="game-wrapper space-y-3 w-full">
           <div className="flex justify-between items-center glass-card px-4 py-2 text-sm">
             <div className="flex items-center gap-2">
-              {/* Green candle HP bar */}
+              {/* Green candle HP bar — enlarged */}
               <div
-                className="relative h-4 w-32 rounded-sm overflow-hidden border"
+                className="relative h-6 w-56 sm:w-72 rounded-sm overflow-hidden border-2"
                 style={{
                   borderColor: "#0d3a14",
                   background:
                     "repeating-linear-gradient(90deg, #0a1f0c 0px, #0a1f0c 4px, #0d2a10 4px, #0d2a10 8px)",
-                  boxShadow: "inset 0 0 4px rgba(0,0,0,0.6)",
+                  boxShadow: "inset 0 0 6px rgba(0,0,0,0.7)",
                 }}
                 title={`HP: ${Math.round(playerHp)}/100`}
               >
@@ -2468,24 +2477,30 @@ export const StreetBrawler: FC = () => {
                 <div
                   className="absolute top-0 bottom-0 pointer-events-none"
                   style={{
-                    width: "2px",
+                    width: "3px",
                     left: `calc(${Math.max(0, playerHp - 6)}% + 2px)`,
                     background: "rgba(255,255,255,0.5)",
                     display: playerHp > 4 ? "block" : "none",
                   }}
                 />
+                {/* HP number overlay */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span className="text-[11px] font-bold font-mono text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)] tabular-nums">
+                    {Math.max(0, Math.round(playerHp))} / 100
+                  </span>
+                </div>
                 {/* Flame at the tip of the wax */}
                 {playerHp > 2 && (
                   <div
                     className="absolute pointer-events-none"
                     style={{
-                      left: `calc(${playerHp}% - 6px)`,
-                      top: "-7px",
-                      width: "12px",
-                      height: "14px",
+                      left: `calc(${playerHp}% - 8px)`,
+                      top: "-10px",
+                      width: "16px",
+                      height: "18px",
                     }}
                   >
-                    <svg viewBox="0 0 12 14" width="12" height="14">
+                    <svg viewBox="0 0 12 14" width="16" height="18">
                       <path
                         d="M6 0 C8 4 10 6 8 10 C7 12 5 13 6 14 C2 13 1 9 3 6 C4 4 5 3 6 0 Z"
                         fill="#ff8a1a"
