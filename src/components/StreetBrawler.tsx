@@ -1958,6 +1958,7 @@ export const StreetBrawler: FC = () => {
     bossIntro: { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" },
     healFlash: 0,
     camAnchor: 0.5,
+    camLookAhead: 0,
     camPreset: "snappy",
     vxAvg: 0,
     vxHistory: [],
