@@ -4,6 +4,7 @@ import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minim
 import waldogeHead from "@/assets/waldoge-head.png";
 import jeetBossHead from "@/assets/jeet-boss-head.png";
 import badActorBossHead from "@/assets/badactor-boss-head.png";
+import ruggerBossHead from "@/assets/rugger-boss-head.png";
 import { SFX } from "@/lib/gameSfx";
 
 // Preloaded boss head images
@@ -11,6 +12,8 @@ const jeetHeadImg: HTMLImageElement | null =
   typeof window !== "undefined" ? (() => { const i = new Image(); i.src = jeetBossHead; return i; })() : null;
 const badActorHeadImg: HTMLImageElement | null =
   typeof window !== "undefined" ? (() => { const i = new Image(); i.src = badActorBossHead; return i; })() : null;
+const ruggerHeadImg: HTMLImageElement | null =
+  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = ruggerBossHead; return i; })() : null;
 
 type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
   | "uppercut" | "spinkick" | "groundpound" | "dashpunch"
@@ -259,6 +262,7 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
   const customHead =
     e.bossName === "JEET" ? jeetHeadImg
     : e.bossName === "BAD ACTOR" ? badActorHeadImg
+    : e.bossName === "RUGGER" ? ruggerHeadImg
     : null;
   if (customHead && customHead.complete && customHead.naturalWidth > 0) {
     const imgSize = headR * 3.2;
