@@ -3525,36 +3525,52 @@ export const StreetBrawler: FC = () => {
           </div>
 
           {/* Mobile touch controls */}
-          <div className="flex justify-between items-center gap-1 md:hidden">
-            <div className="flex gap-1">
+          <div className="flex justify-between items-end gap-3 md:hidden px-1 pt-2 pb-1 select-none">
+            {/* Left: D-pad */}
+            <div className="flex gap-3">
               <button
                 onTouchStart={() => touchMove("left")}
                 onTouchEnd={() => touchMove("stop")}
-                className="w-11 h-11 glass-card flex items-center justify-center text-lg font-bold text-primary active:bg-primary/20"
+                onContextMenu={(e) => e.preventDefault()}
+                className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
               >◀</button>
               <button
                 onTouchStart={() => touchMove("right")}
                 onTouchEnd={() => touchMove("stop")}
-                className="w-11 h-11 glass-card flex items-center justify-center text-lg font-bold text-primary active:bg-primary/20"
+                onContextMenu={(e) => e.preventDefault()}
+                className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
               >▶</button>
             </div>
-            <div className="flex gap-1">
-              <button
-                onTouchStart={() => touchAction("jump")}
-                className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-primary active:bg-primary/20"
-              >JUMP</button>
-              <button
-                onTouchStart={() => touchAction("punch")}
-                className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-primary active:bg-primary/20"
-              >👊</button>
-              <button
-                onTouchStart={() => touchAction("kick")}
-                className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-primary active:bg-primary/20"
-              >🦶</button>
-              <button
-                onTouchStart={() => touchAction("special")}
-                className="w-11 h-11 glass-card flex items-center justify-center text-xs font-bold text-yellow-400 active:bg-yellow-400/20"
-              >⚡</button>
+            {/* Right: Action cluster — punch/kick grouped, jump & special separated */}
+            <div className="flex gap-3 items-end">
+              <div className="flex gap-2">
+                <button
+                  onTouchStart={() => touchAction("punch")}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
+                  aria-label="Punch"
+                >👊</button>
+                <button
+                  onTouchStart={() => touchAction("kick")}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
+                  aria-label="Kick"
+                >🦶</button>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onTouchStart={() => touchAction("jump")}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="w-14 h-14 glass-card flex items-center justify-center text-[11px] font-extrabold tracking-wider text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
+                  aria-label="Jump"
+                >JUMP</button>
+                <button
+                  onTouchStart={() => touchAction("special")}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-yellow-400 active:bg-yellow-400/30 active:scale-95 transition-transform touch-none"
+                  aria-label="Special"
+                >⚡</button>
+              </div>
             </div>
           </div>
 
