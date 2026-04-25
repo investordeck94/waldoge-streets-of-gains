@@ -1876,6 +1876,7 @@ export const StreetBrawler: FC = () => {
     rain: [],
     splashes: [],
     bossIntro: { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" },
+    healFlash: 0,
   });
 
   useEffect(() => {
