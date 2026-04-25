@@ -1018,6 +1018,7 @@ export const StreetBrawler: FC = () => {
     keyJustPressed: new Set(),
     camX: 0,
     wave: 0,
+    level: 0,
     score: 0,
     headImg: null,
     animFrame: 0,
