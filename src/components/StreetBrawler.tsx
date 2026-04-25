@@ -2262,7 +2262,7 @@ export const StreetBrawler: FC = () => {
         if (e.isBoss) {
           drawBoss(ctx, e, g.camX);
         } else {
-          drawStickFigure(ctx, e, g.camX, null, false);
+          drawCandleMinion(ctx, e, g.camX);
         }
       }
 
