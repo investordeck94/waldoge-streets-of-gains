@@ -1940,6 +1940,7 @@ export const StreetBrawler: FC = () => {
     splashes: [],
     bossIntro: { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" },
     healFlash: 0,
+    camAnchor: 0.5,
   });
 
   useEffect(() => {
