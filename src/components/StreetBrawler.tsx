@@ -1912,6 +1912,15 @@ export const StreetBrawler: FC = () => {
     bossIntro: BossIntro;
     healFlash: number;
     camAnchor: number;
+    debugCam: {
+      anchor: number;
+      lerp: number;
+      playerScreenX: number;
+      offset: number;
+      deadzone: number;
+      lookAhead: number;
+      vx: number;
+    };
   }>({
     player: createPlayer(),
     enemies: [],
