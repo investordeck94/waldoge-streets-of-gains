@@ -1997,6 +1997,7 @@ export const StreetBrawler: FC = () => {
     g.bossIntro = { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" };
     g.healFlash = 0;
     g.vxHistory = [];
+    g.camLookAhead = 0;
     g.vxAvg = 0;
     g.camShake = { x: 0, y: 0, magnitude: 0, timer: 0 };
     // Spawn weapon pickups along the level (varied types)
