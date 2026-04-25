@@ -2749,8 +2749,6 @@ export const StreetBrawler: FC = () => {
       // Persist last "moving" anchor so stopping doesn't re-snap the camera.
       if (moving) {
         g.camAnchor = p.vx > 0 ? 0.42 : 0.58;
-      } else if (g.camAnchor === undefined) {
-        g.camAnchor = p.facing > 0 ? 0.46 : 0.54;
       }
 
       const velLookAhead = moving ? p.vx * 14 : 0;
