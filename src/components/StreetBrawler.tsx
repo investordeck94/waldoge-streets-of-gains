@@ -952,6 +952,66 @@ function drawStickFigure(
   ctx.lineWidth = e.state === "spinkick" ? 4 : 3;
   ctx.stroke();
 
+  // Red & white sneakers on the player's feet
+  if (isPlayer) {
+    let frontFoot: [number, number] | null = null;
+    let backFoot: [number, number] | null = null;
+
+    if (e.state === "kick") {
+      frontFoot = [e.facing * limbLen * 1.5, hipY - 5];
+      backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
+    } else if (e.state === "jump" || e.state === "uppercut") {
+      frontFoot = [e.facing * limbLen * 0.6, hipY + limbLen * 0.5];
+      backFoot = [-e.facing * limbLen * 0.6, hipY + limbLen * 0.5];
+    } else if (e.state === "spinkick") {
+      frontFoot = [e.facing * limbLen * 1.8, hipY];
+      backFoot = [-e.facing * limbLen * 0.6, hipY + limbLen * 0.8];
+    } else if (e.state === "groundpound") {
+      frontFoot = [e.facing * limbLen, hipY + limbLen * 0.3];
+      backFoot = [-e.facing * limbLen, hipY + limbLen * 0.3];
+    } else {
+      const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 12 : 0;
+      frontFoot = [e.facing * (limbLen * 0.5 - swing), hipY + limbLen];
+      backFoot = [-e.facing * (limbLen * 0.5 + swing), hipY + limbLen];
+    }
+
+    const drawSneaker = (fx: number, fy: number) => {
+      const w = 12;
+      const h = 5;
+      const dir = e.facing;
+      ctx.save();
+      ctx.translate(fx, fy);
+      // Sole (white)
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.ellipse(dir * 2, h * 0.5, w * 0.6, h * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Upper (red)
+      ctx.fillStyle = "#d62828";
+      ctx.beginPath();
+      ctx.ellipse(dir * 2, -1, w * 0.55, h * 0.85, 0, Math.PI, 0);
+      ctx.fill();
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // White toe cap
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.ellipse(dir * (w * 0.45), 0, w * 0.18, h * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // White lace stripe
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(dir * -1, -3, 3, 2);
+      ctx.restore();
+    };
+
+    if (backFoot) drawSneaker(backFoot[0], backFoot[1]);
+    if (frontFoot) drawSneaker(frontFoot[0], frontFoot[1]);
+  }
+
   // Special move glow
   if (["uppercut", "spinkick", "dashpunch", "groundpound"].includes(e.state)) {
     ctx.beginPath();
