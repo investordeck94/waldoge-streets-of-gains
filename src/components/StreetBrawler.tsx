@@ -2738,11 +2738,10 @@ export const StreetBrawler: FC = () => {
         }
       }
 
-      // Camera — smooth predictive look-ahead
-      // Camera follow:
-      // - Snappy when moving (player stays near center, slight look-ahead).
-      // - Sticky when stopped (deadzone + held anchor) so it doesn't jitter
-      //   as residual vx flips between tiny positive/negative values.
+      // Camera follow with screen-space deadzone + predictive look-ahead.
+      // - Anchor (sticky directional) defines where the player "wants" to sit on screen.
+      // - Deadzone band around the anchor prevents micro-adjustments.
+      // - Look-ahead scales with velocity so the view leads the player noticeably.
       const MOVE_THRESHOLD = 0.6;
       const moving = Math.abs(p.vx) > MOVE_THRESHOLD;
 
@@ -2751,20 +2750,42 @@ export const StreetBrawler: FC = () => {
         g.camAnchor = p.vx > 0 ? 0.42 : 0.58;
       }
 
-      const velLookAhead = moving ? p.vx * 14 : 0;
-      const targetCam = (p.x + velLookAhead) - CANVAS_W * g.camAnchor;
+      // Stronger velocity-based look-ahead (was 14). Scales smoothly with vx,
+      // capped so very fast movement doesn't push the player off-screen.
+      const lookAheadRaw = p.vx * 28;
+      const velLookAhead = Math.max(-160, Math.min(160, lookAheadRaw));
 
-      const dist = Math.abs(targetCam - g.camX);
-      // Deadzone: when stopped and within a few px, don't move at all.
-      if (!moving && dist < 4) {
-        // hold camera — prevents idle jitter
-      } else {
-        // Snappier lerp while moving; gentler when only correcting small drift.
+      // Player position on screen *right now*
+      const playerScreenX = p.x - g.camX;
+      const anchorScreenX = CANVAS_W * g.camAnchor;
+
+      // Deadzone: a band (in screen pixels) around the anchor where camera holds still.
+      const DEADZONE_HALF = moving ? 40 : 70; // tighter while moving, wider when idle
+      const offset = playerScreenX - anchorScreenX;
+
+      let lerpSpeed = 0;
+      let targetCam = g.camX;
+
+      if (Math.abs(offset) > DEADZONE_HALF || Math.abs(velLookAhead) > 6) {
+        // Push camera toward (player + look-ahead) anchored at anchorRatio
+        targetCam = (p.x + velLookAhead) - anchorScreenX;
+        const dist = Math.abs(targetCam - g.camX);
         const baseLerp = moving ? 0.22 : 0.08;
-        const lerpSpeed = Math.min(0.4, baseLerp + dist * 0.0008);
+        lerpSpeed = Math.min(0.4, baseLerp + dist * 0.0008);
         g.camX += (targetCam - g.camX) * lerpSpeed;
       }
       g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
+
+      // Stash debug values for overlay
+      g.debugCam = {
+        anchor: g.camAnchor,
+        lerp: lerpSpeed,
+        playerScreenX,
+        offset,
+        deadzone: DEADZONE_HALF,
+        lookAhead: velLookAhead,
+        vx: p.vx,
+      };
 
       // Draw
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
