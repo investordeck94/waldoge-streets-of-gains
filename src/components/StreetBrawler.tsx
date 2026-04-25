@@ -2,7 +2,12 @@ import { FC, useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
+import jeetBossHead from "@/assets/jeet-boss-head.png";
 import { SFX } from "@/lib/gameSfx";
+
+// Preloaded boss head images
+const jeetHeadImg: HTMLImageElement | null =
+  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = jeetBossHead; return i; })() : null;
 
 type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
   | "uppercut" | "spinkick" | "groundpound" | "dashpunch"
@@ -247,27 +252,34 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
     ctx.fill();
   }
 
-  // Head — skull-like
-  ctx.beginPath();
-  ctx.arc(0, headCY, headR, 0, Math.PI * 2);
-  ctx.fillStyle = e.state === "dead" ? "#444" : "#8b0000";
-  ctx.fill();
-  ctx.strokeStyle = "#ff0000";
-  ctx.lineWidth = 3;
-  ctx.stroke();
-  // Eyes
-  ctx.fillStyle = "#ff4444";
-  ctx.fillRect(-8, headCY - 5, 6, 5);
-  ctx.fillRect(3, headCY - 5, 6, 5);
-  // Mouth
-  ctx.beginPath();
-  ctx.moveTo(-8, headCY + 8);
-  for (let i = 0; i < 5; i++) {
-    ctx.lineTo(-6 + i * 3, headCY + (i % 2 === 0 ? 8 : 14));
+  // Head — use JEET image for level 1 boss, skull for others
+  const isJeet = e.bossName === "JEET";
+  if (isJeet && jeetHeadImg && jeetHeadImg.complete && jeetHeadImg.naturalWidth > 0) {
+    const imgSize = headR * 3.2;
+    if (e.state === "dead") ctx.globalAlpha *= 0.6;
+    ctx.drawImage(jeetHeadImg, -imgSize / 2, headCY - imgSize / 2, imgSize, imgSize);
+  } else {
+    ctx.beginPath();
+    ctx.arc(0, headCY, headR, 0, Math.PI * 2);
+    ctx.fillStyle = e.state === "dead" ? "#444" : "#8b0000";
+    ctx.fill();
+    ctx.strokeStyle = "#ff0000";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    // Eyes
+    ctx.fillStyle = "#ff4444";
+    ctx.fillRect(-8, headCY - 5, 6, 5);
+    ctx.fillRect(3, headCY - 5, 6, 5);
+    // Mouth
+    ctx.beginPath();
+    ctx.moveTo(-8, headCY + 8);
+    for (let i = 0; i < 5; i++) {
+      ctx.lineTo(-6 + i * 3, headCY + (i % 2 === 0 ? 8 : 14));
+    }
+    ctx.strokeStyle = "#ff0000";
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }
-  ctx.strokeStyle = "#ff0000";
-  ctx.lineWidth = 2;
-  ctx.stroke();
 
   // Body
   const neckY = headCY + headR;
