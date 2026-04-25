@@ -3140,6 +3140,47 @@ export const StreetBrawler: FC = () => {
         if (g.bossIntro.timer <= 0) g.bossIntro.active = false;
       }
 
+      // Camera debug overlay
+      if (camDebugRef.current) {
+        const d = g.debugCam;
+        const lines = [
+          `anchor:    ${d.anchor.toFixed(2)}  (screen ${(CANVAS_W * d.anchor).toFixed(0)}px)`,
+          `lerp:      ${d.lerp.toFixed(3)}`,
+          `playerSX:  ${d.playerScreenX.toFixed(0)}px`,
+          `offset:    ${d.offset.toFixed(0)}px  (deadzone ±${d.deadzone}px)`,
+          `lookAhead: ${d.lookAhead.toFixed(0)}px  (vx ${d.vx.toFixed(2)})`,
+          `camX:      ${g.camX.toFixed(0)}`,
+        ];
+        const padX = 8, padY = 6, lineH = 13;
+        const boxW = 230;
+        const boxH = padY * 2 + lines.length * lineH;
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(8, 8, boxW, boxH);
+        ctx.strokeStyle = "rgba(255,215,0,0.5)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(8, 8, boxW, boxH);
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "11px monospace";
+        ctx.textBaseline = "top";
+        for (let i = 0; i < lines.length; i++) {
+          ctx.fillText(lines[i], 8 + padX, 8 + padY + i * lineH);
+        }
+        ctx.textBaseline = "alphabetic";
+
+        // Visualize anchor line + deadzone band
+        const ax = CANVAS_W * d.anchor;
+        ctx.strokeStyle = "rgba(255,215,0,0.6)";
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(ax, 0); ctx.lineTo(ax, CANVAS_H); ctx.stroke();
+        ctx.strokeStyle = "rgba(0,255,180,0.35)";
+        ctx.beginPath(); ctx.moveTo(ax - d.deadzone, 0); ctx.lineTo(ax - d.deadzone, CANVAS_H); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ax + d.deadzone, 0); ctx.lineTo(ax + d.deadzone, CANVAS_H); ctx.stroke();
+        ctx.setLineDash([]);
+        // Player screen X marker
+        ctx.strokeStyle = "rgba(255,80,80,0.8)";
+        ctx.beginPath(); ctx.moveTo(d.playerScreenX, 0); ctx.lineTo(d.playerScreenX, CANVAS_H); ctx.stroke();
+      }
+
       g.animFrame = requestAnimationFrame(tick);
     };
 
