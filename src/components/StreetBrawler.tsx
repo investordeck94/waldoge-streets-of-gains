@@ -850,6 +850,65 @@ function drawStickFigure(
   ctx.lineWidth = e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 4 : 3;
   ctx.stroke();
 
+  // Boxing gloves on the player's hands
+  if (isPlayer) {
+    const drawGlove = (gx: number, gy: number, extended: boolean) => {
+      const r = extended ? 7 : 6;
+      // Wrist cuff
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(gx - e.facing * r * 0.4, gy + r * 0.5, r * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+      // Glove body
+      ctx.fillStyle = "#d62828";
+      ctx.beginPath();
+      ctx.arc(gx, gy, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      // Highlight
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.beginPath();
+      ctx.arc(gx - r * 0.3, gy - r * 0.3, r * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+      // Thumb
+      ctx.fillStyle = "#b81e1e";
+      ctx.beginPath();
+      ctx.arc(gx + e.facing * r * 0.5, gy + r * 0.2, r * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    let frontHand: [number, number] | null = null;
+    let backHand: [number, number] | null = null;
+
+    if (e.state === "punch") {
+      frontHand = [e.facing * limbLen * 1.5, shoulderY - 5];
+      backHand = [-e.facing * limbLen * 0.6, shoulderY + 10];
+    } else if (e.state === "kick") {
+      frontHand = [-e.facing * limbLen * 0.5, shoulderY - 8];
+      backHand = [e.facing * limbLen * 0.3, shoulderY + 5];
+    } else if (e.state === "uppercut") {
+      frontHand = [e.facing * limbLen * 0.8, shoulderY - limbLen * 1.5];
+      backHand = [-e.facing * limbLen * 0.3, shoulderY - limbLen];
+    } else if (e.state === "dashpunch") {
+      frontHand = [e.facing * limbLen * 2, shoulderY];
+      backHand = [e.facing * limbLen * 1.5, shoulderY - 8];
+    } else if (e.state === "spinkick" || e.state === "groundpound") {
+      frontHand = [-limbLen * 0.8, shoulderY + limbLen * 0.3];
+      backHand = [limbLen * 0.8, shoulderY + limbLen * 0.3];
+    } else {
+      const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
+      frontHand = [-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing];
+      backHand = [limbLen * 0.7, shoulderY + limbLen * 0.8 - swing];
+    }
+
+    const extended =
+      e.state === "punch" || e.state === "uppercut" || e.state === "dashpunch";
+    if (backHand) drawGlove(backHand[0], backHand[1], false);
+    if (frontHand) drawGlove(frontHand[0], frontHand[1], extended);
+  }
+
   // Legs
   ctx.beginPath();
   if (e.state === "kick") {
