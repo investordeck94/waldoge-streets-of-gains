@@ -126,12 +126,16 @@ interface LevelConfig {
   waves: { count: number; hp: number; speed: number }[]; // minion waves before boss
   boss: { hp: number; chargeSpeed: number; aiSpeed: number; dmgMult: number; name: string };
   name: string;
+  theme: SceneTheme;
 }
+
+type SceneTheme = "alley" | "city" | "suburbs" | "mall" | "park" | "office" | "chart";
 
 const LEVELS: LevelConfig[] = [
   // Level 1 — easy intro boss
   {
     name: "ALLEY ROOKIE",
+    theme: "alley",
     waves: [
       { count: 2, hp: 20, speed: 1.0 },
       { count: 3, hp: 25, speed: 1.2 },
@@ -140,6 +144,7 @@ const LEVELS: LevelConfig[] = [
   },
   {
     name: "BACKSTREET BRAWLER",
+    theme: "city",
     waves: [
       { count: 3, hp: 30, speed: 1.3 },
       { count: 3, hp: 35, speed: 1.5 },
@@ -148,6 +153,7 @@ const LEVELS: LevelConfig[] = [
   },
   {
     name: "DOCKSIDE ENFORCER",
+    theme: "suburbs",
     waves: [
       { count: 3, hp: 40, speed: 1.5 },
       { count: 4, hp: 45, speed: 1.7 },
@@ -156,6 +162,7 @@ const LEVELS: LevelConfig[] = [
   },
   {
     name: "NEON KINGPIN",
+    theme: "mall",
     waves: [
       { count: 4, hp: 50, speed: 1.7 },
       { count: 4, hp: 55, speed: 1.9 },
@@ -164,6 +171,7 @@ const LEVELS: LevelConfig[] = [
   },
   {
     name: "ROOFTOP REAPER",
+    theme: "park",
     waves: [
       { count: 4, hp: 60, speed: 1.9 },
       { count: 5, hp: 65, speed: 2.1 },
@@ -172,6 +180,7 @@ const LEVELS: LevelConfig[] = [
   },
   {
     name: "UNDERGROUND WARLORD",
+    theme: "office",
     waves: [
       { count: 5, hp: 70, speed: 2.1 },
       { count: 5, hp: 80, speed: 2.3 },
@@ -181,6 +190,7 @@ const LEVELS: LevelConfig[] = [
   // Level 7 — final hardest boss
   {
     name: "DARK DOGE OVERLORD",
+    theme: "chart",
     waves: [
       { count: 5, hp: 90, speed: 2.3 },
       { count: 6, hp: 100, speed: 2.5 },
