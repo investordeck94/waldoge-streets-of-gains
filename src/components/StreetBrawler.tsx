@@ -2760,44 +2760,68 @@ export const StreetBrawler: FC = () => {
       }
 
       // Camera follow with screen-space deadzone + predictive look-ahead.
-      // - Anchor (sticky directional) defines where the player "wants" to sit on screen.
-      // - Deadzone band around the anchor prevents micro-adjustments.
-      // - Look-ahead scales with velocity so the view leads the player noticeably.
+      // Uses a smoothed velocity (moving average) so the camera ignores
+      // the tiny ±jitter at the moment the player decelerates to a stop.
+      g.vxHistory.push(p.vx);
+      if (g.vxHistory.length > 8) g.vxHistory.shift();
+      g.vxAvg = g.vxHistory.reduce((s, v) => s + v, 0) / g.vxHistory.length;
+      const vxSmooth = g.vxAvg;
+
       const MOVE_THRESHOLD = 0.6;
-      const moving = Math.abs(p.vx) > MOVE_THRESHOLD;
+      const moving = Math.abs(vxSmooth) > MOVE_THRESHOLD;
 
       // Persist last "moving" anchor so stopping doesn't re-snap the camera.
       if (moving) {
-        g.camAnchor = p.vx > 0 ? 0.42 : 0.58;
+        g.camAnchor = vxSmooth > 0 ? 0.42 : 0.58;
       }
 
-      // Stronger velocity-based look-ahead (was 14). Scales smoothly with vx,
-      // capped so very fast movement doesn't push the player off-screen.
-      const lookAheadRaw = p.vx * 28;
-      const velLookAhead = Math.max(-160, Math.min(160, lookAheadRaw));
+      // Preset-driven feel
+      const snappy = g.camPreset === "snappy";
+      // snappy: fast in, fast out, less look-ahead so it stays tight to player
+      // buttery: slower easing, larger look-ahead, wider deadzone so it drifts
+      const lookAheadMult = snappy ? 24 : 36;
+      const lookAheadCap = snappy ? 140 : 200;
+      const lookAheadRaw = vxSmooth * lookAheadMult;
+      const velLookAhead = Math.max(-lookAheadCap, Math.min(lookAheadCap, lookAheadRaw));
 
-      // Player position on screen *right now*
       const playerScreenX = p.x - g.camX;
       const anchorScreenX = CANVAS_W * g.camAnchor;
 
-      // Deadzone: a band (in screen pixels) around the anchor where camera holds still.
-      const DEADZONE_HALF = moving ? 40 : 70; // tighter while moving, wider when idle
+      // Deadzone (tighter when moving). Buttery uses a larger band overall.
+      const DEADZONE_HALF = snappy
+        ? (moving ? 40 : 70)
+        : (moving ? 60 : 100);
       const offset = playerScreenX - anchorScreenX;
 
       let lerpSpeed = 0;
       let targetCam = g.camX;
 
       if (Math.abs(offset) > DEADZONE_HALF || Math.abs(velLookAhead) > 6) {
-        // Push camera toward (player + look-ahead) anchored at anchorRatio
         targetCam = (p.x + velLookAhead) - anchorScreenX;
         const dist = Math.abs(targetCam - g.camX);
-        const baseLerp = moving ? 0.22 : 0.08;
-        lerpSpeed = Math.min(0.4, baseLerp + dist * 0.0008);
+        // Asymmetric easing: faster when ENTERING movement, gentler when settling.
+        const enteringMovement = moving && Math.abs(offset) > DEADZONE_HALF;
+        const baseLerp = snappy
+          ? (enteringMovement ? 0.28 : moving ? 0.22 : 0.08)
+          : (enteringMovement ? 0.14 : moving ? 0.10 : 0.04);
+        const maxLerp = snappy ? 0.4 : 0.22;
+        lerpSpeed = Math.min(maxLerp, baseLerp + dist * 0.0008);
         g.camX += (targetCam - g.camX) * lerpSpeed;
       }
       g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
 
-      // Stash debug values for overlay
+      // Camera shake (decays each frame, applied as render offset only)
+      if (g.camShake.timer > 0) {
+        const t = g.camShake.timer;
+        const m = g.camShake.magnitude * (t / 30);
+        g.camShake.x = (Math.random() - 0.5) * 2 * m;
+        g.camShake.y = (Math.random() - 0.5) * 2 * m;
+        g.camShake.timer -= 1;
+      } else {
+        g.camShake.x = 0;
+        g.camShake.y = 0;
+      }
+
       g.debugCam = {
         anchor: g.camAnchor,
         lerp: lerpSpeed,
@@ -2805,7 +2829,7 @@ export const StreetBrawler: FC = () => {
         offset,
         deadzone: DEADZONE_HALF,
         lookAhead: velLookAhead,
-        vx: p.vx,
+        vx: vxSmooth,
       };
 
       // Draw
