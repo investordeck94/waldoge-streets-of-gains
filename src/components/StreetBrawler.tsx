@@ -1879,6 +1879,7 @@ export const StreetBrawler: FC = () => {
   const pausedRef = useRef(false);
   const [showCamDebug, setShowCamDebug] = useState(false);
   const camDebugRef = useRef(false);
+  const [camPreset, setCamPreset] = useState<"snappy" | "buttery">("snappy");
   const sfxRef = useRef(true);
 
   const sfx = useCallback((fn: () => void) => {
@@ -1914,6 +1915,10 @@ export const StreetBrawler: FC = () => {
     bossIntro: BossIntro;
     healFlash: number;
     camAnchor: number;
+    camPreset: "snappy" | "buttery";
+    vxAvg: number;
+    vxHistory: number[];
+    camShake: { x: number; y: number; magnitude: number; timer: number };
     debugCam: {
       anchor: number;
       lerp: number;
@@ -1952,6 +1957,10 @@ export const StreetBrawler: FC = () => {
     bossIntro: { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" },
     healFlash: 0,
     camAnchor: 0.5,
+    camPreset: "snappy",
+    vxAvg: 0,
+    vxHistory: [],
+    camShake: { x: 0, y: 0, magnitude: 0, timer: 0 },
     debugCam: { anchor: 0.5, lerp: 0, playerScreenX: 0, offset: 0, deadzone: 0, lookAhead: 0, vx: 0 },
   });
 
@@ -1960,6 +1969,11 @@ export const StreetBrawler: FC = () => {
     img.src = waldogeHead;
     img.onload = () => { gameRef.current.headImg = img; };
   }, []);
+
+  // Sync camera preset into game ref so the loop reads it without re-mounting
+  useEffect(() => {
+    gameRef.current.camPreset = camPreset;
+  }, [camPreset]);
 
   const startGame = useCallback(() => {
     const g = gameRef.current;
@@ -1980,6 +1994,9 @@ export const StreetBrawler: FC = () => {
     g.shurikenAmmo = 0;
     g.bossIntro = { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" };
     g.healFlash = 0;
+    g.vxHistory = [];
+    g.vxAvg = 0;
+    g.camShake = { x: 0, y: 0, magnitude: 0, timer: 0 };
     // Spawn weapon pickups along the level (varied types)
     g.weapons = [
       { x: 600, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
@@ -2145,10 +2162,17 @@ export const StreetBrawler: FC = () => {
                 text: combo.name, color: "#FFD700", size: 20,
               });
               didSpecial = true;
-              // SFX for special moves
-              if (combo.move === "uppercut") sfx(() => SFX.uppercut());
-              else if (combo.move === "spinkick") sfx(() => SFX.spinKick());
-              else if (combo.move === "dashpunch") sfx(() => SFX.dashPunch());
+              // SFX + screen shake for special moves
+              if (combo.move === "uppercut") {
+                sfx(() => SFX.uppercut());
+                g.camShake = { x: 0, y: 0, magnitude: 6, timer: 14 };
+              } else if (combo.move === "spinkick") {
+                sfx(() => SFX.spinKick());
+                g.camShake = { x: 0, y: 0, magnitude: 5, timer: 12 };
+              } else if (combo.move === "dashpunch") {
+                sfx(() => SFX.dashPunch());
+                g.camShake = { x: 0, y: 0, magnitude: 7, timer: 14 };
+              }
               setTimeout(() => setComboName(""), 1000);
               break;
             }
@@ -2250,6 +2274,11 @@ export const StreetBrawler: FC = () => {
         const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
         const kb = spec ? spec.knockback : (p.state === "punch" ? 5 : 6);
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult);
+
+        // Heavy-impact screen shake on groundpound landing
+        if (p.state === "groundpound" && g.camShake.timer < 6) {
+          g.camShake = { x: 0, y: 0, magnitude: 9, timer: 18 };
+        }
 
         for (const e of g.enemies) {
           if (e.state === "dead") continue;
@@ -2485,6 +2514,9 @@ export const StreetBrawler: FC = () => {
               c.multiplier = 1;
               setComboCount(0);
               setPlayerHp(Math.max(0, p.hp));
+              // Boss hit screen shake — slam is the heaviest
+              const bossShakeMag = e.state === "boss_slam" ? 11 : e.state === "boss_charge" ? 8 : 6;
+              g.camShake = { x: 0, y: 0, magnitude: bossShakeMag, timer: 18 };
               g.effects.push({
                 x: p.x, y: p.y - 50, timer: 25,
                 text: `${dmg}`, color: "#ff0000", size: 18,
@@ -2751,44 +2783,68 @@ export const StreetBrawler: FC = () => {
       }
 
       // Camera follow with screen-space deadzone + predictive look-ahead.
-      // - Anchor (sticky directional) defines where the player "wants" to sit on screen.
-      // - Deadzone band around the anchor prevents micro-adjustments.
-      // - Look-ahead scales with velocity so the view leads the player noticeably.
+      // Uses a smoothed velocity (moving average) so the camera ignores
+      // the tiny ±jitter at the moment the player decelerates to a stop.
+      g.vxHistory.push(p.vx);
+      if (g.vxHistory.length > 8) g.vxHistory.shift();
+      g.vxAvg = g.vxHistory.reduce((s, v) => s + v, 0) / g.vxHistory.length;
+      const vxSmooth = g.vxAvg;
+
       const MOVE_THRESHOLD = 0.6;
-      const moving = Math.abs(p.vx) > MOVE_THRESHOLD;
+      const moving = Math.abs(vxSmooth) > MOVE_THRESHOLD;
 
       // Persist last "moving" anchor so stopping doesn't re-snap the camera.
       if (moving) {
-        g.camAnchor = p.vx > 0 ? 0.42 : 0.58;
+        g.camAnchor = vxSmooth > 0 ? 0.42 : 0.58;
       }
 
-      // Stronger velocity-based look-ahead (was 14). Scales smoothly with vx,
-      // capped so very fast movement doesn't push the player off-screen.
-      const lookAheadRaw = p.vx * 28;
-      const velLookAhead = Math.max(-160, Math.min(160, lookAheadRaw));
+      // Preset-driven feel
+      const snappy = g.camPreset === "snappy";
+      // snappy: fast in, fast out, less look-ahead so it stays tight to player
+      // buttery: slower easing, larger look-ahead, wider deadzone so it drifts
+      const lookAheadMult = snappy ? 24 : 36;
+      const lookAheadCap = snappy ? 140 : 200;
+      const lookAheadRaw = vxSmooth * lookAheadMult;
+      const velLookAhead = Math.max(-lookAheadCap, Math.min(lookAheadCap, lookAheadRaw));
 
-      // Player position on screen *right now*
       const playerScreenX = p.x - g.camX;
       const anchorScreenX = CANVAS_W * g.camAnchor;
 
-      // Deadzone: a band (in screen pixels) around the anchor where camera holds still.
-      const DEADZONE_HALF = moving ? 40 : 70; // tighter while moving, wider when idle
+      // Deadzone (tighter when moving). Buttery uses a larger band overall.
+      const DEADZONE_HALF = snappy
+        ? (moving ? 40 : 70)
+        : (moving ? 60 : 100);
       const offset = playerScreenX - anchorScreenX;
 
       let lerpSpeed = 0;
       let targetCam = g.camX;
 
       if (Math.abs(offset) > DEADZONE_HALF || Math.abs(velLookAhead) > 6) {
-        // Push camera toward (player + look-ahead) anchored at anchorRatio
         targetCam = (p.x + velLookAhead) - anchorScreenX;
         const dist = Math.abs(targetCam - g.camX);
-        const baseLerp = moving ? 0.22 : 0.08;
-        lerpSpeed = Math.min(0.4, baseLerp + dist * 0.0008);
+        // Asymmetric easing: faster when ENTERING movement, gentler when settling.
+        const enteringMovement = moving && Math.abs(offset) > DEADZONE_HALF;
+        const baseLerp = snappy
+          ? (enteringMovement ? 0.28 : moving ? 0.22 : 0.08)
+          : (enteringMovement ? 0.14 : moving ? 0.10 : 0.04);
+        const maxLerp = snappy ? 0.4 : 0.22;
+        lerpSpeed = Math.min(maxLerp, baseLerp + dist * 0.0008);
         g.camX += (targetCam - g.camX) * lerpSpeed;
       }
       g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
 
-      // Stash debug values for overlay
+      // Camera shake (decays each frame, applied as render offset only)
+      if (g.camShake.timer > 0) {
+        const t = g.camShake.timer;
+        const m = g.camShake.magnitude * (t / 30);
+        g.camShake.x = (Math.random() - 0.5) * 2 * m;
+        g.camShake.y = (Math.random() - 0.5) * 2 * m;
+        g.camShake.timer -= 1;
+      } else {
+        g.camShake.x = 0;
+        g.camShake.y = 0;
+      }
+
       g.debugCam = {
         anchor: g.camAnchor,
         lerp: lerpSpeed,
@@ -2796,11 +2852,17 @@ export const StreetBrawler: FC = () => {
         offset,
         deadzone: DEADZONE_HALF,
         lookAhead: velLookAhead,
-        vx: p.vx,
+        vx: vxSmooth,
       };
 
       // Draw
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+      // Apply camera shake offset (visual only — does not affect game state).
+      // Shake stays inside save/restore so the debug overlay below is unaffected.
+      ctx.save();
+      if (g.camShake.x !== 0 || g.camShake.y !== 0) {
+        ctx.translate(g.camShake.x, g.camShake.y);
+      }
       const currentTheme = LEVELS[Math.min(g.level, LEVELS.length - 1)].theme;
       drawScene(ctx, currentTheme, g.camX, CANVAS_W, g.animFrameCount);
 
@@ -3140,6 +3202,9 @@ export const StreetBrawler: FC = () => {
         if (g.bossIntro.timer <= 0) g.bossIntro.active = false;
       }
 
+      // End shake transform — overlays below render in true screen space.
+      ctx.restore();
+
       // Camera debug overlay
       if (camDebugRef.current) {
         const d = g.debugCam;
@@ -3220,6 +3285,14 @@ export const StreetBrawler: FC = () => {
     <div ref={containerRef} className="flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl mx-auto relative">
       {gameState === "playing" && (
         <div className="absolute top-2 right-2 z-20 flex gap-1.5">
+          <button
+            onClick={() => setCamPreset((p) => (p === "snappy" ? "buttery" : "snappy"))}
+            className="px-2 py-1 rounded glass-card hover:bg-muted/50 transition text-[10px] font-mono text-primary"
+            title={`Camera feel: ${camPreset.toUpperCase()} — click to toggle`}
+            aria-label="Toggle camera preset"
+          >
+            {camPreset === "snappy" ? "SNAPPY" : "BUTTERY"}
+          </button>
           <button
             onClick={() => {
               const next = !camDebugRef.current;
