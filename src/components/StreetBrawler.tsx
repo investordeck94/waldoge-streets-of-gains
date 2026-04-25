@@ -1873,7 +1873,7 @@ export const StreetBrawler: FC = () => {
       ctx.restore();
 
       // Wave text
-      const isBossWave = g.wave === WAVES.length - 1;
+      const lvlWaves = LEVELS[g.level]?.waves.length ?? 0;
       const boss = g.enemies.find(e => e.isBoss && e.state !== "dead");
       if (boss) {
         drawBossHpBar(ctx, boss, CANVAS_W);
@@ -1881,7 +1881,10 @@ export const StreetBrawler: FC = () => {
         ctx.fillStyle = "#ffd70088";
         ctx.font = "bold 14px monospace";
         ctx.textAlign = "center";
-        ctx.fillText(`WAVE ${g.wave + 1}/${WAVES.length}`, CANVAS_W / 2, 25);
+        ctx.fillText(
+          `LEVEL ${g.level + 1}/${TOTAL_LEVELS} — WAVE ${Math.min(g.wave + 1, lvlWaves)}/${lvlWaves}`,
+          CANVAS_W / 2, 25,
+        );
       }
 
       // Combo counter on canvas
