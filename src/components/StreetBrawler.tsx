@@ -120,27 +120,88 @@ const COMBO_WINDOW = 40; // frames to chain inputs (generous window)
 const COMBO_HIT_WINDOW = 40; // frames before combo resets
 const MAX_ENERGY = 100;
 
-const WAVES: { count: number; hp: number; speed: number }[] = [
-  { count: 3, hp: 30, speed: 1.2 },
-  { count: 4, hp: 40, speed: 1.5 },
-  { count: 5, hp: 50, speed: 1.8 },
-  { count: 3, hp: 80, speed: 2 },
-  { count: 0, hp: 0, speed: 0 }, // Boss wave
+// Each level: 2 minion waves followed by a boss. Difficulty scales per level.
+interface LevelConfig {
+  waves: { count: number; hp: number; speed: number }[]; // minion waves before boss
+  boss: { hp: number; chargeSpeed: number; aiSpeed: number; dmgMult: number };
+  name: string;
+}
+
+const LEVELS: LevelConfig[] = [
+  // Level 1 — easy intro boss
+  {
+    name: "ALLEY ROOKIE",
+    waves: [
+      { count: 2, hp: 20, speed: 1.0 },
+      { count: 3, hp: 25, speed: 1.2 },
+    ],
+    boss: { hp: 220, chargeSpeed: 4, aiSpeed: 1.2, dmgMult: 0.6 },
+  },
+  {
+    name: "BACKSTREET BRAWLER",
+    waves: [
+      { count: 3, hp: 30, speed: 1.3 },
+      { count: 3, hp: 35, speed: 1.5 },
+    ],
+    boss: { hp: 300, chargeSpeed: 4.5, aiSpeed: 1.5, dmgMult: 0.75 },
+  },
+  {
+    name: "DOCKSIDE ENFORCER",
+    waves: [
+      { count: 3, hp: 40, speed: 1.5 },
+      { count: 4, hp: 45, speed: 1.7 },
+    ],
+    boss: { hp: 380, chargeSpeed: 5, aiSpeed: 1.8, dmgMult: 0.9 },
+  },
+  {
+    name: "NEON KINGPIN",
+    waves: [
+      { count: 4, hp: 50, speed: 1.7 },
+      { count: 4, hp: 55, speed: 1.9 },
+    ],
+    boss: { hp: 460, chargeSpeed: 5.5, aiSpeed: 2.0, dmgMult: 1.0 },
+  },
+  {
+    name: "ROOFTOP REAPER",
+    waves: [
+      { count: 4, hp: 60, speed: 1.9 },
+      { count: 5, hp: 65, speed: 2.1 },
+    ],
+    boss: { hp: 560, chargeSpeed: 6, aiSpeed: 2.2, dmgMult: 1.15 },
+  },
+  {
+    name: "UNDERGROUND WARLORD",
+    waves: [
+      { count: 5, hp: 70, speed: 2.1 },
+      { count: 5, hp: 80, speed: 2.3 },
+    ],
+    boss: { hp: 680, chargeSpeed: 6.5, aiSpeed: 2.5, dmgMult: 1.3 },
+  },
+  // Level 7 — final hardest boss
+  {
+    name: "DARK DOGE OVERLORD",
+    waves: [
+      { count: 5, hp: 90, speed: 2.3 },
+      { count: 6, hp: 100, speed: 2.5 },
+    ],
+    boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5 },
+  },
 ];
 
-const BOSS_HP = 500;
-const BOSS_CHARGE_SPEED = 6;
+const WAVES_PER_LEVEL = 3; // 2 minion waves + 1 boss
+const TOTAL_LEVELS = LEVELS.length;
 
 interface Projectile {
   x: number; y: number; vx: number; vy: number; timer: number;
   isPlayerProjectile?: boolean;
 }
 
-function spawnBoss(playerX: number): Entity {
+function spawnBoss(playerX: number, levelIndex: number): Entity {
+  const cfg = LEVELS[Math.min(levelIndex, LEVELS.length - 1)].boss;
   return {
     x: playerX + 500, y: GROUND_Y, vy: 0, vx: 0,
     width: 50, height: 90, facing: -1,
-    hp: BOSS_HP, maxHp: BOSS_HP,
+    hp: cfg.hp, maxHp: cfg.hp,
     state: "idle", stateTimer: 0, attackCooldown: 60,
     isBoss: true, bossPhase: 1, aiTimer: 90,
   };
@@ -295,6 +356,248 @@ const COMBOS: { inputs: string[]; move: AttackState; name: string }[] = [
   { inputs: ["k", "k", "j"], move: "spinkick", name: "SPIN KICK!" },
   { inputs: ["j", "k", "j"], move: "dashpunch", name: "DASH PUNCH!" },
 ];
+
+// Red candle-stickman minion: cylindrical candle body, flame on head,
+// angry eyes, glove fists, stick limbs. Inspired by user reference image.
+function drawCandleMinion(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
+  const sx = e.x - camX;
+  const sy = e.y;
+  if (sx < -80 || sx > CANVAS_W + 80) return;
+
+  const candleW = 22;        // body width
+  const headLen = 28;        // upper candle segment height
+  const torsoLen = 22;       // lower candle segment height
+  const limbLen = 22;
+  const wickLen = 8;
+
+  // Vertical layout (relative to feet at y=sy)
+  const hipY = -limbLen;                 // top of legs
+  const torsoTop = hipY - torsoLen;      // top of lower segment
+  const gap = 10;                        // visible neck gap between segments
+  const headBottom = torsoTop - gap;     // bottom of head/upper candle
+  const headTop = headBottom - headLen;  // top of upper candle
+  const wickTop = headTop - wickLen;     // tip where flame sits
+
+  ctx.save();
+  ctx.translate(sx, sy);
+
+  if (e.state === "hit") ctx.globalAlpha = 0.7;
+  if (e.state === "dead") {
+    ctx.rotate((e.facing * Math.PI) / 3);
+    ctx.globalAlpha = 0.4;
+  }
+
+  // ---- Helpers ----
+  const candleRed = e.state === "dead" ? "#5a1010" : "#d42020";
+  const candleHi = e.state === "dead" ? "#7a2020" : "#ff6464";
+  const candleSh = e.state === "dead" ? "#3a0808" : "#8a0d0d";
+  const outline = "#3a0000";
+
+  function drawCandleSegment(cy: number, h: number, w: number) {
+    // Body
+    ctx.fillStyle = candleRed;
+    ctx.fillRect(-w / 2, cy, w, h);
+    // Highlight stripe
+    ctx.fillStyle = candleHi;
+    ctx.fillRect(-w / 2 + 2, cy + 2, 3, h - 4);
+    // Side shadow
+    ctx.fillStyle = candleSh;
+    ctx.fillRect(w / 2 - 3, cy + 2, 2, h - 4);
+    // Outline
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(-w / 2, cy, w, h);
+    // Top rim band
+    ctx.fillStyle = "#ffb0b0";
+    ctx.fillRect(-w / 2 + 1, cy + 1, w - 2, 2);
+    // Bottom rim shadow
+    ctx.fillStyle = candleSh;
+    ctx.fillRect(-w / 2 + 1, cy + h - 3, w - 2, 2);
+  }
+
+  // ---- Lower segment (torso) ----
+  drawCandleSegment(torsoTop, torsoLen, candleW);
+
+  // ---- Upper segment (head) ----
+  drawCandleSegment(headBottom - headLen, headLen, candleW);
+
+  // ---- Angry eyes on head segment ----
+  if (e.state !== "dead") {
+    ctx.fillStyle = "#000";
+    // Slanted eyebrow + eye for angry look
+    ctx.save();
+    // Left eye
+    ctx.translate(-5, headBottom - headLen / 2 + 1);
+    ctx.rotate(-0.35 * e.facing);
+    ctx.fillRect(-3, -1, 6, 3);
+    ctx.restore();
+    // Right eye
+    ctx.save();
+    ctx.translate(5, headBottom - headLen / 2 + 1);
+    ctx.rotate(0.35 * e.facing);
+    ctx.fillRect(-3, -1, 6, 3);
+    ctx.restore();
+  }
+
+  // ---- Wick ----
+  ctx.strokeStyle = "#1a1a1a";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, headTop);
+  ctx.lineTo(0, wickTop);
+  ctx.stroke();
+
+  // ---- Flame (animated flicker) ----
+  if (e.state !== "dead") {
+    const flicker = Math.sin(Date.now() / 90 + sx * 0.05) * 1.2;
+    const fY = wickTop;
+    // Outer orange flame
+    ctx.beginPath();
+    ctx.moveTo(0, fY - 14 - flicker);
+    ctx.bezierCurveTo(7, fY - 8, 5, fY + 2, 0, fY + 2);
+    ctx.bezierCurveTo(-5, fY + 2, -7, fY - 8, 0, fY - 14 - flicker);
+    ctx.fillStyle = "#ff6a00";
+    ctx.fill();
+    // Inner yellow
+    ctx.beginPath();
+    ctx.moveTo(0, fY - 9 - flicker * 0.6);
+    ctx.bezierCurveTo(3.5, fY - 5, 3, fY, 0, fY);
+    ctx.bezierCurveTo(-3, fY, -3.5, fY - 5, 0, fY - 9 - flicker * 0.6);
+    ctx.fillStyle = "#ffd000";
+    ctx.fill();
+    // Flame glow
+    const glow = ctx.createRadialGradient(0, fY - 6, 1, 0, fY - 6, 18);
+    glow.addColorStop(0, "rgba(255, 180, 60, 0.35)");
+    glow.addColorStop(1, "rgba(255, 180, 60, 0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(0, fY - 6, 18, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ---- Arms (stick) with red glove fists ----
+  const shoulderL = -candleW / 2 + 1;
+  const shoulderR = candleW / 2 - 1;
+  const shoulderY = torsoTop + 4;
+
+  // Compute hand positions based on state
+  let lHandX = shoulderL - limbLen * 0.7;
+  let lHandY = shoulderY + limbLen * 0.6;
+  let rHandX = shoulderR + limbLen * 0.7;
+  let rHandY = shoulderY + limbLen * 0.6;
+
+  if (e.state === "punch") {
+    // Front fist forward, back hand low
+    if (e.facing > 0) {
+      rHandX = shoulderR + limbLen * 1.4;
+      rHandY = shoulderY - 2;
+      lHandX = shoulderL - limbLen * 0.4;
+      lHandY = shoulderY + limbLen * 0.7;
+    } else {
+      lHandX = shoulderL - limbLen * 1.4;
+      lHandY = shoulderY - 2;
+      rHandX = shoulderR + limbLen * 0.4;
+      rHandY = shoulderY + limbLen * 0.7;
+    }
+  } else if (e.state === "kick") {
+    lHandX = shoulderL - limbLen * 0.5;
+    lHandY = shoulderY + limbLen * 0.3;
+    rHandX = shoulderR + limbLen * 0.5;
+    rHandY = shoulderY + limbLen * 0.3;
+  } else if (e.state === "walk") {
+    const sw = Math.sin(Date.now() / 150) * 6;
+    lHandY += sw;
+    rHandY -= sw;
+  }
+
+  // Draw arm sticks
+  ctx.strokeStyle = candleRed;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(shoulderL, shoulderY);
+  ctx.lineTo(lHandX, lHandY);
+  ctx.moveTo(shoulderR, shoulderY);
+  ctx.lineTo(rHandX, rHandY);
+  ctx.stroke();
+
+  // Glove fists
+  function drawFist(fx: number, fy: number) {
+    ctx.beginPath();
+    ctx.arc(fx, fy, 5, 0, Math.PI * 2);
+    ctx.fillStyle = candleRed;
+    ctx.fill();
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    // Highlight
+    ctx.beginPath();
+    ctx.arc(fx - 1.5, fy - 1.5, 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#ff8080";
+    ctx.fill();
+  }
+  drawFist(lHandX, lHandY);
+  drawFist(rHandX, rHandY);
+
+  // ---- Legs ----
+  let lFootX = -candleW / 4 - 4;
+  let lFootY = 0;
+  let rFootX = candleW / 4 + 4;
+  let rFootY = 0;
+
+  if (e.state === "kick") {
+    if (e.facing > 0) {
+      rFootX = candleW / 2 + limbLen * 1.2;
+      rFootY = -8;
+    } else {
+      lFootX = -candleW / 2 - limbLen * 1.2;
+      lFootY = -8;
+    }
+  } else if (e.state === "jump" || e.state === "uppercut") {
+    lFootY = -limbLen * 0.4;
+    rFootY = -limbLen * 0.4;
+  } else if (e.state === "walk") {
+    const sw = Math.sin(Date.now() / 150) * 6;
+    lFootX += sw;
+    rFootX -= sw;
+  }
+
+  ctx.strokeStyle = candleRed;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-candleW / 4, hipY);
+  ctx.lineTo(lFootX, lFootY);
+  ctx.moveTo(candleW / 4, hipY);
+  ctx.lineTo(rFootX, rFootY);
+  ctx.stroke();
+
+  // Shoe blobs
+  function drawShoe(fx: number, fy: number, dir: number) {
+    ctx.beginPath();
+    ctx.ellipse(fx + dir * 3, fy, 6, 3, 0, 0, Math.PI * 2);
+    ctx.fillStyle = candleRed;
+    ctx.fill();
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  }
+  drawShoe(lFootX, lFootY, -1);
+  drawShoe(rFootX, rFootY, 1);
+
+  ctx.restore();
+
+  // HP bar above flame
+  if (e.state !== "dead") {
+    const barW = 36;
+    const barH = 3;
+    const barX = sx - barW / 2;
+    const barY = sy + wickTop - 14;
+    ctx.fillStyle = "#1a0000";
+    ctx.fillRect(barX, barY, barW, barH);
+    ctx.fillStyle = e.hp > e.maxHp * 0.4 ? "#ff4040" : "#ffaa00";
+    ctx.fillRect(barX, barY, barW * (e.hp / e.maxHp), barH);
+  }
+}
+
 
 function drawStickFigure(
   ctx: CanvasRenderingContext2D,
@@ -886,8 +1189,9 @@ function createPlayer(): Entity {
   };
 }
 
-function spawnEnemies(waveIndex: number, playerX: number): Entity[] {
-  const w = WAVES[waveIndex];
+function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number): Entity[] {
+  const lvl = LEVELS[Math.min(levelIndex, LEVELS.length - 1)];
+  const w = lvl?.waves[waveIndex];
   if (!w) return [];
   return Array.from({ length: w.count }, (_, i) => ({
     x: playerX + 400 + i * 150 + Math.random() * 200,
@@ -910,6 +1214,7 @@ export const StreetBrawler: FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<"menu" | "playing" | "gameover" | "victory">("menu");
   const [wave, setWave] = useState(0);
+  const [level, setLevel] = useState(0);
   const [score, setScore] = useState(0);
   const [playerHp, setPlayerHp] = useState(100);
   const [comboCount, setComboCount] = useState(0);
@@ -929,6 +1234,7 @@ export const StreetBrawler: FC = () => {
     keyJustPressed: Set<string>;
     camX: number;
     wave: number;
+    level: number;
     score: number;
     headImg: HTMLImageElement | null;
     animFrame: number;
@@ -954,6 +1260,7 @@ export const StreetBrawler: FC = () => {
     keyJustPressed: new Set(),
     camX: 0,
     wave: 0,
+    level: 0,
     score: 0,
     headImg: null,
     animFrame: 0,
@@ -984,9 +1291,10 @@ export const StreetBrawler: FC = () => {
     const g = gameRef.current;
     g.player = createPlayer();
     g.wave = 0;
+    g.level = 0;
     g.score = 0;
     g.camX = 0;
-    g.enemies = spawnEnemies(0, 200);
+    g.enemies = spawnEnemies(0, 0, 200);
     g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
     g.effects = [];
     g.powerups = [];
@@ -1019,6 +1327,7 @@ export const StreetBrawler: FC = () => {
     }
     g.splashes = [];
     setWave(0);
+    setLevel(0);
     setScore(0);
     setPlayerHp(100);
     setComboCount(0);
@@ -1377,6 +1686,7 @@ export const StreetBrawler: FC = () => {
 
         // Boss AI
         if (e.isBoss) {
+          const bossCfg = LEVELS[Math.min(g.level, LEVELS.length - 1)].boss;
           // Update boss phase based on HP
           if (e.hp <= e.maxHp * 0.3) e.bossPhase = 3;
           else if (e.hp <= e.maxHp * 0.6) e.bossPhase = 2;
@@ -1388,37 +1698,32 @@ export const StreetBrawler: FC = () => {
             const dx = p.x - e.x;
             const dist = Math.abs(dx);
             e.facing = dx > 0 ? 1 : -1;
-            const phaseSpeed = 1.5 + (e.bossPhase || 1) * 0.5;
+            const phaseSpeed = bossCfg.aiSpeed + (e.bossPhase || 1) * 0.4;
 
             if (e.attackCooldown <= 0) {
-              // Choose attack based on distance and phase
               const phase = e.bossPhase || 1;
+              const cdScale = Math.max(0.55, 1.25 - g.level * 0.1);
               if (dist > 250 && phase >= 2) {
-                // Charge attack
                 e.state = "boss_charge";
                 e.stateTimer = 30;
                 sfx(() => SFX.bossCharge());
-                e.attackCooldown = 50 - phase * 8;
+                e.attackCooldown = Math.round((50 - phase * 8) * cdScale);
               } else if (dist > 150) {
-                // Throw projectile
                 e.state = "boss_throw";
                 e.stateTimer = 20;
-                e.attackCooldown = 40 - phase * 5;
+                e.attackCooldown = Math.round((40 - phase * 5) * cdScale);
               } else if (dist < 80) {
-                // Slam (AOE)
                 e.state = "boss_slam";
                 e.stateTimer = 25;
                 sfx(() => SFX.bossSlam());
-                e.attackCooldown = 45 - phase * 8;
+                e.attackCooldown = Math.round((45 - phase * 8) * cdScale);
               } else {
-                // Regular attacks
                 const atk = Math.random() > 0.5 ? "punch" : "kick";
                 e.state = atk;
                 e.stateTimer = atk === "punch" ? 14 : 17;
-                e.attackCooldown = 25 - phase * 3;
+                e.attackCooldown = Math.round((25 - phase * 3) * cdScale);
               }
             } else {
-              // Walk toward player
               if (dist > 60) {
                 e.x += e.facing * phaseSpeed;
                 e.state = "walk";
@@ -1430,7 +1735,7 @@ export const StreetBrawler: FC = () => {
 
           // Boss charge movement
           if (e.state === "boss_charge" && e.stateTimer > 5) {
-            e.x += e.facing * BOSS_CHARGE_SPEED;
+            e.x += e.facing * bossCfg.chargeSpeed;
           }
 
           // Boss attack hit detection
@@ -1453,7 +1758,8 @@ export const StreetBrawler: FC = () => {
 
           if (bossHitFrame) {
             const range = e.state === "boss_slam" ? 100 : e.state === "boss_charge" ? 60 : 55;
-            const dmg = e.state === "boss_slam" ? 20 : e.state === "boss_charge" ? 15 : e.state === "punch" ? 10 : 12;
+            const baseDmg = e.state === "boss_slam" ? 20 : e.state === "boss_charge" ? 15 : e.state === "punch" ? 10 : 12;
+            const dmg = Math.max(2, Math.round(baseDmg * bossCfg.dmgMult));
             const edx = p.x - e.x;
             const inRange = e.state === "boss_slam"
               ? Math.abs(edx) < range && Math.abs(p.y - e.y) < 70
@@ -1499,7 +1805,7 @@ export const StreetBrawler: FC = () => {
           e.facing = dx > 0 ? 1 : -1;
 
           if (dist > 50) {
-            e.x += e.facing * (WAVES[g.wave]?.speed || 1.5);
+            e.x += e.facing * (LEVELS[g.level]?.waves[g.wave]?.speed || 1.5);
             e.state = "walk";
           } else if (e.attackCooldown <= 0) {
             const atk = Math.random() > 0.5 ? "punch" : "kick";
@@ -1687,28 +1993,54 @@ export const StreetBrawler: FC = () => {
         // Speed boost handled by multiplying movement in the movement section
       }
 
-      // Wave progression
+      // Wave / Level progression
       const alive = g.enemies.filter(e => e.state !== "dead");
       if (alive.length === 0) {
         g.enemies = g.enemies.filter(e => e.stateTimer > 0);
         if (g.enemies.length === 0) {
-          g.wave++;
-          setWave(g.wave);
-          if (g.wave >= WAVES.length) {
-            g.running = false;
-            sfx(() => SFX.victory());
-            setGameState("victory");
-            return;
-          }
-          const isBossWave = g.wave === WAVES.length - 1;
-          if (isBossWave) {
-            g.enemies = [spawnBoss(p.x)];
-            g.projectiles = [];
-            g.effects.push({ x: p.x, y: p.y - 100, timer: 90, text: "⚠ BOSS FIGHT! ⚠", color: "#ff0000", size: 24 });
-            sfx(() => SFX.bossEntrance());
-          } else {
+          // Was the just-cleared wave the boss wave (index === waves.length)?
+          const justClearedBoss = g.wave >= LEVELS[g.level].waves.length;
+
+          if (justClearedBoss) {
+            // Advance to next level
+            g.level++;
+            g.wave = 0;
+            setLevel(g.level);
+            setWave(0);
+            if (g.level >= TOTAL_LEVELS) {
+              g.running = false;
+              sfx(() => SFX.victory());
+              setGameState("victory");
+              return;
+            }
+            // Heal player slightly between levels (reward)
+            p.hp = Math.min(p.maxHp, p.hp + 30);
+            setPlayerHp(p.hp);
+            g.effects.push({
+              x: p.x, y: p.y - 110, timer: 120,
+              text: `LEVEL ${g.level + 1}: ${LEVELS[g.level].name}`,
+              color: "#FFD700", size: 22,
+            });
             sfx(() => SFX.waveStart());
-            g.enemies = spawnEnemies(g.wave, p.x);
+            g.enemies = spawnEnemies(g.level, 0, p.x);
+          } else {
+            // Next wave within current level
+            g.wave++;
+            setWave(g.wave);
+            const isBossWave = g.wave === LEVELS[g.level].waves.length;
+            if (isBossWave) {
+              g.enemies = [spawnBoss(p.x, g.level)];
+              g.projectiles = [];
+              g.effects.push({
+                x: p.x, y: p.y - 100, timer: 90,
+                text: `⚠ BOSS — ${LEVELS[g.level].name} ⚠`,
+                color: "#ff0000", size: 22,
+              });
+              sfx(() => SFX.bossEntrance());
+            } else {
+              sfx(() => SFX.waveStart());
+              g.enemies = spawnEnemies(g.level, g.wave, p.x);
+            }
           }
         }
       }
@@ -1784,7 +2116,7 @@ export const StreetBrawler: FC = () => {
       ctx.restore();
 
       // Wave text
-      const isBossWave = g.wave === WAVES.length - 1;
+      const lvlWaves = LEVELS[g.level]?.waves.length ?? 0;
       const boss = g.enemies.find(e => e.isBoss && e.state !== "dead");
       if (boss) {
         drawBossHpBar(ctx, boss, CANVAS_W);
@@ -1792,7 +2124,10 @@ export const StreetBrawler: FC = () => {
         ctx.fillStyle = "#ffd70088";
         ctx.font = "bold 14px monospace";
         ctx.textAlign = "center";
-        ctx.fillText(`WAVE ${g.wave + 1}/${WAVES.length}`, CANVAS_W / 2, 25);
+        ctx.fillText(
+          `LEVEL ${g.level + 1}/${TOTAL_LEVELS} — WAVE ${Math.min(g.wave + 1, lvlWaves)}/${lvlWaves}`,
+          CANVAS_W / 2, 25,
+        );
       }
 
       // Combo counter on canvas
@@ -1927,7 +2262,7 @@ export const StreetBrawler: FC = () => {
         if (e.isBoss) {
           drawBoss(ctx, e, g.camX);
         } else {
-          drawStickFigure(ctx, e, g.camX, null, false);
+          drawCandleMinion(ctx, e, g.camX);
         }
       }
 
@@ -2060,7 +2395,7 @@ export const StreetBrawler: FC = () => {
               <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
             )}
             <span className="text-primary font-bold">
-              {wave === WAVES.length - 1 ? "⚠ BOSS" : `Wave ${wave + 1}/${WAVES.length}`}
+              {`L${level + 1}/${TOTAL_LEVELS} · ${wave >= LEVELS[level].waves.length ? "⚠ BOSS" : `W${wave + 1}/${LEVELS[level].waves.length}`}`}
             </span>
             <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
             <button
@@ -2131,7 +2466,7 @@ export const StreetBrawler: FC = () => {
             <img src={waldogeHead} alt="Waldoge" className="w-24 h-24 mx-auto object-contain" />
             <h3 className="text-2xl font-bold text-primary font-heading">WALDOGE STREET BRAWLER</h3>
             <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              Fight through waves of thugs! Chain attacks for combos and unleash devastating special moves!
+              Battle through 7 levels of red candle goons. Each level ends with a tougher boss — survive them all!
             </p>
             <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto text-xs text-muted-foreground">
               <div className="glass-card p-2">A/D — Move</div>
@@ -2169,7 +2504,7 @@ export const StreetBrawler: FC = () => {
               <>
                 <Trophy className="w-16 h-16 text-primary mx-auto" />
                 <h3 className="text-2xl font-bold text-primary font-heading">VICTORY!</h3>
-                <p className="text-muted-foreground">You cleared all waves!</p>
+                <p className="text-muted-foreground">You conquered all 7 levels! 🔥</p>
               </>
             ) : (
               <>
