@@ -2449,78 +2449,82 @@ export const StreetBrawler: FC = () => {
 
       {gameState === "playing" && (
         <div className="game-wrapper space-y-3 w-full">
-          <div className="flex justify-between items-center glass-card px-4 py-2 text-sm">
-            <div className="flex items-center gap-2">
-              {/* Green candle HP bar — enlarged */}
-              <div
-                className="relative h-6 w-56 sm:w-72 rounded-sm overflow-hidden border-2"
-                style={{
-                  borderColor: "#0d3a14",
-                  background:
-                    "repeating-linear-gradient(90deg, #0a1f0c 0px, #0a1f0c 4px, #0d2a10 4px, #0d2a10 8px)",
-                  boxShadow: "inset 0 0 6px rgba(0,0,0,0.7)",
-                }}
-                title={`HP: ${Math.round(playerHp)}/100`}
-              >
-                {/* Wax fill */}
-                <div
-                  className="absolute inset-y-0 left-0 transition-all"
-                  style={{
-                    width: `${playerHp}%`,
-                    background:
-                      "linear-gradient(180deg, #7cff8c 0%, #2bd14a 35%, #14a82e 70%, #0a6b1c 100%)",
-                    boxShadow:
-                      "inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.35)",
-                  }}
-                />
-                {/* Vertical highlight stripe (candle gloss) */}
-                <div
-                  className="absolute top-0 bottom-0 pointer-events-none"
-                  style={{
-                    width: "3px",
-                    left: `calc(${Math.max(0, playerHp - 6)}% + 2px)`,
-                    background: "rgba(255,255,255,0.5)",
-                    display: playerHp > 4 ? "block" : "none",
-                  }}
-                />
-                {/* HP number overlay */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span className="text-[11px] font-bold font-mono text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)] tabular-nums">
-                    {Math.max(0, Math.round(playerHp))} / 100
-                  </span>
-                </div>
-                {/* Flame at the tip of the wax */}
-                {playerHp > 2 && (
-                  <div
-                    className="absolute pointer-events-none"
-                    style={{
-                      left: `calc(${playerHp}% - 8px)`,
-                      top: "-10px",
-                      width: "16px",
-                      height: "18px",
-                    }}
-                  >
-                    <svg viewBox="0 0 12 14" width="16" height="18">
-                      <path
-                        d="M6 0 C8 4 10 6 8 10 C7 12 5 13 6 14 C2 13 1 9 3 6 C4 4 5 3 6 0 Z"
-                        fill="#ff8a1a"
-                      >
-                        <animate
-                          attributeName="opacity"
-                          values="0.85;1;0.85"
-                          dur="0.5s"
-                          repeatCount="indefinite"
-                        />
-                      </path>
-                      <path
-                        d="M6 4 C7 6 8 8 7 10 C6 11 5 11 6 12 C4 11 4 8 5 7 C5.5 6 5.7 5 6 4 Z"
-                        fill="#ffe14a"
-                      />
-                    </svg>
-                  </div>
-                )}
-              </div>
+          {/* Player HP — own full-width row, large */}
+          <div className="glass-card px-3 py-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-bold font-mono text-green-400 tracking-wider">PLAYER HP</span>
             </div>
+            <div
+              className="relative h-9 w-full rounded-sm overflow-visible border-2"
+              style={{
+                borderColor: "#0d3a14",
+                background:
+                  "repeating-linear-gradient(90deg, #0a1f0c 0px, #0a1f0c 6px, #0d2a10 6px, #0d2a10 12px)",
+                boxShadow: "inset 0 0 8px rgba(0,0,0,0.7)",
+              }}
+              title={`HP: ${Math.round(playerHp)}/100`}
+            >
+              {/* Wax fill */}
+              <div
+                className="absolute inset-y-0 left-0 transition-all"
+                style={{
+                  width: `${playerHp}%`,
+                  background:
+                    "linear-gradient(180deg, #7cff8c 0%, #2bd14a 35%, #14a82e 70%, #0a6b1c 100%)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.35)",
+                }}
+              />
+              {/* Vertical highlight stripe (candle gloss) */}
+              <div
+                className="absolute top-0 bottom-0 pointer-events-none"
+                style={{
+                  width: "4px",
+                  left: `calc(${Math.max(0, playerHp - 6)}% + 2px)`,
+                  background: "rgba(255,255,255,0.5)",
+                  display: playerHp > 4 ? "block" : "none",
+                }}
+              />
+              {/* HP number overlay */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="text-sm font-bold font-mono text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] tabular-nums">
+                  {Math.max(0, Math.round(playerHp))} / 100
+                </span>
+              </div>
+              {/* Flame at the tip of the wax */}
+              {playerHp > 2 && (
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: `calc(${playerHp}% - 11px)`,
+                    top: "-16px",
+                    width: "22px",
+                    height: "26px",
+                  }}
+                >
+                  <svg viewBox="0 0 12 14" width="22" height="26">
+                    <path
+                      d="M6 0 C8 4 10 6 8 10 C7 12 5 13 6 14 C2 13 1 9 3 6 C4 4 5 3 6 0 Z"
+                      fill="#ff8a1a"
+                    >
+                      <animate
+                        attributeName="opacity"
+                        values="0.85;1;0.85"
+                        dur="0.5s"
+                        repeatCount="indefinite"
+                      />
+                    </path>
+                    <path
+                      d="M6 4 C7 6 8 8 7 10 C6 11 5 11 6 12 C4 11 4 8 5 7 C5.5 6 5.7 5 6 4 Z"
+                      fill="#ffe14a"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center glass-card px-4 py-2 text-sm flex-wrap gap-2">
             {comboCount > 1 && (
               <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
             )}
