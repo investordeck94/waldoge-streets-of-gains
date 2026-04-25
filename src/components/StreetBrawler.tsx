@@ -3541,29 +3541,29 @@ export const StreetBrawler: FC = () => {
                 className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
               >▶</button>
             </div>
-            {/* Right: Action cluster — punch/kick grouped, jump & special separated */}
+            {/* Right: Action cluster — punch/kick on top, jump + special below */}
             <div className="flex gap-3 items-end">
-              <div className="flex gap-2">
-                <button
-                  onTouchStart={() => touchAction("punch")}
-                  onContextMenu={(e) => e.preventDefault()}
-                  className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
-                  aria-label="Punch"
-                >👊</button>
-                <button
-                  onTouchStart={() => touchAction("kick")}
-                  onContextMenu={(e) => e.preventDefault()}
-                  className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
-                  aria-label="Kick"
-                >🦶</button>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onTouchStart={() => touchAction("jump")}
-                  onContextMenu={(e) => e.preventDefault()}
-                  className="w-14 h-14 glass-card flex items-center justify-center text-[11px] font-extrabold tracking-wider text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
-                  aria-label="Jump"
-                >JUMP</button>
+              <button
+                onTouchStart={() => touchAction("jump")}
+                onContextMenu={(e) => e.preventDefault()}
+                className="w-14 h-14 glass-card flex items-center justify-center text-[11px] font-extrabold tracking-wider text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
+                aria-label="Jump"
+              >JUMP</button>
+              <div className="flex flex-col gap-2 items-center">
+                <div className="flex gap-2">
+                  <button
+                    onTouchStart={() => touchAction("punch")}
+                    onContextMenu={(e) => e.preventDefault()}
+                    className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
+                    aria-label="Punch"
+                  >👊</button>
+                  <button
+                    onTouchStart={() => touchAction("kick")}
+                    onContextMenu={(e) => e.preventDefault()}
+                    className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
+                    aria-label="Kick"
+                  >🦶</button>
+                </div>
                 <button
                   onTouchStart={() => touchAction("special")}
                   onContextMenu={(e) => e.preventDefault()}
