@@ -123,7 +123,7 @@ const MAX_ENERGY = 100;
 // Each level: 2 minion waves followed by a boss. Difficulty scales per level.
 interface LevelConfig {
   waves: { count: number; hp: number; speed: number }[]; // minion waves before boss
-  boss: { hp: number; chargeSpeed: number; aiSpeed: number; dmgMult: number };
+  boss: { hp: number; chargeSpeed: number; aiSpeed: number; dmgMult: number; name: string };
   name: string;
 }
 
@@ -135,7 +135,7 @@ const LEVELS: LevelConfig[] = [
       { count: 2, hp: 20, speed: 1.0 },
       { count: 3, hp: 25, speed: 1.2 },
     ],
-    boss: { hp: 220, chargeSpeed: 4, aiSpeed: 1.2, dmgMult: 0.6 },
+    boss: { hp: 220, chargeSpeed: 4, aiSpeed: 1.2, dmgMult: 0.6, name: "JEET" },
   },
   {
     name: "BACKSTREET BRAWLER",
@@ -143,7 +143,7 @@ const LEVELS: LevelConfig[] = [
       { count: 3, hp: 30, speed: 1.3 },
       { count: 3, hp: 35, speed: 1.5 },
     ],
-    boss: { hp: 300, chargeSpeed: 4.5, aiSpeed: 1.5, dmgMult: 0.75 },
+    boss: { hp: 300, chargeSpeed: 4.5, aiSpeed: 1.5, dmgMult: 0.75, name: "RUGGER" },
   },
   {
     name: "DOCKSIDE ENFORCER",
@@ -151,7 +151,7 @@ const LEVELS: LevelConfig[] = [
       { count: 3, hp: 40, speed: 1.5 },
       { count: 4, hp: 45, speed: 1.7 },
     ],
-    boss: { hp: 380, chargeSpeed: 5, aiSpeed: 1.8, dmgMult: 0.9 },
+    boss: { hp: 380, chargeSpeed: 5, aiSpeed: 1.8, dmgMult: 0.9, name: "BAD ACTOR" },
   },
   {
     name: "NEON KINGPIN",
@@ -159,7 +159,7 @@ const LEVELS: LevelConfig[] = [
       { count: 4, hp: 50, speed: 1.7 },
       { count: 4, hp: 55, speed: 1.9 },
     ],
-    boss: { hp: 460, chargeSpeed: 5.5, aiSpeed: 2.0, dmgMult: 1.0 },
+    boss: { hp: 460, chargeSpeed: 5.5, aiSpeed: 2.0, dmgMult: 1.0, name: "FUDDER" },
   },
   {
     name: "ROOFTOP REAPER",
@@ -167,7 +167,7 @@ const LEVELS: LevelConfig[] = [
       { count: 4, hp: 60, speed: 1.9 },
       { count: 5, hp: 65, speed: 2.1 },
     ],
-    boss: { hp: 560, chargeSpeed: 6, aiSpeed: 2.2, dmgMult: 1.15 },
+    boss: { hp: 560, chargeSpeed: 6, aiSpeed: 2.2, dmgMult: 1.15, name: "EXIT LIQUIDITY" },
   },
   {
     name: "UNDERGROUND WARLORD",
@@ -175,7 +175,7 @@ const LEVELS: LevelConfig[] = [
       { count: 5, hp: 70, speed: 2.1 },
       { count: 5, hp: 80, speed: 2.3 },
     ],
-    boss: { hp: 680, chargeSpeed: 6.5, aiSpeed: 2.5, dmgMult: 1.3 },
+    boss: { hp: 680, chargeSpeed: 6.5, aiSpeed: 2.5, dmgMult: 1.3, name: "ROTATOR" },
   },
   // Level 7 — final hardest boss
   {
@@ -184,7 +184,7 @@ const LEVELS: LevelConfig[] = [
       { count: 5, hp: 90, speed: 2.3 },
       { count: 6, hp: 100, speed: 2.5 },
     ],
-    boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5 },
+    boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5, name: "MR 57 SECONDS" },
   },
 ];
 
