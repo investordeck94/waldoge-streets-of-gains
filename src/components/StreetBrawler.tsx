@@ -2967,6 +2967,44 @@ export const StreetBrawler: FC = () => {
       }
 
       drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType);
+
+      // Heal flash: expanding green ring + glow around player when fully healed at level start
+      if (g.healFlash > 0) {
+        const t = g.healFlash / 60; // 1 -> 0
+        const progress = 1 - t;
+        const px = p.x - g.camX;
+        const py = p.y - p.height / 2;
+        const ringR = 20 + progress * 90;
+        ctx.save();
+        ctx.globalAlpha = t;
+        ctx.strokeStyle = "#22ff66";
+        ctx.lineWidth = 4;
+        ctx.shadowColor = "#22ff66";
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(px, py, ringR, 0, Math.PI * 2);
+        ctx.stroke();
+        // Inner pulse
+        ctx.globalAlpha = t * 0.4;
+        ctx.fillStyle = "#22ff66";
+        ctx.beginPath();
+        ctx.arc(px, py, 30 + Math.sin(progress * Math.PI) * 12, 0, Math.PI * 2);
+        ctx.fill();
+        // Floating sparkle hearts
+        ctx.globalAlpha = t;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = "#aaffcc";
+        ctx.font = "bold 14px sans-serif";
+        ctx.textAlign = "center";
+        for (let i = 0; i < 4; i++) {
+          const ang = (i / 4) * Math.PI * 2 + progress * Math.PI;
+          const r = 35 + progress * 30;
+          ctx.fillText("♥", px + Math.cos(ang) * r, py + Math.sin(ang) * r - progress * 20);
+        }
+        ctx.restore();
+        g.healFlash -= 1;
+      }
+
       drawHitEffects(ctx, g.effects, g.camX);
 
       // Boss intro banner overlay (drawn last, above everything)
