@@ -3179,6 +3179,9 @@ export const StreetBrawler: FC = () => {
         if (g.bossIntro.timer <= 0) g.bossIntro.active = false;
       }
 
+      // End shake transform — overlays below render in true screen space.
+      ctx.restore();
+
       // Camera debug overlay
       if (camDebugRef.current) {
         const d = g.debugCam;
