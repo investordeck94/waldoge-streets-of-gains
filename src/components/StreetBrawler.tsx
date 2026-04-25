@@ -3222,6 +3222,19 @@ export const StreetBrawler: FC = () => {
         <div className="absolute top-2 right-2 z-20 flex gap-1.5">
           <button
             onClick={() => {
+              const next = !camDebugRef.current;
+              camDebugRef.current = next;
+              setShowCamDebug(next);
+            }}
+            className="px-2 py-1 rounded glass-card hover:bg-muted/50 transition text-[10px] font-mono"
+            title="Toggle camera debug overlay"
+            aria-label="Toggle camera debug overlay"
+            style={{ color: showCamDebug ? "#FFD700" : undefined }}
+          >
+            CAM
+          </button>
+          <button
+            onClick={() => {
               const next = !pausedRef.current;
               pausedRef.current = next;
               setIsPaused(next);
