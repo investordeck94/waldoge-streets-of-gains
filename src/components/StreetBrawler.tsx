@@ -2611,8 +2611,8 @@ export const StreetBrawler: FC = () => {
               setGameState("victory");
               return;
             }
-            // Heal player slightly between levels (reward)
-            p.hp = Math.min(p.maxHp, p.hp + 30);
+            // Fully heal player between levels (reward)
+            p.hp = p.maxHp;
             setPlayerHp(p.hp);
             g.effects.push({
               x: p.x, y: p.y - 110, timer: 120,
