@@ -1,6 +1,6 @@
 import { FC, useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
+import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize, Pause } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
 import jeetBossHead from "@/assets/jeet-boss-head.png";
 import badActorBossHead from "@/assets/badactor-boss-head.png";
@@ -1875,6 +1875,8 @@ export const StreetBrawler: FC = () => {
   const [comboName, setComboName] = useState("");
   const [energy, setEnergy] = useState(0);
   const [sfxEnabled, setSfxEnabled] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const pausedRef = useRef(false);
   const sfxRef = useRef(true);
 
   const sfx = useCallback((fn: () => void) => {
@@ -1993,6 +1995,8 @@ export const StreetBrawler: FC = () => {
     setComboCount(0);
     setComboName("");
     setEnergy(50);
+    pausedRef.current = false;
+    setIsPaused(false);
     setGameState("playing");
   }, []);
 
@@ -2038,6 +2042,23 @@ export const StreetBrawler: FC = () => {
 
     const tick = () => {
       if (!g.running) return;
+      if (pausedRef.current) {
+        // Draw pause overlay over the last frame and skip simulation
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "bold 48px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("PAUSED", CANVAS_W / 2, CANVAS_H / 2 - 10);
+        ctx.fillStyle = "#fff";
+        ctx.font = "14px monospace";
+        ctx.fillText("Tap Resume to continue", CANVAS_W / 2, CANVAS_H / 2 + 30);
+        ctx.textAlign = "start";
+        ctx.textBaseline = "alphabetic";
+        g.animFrame = requestAnimationFrame(tick);
+        return;
+      }
       g.animFrameCount++;
       const p = g.player;
       const c = g.combo;
@@ -3112,23 +3133,39 @@ export const StreetBrawler: FC = () => {
   return (
     <div ref={containerRef} className="flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl mx-auto relative">
       {gameState === "playing" && (
-        <button
-          onClick={() => {
-            const el = containerRef.current;
-            if (!el) return;
-            if (document.fullscreenElement) {
-              document.exitFullscreen();
-            } else {
-              el.requestFullscreen().catch(() => {});
-            }
-          }}
-          className="absolute top-2 right-2 z-20 p-1.5 rounded glass-card hover:bg-muted/50 transition"
-          title={document.fullscreenElement ? "Exit Fullscreen" : "Fullscreen"}
-        >
-          {document.fullscreenElement
-            ? <Minimize className="w-4 h-4 text-primary" />
-            : <Maximize className="w-4 h-4 text-primary" />}
-        </button>
+        <div className="absolute top-2 right-2 z-20 flex gap-1.5">
+          <button
+            onClick={() => {
+              const next = !pausedRef.current;
+              pausedRef.current = next;
+              setIsPaused(next);
+            }}
+            className="p-1.5 rounded glass-card hover:bg-muted/50 transition"
+            title={isPaused ? "Resume" : "Pause"}
+            aria-label={isPaused ? "Resume" : "Pause"}
+          >
+            {isPaused
+              ? <Play className="w-4 h-4 text-primary" />
+              : <Pause className="w-4 h-4 text-primary" />}
+          </button>
+          <button
+            onClick={() => {
+              const el = containerRef.current;
+              if (!el) return;
+              if (document.fullscreenElement) {
+                document.exitFullscreen();
+              } else {
+                el.requestFullscreen().catch(() => {});
+              }
+            }}
+            className="p-1.5 rounded glass-card hover:bg-muted/50 transition"
+            title={document.fullscreenElement ? "Exit Fullscreen" : "Fullscreen"}
+          >
+            {document.fullscreenElement
+              ? <Minimize className="w-4 h-4 text-primary" />
+              : <Maximize className="w-4 h-4 text-primary" />}
+          </button>
+        </div>
       )}
       <div className="flex items-center gap-2 sm:gap-3">
         <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
