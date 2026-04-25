@@ -3525,7 +3525,7 @@ export const StreetBrawler: FC = () => {
           </div>
 
           {/* Mobile touch controls */}
-          <div className="flex justify-between items-end gap-3 md:hidden px-1 pt-2 pb-1 select-none">
+          <div className="flex justify-between items-start gap-3 md:hidden px-1 pt-2 pb-1 select-none">
             {/* Left: D-pad */}
             <div className="flex gap-3">
               <button
