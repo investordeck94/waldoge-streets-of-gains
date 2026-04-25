@@ -120,16 +120,76 @@ const COMBO_WINDOW = 40; // frames to chain inputs (generous window)
 const COMBO_HIT_WINDOW = 40; // frames before combo resets
 const MAX_ENERGY = 100;
 
-const WAVES: { count: number; hp: number; speed: number }[] = [
-  { count: 3, hp: 30, speed: 1.2 },
-  { count: 4, hp: 40, speed: 1.5 },
-  { count: 5, hp: 50, speed: 1.8 },
-  { count: 3, hp: 80, speed: 2 },
-  { count: 0, hp: 0, speed: 0 }, // Boss wave
+// Each level: 2 minion waves followed by a boss. Difficulty scales per level.
+interface LevelConfig {
+  waves: { count: number; hp: number; speed: number }[]; // minion waves before boss
+  boss: { hp: number; chargeSpeed: number; aiSpeed: number; dmgMult: number };
+  name: string;
+}
+
+const LEVELS: LevelConfig[] = [
+  // Level 1 — easy intro boss
+  {
+    name: "ALLEY ROOKIE",
+    waves: [
+      { count: 2, hp: 20, speed: 1.0 },
+      { count: 3, hp: 25, speed: 1.2 },
+    ],
+    boss: { hp: 220, chargeSpeed: 4, aiSpeed: 1.2, dmgMult: 0.6 },
+  },
+  {
+    name: "BACKSTREET BRAWLER",
+    waves: [
+      { count: 3, hp: 30, speed: 1.3 },
+      { count: 3, hp: 35, speed: 1.5 },
+    ],
+    boss: { hp: 300, chargeSpeed: 4.5, aiSpeed: 1.5, dmgMult: 0.75 },
+  },
+  {
+    name: "DOCKSIDE ENFORCER",
+    waves: [
+      { count: 3, hp: 40, speed: 1.5 },
+      { count: 4, hp: 45, speed: 1.7 },
+    ],
+    boss: { hp: 380, chargeSpeed: 5, aiSpeed: 1.8, dmgMult: 0.9 },
+  },
+  {
+    name: "NEON KINGPIN",
+    waves: [
+      { count: 4, hp: 50, speed: 1.7 },
+      { count: 4, hp: 55, speed: 1.9 },
+    ],
+    boss: { hp: 460, chargeSpeed: 5.5, aiSpeed: 2.0, dmgMult: 1.0 },
+  },
+  {
+    name: "ROOFTOP REAPER",
+    waves: [
+      { count: 4, hp: 60, speed: 1.9 },
+      { count: 5, hp: 65, speed: 2.1 },
+    ],
+    boss: { hp: 560, chargeSpeed: 6, aiSpeed: 2.2, dmgMult: 1.15 },
+  },
+  {
+    name: "UNDERGROUND WARLORD",
+    waves: [
+      { count: 5, hp: 70, speed: 2.1 },
+      { count: 5, hp: 80, speed: 2.3 },
+    ],
+    boss: { hp: 680, chargeSpeed: 6.5, aiSpeed: 2.5, dmgMult: 1.3 },
+  },
+  // Level 7 — final hardest boss
+  {
+    name: "DARK DOGE OVERLORD",
+    waves: [
+      { count: 5, hp: 90, speed: 2.3 },
+      { count: 6, hp: 100, speed: 2.5 },
+    ],
+    boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5 },
+  },
 ];
 
-const BOSS_HP = 500;
-const BOSS_CHARGE_SPEED = 6;
+const WAVES_PER_LEVEL = 3; // 2 minion waves + 1 boss
+const TOTAL_LEVELS = LEVELS.length;
 
 interface Projectile {
   x: number; y: number; vx: number; vy: number; timer: number;
