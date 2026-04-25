@@ -1877,6 +1877,8 @@ export const StreetBrawler: FC = () => {
   const [sfxEnabled, setSfxEnabled] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const pausedRef = useRef(false);
+  const [showCamDebug, setShowCamDebug] = useState(false);
+  const camDebugRef = useRef(false);
   const sfxRef = useRef(true);
 
   const sfx = useCallback((fn: () => void) => {
@@ -1912,6 +1914,15 @@ export const StreetBrawler: FC = () => {
     bossIntro: BossIntro;
     healFlash: number;
     camAnchor: number;
+    debugCam: {
+      anchor: number;
+      lerp: number;
+      playerScreenX: number;
+      offset: number;
+      deadzone: number;
+      lookAhead: number;
+      vx: number;
+    };
   }>({
     player: createPlayer(),
     enemies: [],
@@ -1941,6 +1952,7 @@ export const StreetBrawler: FC = () => {
     bossIntro: { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" },
     healFlash: 0,
     camAnchor: 0.5,
+    debugCam: { anchor: 0.5, lerp: 0, playerScreenX: 0, offset: 0, deadzone: 0, lookAhead: 0, vx: 0 },
   });
 
   useEffect(() => {
@@ -2738,11 +2750,10 @@ export const StreetBrawler: FC = () => {
         }
       }
 
-      // Camera — smooth predictive look-ahead
-      // Camera follow:
-      // - Snappy when moving (player stays near center, slight look-ahead).
-      // - Sticky when stopped (deadzone + held anchor) so it doesn't jitter
-      //   as residual vx flips between tiny positive/negative values.
+      // Camera follow with screen-space deadzone + predictive look-ahead.
+      // - Anchor (sticky directional) defines where the player "wants" to sit on screen.
+      // - Deadzone band around the anchor prevents micro-adjustments.
+      // - Look-ahead scales with velocity so the view leads the player noticeably.
       const MOVE_THRESHOLD = 0.6;
       const moving = Math.abs(p.vx) > MOVE_THRESHOLD;
 
@@ -2751,20 +2762,42 @@ export const StreetBrawler: FC = () => {
         g.camAnchor = p.vx > 0 ? 0.42 : 0.58;
       }
 
-      const velLookAhead = moving ? p.vx * 14 : 0;
-      const targetCam = (p.x + velLookAhead) - CANVAS_W * g.camAnchor;
+      // Stronger velocity-based look-ahead (was 14). Scales smoothly with vx,
+      // capped so very fast movement doesn't push the player off-screen.
+      const lookAheadRaw = p.vx * 28;
+      const velLookAhead = Math.max(-160, Math.min(160, lookAheadRaw));
 
-      const dist = Math.abs(targetCam - g.camX);
-      // Deadzone: when stopped and within a few px, don't move at all.
-      if (!moving && dist < 4) {
-        // hold camera — prevents idle jitter
-      } else {
-        // Snappier lerp while moving; gentler when only correcting small drift.
+      // Player position on screen *right now*
+      const playerScreenX = p.x - g.camX;
+      const anchorScreenX = CANVAS_W * g.camAnchor;
+
+      // Deadzone: a band (in screen pixels) around the anchor where camera holds still.
+      const DEADZONE_HALF = moving ? 40 : 70; // tighter while moving, wider when idle
+      const offset = playerScreenX - anchorScreenX;
+
+      let lerpSpeed = 0;
+      let targetCam = g.camX;
+
+      if (Math.abs(offset) > DEADZONE_HALF || Math.abs(velLookAhead) > 6) {
+        // Push camera toward (player + look-ahead) anchored at anchorRatio
+        targetCam = (p.x + velLookAhead) - anchorScreenX;
+        const dist = Math.abs(targetCam - g.camX);
         const baseLerp = moving ? 0.22 : 0.08;
-        const lerpSpeed = Math.min(0.4, baseLerp + dist * 0.0008);
+        lerpSpeed = Math.min(0.4, baseLerp + dist * 0.0008);
         g.camX += (targetCam - g.camX) * lerpSpeed;
       }
       g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
+
+      // Stash debug values for overlay
+      g.debugCam = {
+        anchor: g.camAnchor,
+        lerp: lerpSpeed,
+        playerScreenX,
+        offset,
+        deadzone: DEADZONE_HALF,
+        lookAhead: velLookAhead,
+        vx: p.vx,
+      };
 
       // Draw
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
@@ -3107,6 +3140,47 @@ export const StreetBrawler: FC = () => {
         if (g.bossIntro.timer <= 0) g.bossIntro.active = false;
       }
 
+      // Camera debug overlay
+      if (camDebugRef.current) {
+        const d = g.debugCam;
+        const lines = [
+          `anchor:    ${d.anchor.toFixed(2)}  (screen ${(CANVAS_W * d.anchor).toFixed(0)}px)`,
+          `lerp:      ${d.lerp.toFixed(3)}`,
+          `playerSX:  ${d.playerScreenX.toFixed(0)}px`,
+          `offset:    ${d.offset.toFixed(0)}px  (deadzone ±${d.deadzone}px)`,
+          `lookAhead: ${d.lookAhead.toFixed(0)}px  (vx ${d.vx.toFixed(2)})`,
+          `camX:      ${g.camX.toFixed(0)}`,
+        ];
+        const padX = 8, padY = 6, lineH = 13;
+        const boxW = 230;
+        const boxH = padY * 2 + lines.length * lineH;
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(8, 8, boxW, boxH);
+        ctx.strokeStyle = "rgba(255,215,0,0.5)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(8, 8, boxW, boxH);
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "11px monospace";
+        ctx.textBaseline = "top";
+        for (let i = 0; i < lines.length; i++) {
+          ctx.fillText(lines[i], 8 + padX, 8 + padY + i * lineH);
+        }
+        ctx.textBaseline = "alphabetic";
+
+        // Visualize anchor line + deadzone band
+        const ax = CANVAS_W * d.anchor;
+        ctx.strokeStyle = "rgba(255,215,0,0.6)";
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(ax, 0); ctx.lineTo(ax, CANVAS_H); ctx.stroke();
+        ctx.strokeStyle = "rgba(0,255,180,0.35)";
+        ctx.beginPath(); ctx.moveTo(ax - d.deadzone, 0); ctx.lineTo(ax - d.deadzone, CANVAS_H); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ax + d.deadzone, 0); ctx.lineTo(ax + d.deadzone, CANVAS_H); ctx.stroke();
+        ctx.setLineDash([]);
+        // Player screen X marker
+        ctx.strokeStyle = "rgba(255,80,80,0.8)";
+        ctx.beginPath(); ctx.moveTo(d.playerScreenX, 0); ctx.lineTo(d.playerScreenX, CANVAS_H); ctx.stroke();
+      }
+
       g.animFrame = requestAnimationFrame(tick);
     };
 
@@ -3146,6 +3220,19 @@ export const StreetBrawler: FC = () => {
     <div ref={containerRef} className="flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl mx-auto relative">
       {gameState === "playing" && (
         <div className="absolute top-2 right-2 z-20 flex gap-1.5">
+          <button
+            onClick={() => {
+              const next = !camDebugRef.current;
+              camDebugRef.current = next;
+              setShowCamDebug(next);
+            }}
+            className="px-2 py-1 rounded glass-card hover:bg-muted/50 transition text-[10px] font-mono"
+            title="Toggle camera debug overlay"
+            aria-label="Toggle camera debug overlay"
+            style={{ color: showCamDebug ? "#FFD700" : undefined }}
+          >
+            CAM
+          </button>
           <button
             onClick={() => {
               const next = !pausedRef.current;
