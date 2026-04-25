@@ -604,12 +604,12 @@ function drawCandleMinion(ctx: CanvasRenderingContext2D, e: Entity, camX: number
 
   ctx.restore();
 
-  // HP bar above flame
+  // HP bar above flame — small/subtle
   if (e.state !== "dead") {
-    const barW = 50;
-    const barH = 5;
+    const barW = 28;
+    const barH = 3;
     const barX = sx - barW / 2;
-    const barY = sy + wickTop - 18;
+    const barY = sy + wickTop - 12;
     // Background + border
     ctx.fillStyle = "#000";
     ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
@@ -618,11 +618,6 @@ function drawCandleMinion(ctx: CanvasRenderingContext2D, e: Entity, camX: number
     // Fill
     ctx.fillStyle = e.hp > e.maxHp * 0.4 ? "#ff4040" : "#ffaa00";
     ctx.fillRect(barX, barY, barW * (e.hp / e.maxHp), barH);
-    // HP number
-    ctx.font = "bold 8px monospace";
-    ctx.fillStyle = "#ffffff";
-    ctx.textAlign = "center";
-    ctx.fillText(`${Math.max(0, Math.ceil(e.hp))}`, sx, barY - 2);
   }
 }
 
@@ -2295,7 +2290,7 @@ export const StreetBrawler: FC = () => {
         // Enemy attack hit
         if ((e.state === "punch" && e.stateTimer === 8) || (e.state === "kick" && e.stateTimer === 10)) {
           const range = e.state === "punch" ? 40 : 50;
-          const dmg = e.state === "punch" ? 2 : 3;
+          const dmg = e.state === "punch" ? 1 : 1;
           const edx = p.x - e.x;
           if (edx * e.facing > 0 && Math.abs(edx) < range && Math.abs(p.y - e.y) < 50 && p.state !== "dead") {
             sfx(() => SFX.hit());
@@ -2364,7 +2359,7 @@ export const StreetBrawler: FC = () => {
           const dy = Math.abs(p.y - proj.y);
           if (dx < 25 && dy < 35 && p.state !== "dead") {
             sfx(() => SFX.hit());
-            p.hp -= 12;
+            p.hp -= 6;
             p.state = "hit";
             p.stateTimer = 10;
             p.vx = proj.vx > 0 ? 4 : -4;
@@ -2372,7 +2367,7 @@ export const StreetBrawler: FC = () => {
             c.multiplier = 1;
             setComboCount(0);
             setPlayerHp(Math.max(0, p.hp));
-            g.effects.push({ x: proj.x, y: proj.y - 20, timer: 20, text: "12", color: "#ff4444", size: 14 });
+            g.effects.push({ x: proj.x, y: proj.y - 20, timer: 20, text: "6", color: "#ff4444", size: 14 });
             if (p.hp <= 0) {
               p.state = "dead";
               g.running = false;
