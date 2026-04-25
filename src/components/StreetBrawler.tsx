@@ -2834,6 +2834,12 @@ export const StreetBrawler: FC = () => {
 
       // Draw
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+      // Apply camera shake offset (visual only — does not affect game state).
+      // Shake stays inside save/restore so the debug overlay below is unaffected.
+      ctx.save();
+      if (g.camShake.x !== 0 || g.camShake.y !== 0) {
+        ctx.translate(g.camShake.x, g.camShake.y);
+      }
       const currentTheme = LEVELS[Math.min(g.level, LEVELS.length - 1)].theme;
       drawScene(ctx, currentTheme, g.camX, CANVAS_W, g.animFrameCount);
 
