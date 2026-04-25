@@ -2794,16 +2794,18 @@ export const StreetBrawler: FC = () => {
       const moving = Math.abs(vxSmooth) > MOVE_THRESHOLD;
 
       // Persist last "moving" anchor so stopping doesn't re-snap the camera.
+      // Pushed hard toward the trailing edge while moving (player at ~1/4 of
+      // the screen) so ~half the screen is always visible AHEAD of the player.
       if (moving) {
-        g.camAnchor = vxSmooth > 0 ? 0.42 : 0.58;
+        g.camAnchor = vxSmooth > 0 ? 0.25 : 0.75;
       }
 
       // Preset-driven feel
       const snappy = g.camPreset === "snappy";
-      // snappy: fast in, fast out, less look-ahead so it stays tight to player
-      // buttery: slower easing, larger look-ahead, wider deadzone so it drifts
-      const lookAheadMult = snappy ? 24 : 36;
-      const lookAheadCap = snappy ? 140 : 200;
+      // Look-ahead now contributes up to ~half the screen on top of the
+      // already-aggressive anchor offset, so the world clearly leads the player.
+      const lookAheadMult = snappy ? 40 : 55;
+      const lookAheadCap = snappy ? CANVAS_W * 0.4 : CANVAS_W * 0.5;
       const lookAheadRaw = vxSmooth * lookAheadMult;
       const velLookAhead = Math.max(-lookAheadCap, Math.min(lookAheadCap, lookAheadRaw));
 
