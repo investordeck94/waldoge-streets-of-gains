@@ -3,6 +3,7 @@ import waldogeMusic from "@/assets/waldoge-music.mp3";
 import { motion, AnimatePresence } from "framer-motion";
 import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize, Pause } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
+import streetBrawlerCover from "@/assets/street-brawler-cover.png";
 import jeetBossHead from "@/assets/jeet-boss-head.png";
 import badActorBossHead from "@/assets/badactor-boss-head.png";
 import ruggerBossHead from "@/assets/rugger-boss-head.png";
@@ -3594,8 +3595,7 @@ export const StreetBrawler: FC = () => {
             exit={{ opacity: 0 }}
             className="glass-card p-8 text-center space-y-6"
           >
-            <img src={waldogeHead} alt="Waldoge" className="w-24 h-24 mx-auto object-contain" />
-            <h3 className="text-2xl font-bold text-primary font-heading">WALDOGE STREET BRAWLER</h3>
+            <img src={streetBrawlerCover} alt="Waldoge Street Brawl" className="w-full max-w-md mx-auto object-contain rounded-lg shadow-2xl" />
             <p className="text-muted-foreground text-sm max-w-md mx-auto">
               Battle through 7 levels of red candle goons. Each level ends with a tougher boss — survive them all!
             </p>
