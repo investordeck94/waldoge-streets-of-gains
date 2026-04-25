@@ -972,6 +972,7 @@ export const StreetBrawler: FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<"menu" | "playing" | "gameover" | "victory">("menu");
   const [wave, setWave] = useState(0);
+  const [level, setLevel] = useState(0);
   const [score, setScore] = useState(0);
   const [playerHp, setPlayerHp] = useState(100);
   const [comboCount, setComboCount] = useState(0);
