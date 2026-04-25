@@ -1848,6 +1848,7 @@ export const StreetBrawler: FC = () => {
     rain: RainDrop[];
     splashes: Splash[];
     bossIntro: BossIntro;
+    healFlash: number;
   }>({
     player: createPlayer(),
     enemies: [],
@@ -1875,6 +1876,7 @@ export const StreetBrawler: FC = () => {
     rain: [],
     splashes: [],
     bossIntro: { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" },
+    healFlash: 0,
   });
 
   useEffect(() => {
@@ -1901,6 +1903,7 @@ export const StreetBrawler: FC = () => {
     g.weaponTimer = 0;
     g.shurikenAmmo = 0;
     g.bossIntro = { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" };
+    g.healFlash = 0;
     // Spawn weapon pickups along the level (varied types)
     g.weapons = [
       { x: 600, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
@@ -2614,10 +2617,15 @@ export const StreetBrawler: FC = () => {
             // Fully heal player between levels (reward)
             p.hp = p.maxHp;
             setPlayerHp(p.hp);
+            g.healFlash = 60;
             g.effects.push({
               x: p.x, y: p.y - 110, timer: 120,
               text: `LEVEL ${g.level + 1}: ${LEVELS[g.level].name}`,
               color: "#FFD700", size: 22,
+            });
+            g.effects.push({
+              x: p.x, y: p.y - 80, timer: 90,
+              text: "♥ FULL HP", color: "#22ff66", size: 18,
             });
             sfx(() => SFX.waveStart());
             g.enemies = spawnEnemies(g.level, 0, p.x);
@@ -2959,6 +2967,44 @@ export const StreetBrawler: FC = () => {
       }
 
       drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType);
+
+      // Heal flash: expanding green ring + glow around player when fully healed at level start
+      if (g.healFlash > 0) {
+        const t = g.healFlash / 60; // 1 -> 0
+        const progress = 1 - t;
+        const px = p.x - g.camX;
+        const py = p.y - p.height / 2;
+        const ringR = 20 + progress * 90;
+        ctx.save();
+        ctx.globalAlpha = t;
+        ctx.strokeStyle = "#22ff66";
+        ctx.lineWidth = 4;
+        ctx.shadowColor = "#22ff66";
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(px, py, ringR, 0, Math.PI * 2);
+        ctx.stroke();
+        // Inner pulse
+        ctx.globalAlpha = t * 0.4;
+        ctx.fillStyle = "#22ff66";
+        ctx.beginPath();
+        ctx.arc(px, py, 30 + Math.sin(progress * Math.PI) * 12, 0, Math.PI * 2);
+        ctx.fill();
+        // Floating sparkle hearts
+        ctx.globalAlpha = t;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = "#aaffcc";
+        ctx.font = "bold 14px sans-serif";
+        ctx.textAlign = "center";
+        for (let i = 0; i < 4; i++) {
+          const ang = (i / 4) * Math.PI * 2 + progress * Math.PI;
+          const r = 35 + progress * 30;
+          ctx.fillText("♥", px + Math.cos(ang) * r, py + Math.sin(ang) * r - progress * 20);
+        }
+        ctx.restore();
+        g.healFlash -= 1;
+      }
+
       drawHitEffects(ctx, g.effects, g.camX);
 
       // Boss intro banner overlay (drawn last, above everything)
