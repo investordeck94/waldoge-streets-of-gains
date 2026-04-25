@@ -1085,6 +1085,7 @@ export const StreetBrawler: FC = () => {
     }
     g.splashes = [];
     setWave(0);
+    setLevel(0);
     setScore(0);
     setPlayerHp(100);
     setComboCount(0);
