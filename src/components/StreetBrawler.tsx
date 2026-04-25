@@ -2156,23 +2156,73 @@ export const StreetBrawler: FC = () => {
         const px = pu.x - g.camX;
         const py = pu.y;
         const bob = Math.sin(Date.now() / 200) * 3;
+        const flashing = pu.timer < 120 && Math.floor(pu.timer / 10) % 2 === 0;
+        ctx.save();
+        if (flashing) ctx.globalAlpha = 0.4;
+
         // Glow
         ctx.beginPath();
-        ctx.arc(px, py - 10 + bob, 14, 0, Math.PI * 2);
-        const glow = ctx.createRadialGradient(px, py - 10 + bob, 2, px, py - 10 + bob, 14);
+        ctx.arc(px, py - 10 + bob, 16, 0, Math.PI * 2);
+        const glow = ctx.createRadialGradient(px, py - 10 + bob, 2, px, py - 10 + bob, 16);
         glow.addColorStop(0, POWERUP_COLORS[pu.type] + "88");
         glow.addColorStop(1, POWERUP_COLORS[pu.type] + "00");
         ctx.fillStyle = glow;
         ctx.fill();
-        // Icon
-        ctx.font = "16px serif";
-        ctx.textAlign = "center";
-        ctx.fillText(POWERUP_ICONS[pu.type], px, py - 5 + bob);
-        // Despawn warning flash
-        if (pu.timer < 120 && Math.floor(pu.timer / 10) % 2 === 0) {
-          ctx.globalAlpha = 0.3;
+
+        if (pu.type === "health") {
+          // Green candle health pickup — matches red minion style but green
+          const cx = px;
+          const baseY = py - 2 + bob;
+          const candleW = 12;
+          const candleH = 18;
+          const wickLen = 4;
+
+          // Candle body
+          ctx.fillStyle = "#1ec24a";
+          ctx.fillRect(cx - candleW / 2, baseY - candleH, candleW, candleH);
+          // Highlight stripe
+          ctx.fillStyle = "#7cff8c";
+          ctx.fillRect(cx - candleW / 2 + 1, baseY - candleH + 2, 2, candleH - 4);
+          // Side shadow
+          ctx.fillStyle = "#0d6b1c";
+          ctx.fillRect(cx + candleW / 2 - 2, baseY - candleH + 2, 1, candleH - 4);
+          // Top rim
+          ctx.fillStyle = "#b6ffc4";
+          ctx.fillRect(cx - candleW / 2 + 1, baseY - candleH + 1, candleW - 2, 1.5);
+          // Outline
+          ctx.strokeStyle = "#062b0d";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(cx - candleW / 2, baseY - candleH, candleW, candleH);
+          // Wick
+          ctx.strokeStyle = "#1a1a1a";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx, baseY - candleH);
+          ctx.lineTo(cx, baseY - candleH - wickLen);
+          ctx.stroke();
+          // Flame (flicker)
+          const flick = Math.sin(Date.now() / 90 + cx * 0.05) * 0.8;
+          const fY = baseY - candleH - wickLen;
+          ctx.beginPath();
+          ctx.moveTo(cx, fY - 8 - flick);
+          ctx.bezierCurveTo(4, fY - 4, 3, fY + 1, cx, fY + 1);
+          ctx.bezierCurveTo(cx - 3, fY + 1, cx - 4, fY - 4, cx, fY - 8 - flick);
+          ctx.fillStyle = "#ff8a1a";
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(cx, fY - 5 - flick * 0.5);
+          ctx.bezierCurveTo(cx + 2, fY - 2, cx + 1.5, fY, cx, fY);
+          ctx.bezierCurveTo(cx - 1.5, fY, cx - 2, fY - 2, cx, fY - 5 - flick * 0.5);
+          ctx.fillStyle = "#ffe14a";
+          ctx.fill();
+        } else {
+          // Other power-ups keep emoji icon
+          ctx.font = "16px serif";
+          ctx.textAlign = "center";
+          ctx.fillStyle = "#fff";
+          ctx.fillText(POWERUP_ICONS[pu.type], px, py - 5 + bob);
         }
-        ctx.globalAlpha = 1;
+        ctx.restore();
       }
 
       // Draw weapon pickups on ground
