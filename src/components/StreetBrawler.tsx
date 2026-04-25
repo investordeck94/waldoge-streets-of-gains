@@ -2806,7 +2806,11 @@ export const StreetBrawler: FC = () => {
       // anchor to the other side of the screen. Player sits at ~1/4 screen
       // facing right (or 3/4 facing left), with ~half the view ahead.
       if (movingForward) {
-        g.camAnchor = p.facing > 0 ? 0.25 : 0.75;
+        const targetAnchor = p.facing > 0 ? 0.12 : 0.88; // push further forward
+        g.camAnchor += (targetAnchor - g.camAnchor) * 0.2;
+      } else {
+        const neutralAnchor = p.facing > 0 ? 0.25 : 0.75;
+        g.camAnchor += (neutralAnchor - g.camAnchor) * 0.1;
       }
 
       // Preset-driven feel
