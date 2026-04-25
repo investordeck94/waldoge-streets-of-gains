@@ -1727,6 +1727,7 @@ export const StreetBrawler: FC = () => {
     animFrameCount: number;
     rain: RainDrop[];
     splashes: Splash[];
+    bossIntro: BossIntro;
   }>({
     player: createPlayer(),
     enemies: [],
@@ -1753,6 +1754,7 @@ export const StreetBrawler: FC = () => {
     animFrameCount: 0,
     rain: [],
     splashes: [],
+    bossIntro: { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" },
   });
 
   useEffect(() => {
@@ -2505,11 +2507,15 @@ export const StreetBrawler: FC = () => {
             if (isBossWave) {
               g.enemies = [spawnBoss(p.x, g.level)];
               g.projectiles = [];
-              g.effects.push({
-                x: p.x, y: p.y - 100, timer: 90,
-                text: `⚠ BOSS — ${LEVELS[g.level].name} ⚠`,
-                color: "#ff0000", size: 22,
-              });
+              // Trigger animated boss intro banner
+              g.bossIntro = {
+                active: true,
+                timer: 150,
+                total: 150,
+                level: g.level,
+                bossName: LEVELS[g.level].boss.name,
+                levelName: LEVELS[g.level].name,
+              };
               sfx(() => SFX.bossEntrance());
             } else {
               sfx(() => SFX.waveStart());
@@ -2537,7 +2543,8 @@ export const StreetBrawler: FC = () => {
 
       // Draw
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-      drawCity(ctx, g.camX, CANVAS_W, g.animFrameCount);
+      const currentTheme = LEVELS[Math.min(g.level, LEVELS.length - 1)].theme;
+      drawScene(ctx, currentTheme, g.camX, CANVAS_W, g.animFrameCount);
 
       // Draw alley objects (crates, trash cans)
       for (const obj of g.alleyObjects) {
