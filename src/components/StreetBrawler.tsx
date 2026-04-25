@@ -1995,6 +1995,8 @@ export const StreetBrawler: FC = () => {
     setComboCount(0);
     setComboName("");
     setEnergy(50);
+    pausedRef.current = false;
+    setIsPaused(false);
     setGameState("playing");
   }, []);
 
