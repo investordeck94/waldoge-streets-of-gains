@@ -20,11 +20,11 @@ interface HeaderProps {
 
 const tabs = [
   { id: "chat", label: "Chat", icon: Dog },
+  { id: "brawler", label: "Street Brawler", icon: Swords },
   { id: "raid", label: "Raid Generator", icon: Zap },
   { id: "meme", label: "Meme Generator", icon: Sparkles },
   { id: "tokens", label: "Token Listings", icon: Coins },
   { id: "game", label: "Find Waldoge", icon: Gamepad2 },
-  { id: "brawler", label: "Street Brawler", icon: Swords },
   { id: "about", label: "About", icon: null },
 ];
 
