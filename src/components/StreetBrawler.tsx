@@ -2648,14 +2648,16 @@ export const StreetBrawler: FC = () => {
       }
 
       // Camera — smooth predictive look-ahead
-      // Use velocity to predict where player is heading
+      // Anchor based on actual MOVEMENT direction (vx), not facing direction.
+      // This prevents the camera from snapping backwards when the player runs
+      // forward while facing an enemy behind them (vx and facing can differ).
       const velLookAhead = p.vx * 25;
-      // Anchor: when moving right, player sits at 25% from left (shows 75% ahead)
-      // When moving left, player sits at 75% from left (shows 75% behind = ahead in left dir)
-      // When idle, center at 40%
       let anchorRatio = 0.4;
-      if (p.facing > 0) anchorRatio = 0.25;
-      else if (p.facing < 0) anchorRatio = 0.75;
+      const MOVE_THRESHOLD = 0.5;
+      if (p.vx > MOVE_THRESHOLD) anchorRatio = 0.25;
+      else if (p.vx < -MOVE_THRESHOLD) anchorRatio = 0.75;
+      else if (p.facing > 0) anchorRatio = 0.35;
+      else if (p.facing < 0) anchorRatio = 0.55;
       const targetCam = (p.x + velLookAhead) - CANVAS_W * anchorRatio;
       // Adaptive lerp: snappier when far away
       const dist = Math.abs(targetCam - g.camX);
