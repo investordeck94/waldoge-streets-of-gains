@@ -1970,6 +1970,11 @@ export const StreetBrawler: FC = () => {
     img.onload = () => { gameRef.current.headImg = img; };
   }, []);
 
+  // Sync camera preset into game ref so the loop reads it without re-mounting
+  useEffect(() => {
+    gameRef.current.camPreset = camPreset;
+  }, [camPreset]);
+
   const startGame = useCallback(() => {
     const g = gameRef.current;
     g.player = createPlayer();
