@@ -992,6 +992,7 @@ export const StreetBrawler: FC = () => {
     keyJustPressed: Set<string>;
     camX: number;
     wave: number;
+    level: number;
     score: number;
     headImg: HTMLImageElement | null;
     animFrame: number;
