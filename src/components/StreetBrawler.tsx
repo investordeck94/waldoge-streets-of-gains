@@ -1911,6 +1911,7 @@ export const StreetBrawler: FC = () => {
     splashes: Splash[];
     bossIntro: BossIntro;
     healFlash: number;
+    camAnchor: number;
   }>({
     player: createPlayer(),
     enemies: [],
