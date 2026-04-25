@@ -1,4 +1,5 @@
 import { FC, useEffect, useRef, useState, useCallback } from "react";
+import waldogeMusic from "@/assets/waldoge-music.mp3";
 import { motion, AnimatePresence } from "framer-motion";
 import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize, Pause } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
@@ -1881,6 +1882,43 @@ export const StreetBrawler: FC = () => {
   const camDebugRef = useRef(false);
   const [camPreset, setCamPreset] = useState<"snappy" | "buttery">("snappy");
   const sfxRef = useRef(true);
+  const musicRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize background music element once
+  useEffect(() => {
+    const audio = new Audio(waldogeMusic);
+    audio.loop = true;
+    audio.volume = 0.35;
+    musicRef.current = audio;
+    return () => {
+      audio.pause();
+      musicRef.current = null;
+    };
+  }, []);
+
+  // Play/pause music based on game state and pause status
+  useEffect(() => {
+    const audio = musicRef.current;
+    if (!audio) return;
+    if (gameState === "playing" && !isPaused && sfxEnabled) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+      if (gameState !== "playing" || gameState === "playing" && false) {
+        // reset to start when leaving play
+      }
+    }
+    if (gameState !== "playing") {
+      audio.currentTime = 0;
+    }
+  }, [gameState, isPaused, sfxEnabled]);
+
+  // Sync mute toggle with music volume
+  useEffect(() => {
+    const audio = musicRef.current;
+    if (!audio) return;
+    audio.muted = !sfxEnabled;
+  }, [sfxEnabled]);
 
   const sfx = useCallback((fn: () => void) => {
     if (sfxRef.current) fn();
