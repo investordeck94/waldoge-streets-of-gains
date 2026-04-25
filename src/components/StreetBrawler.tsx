@@ -3,11 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
 import jeetBossHead from "@/assets/jeet-boss-head.png";
+import badActorBossHead from "@/assets/badactor-boss-head.png";
 import { SFX } from "@/lib/gameSfx";
 
 // Preloaded boss head images
 const jeetHeadImg: HTMLImageElement | null =
   typeof window !== "undefined" ? (() => { const i = new Image(); i.src = jeetBossHead; return i; })() : null;
+const badActorHeadImg: HTMLImageElement | null =
+  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = badActorBossHead; return i; })() : null;
 
 type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
   | "uppercut" | "spinkick" | "groundpound" | "dashpunch"
