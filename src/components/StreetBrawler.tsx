@@ -1877,6 +1877,8 @@ export const StreetBrawler: FC = () => {
   const [sfxEnabled, setSfxEnabled] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const pausedRef = useRef(false);
+  const [showCamDebug, setShowCamDebug] = useState(false);
+  const camDebugRef = useRef(false);
   const sfxRef = useRef(true);
 
   const sfx = useCallback((fn: () => void) => {
