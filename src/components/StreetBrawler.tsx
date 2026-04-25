@@ -2740,17 +2740,18 @@ export const StreetBrawler: FC = () => {
       // Anchor based on actual MOVEMENT direction (vx), not facing direction.
       // This prevents the camera from snapping backwards when the player runs
       // forward while facing an enemy behind them (vx and facing can differ).
-      const velLookAhead = p.vx * 25;
-      let anchorRatio = 0.4;
+      // Keep player centered-ish so the world clearly scrolls with him.
+      const velLookAhead = p.vx * 18;
+      let anchorRatio = 0.5;
       const MOVE_THRESHOLD = 0.5;
-      if (p.vx > MOVE_THRESHOLD) anchorRatio = 0.25;
-      else if (p.vx < -MOVE_THRESHOLD) anchorRatio = 0.75;
-      else if (p.facing > 0) anchorRatio = 0.35;
+      if (p.vx > MOVE_THRESHOLD) anchorRatio = 0.4;       // moving right → show more ahead
+      else if (p.vx < -MOVE_THRESHOLD) anchorRatio = 0.6;  // moving left → show more ahead
+      else if (p.facing > 0) anchorRatio = 0.45;
       else if (p.facing < 0) anchorRatio = 0.55;
       const targetCam = (p.x + velLookAhead) - CANVAS_W * anchorRatio;
-      // Adaptive lerp: snappier when far away
+      // Adaptive lerp: snappier overall so the world clearly tracks the player
       const dist = Math.abs(targetCam - g.camX);
-      const lerpSpeed = Math.min(0.15, 0.04 + dist * 0.0004);
+      const lerpSpeed = Math.min(0.25, 0.12 + dist * 0.0006);
       g.camX += (targetCam - g.camX) * lerpSpeed;
       g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
 
