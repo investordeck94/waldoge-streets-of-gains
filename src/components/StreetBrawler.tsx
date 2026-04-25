@@ -3,11 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
 import jeetBossHead from "@/assets/jeet-boss-head.png";
+import badActorBossHead from "@/assets/badactor-boss-head.png";
 import { SFX } from "@/lib/gameSfx";
 
 // Preloaded boss head images
 const jeetHeadImg: HTMLImageElement | null =
   typeof window !== "undefined" ? (() => { const i = new Image(); i.src = jeetBossHead; return i; })() : null;
+const badActorHeadImg: HTMLImageElement | null =
+  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = badActorBossHead; return i; })() : null;
 
 type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
   | "uppercut" | "spinkick" | "groundpound" | "dashpunch"
@@ -252,12 +255,15 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
     ctx.fill();
   }
 
-  // Head — use JEET image for level 1 boss, skull for others
-  const isJeet = e.bossName === "JEET";
-  if (isJeet && jeetHeadImg && jeetHeadImg.complete && jeetHeadImg.naturalWidth > 0) {
+  // Head — use custom image for specific bosses, skull for others
+  const customHead =
+    e.bossName === "JEET" ? jeetHeadImg
+    : e.bossName === "BAD ACTOR" ? badActorHeadImg
+    : null;
+  if (customHead && customHead.complete && customHead.naturalWidth > 0) {
     const imgSize = headR * 3.2;
     if (e.state === "dead") ctx.globalAlpha *= 0.6;
-    ctx.drawImage(jeetHeadImg, -imgSize / 2, headCY - imgSize / 2, imgSize, imgSize);
+    ctx.drawImage(customHead, -imgSize / 2, headCY - imgSize / 2, imgSize, imgSize);
   } else {
     ctx.beginPath();
     ctx.arc(0, headCY, headR, 0, Math.PI * 2);
