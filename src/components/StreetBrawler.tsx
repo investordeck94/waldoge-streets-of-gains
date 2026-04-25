@@ -2811,21 +2811,26 @@ export const StreetBrawler: FC = () => {
 
       // Preset-driven feel
       const snappy = g.camPreset === "snappy";
-      const lookAheadMult = snappy ? 40 : 55;
-      const lookAheadCap = snappy ? CANVAS_W * 0.4 : CANVAS_W * 0.5;
 
-      // Look-ahead only contributes when moving FORWARD. When retreating,
-      // shrink it heavily and ease it back toward 0 to prevent drift.
+      // Simple direction-based fixed offset:
+      //   camera.x = player.x + (direction * offset)
+      // The camera sits a fixed distance ahead of the player based on
+      // facing/movement direction. No velocity scaling — clean and predictable.
+      const FIXED_OFFSET = snappy ? 100 : 120;
       let lookAheadTarget = 0;
       if (movingForward) {
-        const lookAheadRaw = vxSmooth * lookAheadMult;
-        lookAheadTarget = Math.max(-lookAheadCap, Math.min(lookAheadCap, lookAheadRaw));
+        // Lead in the direction the player is moving
+        lookAheadTarget = p.facing * FIXED_OFFSET;
       } else if (movingBackward) {
-        // Tiny bias only — keeps a hint of motion without yanking the camera
-        lookAheadTarget = vxSmooth * 6;
+        // Retreating: hold last forward bias, decay slowly toward 0
+        lookAheadTarget = 0;
+      } else {
+        // Idle: keep current bias, ease back to neutral
+        lookAheadTarget = 0;
       }
-      // Smooth the look-ahead itself so direction changes don't snap the view
-      g.camLookAhead += (lookAheadTarget - g.camLookAhead) * 0.12;
+      // Ease toward target so direction flips don't snap the view
+      const lookAheadEase = movingForward ? 0.10 : 0.05;
+      g.camLookAhead += (lookAheadTarget - g.camLookAhead) * lookAheadEase;
       const velLookAhead = g.camLookAhead;
 
       const playerScreenX = p.x - g.camX;
