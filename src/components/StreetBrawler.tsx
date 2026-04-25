@@ -2040,6 +2040,23 @@ export const StreetBrawler: FC = () => {
 
     const tick = () => {
       if (!g.running) return;
+      if (pausedRef.current) {
+        // Draw pause overlay over the last frame and skip simulation
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "bold 48px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("PAUSED", CANVAS_W / 2, CANVAS_H / 2 - 10);
+        ctx.fillStyle = "#fff";
+        ctx.font = "14px monospace";
+        ctx.fillText("Tap Resume to continue", CANVAS_W / 2, CANVAS_H / 2 + 30);
+        ctx.textAlign = "start";
+        ctx.textBaseline = "alphabetic";
+        g.animFrame = requestAnimationFrame(tick);
+        return;
+      }
       g.animFrameCount++;
       const p = g.player;
       const c = g.combo;
