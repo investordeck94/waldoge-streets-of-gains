@@ -947,8 +947,9 @@ function createPlayer(): Entity {
   };
 }
 
-function spawnEnemies(waveIndex: number, playerX: number): Entity[] {
-  const w = WAVES[waveIndex];
+function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number): Entity[] {
+  const lvl = LEVELS[Math.min(levelIndex, LEVELS.length - 1)];
+  const w = lvl?.waves[waveIndex];
   if (!w) return [];
   return Array.from({ length: w.count }, (_, i) => ({
     x: playerX + 400 + i * 150 + Math.random() * 200,
