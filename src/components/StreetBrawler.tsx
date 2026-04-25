@@ -2524,8 +2524,7 @@ export const StreetBrawler: FC = () => {
             </div>
           </div>
 
-          <div className="flex justify-between items-center glass-card px-4 py-2 text-sm">
-            <div className="flex items-center gap-2">
+          <div className="flex justify-between items-center glass-card px-4 py-2 text-sm flex-wrap gap-2">
             {comboCount > 1 && (
               <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
             )}
