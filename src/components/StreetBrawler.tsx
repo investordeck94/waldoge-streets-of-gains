@@ -2152,7 +2152,7 @@ export const StreetBrawler: FC = () => {
               <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
             )}
             <span className="text-primary font-bold">
-              {wave === WAVES.length - 1 ? "⚠ BOSS" : `Wave ${wave + 1}/${WAVES.length}`}
+              {`L${level + 1}/${TOTAL_LEVELS} · ${wave >= LEVELS[level].waves.length ? "⚠ BOSS" : `W${wave + 1}/${LEVELS[level].waves.length}`}`}
             </span>
             <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
             <button
