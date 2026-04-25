@@ -2816,7 +2816,7 @@ export const StreetBrawler: FC = () => {
       //   camera.x = player.x + (direction * offset)
       // The camera sits a fixed distance ahead of the player based on
       // facing/movement direction. No velocity scaling — clean and predictable.
-      const FIXED_OFFSET = snappy ? 100 : 120;
+      const FIXED_OFFSET = snappy ? 160 : 220;
       let lookAheadTarget = 0;
       if (movingForward) {
         // Lead in the direction the player is moving
@@ -2828,34 +2828,41 @@ export const StreetBrawler: FC = () => {
         // Idle: keep current bias, ease back to neutral
         lookAheadTarget = 0;
       }
-      // Ease toward target so direction flips don't snap the view
-      const lookAheadEase = movingForward ? 0.10 : 0.05;
+      // Ease toward target — snap forward fast, decay gently
+      const lookAheadEase = movingForward ? 0.25 : 0.08;
       g.camLookAhead += (lookAheadTarget - g.camLookAhead) * lookAheadEase;
       const velLookAhead = g.camLookAhead;
 
       const playerScreenX = p.x - g.camX;
       const anchorScreenX = CANVAS_W * g.camAnchor;
 
-      // Deadzone (tighter when moving). Buttery uses a larger band overall.
+      // Deadzone — collapses tight when moving forward so the camera
+      // commits to leading; wider when idle to avoid micro-jitter.
       const DEADZONE_HALF = snappy
-        ? (moving ? 40 : 70)
-        : (moving ? 60 : 100);
+        ? (movingForward ? 20 : moving ? 40 : 70)
+        : (movingForward ? 30 : moving ? 60 : 100);
       const offset = playerScreenX - anchorScreenX;
 
       let lerpSpeed = 0;
       let targetCam = g.camX;
 
-      if (Math.abs(offset) > DEADZONE_HALF || Math.abs(velLookAhead) > 6) {
+      if (Math.abs(offset) > DEADZONE_HALF || Math.abs(velLookAhead) > 6 || movingForward) {
         targetCam = (p.x + velLookAhead) - anchorScreenX;
-        const dist = Math.abs(targetCam - g.camX);
-        // Asymmetric easing: faster when ENTERING movement, gentler when settling.
-        const enteringMovement = moving && Math.abs(offset) > DEADZONE_HALF;
-        const baseLerp = snappy
-          ? (enteringMovement ? 0.28 : moving ? 0.22 : 0.08)
-          : (enteringMovement ? 0.14 : moving ? 0.10 : 0.04);
-        const maxLerp = snappy ? 0.4 : 0.22;
-        lerpSpeed = Math.min(maxLerp, baseLerp + dist * 0.0008);
-        g.camX += (targetCam - g.camX) * lerpSpeed;
+
+        if (movingForward) {
+          // Aggressive forward chase — camera commits to leading the player.
+          g.camX += (targetCam - g.camX) * 0.35;
+        } else {
+          const dist = Math.abs(targetCam - g.camX);
+          // Asymmetric easing: faster when ENTERING movement, gentler when settling.
+          const enteringMovement = moving && Math.abs(offset) > DEADZONE_HALF;
+          const baseLerp = snappy
+            ? (enteringMovement ? 0.28 : moving ? 0.22 : 0.08)
+            : (enteringMovement ? 0.14 : moving ? 0.10 : 0.04);
+          const maxLerp = snappy ? 0.4 : 0.22;
+          lerpSpeed = Math.min(maxLerp, baseLerp + dist * 0.0008);
+          g.camX += (targetCam - g.camX) * lerpSpeed;
+        }
       }
       g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
 
