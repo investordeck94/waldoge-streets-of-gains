@@ -357,6 +357,248 @@ const COMBOS: { inputs: string[]; move: AttackState; name: string }[] = [
   { inputs: ["j", "k", "j"], move: "dashpunch", name: "DASH PUNCH!" },
 ];
 
+// Red candle-stickman minion: cylindrical candle body, flame on head,
+// angry eyes, glove fists, stick limbs. Inspired by user reference image.
+function drawCandleMinion(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
+  const sx = e.x - camX;
+  const sy = e.y;
+  if (sx < -80 || sx > CANVAS_W + 80) return;
+
+  const candleW = 22;        // body width
+  const headLen = 28;        // upper candle segment height
+  const torsoLen = 22;       // lower candle segment height
+  const limbLen = 22;
+  const wickLen = 8;
+
+  // Vertical layout (relative to feet at y=sy)
+  const hipY = -limbLen;                 // top of legs
+  const torsoTop = hipY - torsoLen;      // top of lower segment
+  const gap = 10;                        // visible neck gap between segments
+  const headBottom = torsoTop - gap;     // bottom of head/upper candle
+  const headTop = headBottom - headLen;  // top of upper candle
+  const wickTop = headTop - wickLen;     // tip where flame sits
+
+  ctx.save();
+  ctx.translate(sx, sy);
+
+  if (e.state === "hit") ctx.globalAlpha = 0.7;
+  if (e.state === "dead") {
+    ctx.rotate((e.facing * Math.PI) / 3);
+    ctx.globalAlpha = 0.4;
+  }
+
+  // ---- Helpers ----
+  const candleRed = e.state === "dead" ? "#5a1010" : "#d42020";
+  const candleHi = e.state === "dead" ? "#7a2020" : "#ff6464";
+  const candleSh = e.state === "dead" ? "#3a0808" : "#8a0d0d";
+  const outline = "#3a0000";
+
+  function drawCandleSegment(cy: number, h: number, w: number) {
+    // Body
+    ctx.fillStyle = candleRed;
+    ctx.fillRect(-w / 2, cy, w, h);
+    // Highlight stripe
+    ctx.fillStyle = candleHi;
+    ctx.fillRect(-w / 2 + 2, cy + 2, 3, h - 4);
+    // Side shadow
+    ctx.fillStyle = candleSh;
+    ctx.fillRect(w / 2 - 3, cy + 2, 2, h - 4);
+    // Outline
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(-w / 2, cy, w, h);
+    // Top rim band
+    ctx.fillStyle = "#ffb0b0";
+    ctx.fillRect(-w / 2 + 1, cy + 1, w - 2, 2);
+    // Bottom rim shadow
+    ctx.fillStyle = candleSh;
+    ctx.fillRect(-w / 2 + 1, cy + h - 3, w - 2, 2);
+  }
+
+  // ---- Lower segment (torso) ----
+  drawCandleSegment(torsoTop, torsoLen, candleW);
+
+  // ---- Upper segment (head) ----
+  drawCandleSegment(headBottom - headLen, headLen, candleW);
+
+  // ---- Angry eyes on head segment ----
+  if (e.state !== "dead") {
+    ctx.fillStyle = "#000";
+    // Slanted eyebrow + eye for angry look
+    ctx.save();
+    // Left eye
+    ctx.translate(-5, headBottom - headLen / 2 + 1);
+    ctx.rotate(-0.35 * e.facing);
+    ctx.fillRect(-3, -1, 6, 3);
+    ctx.restore();
+    // Right eye
+    ctx.save();
+    ctx.translate(5, headBottom - headLen / 2 + 1);
+    ctx.rotate(0.35 * e.facing);
+    ctx.fillRect(-3, -1, 6, 3);
+    ctx.restore();
+  }
+
+  // ---- Wick ----
+  ctx.strokeStyle = "#1a1a1a";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, headTop);
+  ctx.lineTo(0, wickTop);
+  ctx.stroke();
+
+  // ---- Flame (animated flicker) ----
+  if (e.state !== "dead") {
+    const flicker = Math.sin(Date.now() / 90 + sx * 0.05) * 1.2;
+    const fY = wickTop;
+    // Outer orange flame
+    ctx.beginPath();
+    ctx.moveTo(0, fY - 14 - flicker);
+    ctx.bezierCurveTo(7, fY - 8, 5, fY + 2, 0, fY + 2);
+    ctx.bezierCurveTo(-5, fY + 2, -7, fY - 8, 0, fY - 14 - flicker);
+    ctx.fillStyle = "#ff6a00";
+    ctx.fill();
+    // Inner yellow
+    ctx.beginPath();
+    ctx.moveTo(0, fY - 9 - flicker * 0.6);
+    ctx.bezierCurveTo(3.5, fY - 5, 3, fY, 0, fY);
+    ctx.bezierCurveTo(-3, fY, -3.5, fY - 5, 0, fY - 9 - flicker * 0.6);
+    ctx.fillStyle = "#ffd000";
+    ctx.fill();
+    // Flame glow
+    const glow = ctx.createRadialGradient(0, fY - 6, 1, 0, fY - 6, 18);
+    glow.addColorStop(0, "rgba(255, 180, 60, 0.35)");
+    glow.addColorStop(1, "rgba(255, 180, 60, 0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(0, fY - 6, 18, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ---- Arms (stick) with red glove fists ----
+  const shoulderL = -candleW / 2 + 1;
+  const shoulderR = candleW / 2 - 1;
+  const shoulderY = torsoTop + 4;
+
+  // Compute hand positions based on state
+  let lHandX = shoulderL - limbLen * 0.7;
+  let lHandY = shoulderY + limbLen * 0.6;
+  let rHandX = shoulderR + limbLen * 0.7;
+  let rHandY = shoulderY + limbLen * 0.6;
+
+  if (e.state === "punch") {
+    // Front fist forward, back hand low
+    if (e.facing > 0) {
+      rHandX = shoulderR + limbLen * 1.4;
+      rHandY = shoulderY - 2;
+      lHandX = shoulderL - limbLen * 0.4;
+      lHandY = shoulderY + limbLen * 0.7;
+    } else {
+      lHandX = shoulderL - limbLen * 1.4;
+      lHandY = shoulderY - 2;
+      rHandX = shoulderR + limbLen * 0.4;
+      rHandY = shoulderY + limbLen * 0.7;
+    }
+  } else if (e.state === "kick") {
+    lHandX = shoulderL - limbLen * 0.5;
+    lHandY = shoulderY + limbLen * 0.3;
+    rHandX = shoulderR + limbLen * 0.5;
+    rHandY = shoulderY + limbLen * 0.3;
+  } else if (e.state === "walk") {
+    const sw = Math.sin(Date.now() / 150) * 6;
+    lHandY += sw;
+    rHandY -= sw;
+  }
+
+  // Draw arm sticks
+  ctx.strokeStyle = candleRed;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(shoulderL, shoulderY);
+  ctx.lineTo(lHandX, lHandY);
+  ctx.moveTo(shoulderR, shoulderY);
+  ctx.lineTo(rHandX, rHandY);
+  ctx.stroke();
+
+  // Glove fists
+  function drawFist(fx: number, fy: number) {
+    ctx.beginPath();
+    ctx.arc(fx, fy, 5, 0, Math.PI * 2);
+    ctx.fillStyle = candleRed;
+    ctx.fill();
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    // Highlight
+    ctx.beginPath();
+    ctx.arc(fx - 1.5, fy - 1.5, 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#ff8080";
+    ctx.fill();
+  }
+  drawFist(lHandX, lHandY);
+  drawFist(rHandX, rHandY);
+
+  // ---- Legs ----
+  let lFootX = -candleW / 4 - 4;
+  let lFootY = 0;
+  let rFootX = candleW / 4 + 4;
+  let rFootY = 0;
+
+  if (e.state === "kick") {
+    if (e.facing > 0) {
+      rFootX = candleW / 2 + limbLen * 1.2;
+      rFootY = -8;
+    } else {
+      lFootX = -candleW / 2 - limbLen * 1.2;
+      lFootY = -8;
+    }
+  } else if (e.state === "jump" || e.state === "uppercut") {
+    lFootY = -limbLen * 0.4;
+    rFootY = -limbLen * 0.4;
+  } else if (e.state === "walk") {
+    const sw = Math.sin(Date.now() / 150) * 6;
+    lFootX += sw;
+    rFootX -= sw;
+  }
+
+  ctx.strokeStyle = candleRed;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-candleW / 4, hipY);
+  ctx.lineTo(lFootX, lFootY);
+  ctx.moveTo(candleW / 4, hipY);
+  ctx.lineTo(rFootX, rFootY);
+  ctx.stroke();
+
+  // Shoe blobs
+  function drawShoe(fx: number, fy: number, dir: number) {
+    ctx.beginPath();
+    ctx.ellipse(fx + dir * 3, fy, 6, 3, 0, 0, Math.PI * 2);
+    ctx.fillStyle = candleRed;
+    ctx.fill();
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  }
+  drawShoe(lFootX, lFootY, -1);
+  drawShoe(rFootX, rFootY, 1);
+
+  ctx.restore();
+
+  // HP bar above flame
+  if (e.state !== "dead") {
+    const barW = 36;
+    const barH = 3;
+    const barX = sx - barW / 2;
+    const barY = sy + wickTop - 14;
+    ctx.fillStyle = "#1a0000";
+    ctx.fillRect(barX, barY, barW, barH);
+    ctx.fillStyle = e.hp > e.maxHp * 0.4 ? "#ff4040" : "#ffaa00";
+    ctx.fillRect(barX, barY, barW * (e.hp / e.maxHp), barH);
+  }
+}
+
+
 function drawStickFigure(
   ctx: CanvasRenderingContext2D,
   e: Entity,
