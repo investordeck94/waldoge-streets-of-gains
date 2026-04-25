@@ -2017,6 +2017,20 @@ export const StreetBrawler: FC = () => {
         if (g.keys.has("d") || g.keys.has("arrowright")) p.facing = 1;
       }
 
+      // Shuriken throw: press L on ground with shuriken equipped (must run before key clear)
+      if (g.weaponType === "shuriken" && g.shurikenAmmo > 0 && g.keyJustPressed.has("l") && p.y >= GROUND_Y - 5 && p.state !== "dead") {
+        g.shurikenAmmo--;
+        sfx(() => SFX.shurikenThrow());
+        g.projectiles.push({
+          x: p.x + p.facing * 20, y: p.y - 40,
+          vx: p.facing * 9, vy: 0,
+          timer: 90,
+          isPlayerProjectile: true,
+        });
+        g.effects.push({ x: p.x, y: p.y - 60, timer: 20, text: "✦", color: "#cc44ff", size: 14 });
+        if (g.shurikenAmmo <= 0) { g.weaponType = null; g.weaponTimer = 0; }
+      }
+
       g.keyJustPressed.clear();
 
       // Player physics
@@ -2492,19 +2506,6 @@ export const StreetBrawler: FC = () => {
         return wp.timer > 0;
       });
 
-      // Shuriken throw: press L on ground with shuriken equipped
-      if (g.weaponType === "shuriken" && g.shurikenAmmo > 0 && g.keyJustPressed.has("l") && p.y >= GROUND_Y - 5 && p.state !== "dead") {
-        g.shurikenAmmo--;
-        sfx(() => SFX.shurikenThrow());
-        g.projectiles.push({
-          x: p.x + p.facing * 20, y: p.y - 40,
-          vx: p.facing * 9, vy: 0,
-          timer: 90,
-          isPlayerProjectile: true,
-        });
-        g.effects.push({ x: p.x, y: p.y - 60, timer: 20, text: "✦", color: "#cc44ff", size: 14 });
-        if (g.shurikenAmmo <= 0) { g.weaponType = null; g.weaponTimer = 0; }
-      }
       if (g.speedBoostTimer > 0) {
         // Speed boost handled by multiplying movement in the movement section
       }
