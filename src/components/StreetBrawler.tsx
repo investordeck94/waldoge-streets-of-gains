@@ -2846,23 +2846,20 @@ export const StreetBrawler: FC = () => {
       let lerpSpeed = 0;
       let targetCam = g.camX;
 
-      if (Math.abs(offset) > DEADZONE_HALF || Math.abs(velLookAhead) > 6 || movingForward) {
+      if (movingForward) {
+        // FORCE forward camera push (ignore deadzone) — commits to leading.
         targetCam = (p.x + velLookAhead) - anchorScreenX;
-
-        if (movingForward) {
-          // Aggressive forward chase — camera commits to leading the player.
-          g.camX += (targetCam - g.camX) * 0.35;
-        } else {
-          const dist = Math.abs(targetCam - g.camX);
-          // Asymmetric easing: faster when ENTERING movement, gentler when settling.
-          const enteringMovement = moving && Math.abs(offset) > DEADZONE_HALF;
-          const baseLerp = snappy
-            ? (enteringMovement ? 0.28 : moving ? 0.22 : 0.08)
-            : (enteringMovement ? 0.14 : moving ? 0.10 : 0.04);
-          const maxLerp = snappy ? 0.4 : 0.22;
-          lerpSpeed = Math.min(maxLerp, baseLerp + dist * 0.0008);
-          g.camX += (targetCam - g.camX) * lerpSpeed;
-        }
+        g.camX += (targetCam - g.camX) * 0.35;
+      } else if (Math.abs(offset) > DEADZONE_HALF) {
+        // Normal behaviour for idle / backwards motion.
+        targetCam = (p.x + velLookAhead) - anchorScreenX;
+        const dist = Math.abs(targetCam - g.camX);
+        const baseLerp = snappy
+          ? (moving ? 0.22 : 0.08)
+          : (moving ? 0.10 : 0.04);
+        const maxLerp = snappy ? 0.4 : 0.22;
+        lerpSpeed = Math.min(maxLerp, baseLerp + dist * 0.0008);
+        g.camX += (targetCam - g.camX) * lerpSpeed;
       }
       g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
 
