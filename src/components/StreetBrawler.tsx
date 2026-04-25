@@ -1848,6 +1848,7 @@ export const StreetBrawler: FC = () => {
     rain: RainDrop[];
     splashes: Splash[];
     bossIntro: BossIntro;
+    healFlash: number;
   }>({
     player: createPlayer(),
     enemies: [],
