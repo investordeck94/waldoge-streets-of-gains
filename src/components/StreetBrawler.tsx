@@ -3286,6 +3286,14 @@ export const StreetBrawler: FC = () => {
       {gameState === "playing" && (
         <div className="absolute top-2 right-2 z-20 flex gap-1.5">
           <button
+            onClick={() => setCamPreset((p) => (p === "snappy" ? "buttery" : "snappy"))}
+            className="px-2 py-1 rounded glass-card hover:bg-muted/50 transition text-[10px] font-mono text-primary"
+            title={`Camera feel: ${camPreset.toUpperCase()} — click to toggle`}
+            aria-label="Toggle camera preset"
+          >
+            {camPreset === "snappy" ? "SNAPPY" : "BUTTERY"}
+          </button>
+          <button
             onClick={() => {
               const next = !camDebugRef.current;
               camDebugRef.current = next;
