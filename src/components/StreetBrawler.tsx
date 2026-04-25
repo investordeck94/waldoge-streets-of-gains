@@ -2825,7 +2825,7 @@ export const StreetBrawler: FC = () => {
         lookAheadTarget = vxSmooth * 6;
       }
       // Smooth the look-ahead itself so direction changes don't snap the view
-      g.camLookAhead = (g.camLookAhead ?? 0) + (lookAheadTarget - (g.camLookAhead ?? 0)) * 0.12;
+      g.camLookAhead += (lookAheadTarget - g.camLookAhead) * 0.12;
       const velLookAhead = g.camLookAhead;
 
       const playerScreenX = p.x - g.camX;
