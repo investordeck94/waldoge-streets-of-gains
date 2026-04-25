@@ -1879,6 +1879,7 @@ export const StreetBrawler: FC = () => {
   const pausedRef = useRef(false);
   const [showCamDebug, setShowCamDebug] = useState(false);
   const camDebugRef = useRef(false);
+  const [camPreset, setCamPreset] = useState<"snappy" | "buttery">("snappy");
   const sfxRef = useRef(true);
 
   const sfx = useCallback((fn: () => void) => {
