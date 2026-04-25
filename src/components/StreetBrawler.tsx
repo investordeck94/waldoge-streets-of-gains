@@ -327,7 +327,51 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
 
   ctx.restore();
 
-  // Boss HP bar — large, at top of screen (drawn separately)
+  // Above-head HP bar (floats with boss)
+  if (e.state !== "dead") {
+    const barW = 90;
+    const barH = 8;
+    const barX = sx - barW / 2;
+    const barY = sy - bodyLen - limbLen - headR * 2 - 28;
+    const hpPct = Math.max(0, e.hp / e.maxHp);
+    const phase = e.bossPhase || 1;
+    const hpColor = phase >= 3 ? "#ff0000" : phase >= 2 ? "#ff6600" : "#cc00ff";
+
+    // Outer shadow/border
+    ctx.fillStyle = "#000";
+    ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
+    // Track
+    ctx.fillStyle = "#2a0a0a";
+    ctx.fillRect(barX, barY, barW, barH);
+    // Fill
+    ctx.fillStyle = hpColor;
+    ctx.fillRect(barX, barY, barW * hpPct, barH);
+    // Glossy highlight
+    ctx.fillStyle = "rgba(255,255,255,0.25)";
+    ctx.fillRect(barX, barY, barW * hpPct, 2);
+    // Bright border
+    ctx.strokeStyle = "#ff4444";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(barX - 0.5, barY - 0.5, barW + 1, barH + 1);
+
+    // Boss name above the bar
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "center";
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#000";
+    ctx.fillStyle = "#ffd700";
+    const label = `☠ ${e.bossName || "BOSS"}`;
+    ctx.strokeText(label, sx, barY - 5);
+    ctx.fillText(label, sx, barY - 5);
+
+    // HP number under the bar
+    ctx.font = "bold 9px monospace";
+    ctx.lineWidth = 2.5;
+    ctx.fillStyle = "#ffffff";
+    const hpTxt = `${Math.max(0, Math.ceil(e.hp))} / ${e.maxHp}`;
+    ctx.strokeText(hpTxt, sx, barY + barH + 10);
+    ctx.fillText(hpTxt, sx, barY + barH + 10);
+  }
 }
 
 function drawBossHpBar(ctx: CanvasRenderingContext2D, boss: Entity, canvasW: number) {
@@ -2230,7 +2274,7 @@ export const StreetBrawler: FC = () => {
 
           if (bossHitFrame) {
             const range = e.state === "boss_slam" ? 100 : e.state === "boss_charge" ? 60 : 55;
-            const baseDmg = e.state === "boss_slam" ? 10 : e.state === "boss_charge" ? 8 : e.state === "punch" ? 5 : 6;
+            const baseDmg = e.state === "boss_slam" ? 6 : e.state === "boss_charge" ? 5 : e.state === "punch" ? 3 : 4;
             const dmg = Math.max(2, Math.round(baseDmg * bossCfg.dmgMult));
             const edx = p.x - e.x;
             const inRange = e.state === "boss_slam"
@@ -2359,7 +2403,7 @@ export const StreetBrawler: FC = () => {
           const dy = Math.abs(p.y - proj.y);
           if (dx < 25 && dy < 35 && p.state !== "dead") {
             sfx(() => SFX.hit());
-            p.hp -= 6;
+            p.hp -= 4;
             p.state = "hit";
             p.stateTimer = 10;
             p.vx = proj.vx > 0 ? 4 : -4;
@@ -2367,7 +2411,7 @@ export const StreetBrawler: FC = () => {
             c.multiplier = 1;
             setComboCount(0);
             setPlayerHp(Math.max(0, p.hp));
-            g.effects.push({ x: proj.x, y: proj.y - 20, timer: 20, text: "6", color: "#ff4444", size: 14 });
+            g.effects.push({ x: proj.x, y: proj.y - 20, timer: 20, text: "4", color: "#ff4444", size: 14 });
             if (p.hp <= 0) {
               p.state = "dead";
               g.running = false;
