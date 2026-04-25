@@ -2466,7 +2466,7 @@ export const StreetBrawler: FC = () => {
             <img src={waldogeHead} alt="Waldoge" className="w-24 h-24 mx-auto object-contain" />
             <h3 className="text-2xl font-bold text-primary font-heading">WALDOGE STREET BRAWLER</h3>
             <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              Fight through waves of thugs! Chain attacks for combos and unleash devastating special moves!
+              Battle through 7 levels of red candle goons. Each level ends with a tougher boss — survive them all!
             </p>
             <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto text-xs text-muted-foreground">
               <div className="glass-card p-2">A/D — Move</div>
