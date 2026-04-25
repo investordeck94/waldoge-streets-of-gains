@@ -1444,6 +1444,7 @@ export const StreetBrawler: FC = () => {
 
         // Boss AI
         if (e.isBoss) {
+          const bossCfg = LEVELS[Math.min(g.level, LEVELS.length - 1)].boss;
           // Update boss phase based on HP
           if (e.hp <= e.maxHp * 0.3) e.bossPhase = 3;
           else if (e.hp <= e.maxHp * 0.6) e.bossPhase = 2;
@@ -1455,37 +1456,32 @@ export const StreetBrawler: FC = () => {
             const dx = p.x - e.x;
             const dist = Math.abs(dx);
             e.facing = dx > 0 ? 1 : -1;
-            const phaseSpeed = 1.5 + (e.bossPhase || 1) * 0.5;
+            const phaseSpeed = bossCfg.aiSpeed + (e.bossPhase || 1) * 0.4;
 
             if (e.attackCooldown <= 0) {
-              // Choose attack based on distance and phase
               const phase = e.bossPhase || 1;
+              const cdScale = Math.max(0.55, 1.25 - g.level * 0.1);
               if (dist > 250 && phase >= 2) {
-                // Charge attack
                 e.state = "boss_charge";
                 e.stateTimer = 30;
                 sfx(() => SFX.bossCharge());
-                e.attackCooldown = 50 - phase * 8;
+                e.attackCooldown = Math.round((50 - phase * 8) * cdScale);
               } else if (dist > 150) {
-                // Throw projectile
                 e.state = "boss_throw";
                 e.stateTimer = 20;
-                e.attackCooldown = 40 - phase * 5;
+                e.attackCooldown = Math.round((40 - phase * 5) * cdScale);
               } else if (dist < 80) {
-                // Slam (AOE)
                 e.state = "boss_slam";
                 e.stateTimer = 25;
                 sfx(() => SFX.bossSlam());
-                e.attackCooldown = 45 - phase * 8;
+                e.attackCooldown = Math.round((45 - phase * 8) * cdScale);
               } else {
-                // Regular attacks
                 const atk = Math.random() > 0.5 ? "punch" : "kick";
                 e.state = atk;
                 e.stateTimer = atk === "punch" ? 14 : 17;
-                e.attackCooldown = 25 - phase * 3;
+                e.attackCooldown = Math.round((25 - phase * 3) * cdScale);
               }
             } else {
-              // Walk toward player
               if (dist > 60) {
                 e.x += e.facing * phaseSpeed;
                 e.state = "walk";
@@ -1497,7 +1493,7 @@ export const StreetBrawler: FC = () => {
 
           // Boss charge movement
           if (e.state === "boss_charge" && e.stateTimer > 5) {
-            e.x += e.facing * BOSS_CHARGE_SPEED;
+            e.x += e.facing * bossCfg.chargeSpeed;
           }
 
           // Boss attack hit detection
