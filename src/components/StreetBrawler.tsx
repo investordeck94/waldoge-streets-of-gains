@@ -1914,6 +1914,10 @@ export const StreetBrawler: FC = () => {
     bossIntro: BossIntro;
     healFlash: number;
     camAnchor: number;
+    camPreset: "snappy" | "buttery";
+    vxAvg: number;
+    vxHistory: number[];
+    camShake: { x: number; y: number; magnitude: number; timer: number };
     debugCam: {
       anchor: number;
       lerp: number;
