@@ -196,11 +196,12 @@ interface Projectile {
   isPlayerProjectile?: boolean;
 }
 
-function spawnBoss(playerX: number): Entity {
+function spawnBoss(playerX: number, levelIndex: number): Entity {
+  const cfg = LEVELS[Math.min(levelIndex, LEVELS.length - 1)].boss;
   return {
     x: playerX + 500, y: GROUND_Y, vy: 0, vx: 0,
     width: 50, height: 90, facing: -1,
-    hp: BOSS_HP, maxHp: BOSS_HP,
+    hp: cfg.hp, maxHp: cfg.hp,
     state: "idle", stateTimer: 0, attackCooldown: 60,
     isBoss: true, bossPhase: 1, aiTimer: 90,
   };
