@@ -1780,6 +1780,7 @@ export const StreetBrawler: FC = () => {
     g.weaponType = null;
     g.weaponTimer = 0;
     g.shurikenAmmo = 0;
+    g.bossIntro = { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" };
     // Spawn weapon pickups along the level (varied types)
     g.weapons = [
       { x: 600, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
@@ -2836,6 +2837,13 @@ export const StreetBrawler: FC = () => {
 
       drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType);
       drawHitEffects(ctx, g.effects, g.camX);
+
+      // Boss intro banner overlay (drawn last, above everything)
+      if (g.bossIntro.active) {
+        drawBossIntro(ctx, g.bossIntro, CANVAS_W, CANVAS_H);
+        g.bossIntro.timer -= 1;
+        if (g.bossIntro.timer <= 0) g.bossIntro.active = false;
+      }
 
       g.animFrame = requestAnimationFrame(tick);
     };
