@@ -2793,21 +2793,37 @@ export const StreetBrawler: FC = () => {
       const MOVE_THRESHOLD = 0.6;
       const moving = Math.abs(vxSmooth) > MOVE_THRESHOLD;
 
-      // Persist last "moving" anchor so stopping doesn't re-snap the camera.
-      // Pushed hard toward the trailing edge while moving (player at ~1/4 of
-      // the screen) so ~half the screen is always visible AHEAD of the player.
-      if (moving) {
-        g.camAnchor = vxSmooth > 0 ? 0.25 : 0.75;
+      // Direction analysis: is the player moving FORWARD (same dir as facing)
+      // or BACKWARD (retreating)?  Look-ahead only grows on forward motion;
+      // on backward motion it stays small so the camera doesn't drift back.
+      const movingForward = moving && Math.sign(vxSmooth) === p.facing;
+      const movingBackward = moving && Math.sign(vxSmooth) !== p.facing;
+
+      // Persist last "moving forward" anchor so retreating doesn't flip the
+      // anchor to the other side of the screen. Player sits at ~1/4 screen
+      // facing right (or 3/4 facing left), with ~half the view ahead.
+      if (movingForward) {
+        g.camAnchor = p.facing > 0 ? 0.25 : 0.75;
       }
 
       // Preset-driven feel
       const snappy = g.camPreset === "snappy";
-      // Look-ahead now contributes up to ~half the screen on top of the
-      // already-aggressive anchor offset, so the world clearly leads the player.
       const lookAheadMult = snappy ? 40 : 55;
       const lookAheadCap = snappy ? CANVAS_W * 0.4 : CANVAS_W * 0.5;
-      const lookAheadRaw = vxSmooth * lookAheadMult;
-      const velLookAhead = Math.max(-lookAheadCap, Math.min(lookAheadCap, lookAheadRaw));
+
+      // Look-ahead only contributes when moving FORWARD. When retreating,
+      // shrink it heavily and ease it back toward 0 to prevent drift.
+      let lookAheadTarget = 0;
+      if (movingForward) {
+        const lookAheadRaw = vxSmooth * lookAheadMult;
+        lookAheadTarget = Math.max(-lookAheadCap, Math.min(lookAheadCap, lookAheadRaw));
+      } else if (movingBackward) {
+        // Tiny bias only — keeps a hint of motion without yanking the camera
+        lookAheadTarget = vxSmooth * 6;
+      }
+      // Smooth the look-ahead itself so direction changes don't snap the view
+      g.camLookAhead = (g.camLookAhead ?? 0) + (lookAheadTarget - (g.camLookAhead ?? 0)) * 0.12;
+      const velLookAhead = g.camLookAhead;
 
       const playerScreenX = p.x - g.camX;
       const anchorScreenX = CANVAS_W * g.camAnchor;
