@@ -2509,6 +2509,9 @@ export const StreetBrawler: FC = () => {
               c.multiplier = 1;
               setComboCount(0);
               setPlayerHp(Math.max(0, p.hp));
+              // Boss hit screen shake — slam is the heaviest
+              const bossShakeMag = e.state === "boss_slam" ? 11 : e.state === "boss_charge" ? 8 : 6;
+              g.camShake = { x: 0, y: 0, magnitude: bossShakeMag, timer: 18 };
               g.effects.push({
                 x: p.x, y: p.y - 50, timer: 25,
                 text: `${dmg}`, color: "#ff0000", size: 18,
