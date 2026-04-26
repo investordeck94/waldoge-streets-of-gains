@@ -1970,7 +1970,8 @@ export const StreetBrawler: FC = () => {
     camPreset: "snappy" | "buttery";
     vxAvg: number;
     vxHistory: number[];
-    camShake: { x: number; y: number; magnitude: number; timer: number };
+    camShake: { x: number; y: number; magnitude: number; timer: number; duration: number };
+    hitPause: number;
     debugCam: {
       anchor: number;
       lerp: number;
