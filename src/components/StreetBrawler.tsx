@@ -2394,6 +2394,17 @@ export const StreetBrawler: FC = () => {
 
             // Hit effect
             sfx(() => SFX.comboHit(c.hitCount));
+
+            // Per-hit screen shake by attack tier (light/medium/heavy)
+            // Light: punch. Medium: kick/specials. Heavy: groundpound (already triggered above).
+            if (p.state === "punch") {
+              triggerShake(2.5, 6);
+            } else if (p.state === "kick") {
+              triggerShake(4, 9);
+            } else if (spec && p.state !== "groundpound") {
+              triggerShake(5, 10);
+            }
+
             g.effects.push({
               x: e.x, y: e.y - 50, timer: 25,
               text: c.hitCount > 2 ? `${dmg} x${c.hitCount}` : `${dmg}`,
