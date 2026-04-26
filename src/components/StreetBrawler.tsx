@@ -8,6 +8,7 @@ import jeetBossHead from "@/assets/jeet-boss-head.png";
 import badActorBossHead from "@/assets/badactor-boss-head.png";
 import ruggerBossHead from "@/assets/rugger-boss-head.png";
 import fudderBossHead from "@/assets/boss-fudder-head.png";
+import exitLiquidityBossHead from "@/assets/boss-exit-liquidity-head.png";
 import { SFX } from "@/lib/gameSfx";
 
 // Preloaded boss head images
@@ -19,6 +20,8 @@ const ruggerHeadImg: HTMLImageElement | null =
   typeof window !== "undefined" ? (() => { const i = new Image(); i.src = ruggerBossHead; return i; })() : null;
 const fudderHeadImg: HTMLImageElement | null =
   typeof window !== "undefined" ? (() => { const i = new Image(); i.src = fudderBossHead; return i; })() : null;
+const exitLiquidityHeadImg: HTMLImageElement | null =
+  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = exitLiquidityBossHead; return i; })() : null;
 
 type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
   | "uppercut" | "spinkick" | "groundpound" | "dashpunch"
@@ -269,6 +272,7 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
     : e.bossName === "BAD ACTOR" ? badActorHeadImg
     : e.bossName === "RUGGER" ? ruggerHeadImg
     : e.bossName === "FUDDER" ? fudderHeadImg
+    : e.bossName === "EXIT LIQUIDITY" ? exitLiquidityHeadImg
     : null;
   if (customHead && customHead.complete && customHead.naturalWidth > 0) {
     const imgSize = headR * 3.2;
