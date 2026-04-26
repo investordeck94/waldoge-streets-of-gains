@@ -2384,6 +2384,7 @@ export const StreetBrawler: FC = () => {
           g.lightChain.index++;
           g.lightChain.lastFrame = g.animFrameCount;
           g.currentMove = move;
+          g.hitApplied = false;
           // Total animation = recovery (already includes startup), scaled by style speed
           const totalFrames = Math.max(4, Math.round(msToFrames(move.recovery) / fightStyle.speed));
           // Active hit window scales with hitstun & style speed (Rush snappier, Muay Thai longer)
