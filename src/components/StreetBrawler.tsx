@@ -1889,6 +1889,7 @@ export const StreetBrawler: FC = () => {
   const [comboCount, setComboCount] = useState(0);
   const [comboName, setComboName] = useState("");
   const [energy, setEnergy] = useState(0);
+  const [styleName, setStyleName] = useState<StyleName>("brawler");
   const [sfxEnabled, setSfxEnabled] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const pausedRef = useRef(false);
