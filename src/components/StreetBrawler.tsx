@@ -2252,7 +2252,7 @@ export const StreetBrawler: FC = () => {
               p.state = combo.move;
               p.stateTimer = spec.frames;
               p.attackCooldown = spec.frames + 5;
-              c.specialEnergy -= spec.energyCost;
+              c.specialEnergy -= Math.round(spec.energyCost * fightStyle.staminaCost);
               c.inputs = [];
               setEnergy(c.specialEnergy);
               setComboName(combo.name);
@@ -2288,7 +2288,7 @@ export const StreetBrawler: FC = () => {
         p.stateTimer = SPECIAL_ATTACKS.groundpound.frames;
         p.attackCooldown = SPECIAL_ATTACKS.groundpound.frames + 5;
         p.vy = 15;
-        c.specialEnergy -= SPECIAL_ATTACKS.groundpound.energyCost;
+        c.specialEnergy -= Math.round(SPECIAL_ATTACKS.groundpound.energyCost * fightStyle.staminaCost);
         setEnergy(c.specialEnergy);
         setComboName("GROUND POUND!");
         g.effects.push({ x: p.x, y: p.y - 80, timer: 40, text: "GROUND POUND!", color: "#ff6600", size: 18 });
@@ -2299,17 +2299,19 @@ export const StreetBrawler: FC = () => {
 
       // Player movement & basic attacks (blocked during attack animations)
       if (p.state !== "hit" && p.state !== "dead" && !isAttacking && !didSpecial) {
-        const speed = PLAYER_SPEED * (g.speedBoostTimer > 0 ? 1.6 : 1);
+        const speed = PLAYER_SPEED * (g.speedBoostTimer > 0 ? 1.6 : 1) * fightStyle.speed;
         let moving = false;
         if (g.keys.has("a") || g.keys.has("arrowleft")) { p.x -= speed; p.facing = -1; moving = true; }
         if (g.keys.has("d") || g.keys.has("arrowright")) { p.x += speed; p.facing = 1; moving = true; }
         if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && p.y >= GROUND_Y) p.vy = JUMP_FORCE;
 
         if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
-          p.state = "punch"; p.stateTimer = 12; p.attackCooldown = 14;
+          const punchFrames = Math.max(4, Math.round(12 / fightStyle.speed));
+          p.state = "punch"; p.stateTimer = punchFrames; p.attackCooldown = punchFrames + 2;
           sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.punch());
         } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
-          p.state = "kick"; p.stateTimer = 15; p.attackCooldown = 17;
+          const kickFrames = Math.max(5, Math.round(15 / fightStyle.speed));
+          p.state = "kick"; p.stateTimer = kickFrames; p.attackCooldown = kickFrames + 2;
           sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.kick());
         } else if (p.stateTimer <= 0) {
           p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
