@@ -1965,6 +1965,8 @@ export const StreetBrawler: FC = () => {
     style: StyleName;
     lightChain: { index: number; lastFrame: number };
     currentMove: Move | null;
+    attackActive: boolean;
+    attackActiveFrames: number;
     alleyObjects: AlleyObject[];
     animFrameCount: number;
     rain: RainDrop[];
@@ -2012,6 +2014,8 @@ export const StreetBrawler: FC = () => {
     style: "brawler",
     lightChain: { index: 0, lastFrame: -9999 },
     currentMove: null,
+    attackActive: false,
+    attackActiveFrames: 0,
     alleyObjects: [],
     animFrameCount: 0,
     rain: [],
