@@ -2619,9 +2619,12 @@ export const StreetBrawler: FC = () => {
             }
           }
         }
-        // Clear move + active flag so the same press can't double-hit on a later frame
+        // Mark hit as applied so the same press can't double-hit on a later frame
+        // within the active window. currentMove is kept so the alley-object loop below
+        // can still read range/damage; it's nulled when the next attack overwrites it
+        // or the animation ends naturally.
         if (!spec) {
-          g.currentMove = null;
+          g.hitApplied = true;
           g.attackActive = false;
         }
         } // end else (spec || (currentMove && attackActive))
