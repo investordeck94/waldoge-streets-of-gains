@@ -2314,15 +2314,33 @@ export const StreetBrawler: FC = () => {
         if (g.keys.has("d") || g.keys.has("arrowright")) { p.x += speed; p.facing = 1; moving = true; }
         if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && p.y >= GROUND_Y) p.vy = JUMP_FORCE;
 
+        // Reset light-chain index after CHAIN_RESET_MS of inactivity
+        const chainResetFrames = msToFrames(CHAIN_RESET_MS);
+        if (g.animFrameCount - g.lightChain.lastFrame > chainResetFrames) {
+          g.lightChain.index = 0;
+        }
+
         if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
-          const punchFrames = Math.max(4, Math.round(12 / fightStyle.speed));
-          p.state = "punch"; p.stateTimer = punchFrames; p.attackCooldown = punchFrames + 2;
+          // Light attack — chains through style's light moveset (jab → straight → hook for brawler)
+          const lightSet = MOVE_SETS[g.style].light;
+          const move = lightSet[g.lightChain.index % lightSet.length];
+          g.lightChain.index++;
+          g.lightChain.lastFrame = g.animFrameCount;
+          g.currentMove = move;
+          // Total animation = recovery (already includes startup), scaled by style speed
+          const totalFrames = Math.max(4, Math.round(msToFrames(move.recovery) / fightStyle.speed));
+          p.state = "punch"; p.stateTimer = totalFrames; p.attackCooldown = totalFrames + 2;
           sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.punch());
         } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
-          const kickFrames = Math.max(5, Math.round(15 / fightStyle.speed));
-          p.state = "kick"; p.stateTimer = kickFrames; p.attackCooldown = kickFrames + 2;
+          // Heavy attack — single move per style (uppercut/dash strike/roundhouse)
+          const heavySet = MOVE_SETS[g.style].heavy;
+          const move = heavySet[0];
+          g.currentMove = move;
+          const totalFrames = Math.max(5, Math.round(msToFrames(move.recovery) / fightStyle.speed));
+          p.state = "kick"; p.stateTimer = totalFrames; p.attackCooldown = totalFrames + 2;
           sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.kick());
         } else if (p.stateTimer <= 0) {
+          g.currentMove = null;
           p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
         }
       } else if (p.state !== "hit" && p.state !== "dead" && !isAttacking && didSpecial) {
