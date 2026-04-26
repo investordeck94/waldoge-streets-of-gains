@@ -2380,13 +2380,18 @@ export const StreetBrawler: FC = () => {
           g.currentMove = move;
           // Total animation = recovery (already includes startup), scaled by style speed
           const totalFrames = Math.max(4, Math.round(msToFrames(move.recovery) / fightStyle.speed));
+          // Active hit window scales with hitstun & style speed (Rush snappier, Muay Thai longer)
+          const activeFrames = Math.max(2, Math.round(msToFrames(move.hitstun) / fightStyle.speed));
+          g.attackActive = true;
+          g.attackActiveFrames = activeFrames;
           p.state = "punch"; p.stateTimer = totalFrames; p.attackCooldown = totalFrames + 2;
           sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.punch());
           if (import.meta.env.DEV) {
             console.log("[Brawler] STYLE:", g.style);
             console.log("[Brawler] INPUT: light");
             console.log("[Brawler] MOVE:", move.name, move, `chain=${g.lightChain.index - 1}`);
-            console.log("[Brawler] MOVESET:", MOVE_SETS[g.style]);
+            console.log("[Brawler] CURRENT MOVE:", g.currentMove);
+            console.log("[Brawler] STATE TIMER:", p.stateTimer, "ACTIVE FRAMES:", activeFrames);
           }
         } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
           // Heavy attack — single move per style (uppercut/dash strike/roundhouse)
@@ -2394,16 +2399,21 @@ export const StreetBrawler: FC = () => {
           const move = heavySet[0];
           g.currentMove = move;
           const totalFrames = Math.max(5, Math.round(msToFrames(move.recovery) / fightStyle.speed));
+          const activeFrames = Math.max(2, Math.round(msToFrames(move.hitstun) / fightStyle.speed));
+          g.attackActive = true;
+          g.attackActiveFrames = activeFrames;
           p.state = "kick"; p.stateTimer = totalFrames; p.attackCooldown = totalFrames + 2;
           sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.kick());
           if (import.meta.env.DEV) {
             console.log("[Brawler] STYLE:", g.style);
             console.log("[Brawler] INPUT: heavy");
             console.log("[Brawler] MOVE:", move.name, move);
-            console.log("[Brawler] MOVESET:", MOVE_SETS[g.style]);
+            console.log("[Brawler] CURRENT MOVE:", g.currentMove);
+            console.log("[Brawler] STATE TIMER:", p.stateTimer, "ACTIVE FRAMES:", activeFrames);
           }
         } else if (p.stateTimer <= 0) {
-          g.currentMove = null;
+          // NOTE: don't null currentMove here — it's cleared after damage applies
+          // (or when a new attack overwrites it). Nulling here can race the hit-frame check.
           p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
         }
       } else if (p.state !== "hit" && p.state !== "dead" && !isAttacking && didSpecial) {
