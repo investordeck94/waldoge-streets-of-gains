@@ -2017,6 +2017,7 @@ export const StreetBrawler: FC = () => {
     currentMove: null,
     attackActive: false,
     attackActiveFrames: 0,
+    hitApplied: false,
     alleyObjects: [],
     animFrameCount: 0,
     rain: [],
