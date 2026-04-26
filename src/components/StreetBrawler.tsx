@@ -2052,7 +2052,8 @@ export const StreetBrawler: FC = () => {
     g.vxHistory = [];
     g.camLookAhead = 0;
     g.vxAvg = 0;
-    g.camShake = { x: 0, y: 0, magnitude: 0, timer: 0 };
+    g.camShake = { x: 0, y: 0, magnitude: 0, timer: 0, duration: 0 };
+    g.hitPause = 0;
     // Spawn weapon pickups along the level (varied types)
     g.weapons = [
       { x: 600, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
@@ -2247,13 +2248,16 @@ export const StreetBrawler: FC = () => {
               // SFX + screen shake for special moves
               if (combo.move === "uppercut") {
                 sfx(() => SFX.uppercut());
-                g.camShake = { x: 0, y: 0, magnitude: 6, timer: 14 };
+                triggerShake(8, 16);
+                g.hitPause = 3;
               } else if (combo.move === "spinkick") {
                 sfx(() => SFX.spinKick());
-                g.camShake = { x: 0, y: 0, magnitude: 5, timer: 12 };
+                triggerShake(7, 14);
+                g.hitPause = 2;
               } else if (combo.move === "dashpunch") {
                 sfx(() => SFX.dashPunch());
-                g.camShake = { x: 0, y: 0, magnitude: 7, timer: 14 };
+                triggerShake(9, 16);
+                g.hitPause = 3;
               }
               setTimeout(() => setComboName(""), 1000);
               break;
@@ -2358,8 +2362,9 @@ export const StreetBrawler: FC = () => {
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult);
 
         // Heavy-impact screen shake on groundpound landing
-        if (p.state === "groundpound" && g.camShake.timer < 6) {
-          g.camShake = { x: 0, y: 0, magnitude: 9, timer: 18 };
+        if (p.state === "groundpound") {
+          triggerShake(12, 22);
+          g.hitPause = 4;
         }
 
         for (const e of g.enemies) {
@@ -2597,8 +2602,9 @@ export const StreetBrawler: FC = () => {
               setComboCount(0);
               setPlayerHp(Math.max(0, p.hp));
               // Boss hit screen shake — slam is the heaviest
-              const bossShakeMag = e.state === "boss_slam" ? 11 : e.state === "boss_charge" ? 8 : 6;
-              g.camShake = { x: 0, y: 0, magnitude: bossShakeMag, timer: 18 };
+              const bossShakeMag = e.state === "boss_slam" ? 13 : e.state === "boss_charge" ? 10 : 7;
+              triggerShake(bossShakeMag, 20);
+              g.hitPause = e.state === "boss_slam" ? 4 : 2;
               g.effects.push({
                 x: p.x, y: p.y - 50, timer: 25,
                 text: `${dmg}`, color: "#ff0000", size: 18,
