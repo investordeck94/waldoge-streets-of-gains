@@ -2457,6 +2457,11 @@ export const StreetBrawler: FC = () => {
       p.vx = (p.vx || 0) * 0.85;
       p.stateTimer = Math.max(-1, p.stateTimer - 1);
       p.attackCooldown = Math.max(-1, p.attackCooldown - 1);
+      // Decay active hit window — attackActive flips off when the move's active frames elapse
+      if (g.attackActive) {
+        g.attackActiveFrames -= 1;
+        if (g.attackActiveFrames <= 0) g.attackActive = false;
+      }
       if (p.state === "hit" && p.stateTimer <= 0) p.state = "idle";
       if (isAttacking && p.stateTimer <= 0) p.state = "idle";
 
@@ -2475,6 +2480,14 @@ export const StreetBrawler: FC = () => {
         // For J/K basic attacks the active move data drives range/damage/knockback.
         // Specials (uppercut/spinkick/dashpunch/groundpound) keep their hand-tuned values.
         const move = !spec ? g.currentMove : null;
+
+        // For non-spec basic attacks, require attackActive + currentMove. Prevents the
+        // null/late-frame race that was making Rush / Muay Thai whiff.
+        if (!spec && (!g.currentMove || !g.attackActive)) {
+          if (import.meta.env.DEV) {
+            console.log("[Brawler] HIT-FRAME SKIPPED — CURRENT MOVE:", g.currentMove, "STYLE:", g.style, "STATE TIMER:", p.stateTimer, "ACTIVE:", g.attackActive);
+          }
+        } else {
         const baseRange = spec ? spec.range : (move ? move.range : (p.state === "punch" ? 45 : 55));
         const range = baseRange + (g.weaponType ? WEAPON_STATS[g.weaponType].rangeBonus : 0);
         const baseDmg = spec ? spec.dmg : (move ? move.damage : (p.state === "punch" ? 12 : 18));
@@ -2482,6 +2495,7 @@ export const StreetBrawler: FC = () => {
         const kb = spec ? spec.knockback : (move ? move.knockback : (p.state === "punch" ? 5 : 6));
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult * fightStyle.damage);
         if (import.meta.env.DEV) {
+          console.log("[Brawler] HIT FRAME — CURRENT MOVE:", g.currentMove, "STYLE:", g.style, "STATE TIMER:", p.stateTimer);
           console.log("[Brawler] DAMAGE:", dmg, `(base=${baseDmg} × combo=${c.multiplier.toFixed(2)} × boost=${dmgMult} × style=${fightStyle.damage})`);
         }
 
