@@ -2315,6 +2315,9 @@ export const StreetBrawler: FC = () => {
           const move = specialSet[0];
           g.currentMove = move;
           const totalFrames = Math.max(8, Math.round(msToFrames(move.recovery) / fightStyle.speed));
+          const activeFrames = Math.max(2, Math.round(msToFrames(move.hitstun) / fightStyle.speed));
+          g.attackActive = true;
+          g.attackActiveFrames = activeFrames;
           p.state = "kick"; // reuse kick anim; visual aura signals special
           p.stateTimer = totalFrames;
           p.attackCooldown = totalFrames + 4;
@@ -2333,7 +2336,8 @@ export const StreetBrawler: FC = () => {
             console.log("[Brawler] STYLE:", g.style);
             console.log("[Brawler] INPUT: special");
             console.log("[Brawler] MOVE:", move.name, move);
-            console.log("[Brawler] MOVESET:", MOVE_SETS[g.style]);
+            console.log("[Brawler] CURRENT MOVE:", g.currentMove);
+            console.log("[Brawler] STATE TIMER:", p.stateTimer, "ACTIVE FRAMES:", activeFrames);
           }
         }
       }
