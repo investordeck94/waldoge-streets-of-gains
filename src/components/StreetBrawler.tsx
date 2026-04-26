@@ -2005,6 +2005,7 @@ export const StreetBrawler: FC = () => {
     weaponType: null,
     weaponTimer: 0,
     shurikenAmmo: 0,
+    style: "brawler",
     alleyObjects: [],
     animFrameCount: 0,
     rain: [],
