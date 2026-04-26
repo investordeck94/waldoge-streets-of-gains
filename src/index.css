@@ -122,6 +122,13 @@
   .game-wrapper {
     width: 100%;
   }
+
+  /* Portrait-only lock for the brawler on small phones */
+  @media (max-width: 900px) and (orientation: landscape) {
+    .landscape-rotate-hint {
+      display: flex !important;
+    }
+  }
 }
 
 @layer components {
