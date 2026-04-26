@@ -1970,7 +1970,8 @@ export const StreetBrawler: FC = () => {
     camPreset: "snappy" | "buttery";
     vxAvg: number;
     vxHistory: number[];
-    camShake: { x: number; y: number; magnitude: number; timer: number };
+    camShake: { x: number; y: number; magnitude: number; timer: number; duration: number };
+    hitPause: number;
     debugCam: {
       anchor: number;
       lerp: number;
@@ -2013,7 +2014,8 @@ export const StreetBrawler: FC = () => {
     camPreset: "snappy",
     vxAvg: 0,
     vxHistory: [],
-    camShake: { x: 0, y: 0, magnitude: 0, timer: 0 },
+    camShake: { x: 0, y: 0, magnitude: 0, timer: 0, duration: 0 },
+    hitPause: 0,
     debugCam: { anchor: 0.5, lerp: 0, playerScreenX: 0, offset: 0, deadzone: 0, lookAhead: 0, vx: 0 },
   });
 
@@ -2050,7 +2052,8 @@ export const StreetBrawler: FC = () => {
     g.vxHistory = [];
     g.camLookAhead = 0;
     g.vxAvg = 0;
-    g.camShake = { x: 0, y: 0, magnitude: 0, timer: 0 };
+    g.camShake = { x: 0, y: 0, magnitude: 0, timer: 0, duration: 0 };
+    g.hitPause = 0;
     // Spawn weapon pickups along the level (varied types)
     g.weapons = [
       { x: 600, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
@@ -2142,6 +2145,34 @@ export const StreetBrawler: FC = () => {
         g.animFrame = requestAnimationFrame(tick);
         return;
       }
+
+      // Hit-pause: freeze simulation for a few frames on impactful hits
+      // for that classic "juicy" feel. Rendering still happens so shake reads.
+      if (g.hitPause > 0) {
+        g.hitPause -= 1;
+        // Re-render last frame with shake offset for visible impact
+        if (g.camShake.timer > 0) {
+          const dur = Math.max(1, g.camShake.duration);
+          const t = g.camShake.timer;
+          const m = g.camShake.magnitude * (t / dur);
+          g.camShake.x = (Math.random() - 0.5) * 2 * m;
+          g.camShake.y = (Math.random() - 0.5) * 2 * m;
+          g.camShake.timer -= 1;
+        }
+        g.animFrame = requestAnimationFrame(tick);
+        return;
+      }
+
+      // Helper: trigger screen shake. Stronger or longer shakes win over
+      // weaker ongoing ones so a finisher always overrides a light punch.
+      const triggerShake = (intensity: number, duration: number) => {
+        const remaining = g.camShake.timer;
+        const currentMag = remaining > 0 ? g.camShake.magnitude * (remaining / Math.max(1, g.camShake.duration)) : 0;
+        if (intensity >= currentMag || duration > remaining) {
+          g.camShake = { x: 0, y: 0, magnitude: intensity, timer: duration, duration };
+        }
+      };
+
       g.animFrameCount++;
       const p = g.player;
       const c = g.combo;
@@ -2217,13 +2248,16 @@ export const StreetBrawler: FC = () => {
               // SFX + screen shake for special moves
               if (combo.move === "uppercut") {
                 sfx(() => SFX.uppercut());
-                g.camShake = { x: 0, y: 0, magnitude: 6, timer: 14 };
+                triggerShake(8, 16);
+                g.hitPause = 3;
               } else if (combo.move === "spinkick") {
                 sfx(() => SFX.spinKick());
-                g.camShake = { x: 0, y: 0, magnitude: 5, timer: 12 };
+                triggerShake(7, 14);
+                g.hitPause = 2;
               } else if (combo.move === "dashpunch") {
                 sfx(() => SFX.dashPunch());
-                g.camShake = { x: 0, y: 0, magnitude: 7, timer: 14 };
+                triggerShake(9, 16);
+                g.hitPause = 3;
               }
               setTimeout(() => setComboName(""), 1000);
               break;
@@ -2328,8 +2362,9 @@ export const StreetBrawler: FC = () => {
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult);
 
         // Heavy-impact screen shake on groundpound landing
-        if (p.state === "groundpound" && g.camShake.timer < 6) {
-          g.camShake = { x: 0, y: 0, magnitude: 9, timer: 18 };
+        if (p.state === "groundpound") {
+          triggerShake(12, 22);
+          g.hitPause = 4;
         }
 
         for (const e of g.enemies) {
@@ -2359,6 +2394,17 @@ export const StreetBrawler: FC = () => {
 
             // Hit effect
             sfx(() => SFX.comboHit(c.hitCount));
+
+            // Per-hit screen shake by attack tier (light/medium/heavy)
+            // Light: punch. Medium: kick/specials. Heavy: groundpound (already triggered above).
+            if (p.state === "punch") {
+              triggerShake(2.5, 6);
+            } else if (p.state === "kick") {
+              triggerShake(4, 9);
+            } else if (spec && p.state !== "groundpound") {
+              triggerShake(5, 10);
+            }
+
             g.effects.push({
               x: e.x, y: e.y - 50, timer: 25,
               text: c.hitCount > 2 ? `${dmg} x${c.hitCount}` : `${dmg}`,
@@ -2370,6 +2416,9 @@ export const StreetBrawler: FC = () => {
               e.state = "dead";
               e.stateTimer = 60;
               sfx(() => e.isBoss ? SFX.victory() : SFX.enemyDeath());
+              // Finisher: strong shake + hit-pause for satisfying KO feel
+              triggerShake(e.isBoss ? 14 : 7, e.isBoss ? 28 : 14);
+              g.hitPause = Math.max(g.hitPause, e.isBoss ? 8 : 4);
               const killBonus = e.isBoss ? Math.round(1000 * c.multiplier) : Math.round(100 * c.multiplier);
               g.score += killBonus;
               setScore(g.score);
@@ -2567,8 +2616,9 @@ export const StreetBrawler: FC = () => {
               setComboCount(0);
               setPlayerHp(Math.max(0, p.hp));
               // Boss hit screen shake — slam is the heaviest
-              const bossShakeMag = e.state === "boss_slam" ? 11 : e.state === "boss_charge" ? 8 : 6;
-              g.camShake = { x: 0, y: 0, magnitude: bossShakeMag, timer: 18 };
+              const bossShakeMag = e.state === "boss_slam" ? 13 : e.state === "boss_charge" ? 10 : 7;
+              triggerShake(bossShakeMag, 20);
+              g.hitPause = e.state === "boss_slam" ? 4 : 2;
               g.effects.push({
                 x: p.x, y: p.y - 50, timer: 25,
                 text: `${dmg}`, color: "#ff0000", size: 18,
@@ -2920,8 +2970,9 @@ export const StreetBrawler: FC = () => {
 
       // Camera shake (decays each frame, applied as render offset only)
       if (g.camShake.timer > 0) {
+        const dur = Math.max(1, g.camShake.duration);
         const t = g.camShake.timer;
-        const m = g.camShake.magnitude * (t / 30);
+        const m = g.camShake.magnitude * (t / dur);
         g.camShake.x = (Math.random() - 0.5) * 2 * m;
         g.camShake.y = (Math.random() - 0.5) * 2 * m;
         g.camShake.timer -= 1;
