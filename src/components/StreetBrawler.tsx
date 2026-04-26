@@ -2426,7 +2426,7 @@ export const StreetBrawler: FC = () => {
           if (inRange) {
             e.hp -= dmg;
             e.state = "hit";
-            e.stateTimer = spec ? 15 : 10;
+            e.stateTimer = spec ? 15 : (move ? Math.max(8, msToFrames(move.hitstun) / 2) : 10);
             e.vx = (isGroundPound ? (dx > 0 ? 1 : -1) : p.facing) * kb;
             if (p.state === "uppercut") e.vy = -10;
 
