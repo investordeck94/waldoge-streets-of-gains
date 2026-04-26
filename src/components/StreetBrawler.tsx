@@ -2199,6 +2199,11 @@ export const StreetBrawler: FC = () => {
           x: p.x, y: p.y - 90, timer: 40,
           text: STYLES[g.style].label, color: STYLES[g.style].tint, size: 18,
         });
+        if (import.meta.env.DEV) {
+          console.log("[Brawler] STYLE SWAP →", g.style);
+          console.log("[Brawler] STATS:", STYLES[g.style]);
+          console.log("[Brawler] MOVESET:", MOVE_SETS[g.style]);
+        }
       }
       const fightStyle = STYLES[g.style];
 
