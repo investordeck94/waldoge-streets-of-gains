@@ -2014,7 +2014,8 @@ export const StreetBrawler: FC = () => {
     camPreset: "snappy",
     vxAvg: 0,
     vxHistory: [],
-    camShake: { x: 0, y: 0, magnitude: 0, timer: 0 },
+    camShake: { x: 0, y: 0, magnitude: 0, timer: 0, duration: 0 },
+    hitPause: 0,
     debugCam: { anchor: 0.5, lerp: 0, playerScreenX: 0, offset: 0, deadzone: 0, lookAhead: 0, vx: 0 },
   });
 
