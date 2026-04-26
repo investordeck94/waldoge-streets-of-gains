@@ -2111,17 +2111,15 @@ export const StreetBrawler: FC = () => {
     
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
+    // Lock the backing buffer to the fixed internal game resolution.
+    // CSS handles visual scaling via aspect-ratio so the game never stretches
+    // or crops regardless of phone screen size.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = CANVAS_W * dpr;
+    canvas.height = CANVAS_H * dpr;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.scale(dpr, dpr);
-    // Diagnostic: bright lime square to confirm canvas renders
-    ctx.fillStyle = "lime";
-    ctx.fillRect(20, 20, 60, 60);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const g = gameRef.current;
     g.running = true;
 
@@ -3431,17 +3429,28 @@ export const StreetBrawler: FC = () => {
         <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Street Brawler</h2>
       </div>
 
-      <canvas
-        ref={canvasRef}
-        className="rounded-lg border border-border/50"
-        style={{
-          width: "100%",
-          maxWidth: `${CANVAS_W}px`,
-          height: `${CANVAS_H}px`,
-          imageRendering: "pixelated",
-          display: gameState === "playing" ? "block" : "none",
-        }}
-      />
+      <div className="relative w-full" style={{ maxWidth: `${CANVAS_W}px`, margin: "0 auto" }}>
+        <canvas
+          ref={canvasRef}
+          className="rounded-lg border border-border/50 w-full block"
+          style={{
+            aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
+            height: "auto",
+            imageRendering: "pixelated",
+            display: gameState === "playing" ? "block" : "none",
+          }}
+        />
+        {/* Landscape rotate hint — portrait-only game */}
+        {gameState === "playing" && (
+          <div className="landscape-rotate-hint absolute inset-0 hidden items-center justify-center bg-background/95 rounded-lg z-50 p-6 text-center">
+            <div>
+              <div className="text-4xl mb-3">📱↻</div>
+              <h3 className="text-lg font-bold text-primary mb-1">Rotate to Portrait</h3>
+              <p className="text-sm text-muted-foreground">This game is best played in portrait mode.</p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {gameState === "playing" && (
         <div className="game-wrapper space-y-3 w-full">
