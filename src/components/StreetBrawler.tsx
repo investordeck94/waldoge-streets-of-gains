@@ -2058,6 +2058,8 @@ export const StreetBrawler: FC = () => {
     g.vxAvg = 0;
     g.camShake = { x: 0, y: 0, magnitude: 0, timer: 0, duration: 0 };
     g.hitPause = 0;
+    g.style = "brawler";
+    setStyleName("brawler");
     // Spawn weapon pickups along the level (varied types)
     g.weapons = [
       { x: 600, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
