@@ -3433,13 +3433,15 @@ export const StreetBrawler: FC = () => {
 
       <canvas
         ref={canvasRef}
-        className="rounded-lg border border-border/50"
+        className="rounded-lg border border-border/50 w-full"
         style={{
-          width: "100%",
           maxWidth: `${CANVAS_W}px`,
-          height: `${CANVAS_H}px`,
+          aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
+          height: "auto",
+          objectFit: "contain",
           imageRendering: "pixelated",
           display: gameState === "playing" ? "block" : "none",
+          margin: "0 auto",
         }}
       />
 
