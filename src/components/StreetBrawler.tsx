@@ -3308,6 +3308,27 @@ export const StreetBrawler: FC = () => {
         }
       }
 
+      // Style aura — colored glow ring under player so the active style is readable at a glance.
+      // Default brawler skips the ring (neutral baseline).
+      if (g.style !== "brawler") {
+        const px = p.x - g.camX;
+        const py = p.y - p.height / 2;
+        const pulse = 0.7 + 0.3 * Math.sin(g.animFrameCount * 0.15);
+        ctx.save();
+        ctx.globalAlpha = 0.55 * pulse;
+        ctx.strokeStyle = STYLES[g.style].tint;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(px, p.y - 2, 22, 6, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 0.35 * pulse;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(px, py + 6, 28, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType);
 
       // Heal flash: expanding green ring + glow around player when fully healed at level start
