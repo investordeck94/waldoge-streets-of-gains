@@ -3429,19 +3429,28 @@ export const StreetBrawler: FC = () => {
         <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Street Brawler</h2>
       </div>
 
-      <canvas
-        ref={canvasRef}
-        className="rounded-lg border border-border/50 w-full"
-        style={{
-          maxWidth: `${CANVAS_W}px`,
-          aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
-          height: "auto",
-          objectFit: "contain",
-          imageRendering: "pixelated",
-          display: gameState === "playing" ? "block" : "none",
-          margin: "0 auto",
-        }}
-      />
+      <div className="relative w-full" style={{ maxWidth: `${CANVAS_W}px`, margin: "0 auto" }}>
+        <canvas
+          ref={canvasRef}
+          className="rounded-lg border border-border/50 w-full block"
+          style={{
+            aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
+            height: "auto",
+            imageRendering: "pixelated",
+            display: gameState === "playing" ? "block" : "none",
+          }}
+        />
+        {/* Landscape rotate hint — portrait-only game */}
+        {gameState === "playing" && (
+          <div className="landscape-rotate-hint absolute inset-0 hidden items-center justify-center bg-background/95 rounded-lg z-50 p-6 text-center">
+            <div>
+              <div className="text-4xl mb-3">📱↻</div>
+              <h3 className="text-lg font-bold text-primary mb-1">Rotate to Portrait</h3>
+              <p className="text-sm text-muted-foreground">This game is best played in portrait mode.</p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {gameState === "playing" && (
         <div className="game-wrapper space-y-3 w-full">
