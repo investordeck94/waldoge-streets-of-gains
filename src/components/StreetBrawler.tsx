@@ -3630,6 +3630,23 @@ export const StreetBrawler: FC = () => {
           </div>
 
           <div className="flex justify-between items-center glass-card px-4 py-2 text-sm flex-wrap gap-2">
+            <button
+              onClick={() => {
+                const g = gameRef.current;
+                g.style = nextStyle(g.style);
+                setStyleName(g.style);
+                sfxRef.current && SFX.powerupPickup();
+              }}
+              className="px-2 py-0.5 rounded font-bold text-xs font-mono transition border-2"
+              style={{
+                color: STYLES[styleName].tint,
+                borderColor: STYLES[styleName].tint,
+                background: `${STYLES[styleName].tint.replace("hsl(", "hsla(").replace(")", " / 0.12)")}`,
+              }}
+              title="Cycle fight style (Q)"
+            >
+              {STYLES[styleName].label} <span className="opacity-60">[Q]</span>
+            </button>
             {comboCount > 1 && (
               <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
             )}
