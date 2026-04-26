@@ -1965,6 +1965,8 @@ export const StreetBrawler: FC = () => {
     style: StyleName;
     lightChain: { index: number; lastFrame: number };
     currentMove: Move | null;
+    attackActive: boolean;
+    attackActiveFrames: number;
     alleyObjects: AlleyObject[];
     animFrameCount: number;
     rain: RainDrop[];
@@ -2012,6 +2014,8 @@ export const StreetBrawler: FC = () => {
     style: "brawler",
     lightChain: { index: 0, lastFrame: -9999 },
     currentMove: null,
+    attackActive: false,
+    attackActiveFrames: 0,
     alleyObjects: [],
     animFrameCount: 0,
     rain: [],
@@ -2066,6 +2070,8 @@ export const StreetBrawler: FC = () => {
     g.style = "brawler";
     g.lightChain = { index: 0, lastFrame: -9999 };
     g.currentMove = null;
+    g.attackActive = false;
+    g.attackActiveFrames = 0;
     setStyleName("brawler");
     // Spawn weapon pickups along the level (varied types)
     g.weapons = [
@@ -2311,6 +2317,9 @@ export const StreetBrawler: FC = () => {
           const move = specialSet[0];
           g.currentMove = move;
           const totalFrames = Math.max(8, Math.round(msToFrames(move.recovery) / fightStyle.speed));
+          const activeFrames = Math.max(2, Math.round(msToFrames(move.hitstun) / fightStyle.speed));
+          g.attackActive = true;
+          g.attackActiveFrames = activeFrames;
           p.state = "kick"; // reuse kick anim; visual aura signals special
           p.stateTimer = totalFrames;
           p.attackCooldown = totalFrames + 4;
@@ -2329,7 +2338,8 @@ export const StreetBrawler: FC = () => {
             console.log("[Brawler] STYLE:", g.style);
             console.log("[Brawler] INPUT: special");
             console.log("[Brawler] MOVE:", move.name, move);
-            console.log("[Brawler] MOVESET:", MOVE_SETS[g.style]);
+            console.log("[Brawler] CURRENT MOVE:", g.currentMove);
+            console.log("[Brawler] STATE TIMER:", p.stateTimer, "ACTIVE FRAMES:", activeFrames);
           }
         }
       }
@@ -2372,13 +2382,18 @@ export const StreetBrawler: FC = () => {
           g.currentMove = move;
           // Total animation = recovery (already includes startup), scaled by style speed
           const totalFrames = Math.max(4, Math.round(msToFrames(move.recovery) / fightStyle.speed));
+          // Active hit window scales with hitstun & style speed (Rush snappier, Muay Thai longer)
+          const activeFrames = Math.max(2, Math.round(msToFrames(move.hitstun) / fightStyle.speed));
+          g.attackActive = true;
+          g.attackActiveFrames = activeFrames;
           p.state = "punch"; p.stateTimer = totalFrames; p.attackCooldown = totalFrames + 2;
           sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.punch());
           if (import.meta.env.DEV) {
             console.log("[Brawler] STYLE:", g.style);
             console.log("[Brawler] INPUT: light");
             console.log("[Brawler] MOVE:", move.name, move, `chain=${g.lightChain.index - 1}`);
-            console.log("[Brawler] MOVESET:", MOVE_SETS[g.style]);
+            console.log("[Brawler] CURRENT MOVE:", g.currentMove);
+            console.log("[Brawler] STATE TIMER:", p.stateTimer, "ACTIVE FRAMES:", activeFrames);
           }
         } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
           // Heavy attack — single move per style (uppercut/dash strike/roundhouse)
@@ -2386,16 +2401,21 @@ export const StreetBrawler: FC = () => {
           const move = heavySet[0];
           g.currentMove = move;
           const totalFrames = Math.max(5, Math.round(msToFrames(move.recovery) / fightStyle.speed));
+          const activeFrames = Math.max(2, Math.round(msToFrames(move.hitstun) / fightStyle.speed));
+          g.attackActive = true;
+          g.attackActiveFrames = activeFrames;
           p.state = "kick"; p.stateTimer = totalFrames; p.attackCooldown = totalFrames + 2;
           sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.kick());
           if (import.meta.env.DEV) {
             console.log("[Brawler] STYLE:", g.style);
             console.log("[Brawler] INPUT: heavy");
             console.log("[Brawler] MOVE:", move.name, move);
-            console.log("[Brawler] MOVESET:", MOVE_SETS[g.style]);
+            console.log("[Brawler] CURRENT MOVE:", g.currentMove);
+            console.log("[Brawler] STATE TIMER:", p.stateTimer, "ACTIVE FRAMES:", activeFrames);
           }
         } else if (p.stateTimer <= 0) {
-          g.currentMove = null;
+          // NOTE: don't null currentMove here — it's cleared after damage applies
+          // (or when a new attack overwrites it). Nulling here can race the hit-frame check.
           p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
         }
       } else if (p.state !== "hit" && p.state !== "dead" && !isAttacking && didSpecial) {
@@ -2439,6 +2459,11 @@ export const StreetBrawler: FC = () => {
       p.vx = (p.vx || 0) * 0.85;
       p.stateTimer = Math.max(-1, p.stateTimer - 1);
       p.attackCooldown = Math.max(-1, p.attackCooldown - 1);
+      // Decay active hit window — attackActive flips off when the move's active frames elapse
+      if (g.attackActive) {
+        g.attackActiveFrames -= 1;
+        if (g.attackActiveFrames <= 0) g.attackActive = false;
+      }
       if (p.state === "hit" && p.stateTimer <= 0) p.state = "idle";
       if (isAttacking && p.stateTimer <= 0) p.state = "idle";
 
@@ -2457,6 +2482,14 @@ export const StreetBrawler: FC = () => {
         // For J/K basic attacks the active move data drives range/damage/knockback.
         // Specials (uppercut/spinkick/dashpunch/groundpound) keep their hand-tuned values.
         const move = !spec ? g.currentMove : null;
+
+        // For non-spec basic attacks, require attackActive + currentMove. Prevents the
+        // null/late-frame race that was making Rush / Muay Thai whiff.
+        if (!spec && (!g.currentMove || !g.attackActive)) {
+          if (import.meta.env.DEV) {
+            console.log("[Brawler] HIT-FRAME SKIPPED — CURRENT MOVE:", g.currentMove, "STYLE:", g.style, "STATE TIMER:", p.stateTimer, "ACTIVE:", g.attackActive);
+          }
+        } else {
         const baseRange = spec ? spec.range : (move ? move.range : (p.state === "punch" ? 45 : 55));
         const range = baseRange + (g.weaponType ? WEAPON_STATS[g.weaponType].rangeBonus : 0);
         const baseDmg = spec ? spec.dmg : (move ? move.damage : (p.state === "punch" ? 12 : 18));
@@ -2464,6 +2497,7 @@ export const StreetBrawler: FC = () => {
         const kb = spec ? spec.knockback : (move ? move.knockback : (p.state === "punch" ? 5 : 6));
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult * fightStyle.damage);
         if (import.meta.env.DEV) {
+          console.log("[Brawler] HIT FRAME — CURRENT MOVE:", g.currentMove, "STYLE:", g.style, "STATE TIMER:", p.stateTimer);
           console.log("[Brawler] DAMAGE:", dmg, `(base=${baseDmg} × combo=${c.multiplier.toFixed(2)} × boost=${dmgMult} × style=${fightStyle.damage})`);
         }
 
@@ -2570,6 +2604,12 @@ export const StreetBrawler: FC = () => {
             }
           }
         }
+        // Clear move + active flag so the same press can't double-hit on a later frame
+        if (!spec) {
+          g.currentMove = null;
+          g.attackActive = false;
+        }
+        } // end else (spec || (currentMove && attackActive))
       }
 
       // Hit detection on alley objects (crates, trash cans)
