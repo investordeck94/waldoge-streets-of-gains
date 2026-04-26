@@ -22,7 +22,7 @@ type StyleMoveSet = {
   special?: Move[];
 };
 
-export const MOVE_SETS: Record<StyleName, StyleMoveSet> = {
+export const MOVE_SETS: Record<StyleName, Required<StyleMoveSet>> = {
   brawler: {
     light: [
       { name: "jab",      damage: 8,  knockback: 2, hitstun: 100, startup: 80,  recovery: 120, range: 45 },
@@ -32,6 +32,9 @@ export const MOVE_SETS: Record<StyleName, StyleMoveSet> = {
     heavy: [
       { name: "uppercut", damage: 22, knockback: 8, hitstun: 250, startup: 200, recovery: 300, range: 55 },
     ],
+    special: [
+      { name: "haymaker", damage: 32, knockback: 12, hitstun: 350, startup: 250, recovery: 400, range: 60 },
+    ],
   },
   rush: {
     light: [
@@ -40,6 +43,9 @@ export const MOVE_SETS: Record<StyleName, StyleMoveSet> = {
     ],
     heavy: [
       { name: "dash strike", damage: 16, knockback: 5, hitstun: 180, startup: 120, recovery: 180, range: 65 },
+    ],
+    special: [
+      { name: "blitz combo", damage: 24, knockback: 4, hitstun: 220, startup: 100, recovery: 250, range: 70 },
     ],
   },
   muayThai: {
@@ -63,7 +69,11 @@ export const CHAIN_RESET_MS = 1000;
 export const msToFrames = (ms: number) => Math.max(1, Math.round(ms / 16.667));
 
 export function getMove(style: StyleName, type: MoveType, chainIndex: number): Move | null {
-  const set = MOVE_SETS[style][type];
-  if (!set || set.length === 0) return null;
+  const styleSet = MOVE_SETS[style] || MOVE_SETS.brawler;
+  const set = styleSet[type];
+  if (!set || set.length === 0) {
+    if (import.meta.env.DEV) console.warn("[fightMoves] No moves found for", style, type);
+    return null;
+  }
   return set[chainIndex % set.length];
 }
