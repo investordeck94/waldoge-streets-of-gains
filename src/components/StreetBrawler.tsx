@@ -2460,6 +2460,14 @@ export const StreetBrawler: FC = () => {
               size: Math.min(14 + c.hitCount * 2, 24),
             });
 
+            // Move name pop (only on first hit of the move so it doesn't spam)
+            if (move && c.hitCount === 1) {
+              g.effects.push({
+                x: p.x, y: p.y - 95, timer: 30,
+                text: move.name.toUpperCase(), color: STYLES[g.style].tint, size: 12,
+              });
+            }
+
             if (e.hp <= 0) {
               e.state = "dead";
               e.stateTimer = 60;
