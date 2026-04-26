@@ -2602,6 +2602,12 @@ export const StreetBrawler: FC = () => {
             }
           }
         }
+        // Clear move + active flag so the same press can't double-hit on a later frame
+        if (!spec) {
+          g.currentMove = null;
+          g.attackActive = false;
+        }
+        } // end else (spec || (currentMove && attackActive))
       }
 
       // Hit detection on alley objects (crates, trash cans)
