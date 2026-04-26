@@ -7,6 +7,7 @@ import streetBrawlerCover from "@/assets/street-brawler-cover.png";
 import jeetBossHead from "@/assets/jeet-boss-head.png";
 import badActorBossHead from "@/assets/badactor-boss-head.png";
 import ruggerBossHead from "@/assets/rugger-boss-head.png";
+import fudderBossHead from "@/assets/boss-fudder-head.png";
 import { SFX } from "@/lib/gameSfx";
 
 // Preloaded boss head images
@@ -16,6 +17,8 @@ const badActorHeadImg: HTMLImageElement | null =
   typeof window !== "undefined" ? (() => { const i = new Image(); i.src = badActorBossHead; return i; })() : null;
 const ruggerHeadImg: HTMLImageElement | null =
   typeof window !== "undefined" ? (() => { const i = new Image(); i.src = ruggerBossHead; return i; })() : null;
+const fudderHeadImg: HTMLImageElement | null =
+  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = fudderBossHead; return i; })() : null;
 
 type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
   | "uppercut" | "spinkick" | "groundpound" | "dashpunch"
@@ -265,6 +268,7 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
     e.bossName === "JEET" ? jeetHeadImg
     : e.bossName === "BAD ACTOR" ? badActorHeadImg
     : e.bossName === "RUGGER" ? ruggerHeadImg
+    : e.bossName === "FUDDER" ? fudderHeadImg
     : null;
   if (customHead && customHead.complete && customHead.naturalWidth > 0) {
     const imgSize = headR * 3.2;
