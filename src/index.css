@@ -115,14 +115,12 @@
   }
 
   canvas, #game {
-    width: 100%;
-    height: 100%;
     display: block;
+    max-width: 100%;
   }
 
   .game-wrapper {
-    width: 100vw;
-    height: 60vh;
+    width: 100%;
   }
 }
 
