@@ -11,6 +11,7 @@ import fudderBossHead from "@/assets/boss-fudder-head.png";
 import exitLiquidityBossHead from "@/assets/boss-exit-liquidity-head.png";
 import mrMarketerBossHead from "@/assets/boss-mr-marketer-head.png";
 import { SFX } from "@/lib/gameSfx";
+import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 
 // Preloaded boss head images
 const jeetHeadImg: HTMLImageElement | null =
@@ -1888,6 +1889,7 @@ export const StreetBrawler: FC = () => {
   const [comboCount, setComboCount] = useState(0);
   const [comboName, setComboName] = useState("");
   const [energy, setEnergy] = useState(0);
+  const [styleName, setStyleName] = useState<StyleName>("brawler");
   const [sfxEnabled, setSfxEnabled] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const pausedRef = useRef(false);
@@ -1959,6 +1961,7 @@ export const StreetBrawler: FC = () => {
     weaponType: WeaponType | null;
     weaponTimer: number;
     shurikenAmmo: number;
+    style: StyleName;
     alleyObjects: AlleyObject[];
     animFrameCount: number;
     rain: RainDrop[];
@@ -2003,6 +2006,7 @@ export const StreetBrawler: FC = () => {
     weaponType: null,
     weaponTimer: 0,
     shurikenAmmo: 0,
+    style: "brawler",
     alleyObjects: [],
     animFrameCount: 0,
     rain: [],
@@ -2054,6 +2058,8 @@ export const StreetBrawler: FC = () => {
     g.vxAvg = 0;
     g.camShake = { x: 0, y: 0, magnitude: 0, timer: 0, duration: 0 };
     g.hitPause = 0;
+    g.style = "brawler";
+    setStyleName("brawler");
     // Spawn weapon pickups along the level (varied types)
     g.weapons = [
       { x: 600, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
@@ -2177,6 +2183,18 @@ export const StreetBrawler: FC = () => {
       const p = g.player;
       const c = g.combo;
 
+      // Style swap (Q key) — cycles brawler → rush → muayThai
+      if (g.keyJustPressed.has("q")) {
+        g.style = nextStyle(g.style);
+        setStyleName(g.style);
+        sfx(() => SFX.powerupPickup());
+        g.effects.push({
+          x: p.x, y: p.y - 90, timer: 40,
+          text: STYLES[g.style].label, color: STYLES[g.style].tint, size: 18,
+        });
+      }
+      const fightStyle = STYLES[g.style];
+
       // Combo timers
       c.timer = Math.max(0, c.timer - 1);
       c.hitTimer = Math.max(0, c.hitTimer - 1);
@@ -2236,7 +2254,7 @@ export const StreetBrawler: FC = () => {
               p.state = combo.move;
               p.stateTimer = spec.frames;
               p.attackCooldown = spec.frames + 5;
-              c.specialEnergy -= spec.energyCost;
+              c.specialEnergy -= Math.round(spec.energyCost * fightStyle.staminaCost);
               c.inputs = [];
               setEnergy(c.specialEnergy);
               setComboName(combo.name);
@@ -2272,7 +2290,7 @@ export const StreetBrawler: FC = () => {
         p.stateTimer = SPECIAL_ATTACKS.groundpound.frames;
         p.attackCooldown = SPECIAL_ATTACKS.groundpound.frames + 5;
         p.vy = 15;
-        c.specialEnergy -= SPECIAL_ATTACKS.groundpound.energyCost;
+        c.specialEnergy -= Math.round(SPECIAL_ATTACKS.groundpound.energyCost * fightStyle.staminaCost);
         setEnergy(c.specialEnergy);
         setComboName("GROUND POUND!");
         g.effects.push({ x: p.x, y: p.y - 80, timer: 40, text: "GROUND POUND!", color: "#ff6600", size: 18 });
@@ -2283,17 +2301,19 @@ export const StreetBrawler: FC = () => {
 
       // Player movement & basic attacks (blocked during attack animations)
       if (p.state !== "hit" && p.state !== "dead" && !isAttacking && !didSpecial) {
-        const speed = PLAYER_SPEED * (g.speedBoostTimer > 0 ? 1.6 : 1);
+        const speed = PLAYER_SPEED * (g.speedBoostTimer > 0 ? 1.6 : 1) * fightStyle.speed;
         let moving = false;
         if (g.keys.has("a") || g.keys.has("arrowleft")) { p.x -= speed; p.facing = -1; moving = true; }
         if (g.keys.has("d") || g.keys.has("arrowright")) { p.x += speed; p.facing = 1; moving = true; }
         if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && p.y >= GROUND_Y) p.vy = JUMP_FORCE;
 
         if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
-          p.state = "punch"; p.stateTimer = 12; p.attackCooldown = 14;
+          const punchFrames = Math.max(4, Math.round(12 / fightStyle.speed));
+          p.state = "punch"; p.stateTimer = punchFrames; p.attackCooldown = punchFrames + 2;
           sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.punch());
         } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
-          p.state = "kick"; p.stateTimer = 15; p.attackCooldown = 17;
+          const kickFrames = Math.max(5, Math.round(15 / fightStyle.speed));
+          p.state = "kick"; p.stateTimer = kickFrames; p.attackCooldown = kickFrames + 2;
           sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.kick());
         } else if (p.stateTimer <= 0) {
           p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
@@ -2359,7 +2379,7 @@ export const StreetBrawler: FC = () => {
         const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
         const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
         const kb = spec ? spec.knockback : (p.state === "punch" ? 5 : 6);
-        const dmg = Math.round(baseDmg * c.multiplier * dmgMult);
+        const dmg = Math.round(baseDmg * c.multiplier * dmgMult * fightStyle.damage);
 
         // Heavy-impact screen shake on groundpound landing
         if (p.state === "groundpound") {
@@ -3290,6 +3310,27 @@ export const StreetBrawler: FC = () => {
         }
       }
 
+      // Style aura — colored glow ring under player so the active style is readable at a glance.
+      // Default brawler skips the ring (neutral baseline).
+      if (g.style !== "brawler") {
+        const px = p.x - g.camX;
+        const py = p.y - p.height / 2;
+        const pulse = 0.7 + 0.3 * Math.sin(g.animFrameCount * 0.15);
+        ctx.save();
+        ctx.globalAlpha = 0.55 * pulse;
+        ctx.strokeStyle = STYLES[g.style].tint;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(px, p.y - 2, 22, 6, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 0.35 * pulse;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(px, py + 6, 28, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType);
 
       // Heal flash: expanding green ring + glow around player when fully healed at level start
@@ -3589,6 +3630,23 @@ export const StreetBrawler: FC = () => {
           </div>
 
           <div className="flex justify-between items-center glass-card px-4 py-2 text-sm flex-wrap gap-2">
+            <button
+              onClick={() => {
+                const g = gameRef.current;
+                g.style = nextStyle(g.style);
+                setStyleName(g.style);
+                sfxRef.current && SFX.powerupPickup();
+              }}
+              className="px-2 py-0.5 rounded font-bold text-xs font-mono transition border-2"
+              style={{
+                color: STYLES[styleName].tint,
+                borderColor: STYLES[styleName].tint,
+                background: `${STYLES[styleName].tint.replace("hsl(", "hsla(").replace(")", " / 0.12)")}`,
+              }}
+              title="Cycle fight style (Q)"
+            >
+              {STYLES[styleName].label} <span className="opacity-60">[Q]</span>
+            </button>
             {comboCount > 1 && (
               <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
             )}
