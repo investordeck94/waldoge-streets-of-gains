@@ -201,7 +201,7 @@ const LEVELS: LevelConfig[] = [
       { count: 5, hp: 70, speed: 2.1 },
       { count: 5, hp: 80, speed: 2.3 },
     ],
-    boss: { hp: 680, chargeSpeed: 6.5, aiSpeed: 2.5, dmgMult: 1.3, name: "ROTATOR" },
+    boss: { hp: 680, chargeSpeed: 6.5, aiSpeed: 2.5, dmgMult: 1.3, name: "MR MARKETER" },
   },
   // Level 7 — final hardest boss
   {
@@ -211,7 +211,7 @@ const LEVELS: LevelConfig[] = [
       { count: 5, hp: 90, speed: 2.3 },
       { count: 6, hp: 100, speed: 2.5 },
     ],
-    boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5, name: "MR MARKETER" },
+    boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5, name: "TICKER THIEF" },
   },
 ];
 
