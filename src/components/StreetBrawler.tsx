@@ -1967,6 +1967,7 @@ export const StreetBrawler: FC = () => {
     currentMove: Move | null;
     attackActive: boolean;
     attackActiveFrames: number;
+    hitApplied: boolean;
     alleyObjects: AlleyObject[];
     animFrameCount: number;
     rain: RainDrop[];
