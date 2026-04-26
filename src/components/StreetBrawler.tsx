@@ -2463,6 +2463,9 @@ export const StreetBrawler: FC = () => {
         const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
         const kb = spec ? spec.knockback : (move ? move.knockback : (p.state === "punch" ? 5 : 6));
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult * fightStyle.damage);
+        if (import.meta.env.DEV) {
+          console.log("[Brawler] DAMAGE:", dmg, `(base=${baseDmg} × combo=${c.multiplier.toFixed(2)} × boost=${dmgMult} × style=${fightStyle.damage})`);
+        }
 
         // Heavy-impact screen shake on groundpound landing
         if (p.state === "groundpound") {
