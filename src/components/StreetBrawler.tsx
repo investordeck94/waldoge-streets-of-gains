@@ -2181,6 +2181,18 @@ export const StreetBrawler: FC = () => {
       const p = g.player;
       const c = g.combo;
 
+      // Style swap (Q key) — cycles brawler → rush → muayThai
+      if (g.keyJustPressed.has("q")) {
+        g.style = nextStyle(g.style);
+        setStyleName(g.style);
+        sfx(() => SFX.powerupPickup());
+        g.effects.push({
+          x: p.x, y: p.y - 90, timer: 40,
+          text: STYLES[g.style].label, color: STYLES[g.style].tint, size: 18,
+        });
+      }
+      const fightStyle = STYLES[g.style];
+
       // Combo timers
       c.timer = Math.max(0, c.timer - 1);
       c.hitTimer = Math.max(0, c.hitTimer - 1);
