@@ -1960,6 +1960,7 @@ export const StreetBrawler: FC = () => {
     weaponType: WeaponType | null;
     weaponTimer: number;
     shurikenAmmo: number;
+    style: StyleName;
     alleyObjects: AlleyObject[];
     animFrameCount: number;
     rain: RainDrop[];
