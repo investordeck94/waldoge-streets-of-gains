@@ -2405,6 +2405,7 @@ export const StreetBrawler: FC = () => {
           const heavySet = MOVE_SETS[g.style].heavy;
           const move = heavySet[0];
           g.currentMove = move;
+          g.hitApplied = false;
           const totalFrames = Math.max(5, Math.round(msToFrames(move.recovery) / fightStyle.speed));
           const activeFrames = Math.max(2, Math.round(msToFrames(move.hitstun) / fightStyle.speed));
           g.attackActive = true;
