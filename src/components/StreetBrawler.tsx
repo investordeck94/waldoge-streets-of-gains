@@ -2474,14 +2474,24 @@ export const StreetBrawler: FC = () => {
       if (isAttacking && p.stateTimer <= 0) p.state = "idle";
 
       // Player attack hit detection (all attack types)
-      const hitFrame = (
-        (p.state === "punch" && p.stateTimer === 8) ||
-        (p.state === "kick" && p.stateTimer === 10) ||
+      // Legacy hand-tuned specials fire on a single specific frame.
+      const hitFrameSpec = (
         (p.state === "uppercut" && p.stateTimer === 12) ||
         (p.state === "spinkick" && (p.stateTimer === 14 || p.stateTimer === 8)) ||
         (p.state === "dashpunch" && p.stateTimer === 8) ||
         (p.state === "groundpound" && p.y >= GROUND_Y - 5 && p.stateTimer > 5)
       );
+      // Data-driven J/K/L basics: percentage-based active window from attackCooldown.
+      // Window opens at ~50% through the animation and lasts a few frames; hitApplied
+      // ensures each press lands at most once.
+      let hitFrameBasic = false;
+      if (!SPECIAL_ATTACKS[p.state] && g.currentMove && !g.hitApplied) {
+        const totalFrames = p.attackCooldown;
+        const activeStart = Math.floor(totalFrames * 0.5); // middle of animation
+        const activeEnd = Math.max(0, activeStart - 2);    // small window (timer counts down)
+        hitFrameBasic = p.stateTimer <= activeStart && p.stateTimer >= activeEnd;
+      }
+      const hitFrame = hitFrameSpec || hitFrameBasic;
 
       if (hitFrame) {
         const spec = SPECIAL_ATTACKS[p.state];
@@ -2489,11 +2499,10 @@ export const StreetBrawler: FC = () => {
         // Specials (uppercut/spinkick/dashpunch/groundpound) keep their hand-tuned values.
         const move = !spec ? g.currentMove : null;
 
-        // For non-spec basic attacks, require attackActive + currentMove. Prevents the
-        // null/late-frame race that was making Rush / Muay Thai whiff.
-        if (!spec && (!g.currentMove || !g.attackActive)) {
+        // Sanity: basic attacks need currentMove (guard already in hitFrameBasic, but defensive).
+        if (!spec && !g.currentMove) {
           if (import.meta.env.DEV) {
-            console.log("[Brawler] HIT-FRAME SKIPPED — CURRENT MOVE:", g.currentMove, "STYLE:", g.style, "STATE TIMER:", p.stateTimer, "ACTIVE:", g.attackActive);
+            console.log("[Brawler] HIT-FRAME SKIPPED — CURRENT MOVE:", g.currentMove, "STYLE:", g.style, "STATE TIMER:", p.stateTimer);
           }
         } else {
         const baseRange = spec ? spec.range : (move ? move.range : (p.state === "punch" ? 45 : 55));
