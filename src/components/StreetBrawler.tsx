@@ -2296,6 +2296,44 @@ export const StreetBrawler: FC = () => {
         }
       }
 
+      // L on ground (no shuriken) → style-specific special move (uses fightMoves data)
+      const SPECIAL_ENERGY_COST = 25;
+      if (
+        !didSpecial &&
+        g.keyJustPressed.has("l") &&
+        p.y >= GROUND_Y - 5 &&
+        g.weaponType !== "shuriken" &&
+        p.attackCooldown <= 0 &&
+        c.specialEnergy >= SPECIAL_ENERGY_COST
+      ) {
+        const specialSet = MOVE_SETS[g.style].special;
+        if (specialSet && specialSet.length > 0) {
+          const move = specialSet[0];
+          g.currentMove = move;
+          const totalFrames = Math.max(8, Math.round(msToFrames(move.recovery) / fightStyle.speed));
+          p.state = "kick"; // reuse kick anim; visual aura signals special
+          p.stateTimer = totalFrames;
+          p.attackCooldown = totalFrames + 4;
+          c.specialEnergy -= Math.round(SPECIAL_ENERGY_COST * fightStyle.staminaCost);
+          setEnergy(c.specialEnergy);
+          triggerShake(8, 16);
+          setComboName(move.name.toUpperCase() + "!");
+          g.effects.push({
+            x: p.x, y: p.y - 80, timer: 40,
+            text: move.name.toUpperCase() + "!", color: STYLES[g.style].tint, size: 18,
+          });
+          didSpecial = true;
+          sfx(() => SFX.uppercut());
+          setTimeout(() => setComboName(""), 1000);
+          if (import.meta.env.DEV) {
+            console.log("[Brawler] STYLE:", g.style);
+            console.log("[Brawler] INPUT: special");
+            console.log("[Brawler] MOVE:", move.name, move);
+            console.log("[Brawler] MOVESET:", MOVE_SETS[g.style]);
+          }
+        }
+      }
+
       // Ground Pound: press L while airborne
       if (!didSpecial && g.keyJustPressed.has("l") && p.y < GROUND_Y && c.specialEnergy >= SPECIAL_ATTACKS.groundpound.energyCost) {
         p.state = "groundpound";
@@ -2425,6 +2463,9 @@ export const StreetBrawler: FC = () => {
         const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
         const kb = spec ? spec.knockback : (move ? move.knockback : (p.state === "punch" ? 5 : 6));
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult * fightStyle.damage);
+        if (import.meta.env.DEV) {
+          console.log("[Brawler] DAMAGE:", dmg, `(base=${baseDmg} × combo=${c.multiplier.toFixed(2)} × boost=${dmgMult} × style=${fightStyle.damage})`);
+        }
 
         // Heavy-impact screen shake on groundpound landing
         if (p.state === "groundpound") {
