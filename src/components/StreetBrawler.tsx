@@ -2490,6 +2490,9 @@ export const StreetBrawler: FC = () => {
         const activeStart = Math.floor(totalFrames * 0.5); // middle of animation
         const activeEnd = Math.max(0, activeStart - 2);    // small window (timer counts down)
         hitFrameBasic = p.stateTimer <= activeStart && p.stateTimer >= activeEnd;
+        if (import.meta.env.DEV && hitFrameBasic) {
+          console.log("[Brawler] HIT WINDOW:", p.stateTimer, `(active ${activeEnd}-${activeStart}, total ${totalFrames}, style ${g.style})`);
+        }
       }
       const hitFrame = hitFrameSpec || hitFrameBasic;
 
