@@ -11,6 +11,7 @@ import fudderBossHead from "@/assets/boss-fudder-head.png";
 import exitLiquidityBossHead from "@/assets/boss-exit-liquidity-head.png";
 import mrMarketerBossHead from "@/assets/boss-mr-marketer-head.png";
 import { SFX } from "@/lib/gameSfx";
+import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 
 // Preloaded boss head images
 const jeetHeadImg: HTMLImageElement | null =
