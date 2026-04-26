@@ -1963,6 +1963,8 @@ export const StreetBrawler: FC = () => {
     weaponTimer: number;
     shurikenAmmo: number;
     style: StyleName;
+    lightChain: { index: number; lastFrame: number };
+    currentMove: Move | null;
     alleyObjects: AlleyObject[];
     animFrameCount: number;
     rain: RainDrop[];
@@ -2008,6 +2010,8 @@ export const StreetBrawler: FC = () => {
     weaponTimer: 0,
     shurikenAmmo: 0,
     style: "brawler",
+    lightChain: { index: 0, lastFrame: -9999 },
+    currentMove: null,
     alleyObjects: [],
     animFrameCount: 0,
     rain: [],
