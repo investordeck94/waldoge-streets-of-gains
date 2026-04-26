@@ -12,6 +12,7 @@ import exitLiquidityBossHead from "@/assets/boss-exit-liquidity-head.png";
 import mrMarketerBossHead from "@/assets/boss-mr-marketer-head.png";
 import { SFX } from "@/lib/gameSfx";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
+import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
 
 // Preloaded boss head images
 const jeetHeadImg: HTMLImageElement | null =
@@ -1962,6 +1963,8 @@ export const StreetBrawler: FC = () => {
     weaponTimer: number;
     shurikenAmmo: number;
     style: StyleName;
+    lightChain: { index: number; lastFrame: number };
+    currentMove: Move | null;
     alleyObjects: AlleyObject[];
     animFrameCount: number;
     rain: RainDrop[];
@@ -2007,6 +2010,8 @@ export const StreetBrawler: FC = () => {
     weaponTimer: 0,
     shurikenAmmo: 0,
     style: "brawler",
+    lightChain: { index: 0, lastFrame: -9999 },
+    currentMove: null,
     alleyObjects: [],
     animFrameCount: 0,
     rain: [],
@@ -2059,6 +2064,8 @@ export const StreetBrawler: FC = () => {
     g.camShake = { x: 0, y: 0, magnitude: 0, timer: 0, duration: 0 };
     g.hitPause = 0;
     g.style = "brawler";
+    g.lightChain = { index: 0, lastFrame: -9999 };
+    g.currentMove = null;
     setStyleName("brawler");
     // Spawn weapon pickups along the level (varied types)
     g.weapons = [
@@ -2307,15 +2314,33 @@ export const StreetBrawler: FC = () => {
         if (g.keys.has("d") || g.keys.has("arrowright")) { p.x += speed; p.facing = 1; moving = true; }
         if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && p.y >= GROUND_Y) p.vy = JUMP_FORCE;
 
+        // Reset light-chain index after CHAIN_RESET_MS of inactivity
+        const chainResetFrames = msToFrames(CHAIN_RESET_MS);
+        if (g.animFrameCount - g.lightChain.lastFrame > chainResetFrames) {
+          g.lightChain.index = 0;
+        }
+
         if (g.keyJustPressed.has("j") && p.attackCooldown <= 0) {
-          const punchFrames = Math.max(4, Math.round(12 / fightStyle.speed));
-          p.state = "punch"; p.stateTimer = punchFrames; p.attackCooldown = punchFrames + 2;
+          // Light attack — chains through style's light moveset (jab → straight → hook for brawler)
+          const lightSet = MOVE_SETS[g.style].light;
+          const move = lightSet[g.lightChain.index % lightSet.length];
+          g.lightChain.index++;
+          g.lightChain.lastFrame = g.animFrameCount;
+          g.currentMove = move;
+          // Total animation = recovery (already includes startup), scaled by style speed
+          const totalFrames = Math.max(4, Math.round(msToFrames(move.recovery) / fightStyle.speed));
+          p.state = "punch"; p.stateTimer = totalFrames; p.attackCooldown = totalFrames + 2;
           sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.punch());
         } else if (g.keyJustPressed.has("k") && p.attackCooldown <= 0) {
-          const kickFrames = Math.max(5, Math.round(15 / fightStyle.speed));
-          p.state = "kick"; p.stateTimer = kickFrames; p.attackCooldown = kickFrames + 2;
+          // Heavy attack — single move per style (uppercut/dash strike/roundhouse)
+          const heavySet = MOVE_SETS[g.style].heavy;
+          const move = heavySet[0];
+          g.currentMove = move;
+          const totalFrames = Math.max(5, Math.round(msToFrames(move.recovery) / fightStyle.speed));
+          p.state = "kick"; p.stateTimer = totalFrames; p.attackCooldown = totalFrames + 2;
           sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.kick());
         } else if (p.stateTimer <= 0) {
+          g.currentMove = null;
           p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
         }
       } else if (p.state !== "hit" && p.state !== "dead" && !isAttacking && didSpecial) {
@@ -2374,11 +2399,14 @@ export const StreetBrawler: FC = () => {
 
       if (hitFrame) {
         const spec = SPECIAL_ATTACKS[p.state];
-        const baseRange = spec ? spec.range : (p.state === "punch" ? 45 : 55);
+        // For J/K basic attacks the active move data drives range/damage/knockback.
+        // Specials (uppercut/spinkick/dashpunch/groundpound) keep their hand-tuned values.
+        const move = !spec ? g.currentMove : null;
+        const baseRange = spec ? spec.range : (move ? move.range : (p.state === "punch" ? 45 : 55));
         const range = baseRange + (g.weaponType ? WEAPON_STATS[g.weaponType].rangeBonus : 0);
-        const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
+        const baseDmg = spec ? spec.dmg : (move ? move.damage : (p.state === "punch" ? 12 : 18));
         const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
-        const kb = spec ? spec.knockback : (p.state === "punch" ? 5 : 6);
+        const kb = spec ? spec.knockback : (move ? move.knockback : (p.state === "punch" ? 5 : 6));
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult * fightStyle.damage);
 
         // Heavy-impact screen shake on groundpound landing
@@ -2398,7 +2426,7 @@ export const StreetBrawler: FC = () => {
           if (inRange) {
             e.hp -= dmg;
             e.state = "hit";
-            e.stateTimer = spec ? 15 : 10;
+            e.stateTimer = spec ? 15 : (move ? Math.max(8, msToFrames(move.hitstun) / 2) : 10);
             e.vx = (isGroundPound ? (dx > 0 ? 1 : -1) : p.facing) * kb;
             if (p.state === "uppercut") e.vy = -10;
 
@@ -2431,6 +2459,14 @@ export const StreetBrawler: FC = () => {
               color: c.hitCount > 4 ? "#ff00ff" : c.hitCount > 2 ? "#FFD700" : "#ffffff",
               size: Math.min(14 + c.hitCount * 2, 24),
             });
+
+            // Move name pop (only on first hit of the move so it doesn't spam)
+            if (move && c.hitCount === 1) {
+              g.effects.push({
+                x: p.x, y: p.y - 95, timer: 30,
+                text: move.name.toUpperCase(), color: STYLES[g.style].tint, size: 12,
+              });
+            }
 
             if (e.hp <= 0) {
               e.state = "dead";
