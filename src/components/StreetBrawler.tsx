@@ -2144,6 +2144,34 @@ export const StreetBrawler: FC = () => {
         g.animFrame = requestAnimationFrame(tick);
         return;
       }
+
+      // Hit-pause: freeze simulation for a few frames on impactful hits
+      // for that classic "juicy" feel. Rendering still happens so shake reads.
+      if (g.hitPause > 0) {
+        g.hitPause -= 1;
+        // Re-render last frame with shake offset for visible impact
+        if (g.camShake.timer > 0) {
+          const dur = Math.max(1, g.camShake.duration);
+          const t = g.camShake.timer;
+          const m = g.camShake.magnitude * (t / dur);
+          g.camShake.x = (Math.random() - 0.5) * 2 * m;
+          g.camShake.y = (Math.random() - 0.5) * 2 * m;
+          g.camShake.timer -= 1;
+        }
+        g.animFrame = requestAnimationFrame(tick);
+        return;
+      }
+
+      // Helper: trigger screen shake. Stronger or longer shakes win over
+      // weaker ongoing ones so a finisher always overrides a light punch.
+      const triggerShake = (intensity: number, duration: number) => {
+        const remaining = g.camShake.timer;
+        const currentMag = remaining > 0 ? g.camShake.magnitude * (remaining / Math.max(1, g.camShake.duration)) : 0;
+        if (intensity >= currentMag || duration > remaining) {
+          g.camShake = { x: 0, y: 0, magnitude: intensity, timer: duration, duration };
+        }
+      };
+
       g.animFrameCount++;
       const p = g.player;
       const c = g.combo;
