@@ -2956,8 +2956,9 @@ export const StreetBrawler: FC = () => {
 
       // Camera shake (decays each frame, applied as render offset only)
       if (g.camShake.timer > 0) {
+        const dur = Math.max(1, g.camShake.duration);
         const t = g.camShake.timer;
-        const m = g.camShake.magnitude * (t / 30);
+        const m = g.camShake.magnitude * (t / dur);
         g.camShake.x = (Math.random() - 0.5) * 2 * m;
         g.camShake.y = (Math.random() - 0.5) * 2 * m;
         g.camShake.timer -= 1;
