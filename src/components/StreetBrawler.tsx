@@ -2111,17 +2111,15 @@ export const StreetBrawler: FC = () => {
     
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
+    // Lock the backing buffer to the fixed internal game resolution.
+    // CSS handles visual scaling via aspect-ratio so the game never stretches
+    // or crops regardless of phone screen size.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = CANVAS_W * dpr;
+    canvas.height = CANVAS_H * dpr;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.scale(dpr, dpr);
-    // Diagnostic: bright lime square to confirm canvas renders
-    ctx.fillStyle = "lime";
-    ctx.fillRect(20, 20, 60, 60);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const g = gameRef.current;
     g.running = true;
 
