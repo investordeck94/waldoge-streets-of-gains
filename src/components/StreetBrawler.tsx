@@ -2416,6 +2416,9 @@ export const StreetBrawler: FC = () => {
               e.state = "dead";
               e.stateTimer = 60;
               sfx(() => e.isBoss ? SFX.victory() : SFX.enemyDeath());
+              // Finisher: strong shake + hit-pause for satisfying KO feel
+              triggerShake(e.isBoss ? 14 : 7, e.isBoss ? 28 : 14);
+              g.hitPause = Math.max(g.hitPause, e.isBoss ? 8 : 4);
               const killBonus = e.isBoss ? Math.round(1000 * c.multiplier) : Math.round(100 * c.multiplier);
               g.score += killBonus;
               setScore(g.score);
