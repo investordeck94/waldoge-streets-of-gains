@@ -2399,11 +2399,14 @@ export const StreetBrawler: FC = () => {
 
       if (hitFrame) {
         const spec = SPECIAL_ATTACKS[p.state];
-        const baseRange = spec ? spec.range : (p.state === "punch" ? 45 : 55);
+        // For J/K basic attacks the active move data drives range/damage/knockback.
+        // Specials (uppercut/spinkick/dashpunch/groundpound) keep their hand-tuned values.
+        const move = !spec ? g.currentMove : null;
+        const baseRange = spec ? spec.range : (move ? move.range : (p.state === "punch" ? 45 : 55));
         const range = baseRange + (g.weaponType ? WEAPON_STATS[g.weaponType].rangeBonus : 0);
-        const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
+        const baseDmg = spec ? spec.dmg : (move ? move.damage : (p.state === "punch" ? 12 : 18));
         const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
-        const kb = spec ? spec.knockback : (p.state === "punch" ? 5 : 6);
+        const kb = spec ? spec.knockback : (move ? move.knockback : (p.state === "punch" ? 5 : 6));
         const dmg = Math.round(baseDmg * c.multiplier * dmgMult * fightStyle.damage);
 
         // Heavy-impact screen shake on groundpound landing
