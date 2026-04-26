@@ -3429,7 +3429,15 @@ export const StreetBrawler: FC = () => {
         <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Street Brawler</h2>
       </div>
 
-      <div className="relative w-full" style={{ maxWidth: `${CANVAS_W}px`, margin: "0 auto" }}>
+      <div
+        className="relative w-full mx-auto"
+        style={{
+          // Allow the canvas to grow up to ~55svh on mobile so it's not tiny,
+          // but never wider than the native 800px so visuals stay crisp.
+          // 55svh * (800/400 aspect) = 110svw cap for width, then min() with 100% keeps it inside the column.
+          maxWidth: `min(100%, ${CANVAS_W}px, calc(55svh * ${CANVAS_W} / ${CANVAS_H}))`,
+        }}
+      >
         <canvas
           ref={canvasRef}
           className="rounded-lg border border-border/50 w-full block"
