@@ -2319,6 +2319,7 @@ export const StreetBrawler: FC = () => {
         if (specialSet && specialSet.length > 0) {
           const move = specialSet[0];
           g.currentMove = move;
+          g.hitApplied = false;
           const totalFrames = Math.max(8, Math.round(msToFrames(move.recovery) / fightStyle.speed));
           const activeFrames = Math.max(2, Math.round(msToFrames(move.hitstun) / fightStyle.speed));
           g.attackActive = true;
