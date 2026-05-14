@@ -2312,7 +2312,7 @@ export const StreetBrawler: FC = () => {
         // 🌀 SHURIKEN THROW (highest priority if equipped)
         if (g.weaponType === "shuriken" && g.shurikenAmmo > 0 && p.y >= GROUND_Y - 5) {
           g.shurikenAmmo--;
-          p.state = "throw";
+          p.state = "punch";
           p.stateTimer = 12;
           p.attackCooldown = 14;
           g.projectiles.push({
