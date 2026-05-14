@@ -229,6 +229,7 @@ const TOTAL_LEVELS = LEVELS.length;
 interface Projectile {
   x: number; y: number; vx: number; vy: number; timer: number;
   isPlayerProjectile?: boolean;
+  damage?: number;
 }
 
 function spawnBoss(playerX: number, levelIndex: number): Entity {
