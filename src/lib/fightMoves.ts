@@ -14,7 +14,7 @@ export interface Move {
   range: number;
 }
 
-export type StyleName = "brawler" | "rush" | "muayThai";
+export type StyleName = "brawler" | "rush" | "muayThai" | "greenCandle";
 
 type StyleMoveSet = {
   light: Move[];
