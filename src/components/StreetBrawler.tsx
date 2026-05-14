@@ -2517,7 +2517,12 @@ export const StreetBrawler: FC = () => {
         const baseDmg = spec ? spec.dmg : (move ? move.damage : (p.state === "punch" ? 12 : 18));
         const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
         const kb = spec ? spec.knockback : (move ? move.knockback : (p.state === "punch" ? 5 : 6));
-        const dmg = Math.round(baseDmg * c.multiplier * dmgMult * fightStyle.damage);
+        let dmg = Math.round(baseDmg * c.multiplier * dmgMult * fightStyle.damage);
+        // Green Candle rage: bonus damage scales with combo hit count (cap +50%)
+        if (g.style === "greenCandle") {
+          const rageBonus = Math.min(c.hitCount * 0.03, 0.5);
+          dmg = Math.round(dmg * (1 + rageBonus));
+        }
         if (import.meta.env.DEV) {
           console.log("[Brawler] HIT FRAME — CURRENT MOVE:", g.currentMove, "STYLE:", g.style, "STATE TIMER:", p.stateTimer);
           console.log("[Brawler] DAMAGE:", dmg, `(base=${baseDmg} × combo=${c.multiplier.toFixed(2)} × boost=${dmgMult} × style=${fightStyle.damage})`);
