@@ -2548,6 +2548,8 @@ export const StreetBrawler: FC = () => {
             e.stateTimer = spec ? 15 : (move ? Math.max(8, msToFrames(move.hitstun) / 2) : 10);
             e.vx = (isGroundPound ? (dx > 0 ? 1 : -1) : p.facing) * kb;
             if (p.state === "uppercut") e.vy = -10;
+            // Green Candle parabolic launch on every hit
+            if (g.style === "greenCandle") e.vy = -12;
 
             // Combo counter
             c.hitCount++;
