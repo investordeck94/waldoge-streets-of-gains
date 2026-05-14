@@ -3482,17 +3482,19 @@ export const StreetBrawler: FC = () => {
         const px = p.x - g.camX;
         const py = p.y - p.height / 2;
         const pulse = 0.7 + 0.3 * Math.sin(g.animFrameCount * 0.15);
+        // Bigger, hotter aura when player is on a rage streak
+        const auraSize = c.hitCount > 10 ? 10 : 0;
         ctx.save();
         ctx.globalAlpha = 0.55 * pulse;
         ctx.strokeStyle = STYLES[g.style].tint;
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.ellipse(px, p.y - 2, 22, 6, 0, 0, Math.PI * 2);
+        ctx.ellipse(px, p.y - 2, 22 + auraSize, 6 + auraSize * 0.4, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.globalAlpha = 0.35 * pulse;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(px, py + 6, 28, 0, Math.PI * 2);
+        ctx.arc(px, py + 6, 28 + auraSize, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
