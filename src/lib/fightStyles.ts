@@ -1,7 +1,7 @@
 // Fight styles for Street Brawler. Each style trades speed for damage / stamina.
 // Toggled mid-fight with the Q key.
 
-export type StyleName = "brawler" | "rush" | "muayThai";
+export type StyleName = "brawler" | "rush" | "muayThai" | "greenCandle";
 
 export interface FightStyle {
   speed: number;       // movement + attack frame multiplier
