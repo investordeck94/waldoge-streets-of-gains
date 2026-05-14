@@ -229,6 +229,7 @@ const TOTAL_LEVELS = LEVELS.length;
 interface Projectile {
   x: number; y: number; vx: number; vy: number; timer: number;
   isPlayerProjectile?: boolean;
+  damage?: number;
 }
 
 function spawnBoss(playerX: number, levelIndex: number): Entity {
@@ -2305,62 +2306,76 @@ export const StreetBrawler: FC = () => {
         }
       }
 
-      // L on ground (no shuriken) → style-specific special move (uses fightMoves data)
+      // ── L key actions: shuriken (highest) → groundpound (air) → style special (ground) ──
       const SPECIAL_ENERGY_COST = 25;
-      if (
-        !didSpecial &&
-        g.keyJustPressed.has("l") &&
-        p.y >= GROUND_Y - 5 &&
-        g.weaponType !== "shuriken" &&
-        p.attackCooldown <= 0 &&
-        c.specialEnergy >= SPECIAL_ENERGY_COST
-      ) {
-        const specialSet = MOVE_SETS[g.style].special;
-        if (specialSet && specialSet.length > 0) {
-          const move = specialSet[0];
-          g.currentMove = move;
-          g.hitApplied = false;
-          const totalFrames = Math.max(8, Math.round(msToFrames(move.recovery) / fightStyle.speed));
-          const activeFrames = Math.max(2, Math.round(msToFrames(move.hitstun) / fightStyle.speed));
-          g.attackActive = true;
-          g.attackActiveFrames = activeFrames;
-          p.state = "kick"; // reuse kick anim; visual aura signals special
-          p.stateTimer = totalFrames;
-          p.attackCooldown = totalFrames + 4;
-          c.specialEnergy -= Math.round(SPECIAL_ENERGY_COST * fightStyle.staminaCost);
-          setEnergy(c.specialEnergy);
-          triggerShake(8, 16);
-          setComboName(move.name.toUpperCase() + "!");
-          g.effects.push({
-            x: p.x, y: p.y - 80, timer: 40,
-            text: move.name.toUpperCase() + "!", color: STYLES[g.style].tint, size: 18,
+      if (!didSpecial && g.keyJustPressed.has("l") && p.attackCooldown <= 0 && p.state !== "dead") {
+        // 🌀 SHURIKEN THROW (highest priority if equipped)
+        if (g.weaponType === "shuriken" && g.shurikenAmmo > 0 && p.y >= GROUND_Y - 5) {
+          g.shurikenAmmo--;
+          p.state = "punch";
+          p.stateTimer = 12;
+          p.attackCooldown = 14;
+          g.projectiles.push({
+            x: p.x + p.facing * 30,
+            y: p.y - 40,
+            vx: p.facing * 14,
+            vy: 0,
+            timer: 90,
+            isPlayerProjectile: true,
+            damage: Math.round(18 * fightStyle.damage),
           });
+          sfx(() => SFX.shurikenThrow?.());
+          triggerShake(2, 4);
+          g.effects.push({ x: p.x, y: p.y - 60, timer: 20, text: "✦", color: "#cc44ff", size: 14 });
+          if (g.shurikenAmmo <= 0) { g.weaponType = null; g.weaponTimer = 0; }
           didSpecial = true;
-          sfx(() => SFX.uppercut());
+        }
+        // 💥 AIR: GROUNDPOUND
+        else if (p.y < GROUND_Y && c.specialEnergy >= SPECIAL_ATTACKS.groundpound.energyCost) {
+          p.state = "groundpound";
+          p.stateTimer = SPECIAL_ATTACKS.groundpound.frames;
+          p.attackCooldown = SPECIAL_ATTACKS.groundpound.frames + 5;
+          p.vy = 15;
+          c.specialEnergy -= Math.round(SPECIAL_ATTACKS.groundpound.energyCost * fightStyle.staminaCost);
+          setEnergy(c.specialEnergy);
+          setComboName("GROUND POUND!");
+          g.effects.push({ x: p.x, y: p.y - 80, timer: 40, text: "GROUND POUND!", color: "#ff6600", size: 18 });
+          didSpecial = true;
+          sfx(() => SFX.groundPound());
           setTimeout(() => setComboName(""), 1000);
-          if (import.meta.env.DEV) {
-            console.log("[Brawler] STYLE:", g.style);
-            console.log("[Brawler] INPUT: special");
-            console.log("[Brawler] MOVE:", move.name, move);
-            console.log("[Brawler] CURRENT MOVE:", g.currentMove);
-            console.log("[Brawler] STATE TIMER:", p.stateTimer, "ACTIVE FRAMES:", activeFrames);
+        }
+        // 🔥 GROUND: STYLE SPECIAL
+        else if (p.y >= GROUND_Y - 5 && c.specialEnergy >= SPECIAL_ENERGY_COST) {
+          const specialSet = MOVE_SETS[g.style].special;
+          if (specialSet && specialSet.length > 0) {
+            const move = specialSet[0];
+            g.currentMove = move;
+            g.hitApplied = false;
+            const totalFrames = Math.max(8, Math.round(msToFrames(move.recovery) / fightStyle.speed));
+            const activeFrames = Math.max(2, Math.round(msToFrames(move.hitstun) / fightStyle.speed));
+            g.attackActive = true;
+            g.attackActiveFrames = activeFrames;
+            p.state = "kick";
+            p.stateTimer = totalFrames;
+            p.attackCooldown = totalFrames + 4;
+            c.specialEnergy -= Math.round(SPECIAL_ENERGY_COST * fightStyle.staminaCost);
+            setEnergy(c.specialEnergy);
+            triggerShake(8, 16);
+            setComboName(move.name.toUpperCase() + "!");
+            g.effects.push({
+              x: p.x, y: p.y - 80, timer: 40,
+              text: move.name.toUpperCase() + "!", color: STYLES[g.style].tint, size: 18,
+            });
+            didSpecial = true;
+            sfx(() => SFX.uppercut());
+            setTimeout(() => setComboName(""), 1000);
+            if (import.meta.env.DEV) {
+              console.log("[Brawler] STYLE:", g.style);
+              console.log("[Brawler] INPUT: special");
+              console.log("[Brawler] MOVE:", move.name, move);
+            }
           }
         }
-      }
-
-      // Ground Pound: press L while airborne
-      if (!didSpecial && g.keyJustPressed.has("l") && p.y < GROUND_Y && c.specialEnergy >= SPECIAL_ATTACKS.groundpound.energyCost) {
-        p.state = "groundpound";
-        p.stateTimer = SPECIAL_ATTACKS.groundpound.frames;
-        p.attackCooldown = SPECIAL_ATTACKS.groundpound.frames + 5;
-        p.vy = 15;
-        c.specialEnergy -= Math.round(SPECIAL_ATTACKS.groundpound.energyCost * fightStyle.staminaCost);
-        setEnergy(c.specialEnergy);
-        setComboName("GROUND POUND!");
-        g.effects.push({ x: p.x, y: p.y - 80, timer: 40, text: "GROUND POUND!", color: "#ff6600", size: 18 });
-         didSpecial = true;
-         sfx(() => SFX.groundPound());
-        setTimeout(() => setComboName(""), 1000);
       }
 
       // Player movement & basic attacks (blocked during attack animations)
@@ -2432,19 +2447,8 @@ export const StreetBrawler: FC = () => {
         if (g.keys.has("d") || g.keys.has("arrowright")) p.facing = 1;
       }
 
-      // Shuriken throw: press L on ground with shuriken equipped (must run before key clear)
-      if (g.weaponType === "shuriken" && g.shurikenAmmo > 0 && g.keyJustPressed.has("l") && p.y >= GROUND_Y - 5 && p.state !== "dead") {
-        g.shurikenAmmo--;
-        sfx(() => SFX.shurikenThrow());
-        g.projectiles.push({
-          x: p.x + p.facing * 20, y: p.y - 40,
-          vx: p.facing * 9, vy: 0,
-          timer: 90,
-          isPlayerProjectile: true,
-        });
-        g.effects.push({ x: p.x, y: p.y - 60, timer: 20, text: "✦", color: "#cc44ff", size: 14 });
-        if (g.shurikenAmmo <= 0) { g.weaponType = null; g.weaponTimer = 0; }
-      }
+      // (Shuriken throw consolidated into the L-key block above)
+
 
       g.keyJustPressed.clear();
 
@@ -2874,7 +2878,7 @@ export const StreetBrawler: FC = () => {
             const edx = Math.abs(e.x - proj.x);
             const edy = Math.abs(e.y - proj.y);
             if (edx < 30 && edy < 40) {
-              const shurikenDmg = 20;
+              const shurikenDmg = proj.damage ?? 20;
               e.hp -= shurikenDmg;
               e.state = "hit";
               e.stateTimer = 8;
