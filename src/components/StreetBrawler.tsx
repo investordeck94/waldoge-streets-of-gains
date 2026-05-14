@@ -2517,7 +2517,12 @@ export const StreetBrawler: FC = () => {
         const baseDmg = spec ? spec.dmg : (move ? move.damage : (p.state === "punch" ? 12 : 18));
         const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
         const kb = spec ? spec.knockback : (move ? move.knockback : (p.state === "punch" ? 5 : 6));
-        const dmg = Math.round(baseDmg * c.multiplier * dmgMult * fightStyle.damage);
+        let dmg = Math.round(baseDmg * c.multiplier * dmgMult * fightStyle.damage);
+        // Green Candle rage: bonus damage scales with combo hit count (cap +50%)
+        if (g.style === "greenCandle") {
+          const rageBonus = Math.min(c.hitCount * 0.03, 0.5);
+          dmg = Math.round(dmg * (1 + rageBonus));
+        }
         if (import.meta.env.DEV) {
           console.log("[Brawler] HIT FRAME — CURRENT MOVE:", g.currentMove, "STYLE:", g.style, "STATE TIMER:", p.stateTimer);
           console.log("[Brawler] DAMAGE:", dmg, `(base=${baseDmg} × combo=${c.multiplier.toFixed(2)} × boost=${dmgMult} × style=${fightStyle.damage})`);
@@ -2543,6 +2548,8 @@ export const StreetBrawler: FC = () => {
             e.stateTimer = spec ? 15 : (move ? Math.max(8, msToFrames(move.hitstun) / 2) : 10);
             e.vx = (isGroundPound ? (dx > 0 ? 1 : -1) : p.facing) * kb;
             if (p.state === "uppercut") e.vy = -10;
+            // Green Candle parabolic launch on every hit
+            if (g.style === "greenCandle") e.vy = -12;
 
             // Combo counter
             c.hitCount++;
@@ -3475,17 +3482,19 @@ export const StreetBrawler: FC = () => {
         const px = p.x - g.camX;
         const py = p.y - p.height / 2;
         const pulse = 0.7 + 0.3 * Math.sin(g.animFrameCount * 0.15);
+        // Bigger, hotter aura when player is on a rage streak
+        const auraSize = c.hitCount > 10 ? 10 : 0;
         ctx.save();
         ctx.globalAlpha = 0.55 * pulse;
         ctx.strokeStyle = STYLES[g.style].tint;
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.ellipse(px, p.y - 2, 22, 6, 0, 0, Math.PI * 2);
+        ctx.ellipse(px, p.y - 2, 22 + auraSize, 6 + auraSize * 0.4, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.globalAlpha = 0.35 * pulse;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(px, py + 6, 28, 0, Math.PI * 2);
+        ctx.arc(px, py + 6, 28 + auraSize, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }

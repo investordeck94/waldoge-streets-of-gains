@@ -1,7 +1,7 @@
 // Fight styles for Street Brawler. Each style trades speed for damage / stamina.
 // Toggled mid-fight with the Q key.
 
-export type StyleName = "brawler" | "rush" | "muayThai";
+export type StyleName = "brawler" | "rush" | "muayThai" | "greenCandle";
 
 export interface FightStyle {
   speed: number;       // movement + attack frame multiplier
@@ -33,9 +33,16 @@ export const STYLES: Record<StyleName, FightStyle> = {
     label: "MUAY THAI",
     tint: "hsl(0 85% 55%)", // red — slow & heavy
   },
+  greenCandle: {
+    speed: 1.15,
+    damage: 1.55,
+    staminaCost: 1.4,
+    label: "GREEN CANDLE",
+    tint: "hsl(120 100% 50%)", // green — pump rage
+  },
 };
 
-export const STYLE_ORDER: StyleName[] = ["brawler", "rush", "muayThai"];
+export const STYLE_ORDER: StyleName[] = ["brawler", "rush", "muayThai", "greenCandle"];
 
 export function nextStyle(s: StyleName): StyleName {
   const i = STYLE_ORDER.indexOf(s);

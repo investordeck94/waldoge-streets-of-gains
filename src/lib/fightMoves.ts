@@ -14,7 +14,7 @@ export interface Move {
   range: number;
 }
 
-export type StyleName = "brawler" | "rush" | "muayThai";
+export type StyleName = "brawler" | "rush" | "muayThai" | "greenCandle";
 
 type StyleMoveSet = {
   light: Move[];
@@ -58,6 +58,18 @@ export const MOVE_SETS: Record<StyleName, Required<StyleMoveSet>> = {
     ],
     special: [
       { name: "clinch knees", damage: 35, knockback: 6, hitstun: 400, startup: 300, recovery: 400, range: 25 },
+    ],
+  },
+  greenCandle: {
+    light: [
+      { name: "buy",  damage: 9,  knockback: 2, hitstun: 110, startup: 70, recovery: 110, range: 48 },
+      { name: "long", damage: 12, knockback: 3, hitstun: 130, startup: 85, recovery: 125, range: 52 },
+    ],
+    heavy: [
+      { name: "market maker", damage: 34, knockback: 14, hitstun: 360, startup: 260, recovery: 340, range: 70 },
+    ],
+    special: [
+      { name: "PARABOLIC PUMP", damage: 48, knockback: 18, hitstun: 450, startup: 180, recovery: 420, range: 90 },
     ],
   },
 };
