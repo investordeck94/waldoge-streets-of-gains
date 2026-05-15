@@ -2897,7 +2897,8 @@ export const StreetBrawler: FC = () => {
               c.specialEnergy = Math.min(MAX_ENERGY, c.specialEnergy + 3);
               setEnergy(c.specialEnergy);
               setComboCount(c.hitCount);
-              g.effects.push({ x: e.x, y: e.y - 50, timer: 20, text: `${shurikenDmg}`, color: "#cc44ff", size: 14 });
+g.effects.push({ x: e.x, y: e.y - 50, timer: 20, text: `${shurikenDmg}`, color: "#cc44ff", size: 14 });
+              g.effects.push({ x: proj.x, y: proj.y, timer: 12, text: "✦", color: "#ff66ff", size: 16 });
               if (e.hp <= 0) {
                 e.state = "dead";
                 e.stateTimer = 60;
