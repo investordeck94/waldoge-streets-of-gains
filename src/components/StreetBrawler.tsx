@@ -2884,7 +2884,7 @@ export const StreetBrawler: FC = () => {
             if (e.state === "dead") continue;
             const edx = Math.abs(e.x - proj.x);
             const edy = Math.abs(e.y - proj.y);
-            if (edx < 30 && edy < 40) {
+            if (edx < 40 && edy <= 50) {
               const shurikenDmg = proj.damage ?? 20;
               e.hp -= shurikenDmg;
               e.state = "hit";
