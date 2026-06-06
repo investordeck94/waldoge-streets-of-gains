@@ -1495,30 +1495,52 @@ interface Platform {
   style: PlatformStyle;
 }
 
-// Per-level platform layouts: connected climbing routes that ascend left→right.
-// Max jump rise ≈ 120px (JUMP_FORCE -12, GRAVITY 0.6); steps stay ≤ ~50px and
-// horizontal gaps ≤ ~90px so each platform is reachable with a normal jump.
+// Per-level platform layouts: a connected climbing route that ascends left→right,
+// transitions into a long upper walkway/corridor, then steps back down.
+// Max jump rise ≈ 120px (JUMP_FORCE -12, GRAVITY 0.6); stair steps stay ≤ ~45px and
+// horizontal gaps ≤ ~70px so each platform is reachable with a normal jump.
+// Corridor segments abut (gap = 0) to form one continuous upper walkway.
 function spawnPlatforms(level: number): Platform[] {
-  const themeStyles: PlatformStyle[][] = [
-    ["dumpster", "fireEscape", "fireEscape", "rooftop"],   // 0 alley
-    ["balcony", "fireEscape", "balcony", "rooftop"],        // 1 city
-    ["rooftop", "balcony", "rooftop", "balcony"],           // 2 suburbs
-    ["awning", "balcony", "scaffold", "awning"],            // 3 mall
-    ["deck", "scaffold", "treehouse", "deck"],              // 4 park
-    ["balcony", "scaffold", "balcony", "rooftop"],          // 5 office
-    ["scaffold", "chart", "chart", "chart"],                // 6 dark doge / chart
+  // Per-level styling: [stair step style, long corridor style, descent style]
+  const themeStyles: [PlatformStyle, PlatformStyle, PlatformStyle][] = [
+    ["fireEscape", "rooftop",  "fireEscape"], // 0 alley
+    ["fireEscape", "balcony",  "fireEscape"], // 1 city — scaffolding into rooftop catwalk
+    ["balcony",    "rooftop",  "balcony"],    // 2 suburbs
+    ["awning",     "balcony",  "awning"],     // 3 mall — awning up to upper balcony corridor
+    ["deck",       "deck",     "deck"],       // 4 park — wooden boardwalk
+    ["scaffold",   "balcony",  "scaffold"],   // 5 office
+    ["chart",      "chart",    "chart"],      // 6 dark doge — trading-chart catwalk
   ];
-  const styles = themeStyles[Math.min(level, themeStyles.length - 1)];
-  // Connected ascending route: foot-y steps of ~45px, horizontal gaps ~70px.
-  const route = [
-    { x: 420,  y: 265, w: 130 },
-    { x: 620,  y: 220, w: 130 },
-    { x: 820,  y: 178, w: 130 },
-    { x: 1020, y: 140, w: 150 },
+  const [stairStyle, corridorStyle, descentStyle] =
+    themeStyles[Math.min(level, themeStyles.length - 1)];
+
+  const TOP_Y = 155;
+  const SEG_W = 150;          // corridor segment width
+  const CORRIDOR_X0 = 1070;   // first corridor segment x
+  const CORRIDOR_SEGS = 5;    // number of touching segments → long walkway
+
+  const plats: Platform[] = [
+    // Ascending stair route (4 steps up to TOP_Y)
+    { x: 380, y: 275, w: 140, h: 12, style: stairStyle },
+    { x: 580, y: 235, w: 140, h: 12, style: stairStyle },
+    { x: 780, y: 195, w: 140, h: 12, style: stairStyle },
+    { x: 940, y: TOP_Y, w: 130, h: 12, style: corridorStyle }, // landing into corridor
   ];
-  return route.map((pos, i) => ({
-    x: pos.x, y: pos.y, w: pos.w, h: 12, style: styles[i % styles.length],
-  }));
+  // Long upper walkway — segments abut to form one continuous corridor
+  for (let i = 0; i < CORRIDOR_SEGS; i++) {
+    plats.push({
+      x: CORRIDOR_X0 + i * SEG_W,
+      y: TOP_Y,
+      w: SEG_W,
+      h: 12,
+      style: corridorStyle,
+    });
+  }
+  // Descent on the far side
+  const endX = CORRIDOR_X0 + CORRIDOR_SEGS * SEG_W;
+  plats.push({ x: endX + 60,  y: 200, w: 140, h: 12, style: descentStyle });
+  plats.push({ x: endX + 240, y: 250, w: 140, h: 12, style: descentStyle });
+  return plats;
 }
 
 function drawPlatform(ctx: CanvasRenderingContext2D, plat: Platform, camX: number) {
@@ -2268,18 +2290,20 @@ function drawSuburbsScene(ctx: CanvasRenderingContext2D, camX: number, canvasW: 
 
 function drawMallScene(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, frameCount: number) {
   const pal = THEME_PALETTES.mall;
-  ctx.fillStyle = pal.skyMid;
-  ctx.fillRect(0, 0, canvasW, GROUND_Y);
+  // Atrium gradient sky (skylight effect)
+  const sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  sky.addColorStop(0, "#ffe8b8"); sky.addColorStop(0.5, pal.skyMid); sky.addColorStop(1, "#f0d4a0");
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, canvasW, GROUND_Y);
+  // Skylight ceiling beams
   ctx.fillStyle = "#fff8d8";
   for (let i = 0; i < 12; i++) {
     const sx = i * 180 - (camX * 0.1) % 180;
     ctx.fillRect(sx, 0, 120, 35);
-    ctx.fillStyle = "#88aaff";
-    ctx.fillRect(sx, 32, 120, 3);
+    ctx.fillStyle = "#88aaff"; ctx.fillRect(sx, 32, 120, 3);
     ctx.fillStyle = "#fff8d8";
   }
-  ctx.fillStyle = pal.ground1;
-  ctx.fillRect(0, GROUND_Y, canvasW, 80);
+  // Tiled marble floor
+  ctx.fillStyle = pal.ground1; ctx.fillRect(0, GROUND_Y, canvasW, 80);
   ctx.strokeStyle = "#a8a4a0"; ctx.lineWidth = 1;
   for (let i = 0; i < 40; i++) {
     const tx = i * 60 - (camX * 0.95) % 60;
@@ -2288,69 +2312,214 @@ function drawMallScene(ctx: CanvasRenderingContext2D, camX: number, canvasW: num
   for (let y = GROUND_Y + 20; y < GROUND_Y + 80; y += 25) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvasW, y); ctx.stroke();
   }
+  // Detailed shopfronts (clothing / electronics / toys / books / doge mart)
+  const SHOP_LABELS = ["FASHION CO.", "TECH HUB", "TOY WORLD", "BOOK NOOK", "DOGE MART", "SNEAKERS"];
+  const SHOP_COLORS = ["#ff66cc", "#00ddff", "#ffaa44", "#aa66ff", "#ffd633", "#44e0a0"];
   for (let i = 0; i < 15; i++) {
     const bx = i * 260 - (camX * 0.6) % 260;
-    if (bx < -200 || bx > canvasW + 50) continue;
+    if (bx < -250 || bx > canvasW + 50) continue;
+    // Storefront wall
     ctx.fillStyle = pal.nearBldg;
-    ctx.fillRect(bx, GROUND_Y - 120, 220, 120);
-    ctx.fillStyle = "#cfe8ff";
-    ctx.fillRect(bx + 20, GROUND_Y - 90, 180, 70);
-    ctx.strokeStyle = "#888"; ctx.lineWidth = 1.5;
-    ctx.strokeRect(bx + 20, GROUND_Y - 90, 180, 70);
-    const colors = ["#ff66cc", "#00ddff", "#ffaa44", "#aa66ff"];
-    const labels = ["FASHION", "TECH", "TOYS", "DOGE +"];
-    const col = colors[i % colors.length];
-    ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 10;
-    ctx.fillRect(bx + 20, GROUND_Y - 115, 180, 22);
+    ctx.fillRect(bx, GROUND_Y - 130, 230, 130);
+    // Big window glass with reflection
+    const winGrad = ctx.createLinearGradient(bx + 20, GROUND_Y - 100, bx + 20, GROUND_Y - 20);
+    winGrad.addColorStop(0, "#e8f4ff"); winGrad.addColorStop(0.5, "#cfe8ff"); winGrad.addColorStop(1, "#a8d0ee");
+    ctx.fillStyle = winGrad;
+    ctx.fillRect(bx + 20, GROUND_Y - 100, 190, 78);
+    ctx.strokeStyle = "#777"; ctx.lineWidth = 1.5;
+    ctx.strokeRect(bx + 20, GROUND_Y - 100, 190, 78);
+    // Window mullion
+    ctx.beginPath(); ctx.moveTo(bx + 115, GROUND_Y - 100); ctx.lineTo(bx + 115, GROUND_Y - 22); ctx.stroke();
+    // Mannequin / product silhouettes inside windows (varies per shop)
+    const kind = i % SHOP_LABELS.length;
+    ctx.fillStyle = "#3a3a48";
+    if (kind === 0) { // clothing — two mannequins
+      ctx.fillRect(bx + 40, GROUND_Y - 80, 22, 50);
+      ctx.beginPath(); ctx.arc(bx + 51, GROUND_Y - 85, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#c44";
+      ctx.fillRect(bx + 38, GROUND_Y - 70, 26, 18);
+      ctx.fillStyle = "#3a3a48";
+      ctx.fillRect(bx + 150, GROUND_Y - 80, 22, 50);
+      ctx.beginPath(); ctx.arc(bx + 161, GROUND_Y - 85, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#48a"; ctx.fillRect(bx + 148, GROUND_Y - 70, 26, 18);
+    } else if (kind === 1) { // electronics — TVs
+      ctx.fillStyle = "#1a1a22";
+      ctx.fillRect(bx + 35, GROUND_Y - 75, 35, 24);
+      ctx.fillRect(bx + 80, GROUND_Y - 75, 35, 24);
+      ctx.fillRect(bx + 135, GROUND_Y - 75, 35, 24);
+      ctx.fillStyle = "#00ddff";
+      ctx.fillRect(bx + 37, GROUND_Y - 73, 31, 20);
+      ctx.fillStyle = "#ff66cc"; ctx.fillRect(bx + 82, GROUND_Y - 73, 31, 20);
+      ctx.fillStyle = "#ffe066"; ctx.fillRect(bx + 137, GROUND_Y - 73, 31, 20);
+    } else if (kind === 2) { // toys — blocks & ball
+      const colors2 = ["#ff5555","#ffd633","#44a4ff","#66dd66"];
+      for (let k = 0; k < 5; k++) {
+        ctx.fillStyle = colors2[k % 4];
+        ctx.fillRect(bx + 35 + k * 28, GROUND_Y - 50, 22, 22);
+      }
+      ctx.beginPath(); ctx.fillStyle = "#ff8844"; ctx.arc(bx + 170, GROUND_Y - 40, 14, 0, Math.PI * 2); ctx.fill();
+    } else if (kind === 3) { // books — shelves
+      ctx.fillStyle = "#5a3a22";
+      ctx.fillRect(bx + 30, GROUND_Y - 80, 170, 4);
+      ctx.fillRect(bx + 30, GROUND_Y - 55, 170, 4);
+      ctx.fillRect(bx + 30, GROUND_Y - 30, 170, 4);
+      const bcols = ["#a44","#48a","#494","#a84","#84a","#a64"];
+      for (let r = 0; r < 3; r++) for (let k = 0; k < 12; k++) {
+        ctx.fillStyle = bcols[(k + r) % bcols.length];
+        ctx.fillRect(bx + 32 + k * 14, GROUND_Y - 76 + r * 25, 11, 22);
+      }
+    } else if (kind === 4) { // doge mart — shelves & yellow tones
+      ctx.fillStyle = "#ffd633";
+      ctx.fillRect(bx + 30, GROUND_Y - 75, 80, 45);
+      ctx.fillStyle = "#000"; ctx.font = "bold 14px monospace"; ctx.textAlign = "center";
+      ctx.fillText("WOW", bx + 70, GROUND_Y - 50);
+      ctx.fillStyle = "#3a3a48";
+      ctx.fillRect(bx + 130, GROUND_Y - 75, 60, 45);
+    } else { // sneakers
+      const sc = ["#fff","#ff5","#3df","#f3a"];
+      for (let k = 0; k < 4; k++) {
+        ctx.fillStyle = sc[k];
+        ctx.fillRect(bx + 35 + k * 42, GROUND_Y - 45, 36, 14);
+        ctx.beginPath(); ctx.arc(bx + 35 + k * 42, GROUND_Y - 38, 7, Math.PI/2, Math.PI*1.5); ctx.fill();
+      }
+    }
+    // Glowing storefront sign
+    const col = SHOP_COLORS[kind];
+    ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 12;
+    ctx.fillRect(bx + 20, GROUND_Y - 125, 190, 22);
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#fff"; ctx.font = "bold 13px monospace"; ctx.textAlign = "center";
-    ctx.fillText(labels[i % labels.length], bx + 110, GROUND_Y - 100);
+    ctx.fillText(SHOP_LABELS[kind], bx + 115, GROUND_Y - 109);
+    // Potted plant flanking entrance
+    ctx.fillStyle = "#5a3a1a";
+    ctx.fillRect(bx + 6, GROUND_Y - 18, 12, 18);
+    ctx.fillRect(bx + 212, GROUND_Y - 18, 12, 18);
+    ctx.fillStyle = "#3a8030";
+    ctx.beginPath(); ctx.arc(bx + 12, GROUND_Y - 22, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bx + 218, GROUND_Y - 22, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#5aa848";
+    ctx.beginPath(); ctx.arc(bx + 8, GROUND_Y - 27, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bx + 222, GROUND_Y - 27, 5, 0, Math.PI * 2); ctx.fill();
   }
+  // Escalators (between every other shop)
+  for (let i = 0; i < 8; i++) {
+    const ex = i * 520 + 240 - (camX * 0.6) % 520;
+    if (ex < -120 || ex > canvasW + 20) continue;
+    ctx.fillStyle = "#8a8a92";
+    ctx.beginPath();
+    ctx.moveTo(ex, GROUND_Y);
+    ctx.lineTo(ex + 90, GROUND_Y - 60);
+    ctx.lineTo(ex + 110, GROUND_Y - 60);
+    ctx.lineTo(ex + 20, GROUND_Y);
+    ctx.closePath(); ctx.fill();
+    // Step lines
+    ctx.strokeStyle = "#4a4a52"; ctx.lineWidth = 1;
+    for (let s = 0; s < 10; s++) {
+      const t = s / 10;
+      ctx.beginPath();
+      ctx.moveTo(ex + 9 * t * 10, GROUND_Y - 60 * t);
+      ctx.lineTo(ex + 20 + 9 * t * 10, GROUND_Y - 60 * t);
+      ctx.stroke();
+    }
+    // Railings
+    ctx.strokeStyle = "#222"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(ex - 2, GROUND_Y + 4); ctx.lineTo(ex + 88, GROUND_Y - 64); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ex + 22, GROUND_Y + 4); ctx.lineTo(ex + 112, GROUND_Y - 64); ctx.stroke();
+  }
+  // Hanging atrium lights
   for (let i = 0; i < 20; i++) {
     const lx = i * 160 - (camX * 0.6) % 160;
-    ctx.fillStyle = "#ffeb88";
-    ctx.beginPath(); ctx.arc(lx, 60, 6, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "#666"; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(lx, 0); ctx.lineTo(lx, 54); ctx.stroke();
+    ctx.fillStyle = "#ffeb88"; ctx.shadowColor = "#ffeb88"; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(lx, 60, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
   }
 }
 
 function drawParkScene(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, frameCount: number) {
   const pal = THEME_PALETTES.park;
   drawSkyAndFloor(ctx, pal, canvasW, camX);
+  // Sun + soft clouds
   ctx.fillStyle = "#fff5b0";
   ctx.beginPath(); ctx.arc(canvasW - 100, 80, 28, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ffffffcc";
+  for (let i = 0; i < 6; i++) {
+    const cx = i * 260 - (camX * 0.08) % 260;
+    ctx.beginPath();
+    ctx.arc(cx, 60, 18, 0, Math.PI * 2);
+    ctx.arc(cx + 20, 56, 22, 0, Math.PI * 2);
+    ctx.arc(cx + 42, 62, 16, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Distant rolling hills (back layer)
+  ctx.fillStyle = "#6ea868";
+  for (let i = 0; i < 14; i++) {
+    const hx = i * 180 - (camX * 0.12) % 180;
+    ctx.beginPath(); ctx.ellipse(hx, GROUND_Y - 10, 130, 60, 0, Math.PI, 0); ctx.fill();
+  }
+  // Mid bush layer
   for (let i = 0; i < 30; i++) {
     const tx = i * 80 - (camX * 0.25) % 80;
     ctx.fillStyle = "#3a7048";
     ctx.beginPath(); ctx.arc(tx, GROUND_Y - 30, 36, Math.PI, 0); ctx.fill();
   }
+  // Large foreground trees with trunk shading
   for (let i = 0; i < 25; i++) {
     const tx = i * 180 - (camX * 0.55) % 180;
     if (tx < -60 || tx > canvasW + 60) continue;
-    ctx.fillStyle = "#5a3018";
-    ctx.fillRect(tx - 6, GROUND_Y - 90, 12, 90);
+    // trunk
+    ctx.fillStyle = "#4a2810"; ctx.fillRect(tx - 8, GROUND_Y - 100, 16, 100);
+    ctx.fillStyle = "#6a3a18"; ctx.fillRect(tx - 8, GROUND_Y - 100, 4, 100);
+    // canopy
     ctx.fillStyle = "#2f5e3a";
-    ctx.beginPath(); ctx.arc(tx, GROUND_Y - 110, 38, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(tx, GROUND_Y - 118, 42, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "#3a7048";
-    ctx.beginPath(); ctx.arc(tx - 18, GROUND_Y - 95, 24, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(tx + 18, GROUND_Y - 95, 24, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(tx - 22, GROUND_Y - 100, 28, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(tx + 22, GROUND_Y - 100, 28, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#4a8a58";
+    ctx.beginPath(); ctx.arc(tx + 10, GROUND_Y - 130, 16, 0, Math.PI * 2); ctx.fill();
   }
-  for (let i = 0; i < 12; i++) {
-    const bx = i * 380 - (camX * 0.9) % 380;
-    if (bx < -100 || bx > canvasW + 100) continue;
-    if (i % 2 === 0) {
+  // Park props: benches, lamp posts, flower beds, trash bins
+  for (let i = 0; i < 16; i++) {
+    const bx = i * 280 - (camX * 0.9) % 280;
+    if (bx < -120 || bx > canvasW + 120) continue;
+    const kind = i % 4;
+    if (kind === 0) {
+      // Wooden bench
       ctx.fillStyle = "#6a3a1a";
-      ctx.fillRect(bx, GROUND_Y - 18, 60, 6);
+      ctx.fillRect(bx, GROUND_Y - 18, 70, 6);
+      ctx.fillRect(bx, GROUND_Y - 30, 70, 4); // backrest
       ctx.fillRect(bx + 4, GROUND_Y - 12, 4, 12);
-      ctx.fillRect(bx + 52, GROUND_Y - 12, 4, 12);
+      ctx.fillRect(bx + 62, GROUND_Y - 12, 4, 12);
+      ctx.fillRect(bx + 4, GROUND_Y - 30, 3, 18);
+      ctx.fillRect(bx + 63, GROUND_Y - 30, 3, 18);
+    } else if (kind === 1) {
+      // Lamp post
+      ctx.fillStyle = "#222"; ctx.fillRect(bx, GROUND_Y - 70, 4, 70);
+      ctx.fillStyle = "#444"; ctx.fillRect(bx - 4, GROUND_Y - 78, 12, 8);
+      ctx.fillStyle = "#ffeb88"; ctx.shadowColor = "#ffeb88"; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(bx + 2, GROUND_Y - 82, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+    } else if (kind === 2) {
+      // Flower bed: low brick border with bursts of color
+      ctx.fillStyle = "#8a4a2a"; ctx.fillRect(bx, GROUND_Y - 10, 90, 10);
+      const fc = ["#ff5a7a", "#ffd633", "#ff8844", "#ff44aa", "#fff"];
+      for (let k = 0; k < 9; k++) {
+        ctx.fillStyle = fc[k % fc.length];
+        ctx.beginPath(); ctx.arc(bx + 6 + k * 10, GROUND_Y - 12, 3.5, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = "#3a8030";
+      for (let k = 0; k < 5; k++) {
+        ctx.fillRect(bx + 10 + k * 18, GROUND_Y - 14, 2, 6);
+      }
     } else {
-      ctx.fillStyle = "#222";
-      ctx.fillRect(bx, GROUND_Y - 60, 4, 60);
-      ctx.fillStyle = "#ffeb88";
-      ctx.beginPath(); ctx.arc(bx + 2, GROUND_Y - 64, 7, 0, Math.PI * 2); ctx.fill();
+      // Trash bin
+      ctx.fillStyle = "#3a5a3a"; ctx.fillRect(bx, GROUND_Y - 24, 18, 24);
+      ctx.fillStyle = "#2a4a2a"; ctx.fillRect(bx, GROUND_Y - 26, 18, 4);
     }
   }
+  // Flowers in foreground grass
   for (let i = 0; i < 40; i++) {
     const fx = i * 90 - (camX * 0.95) % 90;
     const fc = ["#ff6677", "#ffaa44", "#ffffff", "#ff44aa"][i % 4];
@@ -2479,6 +2648,60 @@ function drawChartScene(ctx: CanvasRenderingContext2D, camX: number, canvasW: nu
   }
   ctx.strokeStyle = "#00ff88"; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(canvasW, GROUND_Y); ctx.stroke();
+  // Trading terminals along back wall
+  for (let i = 0; i < 12; i++) {
+    const tx = i * 280 - (camX * 0.7) % 280;
+    if (tx < -120 || tx > canvasW + 40) continue;
+    // Terminal stand
+    ctx.fillStyle = "#0a1422"; ctx.fillRect(tx, GROUND_Y - 90, 110, 90);
+    // Screen
+    ctx.fillStyle = "#040a14"; ctx.fillRect(tx + 8, GROUND_Y - 82, 94, 56);
+    // Glow border
+    ctx.strokeStyle = "#00ff88"; ctx.shadowColor = "#00ff88"; ctx.shadowBlur = 6;
+    ctx.lineWidth = 1; ctx.strokeRect(tx + 8, GROUND_Y - 82, 94, 56);
+    ctx.shadowBlur = 0;
+    // Mini chart inside screen
+    ctx.strokeStyle = i % 2 === 0 ? "#00ff88" : "#ff4466"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let k = 0; k < 30; k++) {
+      const xx = tx + 10 + k * 3;
+      const yy = GROUND_Y - 55 + Math.sin((k + i) * 0.6) * 12 - k * 0.3;
+      if (k === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+    }
+    ctx.stroke();
+    // Tickers
+    ctx.fillStyle = "#00ff88"; ctx.font = "8px monospace"; ctx.textAlign = "left";
+    ctx.fillText(["DOGE", "WAL", "BTC", "SOL"][i % 4] + " +" + (i * 3 % 24) + "%", tx + 12, GROUND_Y - 32);
+    // Keyboard
+    ctx.fillStyle = "#1a2a3a"; ctx.fillRect(tx + 8, GROUND_Y - 20, 94, 8);
+  }
+  // Wooden crates scattered (ground props)
+  for (let i = 0; i < 14; i++) {
+    const cx = i * 240 + 80 - (camX * 0.95) % 240;
+    if (cx < -40 || cx > canvasW + 40) continue;
+    ctx.fillStyle = "#8a5828"; ctx.fillRect(cx, GROUND_Y - 22, 22, 22);
+    ctx.fillStyle = "#5a3818";
+    ctx.fillRect(cx, GROUND_Y - 22, 22, 2);
+    ctx.fillRect(cx, GROUND_Y - 4, 22, 4);
+    ctx.strokeStyle = "#3a2208"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, GROUND_Y - 22); ctx.lineTo(cx + 22, GROUND_Y - 4);
+    ctx.moveTo(cx + 22, GROUND_Y - 22); ctx.lineTo(cx, GROUND_Y - 4);
+    ctx.stroke();
+    // Doge stamp
+    ctx.fillStyle = "#ffd633"; ctx.font = "bold 8px monospace"; ctx.textAlign = "center";
+    ctx.fillText("DOGE", cx + 11, GROUND_Y - 10);
+  }
+  // Market hanging neon lights
+  for (let i = 0; i < 16; i++) {
+    const lx = i * 200 - (camX * 0.4) % 200;
+    ctx.strokeStyle = "#0a3a4a"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(lx, 0); ctx.lineTo(lx, 28); ctx.stroke();
+    const lc = i % 2 === 0 ? "#00ff88" : "#ff4466";
+    ctx.fillStyle = lc; ctx.shadowColor = lc; ctx.shadowBlur = 10;
+    ctx.fillRect(lx - 8, 28, 16, 6);
+    ctx.shadowBlur = 0;
+  }
 }
 
 function drawScene(ctx: CanvasRenderingContext2D, theme: SceneTheme, camX: number, canvasW: number, frameCount: number) {
