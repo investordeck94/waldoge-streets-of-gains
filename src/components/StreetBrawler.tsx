@@ -1179,10 +1179,10 @@ function drawStickFigure(
         ctx.moveTo(0, hipY);
         ctx.lineTo(e.facing * limbLen * 2.1, hipY - 2);
       } else if (isPlayer && style === "greenCandle") {
-        // Axe / stomp kick — raised then driven down
+        // Berserker forward stomp — thigh drives forward, foot slams down/out
         ctx.moveTo(0, hipY);
-        ctx.lineTo(e.facing * limbLen * 0.5, hipY - limbLen * 1.1);
-        ctx.lineTo(e.facing * limbLen * 1.3, hipY + 2);
+        ctx.lineTo(e.facing * limbLen * 0.9, hipY + limbLen * 0.25);
+        ctx.lineTo(e.facing * limbLen * 1.7, hipY + limbLen * 0.85);
       } else {
         // Brawler — standard front kick
         ctx.moveTo(0, hipY);
