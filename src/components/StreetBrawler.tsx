@@ -913,12 +913,21 @@ function drawStickFigure(
   ctx.stroke();
 
   // Rush style: cyan speed trail on punch
-  if (isPlayer && isRush && e.state === "punch") {
-    ctx.strokeStyle = "rgba(0,200,255,0.4)";
-    ctx.lineWidth = 6;
+  if (isPlayer && style === "rush" && e.state === "punch") {
+    ctx.strokeStyle = "rgba(0,200,255,0.5)";
+    ctx.lineWidth = 8;
     ctx.beginPath();
     ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen * 2.3, shoulderY);
+    ctx.lineTo(e.facing * limbLen * 3, shoulderY);
+    ctx.stroke();
+  }
+
+  // Green Candle: green energy ring on spin kick
+  if (isPlayer && style === "greenCandle" && e.state === "spinkick") {
+    ctx.strokeStyle = "rgba(0,255,100,0.45)";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(0, hipY, 32, 0, Math.PI * 2);
     ctx.stroke();
   }
 
