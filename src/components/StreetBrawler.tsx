@@ -1068,9 +1068,9 @@ function drawStickFigure(
         frontHand = [e.facing * limbLen * 2.8, shoulderY + 2];
         backHand = [-e.facing * limbLen * 0.8, shoulderY + 12];
       } else if (style === "muayThai") {
-        // elbow tip (the striking surface)
-        frontHand = [e.facing * limbLen * 0.4, shoulderY - 16];
-        backHand = [-e.facing * limbLen * 0.3, shoulderY - 10];
+        // elbow tip thrust forward (the striking surface)
+        frontHand = [e.facing * limbLen * 1.7, shoulderY - 2];
+        backHand = [-e.facing * limbLen * 0.2, shoulderY - 12];
       } else if (style === "greenCandle") {
         frontHand = [e.facing * limbLen * 1.4, shoulderY - limbLen * 1.4];
         backHand = [-e.facing * limbLen * 0.5, shoulderY + 12];
@@ -1082,14 +1082,36 @@ function drawStickFigure(
       frontHand = [-e.facing * limbLen * 0.5, shoulderY - 8];
       backHand = [e.facing * limbLen * 0.3, shoulderY + 5];
     } else if (e.state === "uppercut") {
-      frontHand = [e.facing * limbLen * 0.8, shoulderY - limbLen * 1.5];
-      backHand = [-e.facing * limbLen * 0.3, shoulderY - limbLen];
+      if (style === "rush") {
+        frontHand = [e.facing * limbLen * 1.9, shoulderY - limbLen * 1.3];
+        backHand = [-e.facing * limbLen * 0.5, shoulderY + 6];
+      } else if (style === "muayThai") {
+        frontHand = [e.facing * limbLen * 0.2, shoulderY - limbLen * 1.7];
+        backHand = [-e.facing * limbLen * 0.3, shoulderY - 6];
+      } else if (style === "greenCandle") {
+        frontHand = [e.facing * limbLen * 0.9, shoulderY - limbLen * 1.7];
+        backHand = [-e.facing * limbLen * 0.9, shoulderY - limbLen * 1.7];
+      } else {
+        frontHand = [e.facing * limbLen * 0.55, shoulderY - limbLen * 1.8];
+        backHand = [-e.facing * limbLen * 0.35, shoulderY - limbLen * 0.5];
+      }
     } else if (e.state === "dashpunch") {
       frontHand = [e.facing * limbLen * 2, shoulderY];
       backHand = [e.facing * limbLen * 1.5, shoulderY - 8];
     } else if (e.state === "spinkick" || e.state === "groundpound") {
-      frontHand = [-limbLen * 0.8, shoulderY + limbLen * 0.3];
-      backHand = [limbLen * 0.8, shoulderY + limbLen * 0.3];
+      if (e.state === "spinkick" && style === "muayThai") {
+        frontHand = [-limbLen * 0.7, shoulderY - 14];
+        backHand = [limbLen * 0.5, shoulderY + 8];
+      } else if (e.state === "spinkick" && style === "greenCandle") {
+        frontHand = [limbLen * 1.7, shoulderY - 2];
+        backHand = [-limbLen * 1.7, shoulderY - 2];
+      } else if (e.state === "spinkick" && style === "rush") {
+        frontHand = [limbLen * 0.45, shoulderY + 4];
+        backHand = [-limbLen * 0.45, shoulderY + 4];
+      } else {
+        frontHand = [-limbLen * 0.8, shoulderY + limbLen * 0.3];
+        backHand = [limbLen * 0.8, shoulderY + limbLen * 0.3];
+      }
     } else {
       const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
       // Match per-style idle/walk arm geometry
