@@ -1482,7 +1482,9 @@ function drawStickFigure(
 }
 
 // ============== PLATFORMS (Phase 1 — static, jump-through) ==============
-type PlatformStyle = "fireEscape" | "dumpster" | "balcony" | "scaffold" | "rooftop";
+type PlatformStyle =
+  | "fireEscape" | "dumpster" | "balcony" | "scaffold" | "rooftop"
+  | "awning" | "deck" | "treehouse" | "chart";
 interface Platform {
   x: number;       // left edge in world coords
   y: number;       // top surface y (player foot lands here)
@@ -1491,32 +1493,30 @@ interface Platform {
   style: PlatformStyle;
 }
 
-// Per-level platform layouts. Heights are above GROUND_Y (320). Player feet land on `y`.
-// Layouts are hand-tuned to be reachable with the existing JUMP_FORCE (-12, GRAVITY 0.6).
-// Max jump height ≈ 120px, so platforms sit between y = 200 and y = 260.
+// Per-level platform layouts: connected climbing routes that ascend left→right.
+// Max jump rise ≈ 120px (JUMP_FORCE -12, GRAVITY 0.6); steps stay ≤ ~50px and
+// horizontal gaps ≤ ~90px so each platform is reachable with a normal jump.
 function spawnPlatforms(level: number): Platform[] {
   const themeStyles: PlatformStyle[][] = [
-    ["dumpster", "fireEscape", "dumpster", "fireEscape"],  // alley
-    ["balcony", "fireEscape", "balcony", "fireEscape"],     // city
-    ["rooftop", "balcony", "rooftop", "balcony"],           // suburbs
-    ["scaffold", "balcony", "scaffold", "balcony"],         // mall
-    ["rooftop", "scaffold", "rooftop", "scaffold"],         // park
-    ["balcony", "scaffold", "balcony", "scaffold"],         // office
-    ["scaffold", "rooftop", "scaffold", "rooftop"],         // chart
+    ["dumpster", "fireEscape", "fireEscape", "rooftop"],   // 0 alley
+    ["balcony", "fireEscape", "balcony", "rooftop"],        // 1 city
+    ["rooftop", "balcony", "rooftop", "balcony"],           // 2 suburbs
+    ["awning", "balcony", "scaffold", "awning"],            // 3 mall
+    ["deck", "scaffold", "treehouse", "deck"],              // 4 park
+    ["balcony", "scaffold", "balcony", "rooftop"],          // 5 office
+    ["scaffold", "chart", "chart", "chart"],                // 6 dark doge / chart
   ];
   const styles = themeStyles[Math.min(level, themeStyles.length - 1)];
-  const out: Platform[] = [];
-  // Place 4 platforms spaced across the level.
-  const positions = [
-    { x: 500,  y: 240, w: 140 },
-    { x: 1100, y: 215, w: 160 },
-    { x: 1800, y: 250, w: 130 },
-    { x: 2500, y: 220, w: 170 },
+  // Connected ascending route: foot-y steps of ~45px, horizontal gaps ~70px.
+  const route = [
+    { x: 420,  y: 265, w: 130 },
+    { x: 620,  y: 220, w: 130 },
+    { x: 820,  y: 178, w: 130 },
+    { x: 1020, y: 140, w: 150 },
   ];
-  positions.forEach((pos, i) => {
-    out.push({ x: pos.x, y: pos.y, w: pos.w, h: 12, style: styles[i % styles.length] });
-  });
-  return out;
+  return route.map((pos, i) => ({
+    x: pos.x, y: pos.y, w: pos.w, h: 12, style: styles[i % styles.length],
+  }));
 }
 
 function drawPlatform(ctx: CanvasRenderingContext2D, plat: Platform, camX: number) {
