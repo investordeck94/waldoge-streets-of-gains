@@ -1009,8 +1009,14 @@ function drawStickFigure(
   // Legs
   ctx.beginPath();
   if (e.state === "kick") {
-    ctx.moveTo(0, hipY);
-    ctx.lineTo(e.facing * limbLen * 1.5, hipY - 5);
+    if (isPlayer && style === "muayThai") {
+      // Knee strike — front leg lifted high and bent up
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * limbLen * 0.7, hipY - 18);
+    } else {
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * limbLen * 1.5, hipY - 5);
+    }
     ctx.moveTo(0, hipY);
     ctx.lineTo(-e.facing * limbLen * 0.5, hipY + limbLen);
   } else if (e.state === "jump" || e.state === "uppercut") {
