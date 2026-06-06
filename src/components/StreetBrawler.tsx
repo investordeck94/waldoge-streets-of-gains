@@ -2072,6 +2072,7 @@ export const StreetBrawler: FC = () => {
       lookAhead: number;
       vx: number;
     };
+    specialFx: { style: StyleName; timer: number; total: number } | null;
   }>({
     player: createPlayer(),
     enemies: [],
@@ -2108,6 +2109,7 @@ export const StreetBrawler: FC = () => {
     healFlash: 0,
     camAnchor: 0.5,
     camLookAhead: 0,
+    specialFx: null,
     camPreset: "snappy",
     vxAvg: 0,
     vxHistory: [],
@@ -2441,7 +2443,8 @@ export const StreetBrawler: FC = () => {
             p.attackCooldown = totalFrames + 4;
             c.specialEnergy -= Math.round(SPECIAL_ENERGY_COST * fightStyle.staminaCost);
             setEnergy(c.specialEnergy);
-            triggerShake(8, 16);
+            triggerShake(g.style === "brawler" ? 14 : 8, g.style === "brawler" ? 22 : 16);
+            g.specialFx = { style: g.style, timer: totalFrames, total: totalFrames };
             setComboName(move.name.toUpperCase() + "!");
             g.effects.push({
               x: p.x, y: p.y - 80, timer: 40,
@@ -3579,6 +3582,96 @@ export const StreetBrawler: FC = () => {
         ctx.arc(px, py + 6, 28 + auraSize, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
+      }
+
+      // ─── Style-specific SPECIAL move visuals (visuals only — no combat changes) ───
+      // Tied to g.specialFx which is set the instant the style special triggers.
+      if (g.specialFx && g.specialFx.timer > 0) {
+        const fx = g.specialFx;
+        const t = fx.timer / fx.total;            // 1 -> 0 over the move
+        const progress = 1 - t;                   // 0 -> 1
+        const px = p.x - g.camX;
+        const py = p.y - p.height / 2;
+        ctx.save();
+
+        if (fx.style === "brawler") {
+          // Haymaker: full-screen white impact flash on the active window
+          const flash = Math.max(0, 1 - Math.abs(progress - 0.45) * 4);
+          if (flash > 0) {
+            ctx.globalAlpha = flash * 0.55;
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+          }
+          // Heavy arc swoosh in front of the player
+          ctx.globalAlpha = 0.7 * t;
+          ctx.strokeStyle = "#fff8c8";
+          ctx.lineWidth = 8;
+          ctx.beginPath();
+          ctx.arc(px + p.facing * 20, py + 4, 50, p.facing === 1 ? -Math.PI / 2 : Math.PI / 2, p.facing === 1 ? Math.PI / 2 : (3 * Math.PI) / 2);
+          ctx.stroke();
+        } else if (fx.style === "rush") {
+          // Afterimage barrage: 3 cyan ghost silhouettes trailing behind the player
+          ctx.fillStyle = "rgba(0,200,255,0.35)";
+          for (let i = 1; i <= 3; i++) {
+            const off = i * 14 * p.facing;
+            ctx.globalAlpha = (0.35 - i * 0.08) * t;
+            ctx.beginPath();
+            ctx.ellipse(px - off, py + 4, 10, 22, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          // Blue speed streaks
+          ctx.globalAlpha = 0.8 * t;
+          ctx.strokeStyle = "#7fe8ff";
+          ctx.lineWidth = 2;
+          for (let i = 0; i < 5; i++) {
+            const yy = py - 10 + i * 8;
+            ctx.beginPath();
+            ctx.moveTo(px - p.facing * 50, yy);
+            ctx.lineTo(px - p.facing * 10, yy);
+            ctx.stroke();
+          }
+        } else if (fx.style === "muayThai") {
+          // Flying knee: orange impact burst at strike point + leap arc trail
+          const burstX = px + p.facing * 28;
+          const burstY = py + 2;
+          // Radial burst
+          ctx.globalAlpha = Math.max(0, 1 - progress * 1.5);
+          const grad = ctx.createRadialGradient(burstX, burstY, 4, burstX, burstY, 38);
+          grad.addColorStop(0, "rgba(255,180,60,0.9)");
+          grad.addColorStop(1, "rgba(255,80,0,0)");
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(burstX, burstY, 38, 0, Math.PI * 2);
+          ctx.fill();
+          // Leap streak behind player
+          ctx.globalAlpha = 0.6 * t;
+          ctx.strokeStyle = "#ff9a3c";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(px - p.facing * 40, py + 30);
+          ctx.quadraticCurveTo(px - p.facing * 20, py - 20, px, py);
+          ctx.stroke();
+        } else if (fx.style === "greenCandle") {
+          // Berserker lariat: spinning green ring + thick aura
+          const spin = progress * Math.PI * 6;
+          ctx.translate(px, py + 4);
+          ctx.rotate(spin);
+          ctx.globalAlpha = 0.6 * t;
+          ctx.strokeStyle = "#39ff88";
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 42, 14, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.globalAlpha = 0.35 * t;
+          ctx.lineWidth = 10;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 50, 18, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+        fx.timer--;
+        if (fx.timer <= 0) g.specialFx = null;
       }
 
       drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType, g.style);
