@@ -1641,6 +1641,131 @@ function drawPlatform(ctx: CanvasRenderingContext2D, plat: Platform, camX: numbe
       }
       break;
     }
+    case "awning": {
+      // Mall storefront awning: striped fabric slope with hanging valance.
+      ctx.fillStyle = "#c43a3a";
+      ctx.fillRect(sx, y, plat.w, plat.h);
+      // Stripes
+      ctx.fillStyle = "#f0e8d8";
+      const stripeW = 14;
+      for (let i = 0; i < plat.w; i += stripeW * 2) {
+        ctx.fillRect(sx + i, y, stripeW, plat.h);
+      }
+      // Top trim
+      ctx.fillStyle = "#7a1a1a";
+      ctx.fillRect(sx, y, plat.w, 2);
+      // Scalloped valance
+      ctx.fillStyle = "#c43a3a";
+      for (let i = 0; i < plat.w; i += 12) {
+        ctx.beginPath();
+        ctx.arc(sx + i + 6, y + plat.h, 5, 0, Math.PI);
+        ctx.fill();
+      }
+      // Support brackets to wall
+      ctx.strokeStyle = "#2a2a30";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(sx, y); ctx.lineTo(sx - 6, y + 10);
+      ctx.moveTo(sx + plat.w, y); ctx.lineTo(sx + plat.w + 6, y + 10);
+      ctx.stroke();
+      break;
+    }
+    case "deck": {
+      // Wooden observation deck: thick plank top with log supports.
+      ctx.fillStyle = "#a87848";
+      ctx.fillRect(sx, y, plat.w, plat.h + 2);
+      ctx.fillStyle = "#7a5028";
+      for (let px = sx + 24; px < sx + plat.w; px += 24) {
+        ctx.fillRect(px, y, 1, plat.h);
+      }
+      ctx.fillStyle = "#5a3818";
+      ctx.fillRect(sx, y + plat.h, plat.w, 2);
+      // Top highlight
+      ctx.fillStyle = "#c89868";
+      ctx.fillRect(sx, y, plat.w, 2);
+      // Log supports
+      ctx.fillStyle = "#5a3818";
+      const colH = GROUND_Y - (y + plat.h + 2);
+      if (colH > 0) {
+        ctx.fillRect(sx + 10, y + plat.h + 2, 8, colH);
+        ctx.fillRect(sx + plat.w - 18, y + plat.h + 2, 8, colH);
+      }
+      // Low railing posts
+      ctx.strokeStyle = "#5a3818";
+      ctx.lineWidth = 1.5;
+      for (let rx = sx + 8; rx < sx + plat.w - 4; rx += 18) {
+        ctx.beginPath(); ctx.moveTo(rx, y); ctx.lineTo(rx, y - 12); ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.moveTo(sx + 6, y - 12); ctx.lineTo(sx + plat.w - 6, y - 12); ctx.stroke();
+      break;
+    }
+    case "treehouse": {
+      // Treehouse-style: wood plank with leafy canopy backdrop.
+      // Leaves behind
+      ctx.fillStyle = "#3a6a2a";
+      ctx.beginPath();
+      ctx.arc(sx + 10, y - 4, 10, 0, Math.PI * 2);
+      ctx.arc(sx + plat.w - 10, y - 4, 10, 0, Math.PI * 2);
+      ctx.arc(sx + plat.w / 2, y - 8, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#4a8a38";
+      ctx.beginPath();
+      ctx.arc(sx + 20, y - 8, 7, 0, Math.PI * 2);
+      ctx.arc(sx + plat.w - 20, y - 8, 7, 0, Math.PI * 2);
+      ctx.fill();
+      // Plank
+      ctx.fillStyle = "#8a5828";
+      ctx.fillRect(sx, y, plat.w, plat.h);
+      ctx.fillStyle = "#5a3818";
+      ctx.fillRect(sx, y + plat.h - 2, plat.w, 2);
+      ctx.fillStyle = "#a87848";
+      ctx.fillRect(sx, y, plat.w, 2);
+      // Rope supports up
+      ctx.strokeStyle = "#6a4828";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(sx + 6, y); ctx.lineTo(sx + 14, y - 18);
+      ctx.moveTo(sx + plat.w - 6, y); ctx.lineTo(sx + plat.w - 14, y - 18);
+      ctx.stroke();
+      break;
+    }
+    case "chart": {
+      // Trading-chart platform: glowing green candle bar with grid backdrop.
+      // Bar body
+      ctx.fillStyle = "#0a1a14";
+      ctx.fillRect(sx, y, plat.w, plat.h);
+      // Top neon line
+      ctx.fillStyle = "#2dff88";
+      ctx.fillRect(sx, y, plat.w, 2);
+      // Glow underside
+      ctx.fillStyle = "#1a4a30";
+      ctx.fillRect(sx, y + plat.h - 2, plat.w, 2);
+      // Grid lines on top surface
+      ctx.strokeStyle = "#2dff88";
+      ctx.globalAlpha = 0.35;
+      ctx.lineWidth = 0.6;
+      for (let gx = sx + 12; gx < sx + plat.w; gx += 16) {
+        ctx.beginPath(); ctx.moveTo(gx, y + 2); ctx.lineTo(gx, y + plat.h - 2); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      // Candle stem rising above
+      ctx.strokeStyle = "#2dff88";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(sx + plat.w / 2, y); ctx.lineTo(sx + plat.w / 2, y - 16);
+      ctx.stroke();
+      // Red candle wick column down to ground
+      ctx.strokeStyle = "#ff3a5a";
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(sx + plat.w / 2, y + plat.h);
+      ctx.lineTo(sx + plat.w / 2, GROUND_Y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      break;
+    }
   }
   ctx.restore();
 }
