@@ -1,7 +1,9 @@
 import { FC, useEffect, useRef, useState, useCallback } from "react";
 import waldogeMusic from "@/assets/waldoge-music.mp3";
+import waldogeCombatTheme from "@/assets/waldoge-combat-theme.mp3.asset.json";
+import waldogeArcade from "@/assets/waldoge-arcade.mp3.asset.json";
 import { motion, AnimatePresence } from "framer-motion";
-import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize, Pause } from "lucide-react";
+import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize, Pause, SkipForward, SkipBack } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
 import streetBrawlerCover from "@/assets/street-brawler-cover.png";
 import jeetBossHead from "@/assets/jeet-boss-head.png";
@@ -2615,18 +2617,29 @@ export const StreetBrawler: FC = () => {
   const [camPreset, setCamPreset] = useState<"snappy" | "buttery">("snappy");
   const sfxRef = useRef(true);
   const musicRef = useRef<HTMLAudioElement | null>(null);
+  const TRACKS = [
+    { src: waldogeMusic, name: "Waldoge Theme" },
+    { src: waldogeCombatTheme.url, name: "Combat Theme" },
+    { src: waldogeArcade.url, name: "Arcade" },
+  ];
+  const [trackIdx, setTrackIdx] = useState(0);
 
-  // Initialize background music element once
+  // Initialize background music element; rebuild when track changes.
   useEffect(() => {
-    const audio = new Audio(waldogeMusic);
-    audio.loop = true;
+    const audio = new Audio(TRACKS[trackIdx].src);
+    audio.loop = false;
     audio.volume = 0.35;
+    audio.muted = !sfxRef.current;
+    const onEnded = () => setTrackIdx((i) => (i + 1) % TRACKS.length);
+    audio.addEventListener("ended", onEnded);
     musicRef.current = audio;
     return () => {
+      audio.removeEventListener("ended", onEnded);
       audio.pause();
       musicRef.current = null;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackIdx]);
 
   // Play/pause music based on game state and pause status
   useEffect(() => {
@@ -2636,14 +2649,11 @@ export const StreetBrawler: FC = () => {
       audio.play().catch(() => {});
     } else {
       audio.pause();
-      if (gameState !== "playing" || gameState === "playing" && false) {
-        // reset to start when leaving play
-      }
     }
     if (gameState !== "playing") {
       audio.currentTime = 0;
     }
-  }, [gameState, isPaused, sfxEnabled]);
+  }, [gameState, isPaused, sfxEnabled, trackIdx]);
 
   // Sync mute toggle with music volume
   useEffect(() => {
@@ -2651,6 +2661,10 @@ export const StreetBrawler: FC = () => {
     if (!audio) return;
     audio.muted = !sfxEnabled;
   }, [sfxEnabled]);
+
+  const skipTrack = useCallback((dir: 1 | -1) => {
+    setTrackIdx((i) => (i + dir + TRACKS.length) % TRACKS.length);
+  }, [TRACKS.length]);
 
   const sfx = useCallback((fn: () => void) => {
     if (sfxRef.current) fn();
@@ -4532,6 +4546,28 @@ export const StreetBrawler: FC = () => {
               ? <Play className="w-4 h-4 text-primary" />
               : <Pause className="w-4 h-4 text-primary" />}
           </button>
+          {/* Mini music player */}
+          <div className="flex items-center gap-0.5 px-1 py-0.5 rounded glass-card" title={`Track: ${TRACKS[trackIdx].name}`}>
+            <button
+              onClick={() => skipTrack(-1)}
+              className="p-1 hover:bg-muted/50 rounded transition"
+              aria-label="Previous track"
+              title="Previous track"
+            >
+              <SkipBack className="w-3 h-3 text-primary" />
+            </button>
+            <span className="text-[9px] font-mono text-muted-foreground max-w-[60px] truncate hidden sm:inline">
+              {TRACKS[trackIdx].name}
+            </span>
+            <button
+              onClick={() => skipTrack(1)}
+              className="p-1 hover:bg-muted/50 rounded transition"
+              aria-label="Next track"
+              title="Next track"
+            >
+              <SkipForward className="w-3 h-3 text-primary" />
+            </button>
+          </div>
           <button
             onClick={() => {
               const el = containerRef.current;
