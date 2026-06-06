@@ -1495,30 +1495,52 @@ interface Platform {
   style: PlatformStyle;
 }
 
-// Per-level platform layouts: connected climbing routes that ascend left→right.
-// Max jump rise ≈ 120px (JUMP_FORCE -12, GRAVITY 0.6); steps stay ≤ ~50px and
-// horizontal gaps ≤ ~90px so each platform is reachable with a normal jump.
+// Per-level platform layouts: a connected climbing route that ascends left→right,
+// transitions into a long upper walkway/corridor, then steps back down.
+// Max jump rise ≈ 120px (JUMP_FORCE -12, GRAVITY 0.6); stair steps stay ≤ ~45px and
+// horizontal gaps ≤ ~70px so each platform is reachable with a normal jump.
+// Corridor segments abut (gap = 0) to form one continuous upper walkway.
 function spawnPlatforms(level: number): Platform[] {
-  const themeStyles: PlatformStyle[][] = [
-    ["dumpster", "fireEscape", "fireEscape", "rooftop"],   // 0 alley
-    ["balcony", "fireEscape", "balcony", "rooftop"],        // 1 city
-    ["rooftop", "balcony", "rooftop", "balcony"],           // 2 suburbs
-    ["awning", "balcony", "scaffold", "awning"],            // 3 mall
-    ["deck", "scaffold", "treehouse", "deck"],              // 4 park
-    ["balcony", "scaffold", "balcony", "rooftop"],          // 5 office
-    ["scaffold", "chart", "chart", "chart"],                // 6 dark doge / chart
+  // Per-level styling: [stair step style, long corridor style, descent style]
+  const themeStyles: [PlatformStyle, PlatformStyle, PlatformStyle][] = [
+    ["fireEscape", "rooftop",  "fireEscape"], // 0 alley
+    ["fireEscape", "balcony",  "fireEscape"], // 1 city — scaffolding into rooftop catwalk
+    ["balcony",    "rooftop",  "balcony"],    // 2 suburbs
+    ["awning",     "balcony",  "awning"],     // 3 mall — awning up to upper balcony corridor
+    ["deck",       "deck",     "deck"],       // 4 park — wooden boardwalk
+    ["scaffold",   "balcony",  "scaffold"],   // 5 office
+    ["chart",      "chart",    "chart"],      // 6 dark doge — trading-chart catwalk
   ];
-  const styles = themeStyles[Math.min(level, themeStyles.length - 1)];
-  // Connected ascending route: foot-y steps of ~45px, horizontal gaps ~70px.
-  const route = [
-    { x: 420,  y: 265, w: 130 },
-    { x: 620,  y: 220, w: 130 },
-    { x: 820,  y: 178, w: 130 },
-    { x: 1020, y: 140, w: 150 },
+  const [stairStyle, corridorStyle, descentStyle] =
+    themeStyles[Math.min(level, themeStyles.length - 1)];
+
+  const TOP_Y = 155;
+  const SEG_W = 150;          // corridor segment width
+  const CORRIDOR_X0 = 1070;   // first corridor segment x
+  const CORRIDOR_SEGS = 5;    // number of touching segments → long walkway
+
+  const plats: Platform[] = [
+    // Ascending stair route (4 steps up to TOP_Y)
+    { x: 380, y: 275, w: 140, h: 12, style: stairStyle },
+    { x: 580, y: 235, w: 140, h: 12, style: stairStyle },
+    { x: 780, y: 195, w: 140, h: 12, style: stairStyle },
+    { x: 940, y: TOP_Y, w: 130, h: 12, style: corridorStyle }, // landing into corridor
   ];
-  return route.map((pos, i) => ({
-    x: pos.x, y: pos.y, w: pos.w, h: 12, style: styles[i % styles.length],
-  }));
+  // Long upper walkway — segments abut to form one continuous corridor
+  for (let i = 0; i < CORRIDOR_SEGS; i++) {
+    plats.push({
+      x: CORRIDOR_X0 + i * SEG_W,
+      y: TOP_Y,
+      w: SEG_W,
+      h: 12,
+      style: corridorStyle,
+    });
+  }
+  // Descent on the far side
+  const endX = CORRIDOR_X0 + CORRIDOR_SEGS * SEG_W;
+  plats.push({ x: endX + 60,  y: 200, w: 140, h: 12, style: descentStyle });
+  plats.push({ x: endX + 240, y: 250, w: 140, h: 12, style: descentStyle });
+  return plats;
 }
 
 function drawPlatform(ctx: CanvasRenderingContext2D, plat: Platform, camX: number) {
