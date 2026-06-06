@@ -3048,21 +3048,49 @@ export const StreetBrawler: FC = () => {
 
       g.keyJustPressed.clear();
 
-      // Player physics
+      // Player physics (with jump-through platforms)
+      const pAny = p as Entity & { onPlatform?: Platform | null };
+      const prevFootY = p.y;
       p.vy += GRAVITY;
       p.y += p.vy;
+      // Ground collision (unchanged)
       if (p.y >= GROUND_Y) {
-        // Ground pound shockwave on landing
         if (p.state === "groundpound" && p.vy > 5) {
           g.effects.push({ x: p.x, y: GROUND_Y, timer: 15, text: "💥", color: "#ff6600", size: 24 });
         }
         p.y = GROUND_Y;
         p.vy = 0;
+        pAny.onPlatform = null;
+      } else if (p.vy >= 0 && p.state !== "groundpound") {
+        // Platform landing — only while descending; pass through from below; groundpound ignores.
+        const halfW = 16;
+        for (const plat of g.platforms) {
+          if (p.x + halfW > plat.x && p.x - halfW < plat.x + plat.w) {
+            if (prevFootY <= plat.y + 1 && p.y >= plat.y) {
+              p.y = plat.y;
+              p.vy = 0;
+              pAny.onPlatform = plat;
+              break;
+            }
+          }
+        }
       }
       p.x = Math.max(20, Math.min(LEVEL_WIDTH - 20, p.x));
       p.x += p.vx || 0;
       if (p.state === "dashpunch" && p.stateTimer > 5) p.x += p.facing * 6; // dash forward
       p.vx = (p.vx || 0) * 0.85;
+      // Walk off platform edge — start falling on next frame.
+      if (pAny.onPlatform) {
+        const plat = pAny.onPlatform;
+        const halfW = 16;
+        if (p.x + halfW <= plat.x || p.x - halfW >= plat.x + plat.w) {
+          pAny.onPlatform = null;
+        } else {
+          // Stay snapped to platform top while standing on it.
+          p.y = plat.y;
+        }
+      }
+
       p.stateTimer = Math.max(-1, p.stateTimer - 1);
       p.attackCooldown = Math.max(-1, p.attackCooldown - 1);
       // Decay active hit window — attackActive flips off when the move's active frames elapse
