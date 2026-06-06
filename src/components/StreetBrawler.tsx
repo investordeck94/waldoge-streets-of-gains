@@ -1481,6 +1481,170 @@ function drawStickFigure(
   }
 }
 
+// ============== PLATFORMS (Phase 1 — static, jump-through) ==============
+type PlatformStyle = "fireEscape" | "dumpster" | "balcony" | "scaffold" | "rooftop";
+interface Platform {
+  x: number;       // left edge in world coords
+  y: number;       // top surface y (player foot lands here)
+  w: number;       // width
+  h: number;       // visual thickness
+  style: PlatformStyle;
+}
+
+// Per-level platform layouts. Heights are above GROUND_Y (320). Player feet land on `y`.
+// Layouts are hand-tuned to be reachable with the existing JUMP_FORCE (-12, GRAVITY 0.6).
+// Max jump height ≈ 120px, so platforms sit between y = 200 and y = 260.
+function spawnPlatforms(level: number): Platform[] {
+  const themeStyles: PlatformStyle[][] = [
+    ["dumpster", "fireEscape", "dumpster", "fireEscape"],  // alley
+    ["balcony", "fireEscape", "balcony", "fireEscape"],     // city
+    ["rooftop", "balcony", "rooftop", "balcony"],           // suburbs
+    ["scaffold", "balcony", "scaffold", "balcony"],         // mall
+    ["rooftop", "scaffold", "rooftop", "scaffold"],         // park
+    ["balcony", "scaffold", "balcony", "scaffold"],         // office
+    ["scaffold", "rooftop", "scaffold", "rooftop"],         // chart
+  ];
+  const styles = themeStyles[Math.min(level, themeStyles.length - 1)];
+  const out: Platform[] = [];
+  // Place 4 platforms spaced across the level.
+  const positions = [
+    { x: 500,  y: 240, w: 140 },
+    { x: 1100, y: 215, w: 160 },
+    { x: 1800, y: 250, w: 130 },
+    { x: 2500, y: 220, w: 170 },
+  ];
+  positions.forEach((pos, i) => {
+    out.push({ x: pos.x, y: pos.y, w: pos.w, h: 12, style: styles[i % styles.length] });
+  });
+  return out;
+}
+
+function drawPlatform(ctx: CanvasRenderingContext2D, plat: Platform, camX: number) {
+  const sx = plat.x - camX;
+  if (sx + plat.w < -40 || sx > CANVAS_W + 40) return;
+  const y = plat.y;
+  ctx.save();
+  switch (plat.style) {
+    case "dumpster": {
+      // Green dumpster body sitting on the ground, with a flat lid top at `y`.
+      const bodyTop = y;
+      const bodyH = Math.max(40, GROUND_Y - bodyTop);
+      ctx.fillStyle = "#2d5a3a";
+      ctx.fillRect(sx, bodyTop, plat.w, bodyH);
+      ctx.fillStyle = "#1f4028";
+      ctx.fillRect(sx, bodyTop + bodyH - 6, plat.w, 6);
+      // Lid (top surface)
+      ctx.fillStyle = "#3a7048";
+      ctx.fillRect(sx - 2, bodyTop - plat.h, plat.w + 4, plat.h);
+      ctx.fillStyle = "#1a1a1a";
+      ctx.fillRect(sx - 2, bodyTop - plat.h, plat.w + 4, 2);
+      // Side ribs
+      ctx.strokeStyle = "#1f4028";
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 4; i++) {
+        const rx = sx + (plat.w / 4) * i;
+        ctx.beginPath(); ctx.moveTo(rx, bodyTop + 4); ctx.lineTo(rx, bodyTop + bodyH - 8); ctx.stroke();
+      }
+      break;
+    }
+    case "fireEscape": {
+      // Steel grate platform with railing and support bracket.
+      ctx.fillStyle = "#3a3a42";
+      ctx.fillRect(sx, y, plat.w, plat.h);
+      ctx.fillStyle = "#5a5a62";
+      ctx.fillRect(sx, y, plat.w, 2);
+      // Grate pattern
+      ctx.strokeStyle = "#1a1a1f";
+      ctx.lineWidth = 0.6;
+      for (let gx = sx + 4; gx < sx + plat.w; gx += 6) {
+        ctx.beginPath(); ctx.moveTo(gx, y + 3); ctx.lineTo(gx, y + plat.h - 1); ctx.stroke();
+      }
+      // Railing
+      ctx.strokeStyle = "#2a2a30";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(sx + 2, y); ctx.lineTo(sx + 2, y - 24);
+      ctx.moveTo(sx + plat.w - 2, y); ctx.lineTo(sx + plat.w - 2, y - 24);
+      ctx.moveTo(sx + 2, y - 24); ctx.lineTo(sx + plat.w - 2, y - 24);
+      ctx.moveTo(sx + 2, y - 12); ctx.lineTo(sx + plat.w - 2, y - 12);
+      ctx.stroke();
+      // Support brackets down to ground
+      ctx.strokeStyle = "#2a2a30";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sx + 8, y + plat.h); ctx.lineTo(sx + 8, GROUND_Y);
+      ctx.moveTo(sx + plat.w - 8, y + plat.h); ctx.lineTo(sx + plat.w - 8, GROUND_Y);
+      ctx.stroke();
+      break;
+    }
+    case "balcony": {
+      // Stone/concrete ledge with iron railing.
+      ctx.fillStyle = "#8a8478";
+      ctx.fillRect(sx, y, plat.w, plat.h);
+      ctx.fillStyle = "#6a6458";
+      ctx.fillRect(sx, y + plat.h - 3, plat.w, 3);
+      ctx.fillStyle = "#a8a294";
+      ctx.fillRect(sx, y, plat.w, 2);
+      // Railing posts
+      ctx.strokeStyle = "#1a1a1a";
+      ctx.lineWidth = 1.2;
+      for (let rx = sx + 6; rx < sx + plat.w - 4; rx += 10) {
+        ctx.beginPath(); ctx.moveTo(rx, y); ctx.lineTo(rx, y - 18); ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.moveTo(sx + 4, y - 18); ctx.lineTo(sx + plat.w - 4, y - 18); ctx.stroke();
+      break;
+    }
+    case "scaffold": {
+      // Wood plank on metal pipe frame.
+      ctx.fillStyle = "#b8864a";
+      ctx.fillRect(sx, y, plat.w, plat.h);
+      ctx.fillStyle = "#8a6030";
+      // Plank seams
+      for (let px = sx + 30; px < sx + plat.w; px += 30) {
+        ctx.fillRect(px, y, 1, plat.h);
+      }
+      ctx.fillStyle = "#6a4820";
+      ctx.fillRect(sx, y + plat.h - 2, plat.w, 2);
+      // Metal pipe legs + cross brace
+      ctx.strokeStyle = "#6a6a72";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sx + 6, y + plat.h); ctx.lineTo(sx + 6, GROUND_Y);
+      ctx.moveTo(sx + plat.w - 6, y + plat.h); ctx.lineTo(sx + plat.w - 6, GROUND_Y);
+      ctx.moveTo(sx + 6, y + plat.h); ctx.lineTo(sx + plat.w - 6, GROUND_Y);
+      ctx.moveTo(sx + plat.w - 6, y + plat.h); ctx.lineTo(sx + 6, GROUND_Y);
+      ctx.stroke();
+      break;
+    }
+    case "rooftop": {
+      // Low rooftop with parapet trim and brick supports.
+      ctx.fillStyle = "#5a4838";
+      ctx.fillRect(sx, y, plat.w, plat.h + 2);
+      ctx.fillStyle = "#3a2e22";
+      ctx.fillRect(sx, y + plat.h, plat.w, 2);
+      // Tile top
+      ctx.fillStyle = "#7a6450";
+      ctx.fillRect(sx, y, plat.w, 3);
+      // Brick column below
+      ctx.fillStyle = "#6a4a38";
+      const colH = GROUND_Y - (y + plat.h);
+      if (colH > 0) {
+        ctx.fillRect(sx + 10, y + plat.h, 16, colH);
+        ctx.fillRect(sx + plat.w - 26, y + plat.h, 16, colH);
+        ctx.strokeStyle = "#3a2418";
+        ctx.lineWidth = 0.5;
+        for (let by = y + plat.h + 6; by < GROUND_Y; by += 8) {
+          ctx.beginPath(); ctx.moveTo(sx + 10, by); ctx.lineTo(sx + 26, by); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(sx + plat.w - 26, by); ctx.lineTo(sx + plat.w - 10, by); ctx.stroke();
+        }
+      }
+      break;
+    }
+  }
+  ctx.restore();
+}
+
 interface AlleyObject {
   x: number;
   y: number;
