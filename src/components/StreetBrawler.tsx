@@ -1145,7 +1145,15 @@ function drawStickFigure(
     let backFoot: [number, number] | null = null;
 
     if (e.state === "kick") {
-      frontFoot = [e.facing * limbLen * 1.5, hipY - 5];
+      if (style === "muayThai") {
+        frontFoot = [e.facing * limbLen * 0.85, hipY - 22];
+      } else if (style === "rush") {
+        frontFoot = [e.facing * limbLen * 2.1, hipY - 2];
+      } else if (style === "greenCandle") {
+        frontFoot = [e.facing * limbLen * 1.3, hipY + 2];
+      } else {
+        frontFoot = [e.facing * limbLen * 1.5, hipY - 5];
+      }
       backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
     } else if (e.state === "jump" || e.state === "uppercut") {
       frontFoot = [e.facing * limbLen * 0.6, hipY + limbLen * 0.5];
@@ -1158,8 +1166,19 @@ function drawStickFigure(
       backFoot = [-e.facing * limbLen, hipY + limbLen * 0.3];
     } else {
       const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 12 : 0;
-      frontFoot = [e.facing * (limbLen * 0.5 - swing), hipY + limbLen];
-      backFoot = [-e.facing * (limbLen * 0.5 + swing), hipY + limbLen];
+      if (style === "rush") {
+        frontFoot = [e.facing * (limbLen * 0.9 - swing * 0.5), hipY + limbLen];
+        backFoot = [-e.facing * (limbLen * 0.4 + swing * 0.5), hipY + limbLen];
+      } else if (style === "muayThai") {
+        frontFoot = [e.facing * (limbLen * 0.35 - swing * 0.4), hipY + limbLen * 0.95];
+        backFoot = [-e.facing * (limbLen * 0.4 + swing * 0.4), hipY + limbLen];
+      } else if (style === "greenCandle") {
+        frontFoot = [e.facing * (limbLen * 0.9 - swing * 0.6), hipY + limbLen];
+        backFoot = [-e.facing * (limbLen * 0.9 + swing * 0.6), hipY + limbLen];
+      } else {
+        frontFoot = [e.facing * (limbLen * 0.5 - swing), hipY + limbLen];
+        backFoot = [-e.facing * (limbLen * 0.5 + swing), hipY + limbLen];
+      }
     }
 
     const drawSneaker = (fx: number, fy: number) => {
