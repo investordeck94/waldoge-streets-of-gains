@@ -1486,7 +1486,7 @@ function drawStickFigure(
 // ============== PLATFORMS (Phase 1 — static, jump-through) ==============
 type PlatformStyle =
   | "fireEscape" | "dumpster" | "balcony" | "scaffold" | "rooftop"
-  | "awning" | "deck" | "treehouse" | "chart";
+  | "awning" | "deck" | "treehouse" | "chart" | "trestle" | "mallStair";
 interface Platform {
   x: number;       // left edge in world coords
   y: number;       // top surface y (player foot lands here)
