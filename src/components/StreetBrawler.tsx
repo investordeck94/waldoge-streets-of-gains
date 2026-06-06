@@ -712,7 +712,17 @@ function drawStickFigure(
   headImg: HTMLImageElement | null,
   isPlayer: boolean,
   weaponType: WeaponType | null = null,
+  style: StyleName = "brawler",
 ) {
+  const styleColor =
+    style === "brawler" ? "#FFD700" :
+    style === "rush" ? "#00ccff" :
+    style === "muayThai" ? "#ff8800" :
+    "#00ff66";
+  const isBrawler = style === "brawler";
+  const isRush = style === "rush";
+  const isMuay = style === "muayThai";
+  const isGreen = style === "greenCandle";
   const sx = e.x - camX;
   const sy = e.y;
   const headR = 16;
