@@ -816,10 +816,10 @@ function drawStickFigure(
       frontArmEnd = [e.facing * limbLen * 2.8, shoulderY + 2];
       backArmEnd = [-e.facing * limbLen * 0.8, shoulderY + 12];
     } else if (isPlayer && style === "muayThai") {
-      // Elbow strike — bent arm with visible elbow joint, guard hand high
-      elbow = [e.facing * limbLen * 0.6, shoulderY - 4];
-      frontArmEnd = [e.facing * limbLen * 0.4, shoulderY - 16];
-      backArmEnd = [-e.facing * limbLen * 0.3, shoulderY - 10];
+      // Elbow strike thrust forward — elbow leads as the offensive striking surface
+      elbow = [e.facing * limbLen * 1.1, shoulderY - 6];
+      frontArmEnd = [e.facing * limbLen * 1.7, shoulderY - 2];
+      backArmEnd = [-e.facing * limbLen * 0.2, shoulderY - 12];
     } else if (isPlayer && style === "greenCandle") {
       // Overhead smash
       frontArmEnd = [e.facing * limbLen * 1.4, shoulderY - limbLen * 1.4];
