@@ -732,8 +732,19 @@ function drawStickFigure(
   ctx.save();
   ctx.translate(sx, sy);
 
-  if (isPlayer && style === "greenCandle") {
-    ctx.scale(1.25, 0.8);
+  // Per-style stance transforms (silhouette differentiation while idle/walking)
+  if (isPlayer) {
+    if (style === "rush") {
+      // Forward-leaning ninja/speed stance
+      ctx.transform(1, 0, -0.18 * e.facing, 1, 0, 0);
+    } else if (style === "muayThai") {
+      // Compact upright Muay Thai stance
+      ctx.scale(0.95, 1);
+    } else if (style === "greenCandle") {
+      // Hunched berserker — wider, shorter
+      ctx.scale(1.28, 0.82);
+      ctx.transform(1, 0, 0.08 * e.facing, 1, 0, 6);
+    }
   }
 
 
