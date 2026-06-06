@@ -2290,18 +2290,20 @@ function drawSuburbsScene(ctx: CanvasRenderingContext2D, camX: number, canvasW: 
 
 function drawMallScene(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, frameCount: number) {
   const pal = THEME_PALETTES.mall;
-  ctx.fillStyle = pal.skyMid;
-  ctx.fillRect(0, 0, canvasW, GROUND_Y);
+  // Atrium gradient sky (skylight effect)
+  const sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  sky.addColorStop(0, "#ffe8b8"); sky.addColorStop(0.5, pal.skyMid); sky.addColorStop(1, "#f0d4a0");
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, canvasW, GROUND_Y);
+  // Skylight ceiling beams
   ctx.fillStyle = "#fff8d8";
   for (let i = 0; i < 12; i++) {
     const sx = i * 180 - (camX * 0.1) % 180;
     ctx.fillRect(sx, 0, 120, 35);
-    ctx.fillStyle = "#88aaff";
-    ctx.fillRect(sx, 32, 120, 3);
+    ctx.fillStyle = "#88aaff"; ctx.fillRect(sx, 32, 120, 3);
     ctx.fillStyle = "#fff8d8";
   }
-  ctx.fillStyle = pal.ground1;
-  ctx.fillRect(0, GROUND_Y, canvasW, 80);
+  // Tiled marble floor
+  ctx.fillStyle = pal.ground1; ctx.fillRect(0, GROUND_Y, canvasW, 80);
   ctx.strokeStyle = "#a8a4a0"; ctx.lineWidth = 1;
   for (let i = 0; i < 40; i++) {
     const tx = i * 60 - (camX * 0.95) % 60;
@@ -2310,30 +2312,128 @@ function drawMallScene(ctx: CanvasRenderingContext2D, camX: number, canvasW: num
   for (let y = GROUND_Y + 20; y < GROUND_Y + 80; y += 25) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvasW, y); ctx.stroke();
   }
+  // Detailed shopfronts (clothing / electronics / toys / books / doge mart)
+  const SHOP_LABELS = ["FASHION CO.", "TECH HUB", "TOY WORLD", "BOOK NOOK", "DOGE MART", "SNEAKERS"];
+  const SHOP_COLORS = ["#ff66cc", "#00ddff", "#ffaa44", "#aa66ff", "#ffd633", "#44e0a0"];
   for (let i = 0; i < 15; i++) {
     const bx = i * 260 - (camX * 0.6) % 260;
-    if (bx < -200 || bx > canvasW + 50) continue;
+    if (bx < -250 || bx > canvasW + 50) continue;
+    // Storefront wall
     ctx.fillStyle = pal.nearBldg;
-    ctx.fillRect(bx, GROUND_Y - 120, 220, 120);
-    ctx.fillStyle = "#cfe8ff";
-    ctx.fillRect(bx + 20, GROUND_Y - 90, 180, 70);
-    ctx.strokeStyle = "#888"; ctx.lineWidth = 1.5;
-    ctx.strokeRect(bx + 20, GROUND_Y - 90, 180, 70);
-    const colors = ["#ff66cc", "#00ddff", "#ffaa44", "#aa66ff"];
-    const labels = ["FASHION", "TECH", "TOYS", "DOGE +"];
-    const col = colors[i % colors.length];
-    ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 10;
-    ctx.fillRect(bx + 20, GROUND_Y - 115, 180, 22);
+    ctx.fillRect(bx, GROUND_Y - 130, 230, 130);
+    // Big window glass with reflection
+    const winGrad = ctx.createLinearGradient(bx + 20, GROUND_Y - 100, bx + 20, GROUND_Y - 20);
+    winGrad.addColorStop(0, "#e8f4ff"); winGrad.addColorStop(0.5, "#cfe8ff"); winGrad.addColorStop(1, "#a8d0ee");
+    ctx.fillStyle = winGrad;
+    ctx.fillRect(bx + 20, GROUND_Y - 100, 190, 78);
+    ctx.strokeStyle = "#777"; ctx.lineWidth = 1.5;
+    ctx.strokeRect(bx + 20, GROUND_Y - 100, 190, 78);
+    // Window mullion
+    ctx.beginPath(); ctx.moveTo(bx + 115, GROUND_Y - 100); ctx.lineTo(bx + 115, GROUND_Y - 22); ctx.stroke();
+    // Mannequin / product silhouettes inside windows (varies per shop)
+    const kind = i % SHOP_LABELS.length;
+    ctx.fillStyle = "#3a3a48";
+    if (kind === 0) { // clothing — two mannequins
+      ctx.fillRect(bx + 40, GROUND_Y - 80, 22, 50);
+      ctx.beginPath(); ctx.arc(bx + 51, GROUND_Y - 85, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#c44";
+      ctx.fillRect(bx + 38, GROUND_Y - 70, 26, 18);
+      ctx.fillStyle = "#3a3a48";
+      ctx.fillRect(bx + 150, GROUND_Y - 80, 22, 50);
+      ctx.beginPath(); ctx.arc(bx + 161, GROUND_Y - 85, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#48a"; ctx.fillRect(bx + 148, GROUND_Y - 70, 26, 18);
+    } else if (kind === 1) { // electronics — TVs
+      ctx.fillStyle = "#1a1a22";
+      ctx.fillRect(bx + 35, GROUND_Y - 75, 35, 24);
+      ctx.fillRect(bx + 80, GROUND_Y - 75, 35, 24);
+      ctx.fillRect(bx + 135, GROUND_Y - 75, 35, 24);
+      ctx.fillStyle = "#00ddff";
+      ctx.fillRect(bx + 37, GROUND_Y - 73, 31, 20);
+      ctx.fillStyle = "#ff66cc"; ctx.fillRect(bx + 82, GROUND_Y - 73, 31, 20);
+      ctx.fillStyle = "#ffe066"; ctx.fillRect(bx + 137, GROUND_Y - 73, 31, 20);
+    } else if (kind === 2) { // toys — blocks & ball
+      const colors2 = ["#ff5555","#ffd633","#44a4ff","#66dd66"];
+      for (let k = 0; k < 5; k++) {
+        ctx.fillStyle = colors2[k % 4];
+        ctx.fillRect(bx + 35 + k * 28, GROUND_Y - 50, 22, 22);
+      }
+      ctx.beginPath(); ctx.fillStyle = "#ff8844"; ctx.arc(bx + 170, GROUND_Y - 40, 14, 0, Math.PI * 2); ctx.fill();
+    } else if (kind === 3) { // books — shelves
+      ctx.fillStyle = "#5a3a22";
+      ctx.fillRect(bx + 30, GROUND_Y - 80, 170, 4);
+      ctx.fillRect(bx + 30, GROUND_Y - 55, 170, 4);
+      ctx.fillRect(bx + 30, GROUND_Y - 30, 170, 4);
+      const bcols = ["#a44","#48a","#494","#a84","#84a","#a64"];
+      for (let r = 0; r < 3; r++) for (let k = 0; k < 12; k++) {
+        ctx.fillStyle = bcols[(k + r) % bcols.length];
+        ctx.fillRect(bx + 32 + k * 14, GROUND_Y - 76 + r * 25, 11, 22);
+      }
+    } else if (kind === 4) { // doge mart — shelves & yellow tones
+      ctx.fillStyle = "#ffd633";
+      ctx.fillRect(bx + 30, GROUND_Y - 75, 80, 45);
+      ctx.fillStyle = "#000"; ctx.font = "bold 14px monospace"; ctx.textAlign = "center";
+      ctx.fillText("WOW", bx + 70, GROUND_Y - 50);
+      ctx.fillStyle = "#3a3a48";
+      ctx.fillRect(bx + 130, GROUND_Y - 75, 60, 45);
+    } else { // sneakers
+      const sc = ["#fff","#ff5","#3df","#f3a"];
+      for (let k = 0; k < 4; k++) {
+        ctx.fillStyle = sc[k];
+        ctx.fillRect(bx + 35 + k * 42, GROUND_Y - 45, 36, 14);
+        ctx.beginPath(); ctx.arc(bx + 35 + k * 42, GROUND_Y - 38, 7, Math.PI/2, Math.PI*1.5); ctx.fill();
+      }
+    }
+    // Glowing storefront sign
+    const col = SHOP_COLORS[kind];
+    ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 12;
+    ctx.fillRect(bx + 20, GROUND_Y - 125, 190, 22);
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#fff"; ctx.font = "bold 13px monospace"; ctx.textAlign = "center";
-    ctx.fillText(labels[i % labels.length], bx + 110, GROUND_Y - 100);
+    ctx.fillText(SHOP_LABELS[kind], bx + 115, GROUND_Y - 109);
+    // Potted plant flanking entrance
+    ctx.fillStyle = "#5a3a1a";
+    ctx.fillRect(bx + 6, GROUND_Y - 18, 12, 18);
+    ctx.fillRect(bx + 212, GROUND_Y - 18, 12, 18);
+    ctx.fillStyle = "#3a8030";
+    ctx.beginPath(); ctx.arc(bx + 12, GROUND_Y - 22, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bx + 218, GROUND_Y - 22, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#5aa848";
+    ctx.beginPath(); ctx.arc(bx + 8, GROUND_Y - 27, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bx + 222, GROUND_Y - 27, 5, 0, Math.PI * 2); ctx.fill();
   }
+  // Escalators (between every other shop)
+  for (let i = 0; i < 8; i++) {
+    const ex = i * 520 + 240 - (camX * 0.6) % 520;
+    if (ex < -120 || ex > canvasW + 20) continue;
+    ctx.fillStyle = "#8a8a92";
+    ctx.beginPath();
+    ctx.moveTo(ex, GROUND_Y);
+    ctx.lineTo(ex + 90, GROUND_Y - 60);
+    ctx.lineTo(ex + 110, GROUND_Y - 60);
+    ctx.lineTo(ex + 20, GROUND_Y);
+    ctx.closePath(); ctx.fill();
+    // Step lines
+    ctx.strokeStyle = "#4a4a52"; ctx.lineWidth = 1;
+    for (let s = 0; s < 10; s++) {
+      const t = s / 10;
+      ctx.beginPath();
+      ctx.moveTo(ex + 9 * t * 10, GROUND_Y - 60 * t);
+      ctx.lineTo(ex + 20 + 9 * t * 10, GROUND_Y - 60 * t);
+      ctx.stroke();
+    }
+    // Railings
+    ctx.strokeStyle = "#222"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(ex - 2, GROUND_Y + 4); ctx.lineTo(ex + 88, GROUND_Y - 64); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ex + 22, GROUND_Y + 4); ctx.lineTo(ex + 112, GROUND_Y - 64); ctx.stroke();
+  }
+  // Hanging atrium lights
   for (let i = 0; i < 20; i++) {
     const lx = i * 160 - (camX * 0.6) % 160;
-    ctx.fillStyle = "#ffeb88";
-    ctx.beginPath(); ctx.arc(lx, 60, 6, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "#666"; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(lx, 0); ctx.lineTo(lx, 54); ctx.stroke();
+    ctx.fillStyle = "#ffeb88"; ctx.shadowColor = "#ffeb88"; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(lx, 60, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
   }
 }
 
