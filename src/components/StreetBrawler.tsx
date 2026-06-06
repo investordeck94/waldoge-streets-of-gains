@@ -1501,15 +1501,17 @@ interface Platform {
 // horizontal gaps ≤ ~70px so each platform is reachable with a normal jump.
 // Corridor segments abut (gap = 0) to form one continuous upper walkway.
 function spawnPlatforms(level: number): Platform[] {
-  // Per-level styling: [stair step style, long corridor style, descent style]
+  // All levels share the wooden-plank-on-steel-trestle look from the reference;
+  // mall uses a stair/balcony variant. Level-specific decorations (lamps,
+  // crates, potted plants) are drawn on TOP of corridor platforms later.
   const themeStyles: [PlatformStyle, PlatformStyle, PlatformStyle][] = [
-    ["fireEscape", "rooftop",  "fireEscape"], // 0 alley
-    ["fireEscape", "balcony",  "fireEscape"], // 1 city — scaffolding into rooftop catwalk
-    ["balcony",    "rooftop",  "balcony"],    // 2 suburbs
-    ["awning",     "balcony",  "awning"],     // 3 mall — awning up to upper balcony corridor
-    ["deck",       "deck",     "deck"],       // 4 park — wooden boardwalk
-    ["scaffold",   "balcony",  "scaffold"],   // 5 office
-    ["chart",      "chart",    "chart"],      // 6 dark doge — trading-chart catwalk
+    ["trestle",   "trestle",   "trestle"],   // 0 alley
+    ["trestle",   "trestle",   "trestle"],   // 1 city
+    ["trestle",   "trestle",   "trestle"],   // 2 suburbs
+    ["mallStair", "mallStair", "mallStair"], // 3 mall — balcony corridor over shops
+    ["trestle",   "trestle",   "trestle"],   // 4 park — wooden boardwalk
+    ["trestle",   "trestle",   "trestle"],   // 5 office
+    ["trestle",   "trestle",   "trestle"],   // 6 dark doge — trading-chart catwalk
   ];
   const [stairStyle, corridorStyle, descentStyle] =
     themeStyles[Math.min(level, themeStyles.length - 1)];
