@@ -776,7 +776,7 @@ function drawStickFigure(
   ctx.beginPath();
   ctx.moveTo(0, neckY);
   ctx.lineTo(0, hipY);
-  ctx.strokeStyle = isPlayer ? "#FFD700" : "#ff4444";
+  ctx.strokeStyle = isPlayer ? styleColor : "#ff4444";
   ctx.lineWidth = 3;
   ctx.stroke();
 
@@ -845,10 +845,31 @@ function drawStickFigure(
     ctx.lineTo(limbLen * 0.8, shoulderY + limbLen * 0.3);
   } else {
     const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing);
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(limbLen * 0.7, shoulderY + limbLen * 0.8 - swing);
+    if (isPlayer && isRush) {
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-limbLen * 0.4, shoulderY - 2 + swing * 0.3);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 0.4, shoulderY - 2 - swing * 0.3);
+    } else if (isPlayer && isMuay) {
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-limbLen * 1.1, shoulderY + 14 + swing * 0.3);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 1.1, shoulderY + 14 - swing * 0.3);
+    } else if (isPlayer && isGreen) {
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-limbLen, shoulderY + 12 + swing * 0.4);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen, shoulderY + 12 - swing * 0.4);
+    } else if (isPlayer && isBrawler) {
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-limbLen * 0.5, shoulderY + 4 + swing * 0.3);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 0.5, shoulderY + 4 - swing * 0.3);
+    } else {
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 0.7, shoulderY + limbLen * 0.8 - swing);
     // Draw weapon held at side when idle/walking
     if (weaponType) {
       ctx.stroke();
@@ -883,9 +904,35 @@ function drawStickFigure(
       ctx.beginPath();
     }
   }
-  ctx.strokeStyle = isPlayer ? "#FFD700" : "#ff4444";
+  ctx.strokeStyle = isPlayer ? styleColor : "#ff4444";
   ctx.lineWidth = e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 4 : 3;
   ctx.stroke();
+
+  // Rush style: cyan speed trail on punch
+  if (isPlayer && isRush && e.state === "punch") {
+    ctx.strokeStyle = "rgba(0,200,255,0.4)";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(0, shoulderY);
+    ctx.lineTo(e.facing * limbLen * 2.3, shoulderY);
+    ctx.stroke();
+  }
+
+  // Green Candle: pump rage particles around head
+  if (isPlayer && isGreen) {
+    for (let i = 0; i < 6; i++) {
+      ctx.fillStyle = "rgba(0,255,100,0.25)";
+      ctx.beginPath();
+      ctx.arc(
+        (Math.random() - 0.5) * 20,
+        headCY - Math.random() * 20,
+        3 + Math.random() * 4,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
+  }
 
   // Boxing gloves on the player's hands
   if (isPlayer) {
@@ -975,7 +1022,7 @@ function drawStickFigure(
     ctx.moveTo(0, hipY);
     ctx.lineTo(limbLen * 0.5 - swing, hipY + limbLen);
   }
-  ctx.strokeStyle = isPlayer ? "#FFD700" : "#ff4444";
+  ctx.strokeStyle = isPlayer ? styleColor : "#ff4444";
   ctx.lineWidth = e.state === "spinkick" ? 4 : 3;
   ctx.stroke();
 
@@ -1044,7 +1091,12 @@ function drawStickFigure(
     ctx.beginPath();
     ctx.arc(0, headCY + headR + bodyLen / 2, 35, 0, Math.PI * 2);
     const glow = ctx.createRadialGradient(0, headCY + headR + bodyLen / 2, 5, 0, headCY + headR + bodyLen / 2, 35);
-    glow.addColorStop(0, "rgba(255, 215, 0, 0.4)");
+    const auraColor =
+      style === "brawler" ? "rgba(255,215,0,0.4)" :
+      style === "rush" ? "rgba(0,200,255,0.4)" :
+      style === "muayThai" ? "rgba(255,120,0,0.4)" :
+      "rgba(0,255,100,0.45)";
+    glow.addColorStop(0, isPlayer ? auraColor : "rgba(255, 215, 0, 0.4)");
     glow.addColorStop(1, "rgba(255, 215, 0, 0)");
     ctx.fillStyle = glow;
     ctx.fill();
@@ -3510,7 +3562,7 @@ export const StreetBrawler: FC = () => {
         ctx.restore();
       }
 
-      drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType);
+      drawStickFigure(ctx, p, g.camX, g.headImg, true, g.weaponType, g.style);
 
       // Heal flash: expanding green ring + glow around player when fully healed at level start
       if (g.healFlash > 0) {
