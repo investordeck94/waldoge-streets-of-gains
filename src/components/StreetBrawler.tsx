@@ -1192,96 +1192,127 @@ function drawStickFigure(
     if (frontHand) drawGlove(frontHand[0], frontHand[1], extended);
   }
 
-  // Legs
+  // Legs — capture endpoints so we can add Waldoge stripe accents on player
+  let legAEnd: [number, number] = [0, hipY + limbLen];
+  let legBEnd: [number, number] = [0, hipY + limbLen];
+  let legAMid: [number, number] | null = null; // optional bend (knee) for multi-segment legs
+  let legBMid: [number, number] | null = null;
+
   ctx.beginPath();
   if (e.state === "kick") {
     if (isPlayer && style === "muayThai") {
-      // Muay Thai knee strike — thigh raised high to torso, shin folded back/down underneath
-      const kneeX = e.facing * limbLen * 1.25;      // knee driven forward into opponent
-      const kneeY = hipY - limbLen * 0.95;          // knee up at chest/torso level
-      const footX = e.facing * limbLen * 0.7;       // shin folded back underneath thigh
-      const footY = hipY - limbLen * 0.25;          // foot tucked, lower than knee
+      const kneeX = e.facing * limbLen * 1.25;
+      const kneeY = hipY - limbLen * 0.95;
+      const footX = e.facing * limbLen * 0.7;
+      const footY = hipY - limbLen * 0.25;
       ctx.moveTo(0, hipY);
-      ctx.lineTo(kneeX, kneeY);                     // thigh up
-      ctx.lineTo(footX, footY);                     // shin folded back
-      // Support leg planted firmly
+      ctx.lineTo(kneeX, kneeY);
+      ctx.lineTo(footX, footY);
       ctx.moveTo(0, hipY);
       ctx.lineTo(-e.facing * limbLen * 0.1, hipY + limbLen);
+      legAMid = [kneeX, kneeY]; legAEnd = [footX, footY];
+      legBEnd = [-e.facing * limbLen * 0.1, hipY + limbLen];
     } else {
       if (isPlayer && style === "rush") {
-        // Long extended side kick
         ctx.moveTo(0, hipY);
         ctx.lineTo(e.facing * limbLen * 2.1, hipY - 2);
+        legAEnd = [e.facing * limbLen * 2.1, hipY - 2];
       } else if (isPlayer && style === "greenCandle") {
-        // Berserker forward stomp — thigh drives forward, foot slams down/out
         ctx.moveTo(0, hipY);
         ctx.lineTo(e.facing * limbLen * 0.9, hipY + limbLen * 0.25);
         ctx.lineTo(e.facing * limbLen * 1.7, hipY + limbLen * 0.85);
+        legAMid = [e.facing * limbLen * 0.9, hipY + limbLen * 0.25];
+        legAEnd = [e.facing * limbLen * 1.7, hipY + limbLen * 0.85];
       } else {
-        // Brawler — standard front kick
         ctx.moveTo(0, hipY);
         ctx.lineTo(e.facing * limbLen * 1.5, hipY - 5);
+        legAEnd = [e.facing * limbLen * 1.5, hipY - 5];
       }
       ctx.moveTo(0, hipY);
       ctx.lineTo(-e.facing * limbLen * 0.5, hipY + limbLen);
+      legBEnd = [-e.facing * limbLen * 0.5, hipY + limbLen];
     }
   } else if (e.state === "jump" || e.state === "uppercut") {
     ctx.moveTo(0, hipY);
     ctx.lineTo(-limbLen * 0.6, hipY + limbLen * 0.5);
     ctx.moveTo(0, hipY);
     ctx.lineTo(limbLen * 0.6, hipY + limbLen * 0.5);
+    legAEnd = [limbLen * 0.6, hipY + limbLen * 0.5];
+    legBEnd = [-limbLen * 0.6, hipY + limbLen * 0.5];
   } else if (e.state === "spinkick") {
     ctx.moveTo(0, hipY);
     ctx.lineTo(e.facing * limbLen * 1.8, hipY);
     ctx.moveTo(0, hipY);
     ctx.lineTo(-e.facing * limbLen * 0.6, hipY + limbLen * 0.8);
+    legAEnd = [e.facing * limbLen * 1.8, hipY];
+    legBEnd = [-e.facing * limbLen * 0.6, hipY + limbLen * 0.8];
   } else if (e.state === "groundpound") {
     ctx.moveTo(0, hipY);
     ctx.lineTo(-limbLen, hipY + limbLen * 0.3);
     ctx.moveTo(0, hipY);
     ctx.lineTo(limbLen, hipY + limbLen * 0.3);
+    legAEnd = [limbLen, hipY + limbLen * 0.3];
+    legBEnd = [-limbLen, hipY + limbLen * 0.3];
   } else {
-    // Per-style idle/walk legs (silhouette stance)
     const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 12 : 0;
+    let aX: number, bX: number, aY = hipY + limbLen, bY = hipY + limbLen;
     if (isPlayer && style === "rush") {
-      // Lean: front foot far ahead, back foot trailing
-      ctx.moveTo(0, hipY);
-      ctx.lineTo(e.facing * (limbLen * 0.9 - swing * 0.5), hipY + limbLen);
-      ctx.moveTo(0, hipY);
-      ctx.lineTo(-e.facing * (limbLen * 0.4 + swing * 0.5), hipY + limbLen);
+      aX = e.facing * (limbLen * 0.9 - swing * 0.5);
+      bX = -e.facing * (limbLen * 0.4 + swing * 0.5);
     } else if (isPlayer && style === "muayThai") {
-      // Compact stance, lead knee slightly raised
-      ctx.moveTo(0, hipY);
-      ctx.lineTo(e.facing * (limbLen * 0.35 - swing * 0.4), hipY + limbLen * 0.95);
-      ctx.moveTo(0, hipY);
-      ctx.lineTo(-e.facing * (limbLen * 0.4 + swing * 0.4), hipY + limbLen);
+      aX = e.facing * (limbLen * 0.35 - swing * 0.4); aY = hipY + limbLen * 0.95;
+      bX = -e.facing * (limbLen * 0.4 + swing * 0.4);
     } else if (isPlayer && style === "greenCandle") {
-      // Wide hunched berserker stance
-      ctx.moveTo(0, hipY);
-      ctx.lineTo(e.facing * (limbLen * 0.9 - swing * 0.6), hipY + limbLen);
-      ctx.moveTo(0, hipY);
-      ctx.lineTo(-e.facing * (limbLen * 0.9 + swing * 0.6), hipY + limbLen);
+      aX = e.facing * (limbLen * 0.9 - swing * 0.6);
+      bX = -e.facing * (limbLen * 0.9 + swing * 0.6);
     } else {
-      // Brawler / enemies — neutral
-      ctx.moveTo(0, hipY);
-      ctx.lineTo(-limbLen * 0.5 + swing, hipY + limbLen);
-      ctx.moveTo(0, hipY);
-      ctx.lineTo(limbLen * 0.5 - swing, hipY + limbLen);
+      aX = limbLen * 0.5 - swing;
+      bX = -limbLen * 0.5 + swing;
     }
+    ctx.moveTo(0, hipY); ctx.lineTo(aX, aY);
+    ctx.moveTo(0, hipY); ctx.lineTo(bX, bY);
+    legAEnd = [aX, aY]; legBEnd = [bX, bY];
   }
   ctx.strokeStyle = isPlayer ? "#d92b2b" : "#ff4444";
   ctx.lineWidth = isPlayer ? (e.state === "spinkick" ? 7 : 6) : (e.state === "spinkick" ? 4 : 3);
   ctx.lineCap = "round";
   ctx.stroke();
-  // White stripe accent over legs (player Waldoge branding)
+
+  // Waldoge white stripe accents on upper legs (perpendicular bands, matches torso)
   if (isPlayer) {
-    ctx.save();
-    ctx.strokeStyle = "#f5ece0";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([3, 4]);
-    ctx.stroke();
-    ctx.restore();
+    const drawLegStripes = (
+      end: [number, number],
+      mid: [number, number] | null,
+    ) => {
+      // Upper segment = hip -> (mid ?? end)
+      const tx = mid ? mid[0] : end[0];
+      const ty = mid ? mid[1] : end[1];
+      const dx = tx - 0;
+      const dy = ty - hipY;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) return;
+      const ux = dx / len, uy = dy / len;
+      // perpendicular
+      const px = -uy, py = ux;
+      const halfW = 3.5; // stripe half-width across leg
+      ctx.strokeStyle = "#f5ece0";
+      ctx.lineWidth = 1.8;
+      ctx.lineCap = "butt";
+      // 2 evenly spaced stripes on upper portion (25% and 55% down the upper segment)
+      for (const t of [0.28, 0.58]) {
+        const cx = ux * len * t;
+        const cy = hipY + uy * len * t;
+        ctx.beginPath();
+        ctx.moveTo(cx - px * halfW, cy - py * halfW);
+        ctx.lineTo(cx + px * halfW, cy + py * halfW);
+        ctx.stroke();
+      }
+    };
+    drawLegStripes(legAEnd, legAMid);
+    drawLegStripes(legBEnd, legBMid);
+    ctx.lineCap = "round";
   }
+
 
   // Red & white sneakers on the player's feet
   if (isPlayer) {
