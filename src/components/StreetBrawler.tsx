@@ -4546,6 +4546,28 @@ export const StreetBrawler: FC = () => {
               ? <Play className="w-4 h-4 text-primary" />
               : <Pause className="w-4 h-4 text-primary" />}
           </button>
+          {/* Mini music player */}
+          <div className="flex items-center gap-0.5 px-1 py-0.5 rounded glass-card" title={`Track: ${TRACKS[trackIdx].name}`}>
+            <button
+              onClick={() => skipTrack(-1)}
+              className="p-1 hover:bg-muted/50 rounded transition"
+              aria-label="Previous track"
+              title="Previous track"
+            >
+              <SkipBack className="w-3 h-3 text-primary" />
+            </button>
+            <span className="text-[9px] font-mono text-muted-foreground max-w-[60px] truncate hidden sm:inline">
+              {TRACKS[trackIdx].name}
+            </span>
+            <button
+              onClick={() => skipTrack(1)}
+              className="p-1 hover:bg-muted/50 rounded transition"
+              aria-label="Next track"
+              title="Next track"
+            >
+              <SkipForward className="w-3 h-3 text-primary" />
+            </button>
+          </div>
           <button
             onClick={() => {
               const el = containerRef.current;
