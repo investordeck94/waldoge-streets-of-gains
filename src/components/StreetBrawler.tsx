@@ -2617,18 +2617,29 @@ export const StreetBrawler: FC = () => {
   const [camPreset, setCamPreset] = useState<"snappy" | "buttery">("snappy");
   const sfxRef = useRef(true);
   const musicRef = useRef<HTMLAudioElement | null>(null);
+  const TRACKS = [
+    { src: waldogeMusic, name: "Waldoge Theme" },
+    { src: waldogeCombatTheme.url, name: "Combat Theme" },
+    { src: waldogeArcade.url, name: "Arcade" },
+  ];
+  const [trackIdx, setTrackIdx] = useState(0);
 
-  // Initialize background music element once
+  // Initialize background music element; rebuild when track changes.
   useEffect(() => {
-    const audio = new Audio(waldogeMusic);
-    audio.loop = true;
+    const audio = new Audio(TRACKS[trackIdx].src);
+    audio.loop = false;
     audio.volume = 0.35;
+    audio.muted = !sfxRef.current;
+    const onEnded = () => setTrackIdx((i) => (i + 1) % TRACKS.length);
+    audio.addEventListener("ended", onEnded);
     musicRef.current = audio;
     return () => {
+      audio.removeEventListener("ended", onEnded);
       audio.pause();
       musicRef.current = null;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackIdx]);
 
   // Play/pause music based on game state and pause status
   useEffect(() => {
@@ -2638,14 +2649,11 @@ export const StreetBrawler: FC = () => {
       audio.play().catch(() => {});
     } else {
       audio.pause();
-      if (gameState !== "playing" || gameState === "playing" && false) {
-        // reset to start when leaving play
-      }
     }
     if (gameState !== "playing") {
       audio.currentTime = 0;
     }
-  }, [gameState, isPaused, sfxEnabled]);
+  }, [gameState, isPaused, sfxEnabled, trackIdx]);
 
   // Sync mute toggle with music volume
   useEffect(() => {
@@ -2653,6 +2661,10 @@ export const StreetBrawler: FC = () => {
     if (!audio) return;
     audio.muted = !sfxEnabled;
   }, [sfxEnabled]);
+
+  const skipTrack = useCallback((dir: 1 | -1) => {
+    setTrackIdx((i) => (i + dir + TRACKS.length) % TRACKS.length);
+  }, [TRACKS.length]);
 
   const sfx = useCallback((fn: () => void) => {
     if (sfxRef.current) fn();
