@@ -803,76 +803,26 @@ function drawStickFigure(
   const neckY = headCY + headR;
   const hipY = neckY + bodyLen;
   if (isPlayer) {
-    // Waldoge cartoon torso: red/white striped sweater
-    // Beefed-up proportions so the body supports the head size.
-    const torsoH = (hipY - neckY) * 1.32;            // ~32% taller visually
-    const hemY = neckY + torsoH;                      // sweater hem (overlaps upper thigh)
-    const topW = 26;      // collar width (wider, fuller mascot neck)
-    const midW = 44;      // chest width (~30% wider, full mascot barrel)
-    const botW = 40;      // hem width (rounded bottom)
-    const collarH = Math.max(3, torsoH * 0.12);
-    const shoulderY = neckY + torsoH * 0.18;
-    const chestY = neckY + torsoH * 0.5;
-
-    // Sweater silhouette — fuller, rounder mascot torso using bezier curves
-    ctx.save();
+    // Stickman torso in Waldoge colors: thick red line with white stripe accents
+    ctx.lineCap = "round";
+    // Red torso bar
     ctx.beginPath();
-    ctx.moveTo(-topW / 2, neckY + collarH);
-    // Left side: collar -> shoulder bulge -> chest -> hip (rounded barrel)
-    ctx.bezierCurveTo(
-      -midW / 2 - 4, shoulderY,
-      -midW / 2 - 2, chestY,
-      -botW / 2, hemY - 2
-    );
-    // Rounded hem
-    ctx.quadraticCurveTo(0, hemY + 4, botW / 2, hemY - 2);
-    // Right side back up
-    ctx.bezierCurveTo(
-      midW / 2 + 2, chestY,
-      midW / 2 + 4, shoulderY,
-      topW / 2, neckY + collarH
-    );
-    ctx.closePath();
-
-    // Clip stripes to sweater shape
-    ctx.save();
-    ctx.clip();
-    // Base white/cream
-    ctx.fillStyle = "#f5ece0";
-    ctx.fillRect(-midW, neckY, midW * 2, torsoH + 4);
-    // Red stripes
-    ctx.fillStyle = "#d92b2b";
-    const stripeH = torsoH / 6;
-    for (let i = 0; i < 6; i += 2) {
-      ctx.fillRect(-midW, neckY + collarH + i * stripeH, midW * 2, stripeH);
+    ctx.moveTo(0, neckY);
+    ctx.lineTo(0, hipY);
+    ctx.strokeStyle = "#d92b2b";
+    ctx.lineWidth = 7;
+    ctx.stroke();
+    // White horizontal stripe accents
+    ctx.strokeStyle = "#f5ece0";
+    ctx.lineWidth = 2;
+    const torsoH = hipY - neckY;
+    for (let i = 1; i <= 3; i++) {
+      const y = neckY + (torsoH * i) / 4;
+      ctx.beginPath();
+      ctx.moveTo(-4, y);
+      ctx.lineTo(4, y);
+      ctx.stroke();
     }
-    // WALDOGE chest label
-    const labelY = neckY + torsoH * 0.5;
-    ctx.fillStyle = "#1a1a1a";
-    ctx.fillRect(-14, labelY - 4, 28, 8);
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 6px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("WALDOGE", 0, labelY + 0.5);
-    ctx.restore();
-
-    // Sweater outline
-    ctx.strokeStyle = "#1a1a1a";
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-
-    // Ribbed collar
-    ctx.beginPath();
-    ctx.moveTo(-topW / 2 - 1, neckY + collarH);
-    ctx.quadraticCurveTo(0, neckY + collarH - 5, topW / 2 + 1, neckY + collarH);
-    ctx.lineTo(topW / 2, neckY);
-    ctx.quadraticCurveTo(0, neckY - 3, -topW / 2, neckY);
-    ctx.closePath();
-    ctx.fillStyle = "#f5ece0";
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
   } else {
     ctx.beginPath();
     ctx.moveTo(0, neckY);
