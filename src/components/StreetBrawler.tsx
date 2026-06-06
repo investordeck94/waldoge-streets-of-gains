@@ -1792,6 +1792,102 @@ function drawPlatform(ctx: CanvasRenderingContext2D, plat: Platform, camX: numbe
       ctx.globalAlpha = 1;
       break;
     }
+    case "trestle": {
+      // Reference-style: thick wooden plank top on dark steel X-braced trestle.
+      const topH = 14;
+      // Wood plank surface (warm brown)
+      ctx.fillStyle = "#8a5230";
+      ctx.fillRect(sx, y, plat.w, topH);
+      ctx.fillStyle = "#a8693c"; // top highlight
+      ctx.fillRect(sx, y, plat.w, 3);
+      ctx.fillStyle = "#4a2a14"; // bottom shadow
+      ctx.fillRect(sx, y + topH - 3, plat.w, 3);
+      // Plank seams every ~22px
+      ctx.strokeStyle = "#3a1e0e"; ctx.lineWidth = 1;
+      for (let px = sx + 22; px < sx + plat.w; px += 22) {
+        ctx.beginPath(); ctx.moveTo(px, y + 1); ctx.lineTo(px, y + topH - 1); ctx.stroke();
+      }
+      // Steel trestle frame down to ground
+      const supTop = y + topH;
+      const supBot = GROUND_Y;
+      const supH = supBot - supTop;
+      if (supH > 4) {
+        ctx.strokeStyle = "#222a32"; ctx.lineWidth = 3;
+        // Outer legs (splayed slightly inward at bottom)
+        const innerInset = 6;
+        const baseInset = 14;
+        ctx.beginPath();
+        ctx.moveTo(sx + innerInset, supTop);
+        ctx.lineTo(sx + baseInset, supBot);
+        ctx.moveTo(sx + plat.w - innerInset, supTop);
+        ctx.lineTo(sx + plat.w - baseInset, supBot);
+        ctx.stroke();
+        // Top horizontal beam under plank
+        ctx.fillStyle = "#2a3038";
+        ctx.fillRect(sx + 4, supTop, plat.w - 8, 4);
+        // X cross-braces — one big X plus a horizontal mid-beam
+        ctx.strokeStyle = "#2a3038"; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(sx + innerInset + 4, supTop + 4);
+        ctx.lineTo(sx + plat.w - baseInset - 2, supBot - 2);
+        ctx.moveTo(sx + plat.w - innerInset - 4, supTop + 4);
+        ctx.lineTo(sx + baseInset + 2, supBot - 2);
+        ctx.stroke();
+        // Mid horizontal brace
+        if (supH > 50) {
+          const mid = supTop + supH / 2;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(sx + innerInset + 2, mid);
+          ctx.lineTo(sx + plat.w - innerInset - 2, mid);
+          ctx.stroke();
+        }
+        // Highlight on the left edge of each leg
+        ctx.strokeStyle = "#3a444e"; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(sx + innerInset - 1, supTop + 2);
+        ctx.lineTo(sx + baseInset - 1, supBot - 2);
+        ctx.stroke();
+      }
+      break;
+    }
+    case "mallStair": {
+      // Mall balcony/stair landing: cream wall, dark steel railing, brass cap.
+      const topH = 10;
+      // Landing slab
+      ctx.fillStyle = "#e8dcc4";
+      ctx.fillRect(sx, y, plat.w, topH);
+      ctx.fillStyle = "#c9b894";
+      ctx.fillRect(sx, y + topH - 2, plat.w, 2);
+      // Brass nosing
+      ctx.fillStyle = "#c9a84c";
+      ctx.fillRect(sx, y, plat.w, 2);
+      // Iron railing (dark posts + top rail)
+      ctx.strokeStyle = "#1a1a22"; ctx.lineWidth = 1.4;
+      for (let rx = sx + 6; rx < sx + plat.w - 4; rx += 14) {
+        ctx.beginPath(); ctx.moveTo(rx, y); ctx.lineTo(rx, y - 20); ctx.stroke();
+      }
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sx + 4, y - 20); ctx.lineTo(sx + plat.w - 4, y - 20); ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(sx + 4, y - 10); ctx.lineTo(sx + plat.w - 4, y - 10); ctx.stroke();
+      // Solid wall below landing down to ground (kept narrow so combat reads clearly)
+      const wallH = GROUND_Y - (y + topH);
+      if (wallH > 0) {
+        ctx.fillStyle = "#d8c8a4";
+        ctx.fillRect(sx + 6, y + topH, plat.w - 12, wallH);
+        ctx.fillStyle = "#b8a484";
+        ctx.fillRect(sx + 6, y + topH, 3, wallH);
+        ctx.fillStyle = "#3a3030";
+        // Stair tread shadows along left edge to suggest staircase
+        for (let sy = y + topH + 10; sy < GROUND_Y - 6; sy += 14) {
+          ctx.fillRect(sx + 8, sy, plat.w - 16, 1);
+        }
+      }
+      break;
+    }
   }
   ctx.restore();
 }
