@@ -742,9 +742,14 @@ function drawStickFigure(
       ctx.scale(0.95, 1);
       if (e.state === "kick") ctx.transform(1, 0, -0.22 * e.facing, 1, 0, 0);
     } else if (style === "greenCandle") {
-      // Hunched berserker — wider, shorter
-      ctx.scale(1.28, 0.82);
-      ctx.transform(1, 0, 0.08 * e.facing, 1, 0, 6);
+      // Hunched berserker — wider, shorter. Skip hunch during lariat so the
+      // body spin reads cleanly on screen.
+      if (e.state === "spinkick") {
+        ctx.scale(1.15, 1);
+      } else {
+        ctx.scale(1.28, 0.82);
+        ctx.transform(1, 0, 0.08 * e.facing, 1, 0, 6);
+      }
     }
   }
 
@@ -761,7 +766,7 @@ function drawStickFigure(
     const spinProgress = e.stateTimer / 18;
     const spins =
       isPlayer && style === "rush" ? 2.2 :        // tornado kick — extra spins
-      isPlayer && style === "greenCandle" ? 1.6 : // lariat — wide rotation
+      isPlayer && style === "greenCandle" ? 3.0 : // lariat — very visible spin
       isPlayer && style === "muayThai" ? 1.1 :    // spinning elbow
       isPlayer && style === "brawler" ? 0.55 :    // half-spin roundhouse
       1;
@@ -1007,12 +1012,27 @@ function drawStickFigure(
     ctx.stroke();
   }
 
-  // Green Candle: green energy ring on spin kick
+  // Green Candle: large spinning green motion rings on the lariat
   if (isPlayer && style === "greenCandle" && e.state === "spinkick") {
-    ctx.strokeStyle = "rgba(0,255,100,0.45)";
+    const p = e.stateTimer / 18;
+    // Outer expanding aura
+    ctx.strokeStyle = "rgba(0,255,100,0.25)";
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(0, hipY - 8, 48 + p * 14, 0, Math.PI * 2);
+    ctx.stroke();
+    // Mid swirl ring with broken arcs to suggest rotation
+    ctx.strokeStyle = "rgba(0,255,120,0.55)";
     ctx.lineWidth = 6;
     ctx.beginPath();
-    ctx.arc(0, hipY, 32, 0, Math.PI * 2);
+    ctx.arc(0, hipY - 4, 38, 0.2, Math.PI * 1.2);
+    ctx.arc(0, hipY - 4, 38, Math.PI * 1.4, Math.PI * 1.95);
+    ctx.stroke();
+    // Inner bright ring
+    ctx.strokeStyle = "rgba(180,255,200,0.7)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, hipY - 4, 28, 0, Math.PI * 2);
     ctx.stroke();
   }
 
@@ -1159,10 +1179,10 @@ function drawStickFigure(
         ctx.moveTo(0, hipY);
         ctx.lineTo(e.facing * limbLen * 2.1, hipY - 2);
       } else if (isPlayer && style === "greenCandle") {
-        // Axe / stomp kick — raised then driven down
+        // Berserker forward stomp — thigh drives forward, foot slams down/out
         ctx.moveTo(0, hipY);
-        ctx.lineTo(e.facing * limbLen * 0.5, hipY - limbLen * 1.1);
-        ctx.lineTo(e.facing * limbLen * 1.3, hipY + 2);
+        ctx.lineTo(e.facing * limbLen * 0.9, hipY + limbLen * 0.25);
+        ctx.lineTo(e.facing * limbLen * 1.7, hipY + limbLen * 0.85);
       } else {
         // Brawler — standard front kick
         ctx.moveTo(0, hipY);
@@ -1233,7 +1253,7 @@ function drawStickFigure(
         frontFoot = [e.facing * limbLen * 2.1, hipY - 2];
         backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
       } else if (style === "greenCandle") {
-        frontFoot = [e.facing * limbLen * 1.3, hipY + 2];
+        frontFoot = [e.facing * limbLen * 1.7, hipY + limbLen * 0.85];
         backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
       } else {
         frontFoot = [e.facing * limbLen * 1.5, hipY - 5];
