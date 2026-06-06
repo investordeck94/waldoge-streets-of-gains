@@ -738,8 +738,9 @@ function drawStickFigure(
       // Forward-leaning ninja/speed stance
       ctx.transform(1, 0, -0.18 * e.facing, 1, 0, 0);
     } else if (style === "muayThai") {
-      // Compact upright Muay Thai stance
+      // Compact upright Muay Thai stance; lean forward into knee strike
       ctx.scale(0.95, 1);
+      if (e.state === "kick") ctx.transform(1, 0, -0.22 * e.facing, 1, 0, 0);
     } else if (style === "greenCandle") {
       // Hunched berserker — wider, shorter
       ctx.scale(1.28, 0.82);
@@ -1141,26 +1142,35 @@ function drawStickFigure(
   ctx.beginPath();
   if (e.state === "kick") {
     if (isPlayer && style === "muayThai") {
-      // Knee strike — bent leg with visible knee
+      // Muay Thai knee strike — thigh raised high to torso, shin folded back/down underneath
+      const kneeX = e.facing * limbLen * 0.55;
+      const kneeY = hipY - limbLen * 0.95;          // knee up at chest/torso level
+      const footX = e.facing * limbLen * 0.15;      // foot tucked back under thigh
+      const footY = hipY - limbLen * 0.35;          // shin folded, foot hidden behind body
       ctx.moveTo(0, hipY);
-      ctx.lineTo(e.facing * limbLen * 0.5, hipY - 6);
-      ctx.lineTo(e.facing * limbLen * 0.85, hipY - 22);
-    } else if (isPlayer && style === "rush") {
-      // Long extended side kick
+      ctx.lineTo(kneeX, kneeY);                     // thigh up
+      ctx.lineTo(footX, footY);                     // shin folded back
+      // Support leg planted firmly
       ctx.moveTo(0, hipY);
-      ctx.lineTo(e.facing * limbLen * 2.1, hipY - 2);
-    } else if (isPlayer && style === "greenCandle") {
-      // Axe / stomp kick — raised then driven down
-      ctx.moveTo(0, hipY);
-      ctx.lineTo(e.facing * limbLen * 0.5, hipY - limbLen * 1.1);
-      ctx.lineTo(e.facing * limbLen * 1.3, hipY + 2);
+      ctx.lineTo(-e.facing * limbLen * 0.1, hipY + limbLen);
     } else {
-      // Brawler — standard front kick
+      if (isPlayer && style === "rush") {
+        // Long extended side kick
+        ctx.moveTo(0, hipY);
+        ctx.lineTo(e.facing * limbLen * 2.1, hipY - 2);
+      } else if (isPlayer && style === "greenCandle") {
+        // Axe / stomp kick — raised then driven down
+        ctx.moveTo(0, hipY);
+        ctx.lineTo(e.facing * limbLen * 0.5, hipY - limbLen * 1.1);
+        ctx.lineTo(e.facing * limbLen * 1.3, hipY + 2);
+      } else {
+        // Brawler — standard front kick
+        ctx.moveTo(0, hipY);
+        ctx.lineTo(e.facing * limbLen * 1.5, hipY - 5);
+      }
       ctx.moveTo(0, hipY);
-      ctx.lineTo(e.facing * limbLen * 1.5, hipY - 5);
+      ctx.lineTo(-e.facing * limbLen * 0.5, hipY + limbLen);
     }
-    ctx.moveTo(0, hipY);
-    ctx.lineTo(-e.facing * limbLen * 0.5, hipY + limbLen);
   } else if (e.state === "jump" || e.state === "uppercut") {
     ctx.moveTo(0, hipY);
     ctx.lineTo(-limbLen * 0.6, hipY + limbLen * 0.5);
@@ -1216,15 +1226,19 @@ function drawStickFigure(
 
     if (e.state === "kick") {
       if (style === "muayThai") {
-        frontFoot = [e.facing * limbLen * 0.85, hipY - 22];
+        // Foot tucked back under thigh (knee-strike silhouette)
+        frontFoot = [e.facing * limbLen * 0.15, hipY - limbLen * 0.35];
+        backFoot = [-e.facing * limbLen * 0.1, hipY + limbLen];
       } else if (style === "rush") {
         frontFoot = [e.facing * limbLen * 2.1, hipY - 2];
+        backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
       } else if (style === "greenCandle") {
         frontFoot = [e.facing * limbLen * 1.3, hipY + 2];
+        backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
       } else {
         frontFoot = [e.facing * limbLen * 1.5, hipY - 5];
+        backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
       }
-      backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
     } else if (e.state === "jump" || e.state === "uppercut") {
       frontFoot = [e.facing * limbLen * 0.6, hipY + limbLen * 0.5];
       backFoot = [-e.facing * limbLen * 0.6, hipY + limbLen * 0.5];
