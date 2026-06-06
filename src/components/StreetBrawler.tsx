@@ -1227,7 +1227,7 @@ function drawStickFigure(
     if (e.state === "kick") {
       if (style === "muayThai") {
         // Foot tucked back under thigh (knee-strike silhouette)
-        frontFoot = [e.facing * limbLen * 0.15, hipY - limbLen * 0.35];
+        frontFoot = [e.facing * limbLen * 0.7, hipY - limbLen * 0.25];
         backFoot = [-e.facing * limbLen * 0.1, hipY + limbLen];
       } else if (style === "rush") {
         frontFoot = [e.facing * limbLen * 2.1, hipY - 2];
