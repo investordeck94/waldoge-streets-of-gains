@@ -1,7 +1,9 @@
 import { FC, useEffect, useRef, useState, useCallback } from "react";
 import waldogeMusic from "@/assets/waldoge-music.mp3";
+import waldogeCombatTheme from "@/assets/waldoge-combat-theme.mp3.asset.json";
+import waldogeArcade from "@/assets/waldoge-arcade.mp3.asset.json";
 import { motion, AnimatePresence } from "framer-motion";
-import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize, Pause } from "lucide-react";
+import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize, Pause, SkipForward, SkipBack } from "lucide-react";
 import waldogeHead from "@/assets/waldoge-head.png";
 import streetBrawlerCover from "@/assets/street-brawler-cover.png";
 import jeetBossHead from "@/assets/jeet-boss-head.png";
