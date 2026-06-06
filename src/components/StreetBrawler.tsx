@@ -755,10 +755,16 @@ function drawStickFigure(
     ctx.globalAlpha = 0.4;
   }
 
-  // Spin kick rotation
+  // Spin kick rotation — amount varies per style for recognizable silhouettes
   if (e.state === "spinkick") {
     const spinProgress = e.stateTimer / 18;
-    ctx.rotate(spinProgress * Math.PI * 2 * e.facing);
+    const spins =
+      isPlayer && style === "rush" ? 2.2 :        // tornado kick — extra spins
+      isPlayer && style === "greenCandle" ? 1.6 : // lariat — wide rotation
+      isPlayer && style === "muayThai" ? 1.1 :    // spinning elbow
+      isPlayer && style === "brawler" ? 0.55 :    // half-spin roundhouse
+      1;
+    ctx.rotate(spinProgress * Math.PI * 2 * spins * e.facing);
   }
 
   const headCY = -bodyLen - limbLen - headR;
@@ -810,10 +816,10 @@ function drawStickFigure(
       frontArmEnd = [e.facing * limbLen * 2.8, shoulderY + 2];
       backArmEnd = [-e.facing * limbLen * 0.8, shoulderY + 12];
     } else if (isPlayer && style === "muayThai") {
-      // Elbow strike — bent arm with visible elbow joint, guard hand high
-      elbow = [e.facing * limbLen * 0.6, shoulderY - 4];
-      frontArmEnd = [e.facing * limbLen * 0.4, shoulderY - 16];
-      backArmEnd = [-e.facing * limbLen * 0.3, shoulderY - 10];
+      // Elbow strike thrust forward — elbow leads as the offensive striking surface
+      elbow = [e.facing * limbLen * 1.1, shoulderY - 6];
+      frontArmEnd = [e.facing * limbLen * 1.7, shoulderY - 2];
+      backArmEnd = [-e.facing * limbLen * 0.2, shoulderY - 12];
     } else if (isPlayer && style === "greenCandle") {
       // Overhead smash
       frontArmEnd = [e.facing * limbLen * 1.4, shoulderY - limbLen * 1.4];
@@ -871,11 +877,32 @@ function drawStickFigure(
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(e.facing * limbLen * 0.3, shoulderY + 5);
   } else if (e.state === "uppercut") {
-    // Both arms up
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen * 0.8, shoulderY - limbLen * 1.5);
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(-e.facing * limbLen * 0.3, shoulderY - limbLen);
+    if (isPlayer && style === "rush") {
+      // Rising dash uppercut — long angled strike
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(e.facing * limbLen * 1.9, shoulderY - limbLen * 1.3);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-e.facing * limbLen * 0.5, shoulderY + 6);
+    } else if (isPlayer && style === "muayThai") {
+      // Upward elbow — bent arm with elbow leading skyward
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(e.facing * limbLen * 0.55, shoulderY - 4);
+      ctx.lineTo(e.facing * limbLen * 0.2, shoulderY - limbLen * 1.7);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-e.facing * limbLen * 0.3, shoulderY - 6);
+    } else if (isPlayer && style === "greenCandle") {
+      // Brutal two-arm launcher — both arms thrust up & out
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(e.facing * limbLen * 0.9, shoulderY - limbLen * 1.7);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-e.facing * limbLen * 0.9, shoulderY - limbLen * 1.7);
+    } else {
+      // Brawler boxing uppercut — tight vertical front arm, back guard up
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(e.facing * limbLen * 0.55, shoulderY - limbLen * 1.8);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-e.facing * limbLen * 0.35, shoulderY - limbLen * 0.5);
+    }
   } else if (e.state === "dashpunch") {
     // Extended forward punch with both arms
     ctx.moveTo(0, shoulderY);
@@ -883,10 +910,31 @@ function drawStickFigure(
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(e.facing * limbLen * 1.5, shoulderY - 8);
   } else if (e.state === "spinkick" || e.state === "groundpound") {
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(-limbLen * 0.8, shoulderY + limbLen * 0.3);
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(limbLen * 0.8, shoulderY + limbLen * 0.3);
+    if (isPlayer && e.state === "spinkick" && style === "muayThai") {
+      // Spinning elbow — bent arm across chest
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 0.6, shoulderY - 10);
+      ctx.lineTo(-limbLen * 0.7, shoulderY - 14);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 0.5, shoulderY + 8);
+    } else if (isPlayer && e.state === "spinkick" && style === "greenCandle") {
+      // Berserker lariat — both arms extended wide (clothesline)
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-limbLen * 1.7, shoulderY - 2);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 1.7, shoulderY - 2);
+    } else if (isPlayer && e.state === "spinkick" && style === "rush") {
+      // Tornado kick — arms tucked tight for fast spin
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-limbLen * 0.45, shoulderY + 4);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 0.45, shoulderY + 4);
+    } else {
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-limbLen * 0.8, shoulderY + limbLen * 0.3);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 0.8, shoulderY + limbLen * 0.3);
+    }
   } else {
     const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
     if (style === "rush") {
@@ -1020,9 +1068,9 @@ function drawStickFigure(
         frontHand = [e.facing * limbLen * 2.8, shoulderY + 2];
         backHand = [-e.facing * limbLen * 0.8, shoulderY + 12];
       } else if (style === "muayThai") {
-        // elbow tip (the striking surface)
-        frontHand = [e.facing * limbLen * 0.4, shoulderY - 16];
-        backHand = [-e.facing * limbLen * 0.3, shoulderY - 10];
+        // elbow tip thrust forward (the striking surface)
+        frontHand = [e.facing * limbLen * 1.7, shoulderY - 2];
+        backHand = [-e.facing * limbLen * 0.2, shoulderY - 12];
       } else if (style === "greenCandle") {
         frontHand = [e.facing * limbLen * 1.4, shoulderY - limbLen * 1.4];
         backHand = [-e.facing * limbLen * 0.5, shoulderY + 12];
@@ -1034,14 +1082,36 @@ function drawStickFigure(
       frontHand = [-e.facing * limbLen * 0.5, shoulderY - 8];
       backHand = [e.facing * limbLen * 0.3, shoulderY + 5];
     } else if (e.state === "uppercut") {
-      frontHand = [e.facing * limbLen * 0.8, shoulderY - limbLen * 1.5];
-      backHand = [-e.facing * limbLen * 0.3, shoulderY - limbLen];
+      if (style === "rush") {
+        frontHand = [e.facing * limbLen * 1.9, shoulderY - limbLen * 1.3];
+        backHand = [-e.facing * limbLen * 0.5, shoulderY + 6];
+      } else if (style === "muayThai") {
+        frontHand = [e.facing * limbLen * 0.2, shoulderY - limbLen * 1.7];
+        backHand = [-e.facing * limbLen * 0.3, shoulderY - 6];
+      } else if (style === "greenCandle") {
+        frontHand = [e.facing * limbLen * 0.9, shoulderY - limbLen * 1.7];
+        backHand = [-e.facing * limbLen * 0.9, shoulderY - limbLen * 1.7];
+      } else {
+        frontHand = [e.facing * limbLen * 0.55, shoulderY - limbLen * 1.8];
+        backHand = [-e.facing * limbLen * 0.35, shoulderY - limbLen * 0.5];
+      }
     } else if (e.state === "dashpunch") {
       frontHand = [e.facing * limbLen * 2, shoulderY];
       backHand = [e.facing * limbLen * 1.5, shoulderY - 8];
     } else if (e.state === "spinkick" || e.state === "groundpound") {
-      frontHand = [-limbLen * 0.8, shoulderY + limbLen * 0.3];
-      backHand = [limbLen * 0.8, shoulderY + limbLen * 0.3];
+      if (e.state === "spinkick" && style === "muayThai") {
+        frontHand = [-limbLen * 0.7, shoulderY - 14];
+        backHand = [limbLen * 0.5, shoulderY + 8];
+      } else if (e.state === "spinkick" && style === "greenCandle") {
+        frontHand = [limbLen * 1.7, shoulderY - 2];
+        backHand = [-limbLen * 1.7, shoulderY - 2];
+      } else if (e.state === "spinkick" && style === "rush") {
+        frontHand = [limbLen * 0.45, shoulderY + 4];
+        backHand = [-limbLen * 0.45, shoulderY + 4];
+      } else {
+        frontHand = [-limbLen * 0.8, shoulderY + limbLen * 0.3];
+        backHand = [limbLen * 0.8, shoulderY + limbLen * 0.3];
+      }
     } else {
       const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
       // Match per-style idle/walk arm geometry
@@ -1232,6 +1302,59 @@ function drawStickFigure(
     glow.addColorStop(1, "rgba(255, 215, 0, 0)");
     ctx.fillStyle = glow;
     ctx.fill();
+  }
+
+  // Rush style speed cues — motion streaks while moving, afterimage ghost
+  // silhouettes during punch / dash. Drawn last so they layer on top, but
+  // remain translucent so the body silhouette stays readable.
+  if (isPlayer && style === "rush") {
+    const moving = e.state === "walk";
+    const attacking = e.state === "punch" || e.state === "dashpunch";
+    if (moving || attacking) {
+      ctx.save();
+      // Motion streaks behind the body
+      ctx.strokeStyle = "rgba(0,210,255,0.55)";
+      ctx.lineWidth = 2;
+      const streakCount = attacking ? 5 : 4;
+      for (let i = 1; i <= streakCount; i++) {
+        const off = -e.facing * i * (attacking ? 10 : 7);
+        ctx.globalAlpha = Math.max(0.05, 0.45 - i * 0.08);
+        ctx.beginPath();
+        ctx.moveTo(off, neckY + 6);
+        ctx.lineTo(off - e.facing * 16, neckY + 6 + (i % 2 ? 2 : -2));
+        ctx.moveTo(off, hipY - 4);
+        ctx.lineTo(off - e.facing * 18, hipY - 4 + (i % 2 ? -2 : 2));
+        ctx.moveTo(off, (neckY + hipY) / 2);
+        ctx.lineTo(off - e.facing * 20, (neckY + hipY) / 2);
+        ctx.stroke();
+      }
+      // Afterimage ghost silhouettes during punch/dash
+      if (attacking) {
+        ctx.strokeStyle = "rgba(0,200,255,0.4)";
+        ctx.lineWidth = 3;
+        for (let g = 1; g <= 2; g++) {
+          const gx = -e.facing * g * 14;
+          ctx.globalAlpha = 0.35 - g * 0.1;
+          // Body
+          ctx.beginPath();
+          ctx.moveTo(gx, neckY);
+          ctx.lineTo(gx, hipY);
+          // Head circle
+          ctx.moveTo(gx + headR, headCY);
+          ctx.arc(gx, headCY, headR, 0, Math.PI * 2);
+          // Front arm extended
+          ctx.moveTo(gx, neckY + 8);
+          ctx.lineTo(gx + e.facing * limbLen * 2.4, neckY + 10);
+          // Legs
+          ctx.moveTo(gx, hipY);
+          ctx.lineTo(gx + e.facing * limbLen * 0.7, hipY + limbLen);
+          ctx.moveTo(gx, hipY);
+          ctx.lineTo(gx - e.facing * limbLen * 0.4, hipY + limbLen);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
   }
 
   ctx.restore();
