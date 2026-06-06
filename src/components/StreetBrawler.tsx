@@ -778,7 +778,10 @@ function drawStickFigure(
   // Head
   if (isPlayer && headImg && headImg.complete) {
     const s = headR * 3;
+    ctx.save();
+    if (e.facing < 0) ctx.scale(-1, 1);
     ctx.drawImage(headImg, -s / 2, headCY - s / 2, s, s);
+    ctx.restore();
   } else {
     ctx.beginPath();
     ctx.arc(0, headCY, headR, 0, Math.PI * 2);
