@@ -766,7 +766,7 @@ function drawStickFigure(
     const spinProgress = e.stateTimer / 18;
     const spins =
       isPlayer && style === "rush" ? 2.2 :        // tornado kick — extra spins
-      isPlayer && style === "greenCandle" ? 1.6 : // lariat — wide rotation
+      isPlayer && style === "greenCandle" ? 3.0 : // lariat — very visible spin
       isPlayer && style === "muayThai" ? 1.1 :    // spinning elbow
       isPlayer && style === "brawler" ? 0.55 :    // half-spin roundhouse
       1;
