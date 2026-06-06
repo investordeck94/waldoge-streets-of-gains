@@ -738,8 +738,9 @@ function drawStickFigure(
       // Forward-leaning ninja/speed stance
       ctx.transform(1, 0, -0.18 * e.facing, 1, 0, 0);
     } else if (style === "muayThai") {
-      // Compact upright Muay Thai stance
+      // Compact upright Muay Thai stance; lean forward into knee strike
       ctx.scale(0.95, 1);
+      if (e.state === "kick") ctx.transform(1, 0, -0.22 * e.facing, 1, 0, 0);
     } else if (style === "greenCandle") {
       // Hunched berserker — wider, shorter
       ctx.scale(1.28, 0.82);
