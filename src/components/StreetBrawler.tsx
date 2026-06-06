@@ -1016,8 +1016,20 @@ function drawStickFigure(
     let backHand: [number, number] | null = null;
 
     if (e.state === "punch") {
-      frontHand = [e.facing * limbLen * 1.5, shoulderY - 5];
-      backHand = [-e.facing * limbLen * 0.6, shoulderY + 10];
+      if (style === "rush") {
+        frontHand = [e.facing * limbLen * 2.8, shoulderY + 2];
+        backHand = [-e.facing * limbLen * 0.8, shoulderY + 12];
+      } else if (style === "muayThai") {
+        // elbow tip (the striking surface)
+        frontHand = [e.facing * limbLen * 0.4, shoulderY - 16];
+        backHand = [-e.facing * limbLen * 0.3, shoulderY - 10];
+      } else if (style === "greenCandle") {
+        frontHand = [e.facing * limbLen * 1.4, shoulderY - limbLen * 1.4];
+        backHand = [-e.facing * limbLen * 0.5, shoulderY + 12];
+      } else {
+        frontHand = [e.facing * limbLen * 2.2, shoulderY - 3];
+        backHand = [-e.facing * limbLen * 0.6, shoulderY + 10];
+      }
     } else if (e.state === "kick") {
       frontHand = [-e.facing * limbLen * 0.5, shoulderY - 8];
       backHand = [e.facing * limbLen * 0.3, shoulderY + 5];
@@ -1032,8 +1044,21 @@ function drawStickFigure(
       backHand = [limbLen * 0.8, shoulderY + limbLen * 0.3];
     } else {
       const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
-      frontHand = [-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing];
-      backHand = [limbLen * 0.7, shoulderY + limbLen * 0.8 - swing];
+      // Match per-style idle/walk arm geometry
+      if (style === "rush") {
+        frontHand = [limbLen * 1.3, shoulderY + 4];
+        backHand = [-limbLen * 1.3, shoulderY + 4];
+      } else if (style === "muayThai") {
+        // Hands high beside head (high guard)
+        frontHand = [limbLen * 0.35, shoulderY - 8];
+        backHand = [-limbLen * 0.35, shoulderY - 8];
+      } else if (style === "greenCandle") {
+        frontHand = [limbLen * 1.0, shoulderY + 16];
+        backHand = [-limbLen * 1.0, shoulderY + 16];
+      } else {
+        frontHand = [-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing];
+        backHand = [limbLen * 0.7, shoulderY + limbLen * 0.8 - swing];
+      }
     }
 
     const extended =
