@@ -1012,12 +1012,27 @@ function drawStickFigure(
     ctx.stroke();
   }
 
-  // Green Candle: green energy ring on spin kick
+  // Green Candle: large spinning green motion rings on the lariat
   if (isPlayer && style === "greenCandle" && e.state === "spinkick") {
-    ctx.strokeStyle = "rgba(0,255,100,0.45)";
+    const p = e.stateTimer / 18;
+    // Outer expanding aura
+    ctx.strokeStyle = "rgba(0,255,100,0.25)";
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(0, hipY - 8, 48 + p * 14, 0, Math.PI * 2);
+    ctx.stroke();
+    // Mid swirl ring with broken arcs to suggest rotation
+    ctx.strokeStyle = "rgba(0,255,120,0.55)";
     ctx.lineWidth = 6;
     ctx.beginPath();
-    ctx.arc(0, hipY, 32, 0, Math.PI * 2);
+    ctx.arc(0, hipY - 4, 38, 0.2, Math.PI * 1.2);
+    ctx.arc(0, hipY - 4, 38, Math.PI * 1.4, Math.PI * 1.95);
+    ctx.stroke();
+    // Inner bright ring
+    ctx.strokeStyle = "rgba(180,255,200,0.7)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, hipY - 4, 28, 0, Math.PI * 2);
     ctx.stroke();
   }
 
