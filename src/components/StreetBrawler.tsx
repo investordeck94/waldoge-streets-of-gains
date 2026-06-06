@@ -2440,39 +2440,86 @@ function drawMallScene(ctx: CanvasRenderingContext2D, camX: number, canvasW: num
 function drawParkScene(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, frameCount: number) {
   const pal = THEME_PALETTES.park;
   drawSkyAndFloor(ctx, pal, canvasW, camX);
+  // Sun + soft clouds
   ctx.fillStyle = "#fff5b0";
   ctx.beginPath(); ctx.arc(canvasW - 100, 80, 28, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ffffffcc";
+  for (let i = 0; i < 6; i++) {
+    const cx = i * 260 - (camX * 0.08) % 260;
+    ctx.beginPath();
+    ctx.arc(cx, 60, 18, 0, Math.PI * 2);
+    ctx.arc(cx + 20, 56, 22, 0, Math.PI * 2);
+    ctx.arc(cx + 42, 62, 16, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Distant rolling hills (back layer)
+  ctx.fillStyle = "#6ea868";
+  for (let i = 0; i < 14; i++) {
+    const hx = i * 180 - (camX * 0.12) % 180;
+    ctx.beginPath(); ctx.ellipse(hx, GROUND_Y - 10, 130, 60, 0, Math.PI, 0); ctx.fill();
+  }
+  // Mid bush layer
   for (let i = 0; i < 30; i++) {
     const tx = i * 80 - (camX * 0.25) % 80;
     ctx.fillStyle = "#3a7048";
     ctx.beginPath(); ctx.arc(tx, GROUND_Y - 30, 36, Math.PI, 0); ctx.fill();
   }
+  // Large foreground trees with trunk shading
   for (let i = 0; i < 25; i++) {
     const tx = i * 180 - (camX * 0.55) % 180;
     if (tx < -60 || tx > canvasW + 60) continue;
-    ctx.fillStyle = "#5a3018";
-    ctx.fillRect(tx - 6, GROUND_Y - 90, 12, 90);
+    // trunk
+    ctx.fillStyle = "#4a2810"; ctx.fillRect(tx - 8, GROUND_Y - 100, 16, 100);
+    ctx.fillStyle = "#6a3a18"; ctx.fillRect(tx - 8, GROUND_Y - 100, 4, 100);
+    // canopy
     ctx.fillStyle = "#2f5e3a";
-    ctx.beginPath(); ctx.arc(tx, GROUND_Y - 110, 38, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(tx, GROUND_Y - 118, 42, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "#3a7048";
-    ctx.beginPath(); ctx.arc(tx - 18, GROUND_Y - 95, 24, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(tx + 18, GROUND_Y - 95, 24, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(tx - 22, GROUND_Y - 100, 28, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(tx + 22, GROUND_Y - 100, 28, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#4a8a58";
+    ctx.beginPath(); ctx.arc(tx + 10, GROUND_Y - 130, 16, 0, Math.PI * 2); ctx.fill();
   }
-  for (let i = 0; i < 12; i++) {
-    const bx = i * 380 - (camX * 0.9) % 380;
-    if (bx < -100 || bx > canvasW + 100) continue;
-    if (i % 2 === 0) {
+  // Park props: benches, lamp posts, flower beds, trash bins
+  for (let i = 0; i < 16; i++) {
+    const bx = i * 280 - (camX * 0.9) % 280;
+    if (bx < -120 || bx > canvasW + 120) continue;
+    const kind = i % 4;
+    if (kind === 0) {
+      // Wooden bench
       ctx.fillStyle = "#6a3a1a";
-      ctx.fillRect(bx, GROUND_Y - 18, 60, 6);
+      ctx.fillRect(bx, GROUND_Y - 18, 70, 6);
+      ctx.fillRect(bx, GROUND_Y - 30, 70, 4); // backrest
       ctx.fillRect(bx + 4, GROUND_Y - 12, 4, 12);
-      ctx.fillRect(bx + 52, GROUND_Y - 12, 4, 12);
+      ctx.fillRect(bx + 62, GROUND_Y - 12, 4, 12);
+      ctx.fillRect(bx + 4, GROUND_Y - 30, 3, 18);
+      ctx.fillRect(bx + 63, GROUND_Y - 30, 3, 18);
+    } else if (kind === 1) {
+      // Lamp post
+      ctx.fillStyle = "#222"; ctx.fillRect(bx, GROUND_Y - 70, 4, 70);
+      ctx.fillStyle = "#444"; ctx.fillRect(bx - 4, GROUND_Y - 78, 12, 8);
+      ctx.fillStyle = "#ffeb88"; ctx.shadowColor = "#ffeb88"; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(bx + 2, GROUND_Y - 82, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+    } else if (kind === 2) {
+      // Flower bed: low brick border with bursts of color
+      ctx.fillStyle = "#8a4a2a"; ctx.fillRect(bx, GROUND_Y - 10, 90, 10);
+      const fc = ["#ff5a7a", "#ffd633", "#ff8844", "#ff44aa", "#fff"];
+      for (let k = 0; k < 9; k++) {
+        ctx.fillStyle = fc[k % fc.length];
+        ctx.beginPath(); ctx.arc(bx + 6 + k * 10, GROUND_Y - 12, 3.5, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = "#3a8030";
+      for (let k = 0; k < 5; k++) {
+        ctx.fillRect(bx + 10 + k * 18, GROUND_Y - 14, 2, 6);
+      }
     } else {
-      ctx.fillStyle = "#222";
-      ctx.fillRect(bx, GROUND_Y - 60, 4, 60);
-      ctx.fillStyle = "#ffeb88";
-      ctx.beginPath(); ctx.arc(bx + 2, GROUND_Y - 64, 7, 0, Math.PI * 2); ctx.fill();
+      // Trash bin
+      ctx.fillStyle = "#3a5a3a"; ctx.fillRect(bx, GROUND_Y - 24, 18, 24);
+      ctx.fillStyle = "#2a4a2a"; ctx.fillRect(bx, GROUND_Y - 26, 18, 4);
     }
   }
+  // Flowers in foreground grass
   for (let i = 0; i < 40; i++) {
     const fx = i * 90 - (camX * 0.95) % 90;
     const fc = ["#ff6677", "#ffaa44", "#ffffff", "#ff44aa"][i % 4];
