@@ -3946,6 +3946,26 @@ export const StreetBrawler: FC = () => {
         drawAlleyObject(ctx, obj, g.camX);
       }
 
+      // Player ground shadow (helps judge platform landings)
+      {
+        const p = g.player;
+        if (p && p.alive) {
+          const sx = p.x - g.camX;
+          // Shadow shrinks/fades as the player rises above the ground.
+          const heightAboveGround = Math.max(0, GROUND_Y - p.y);
+          const t = Math.min(1, heightAboveGround / 140);
+          const rx = 14 * (1 - t * 0.55);
+          const ry = 4 * (1 - t * 0.55);
+          ctx.save();
+          ctx.globalAlpha = 0.35 * (1 - t * 0.5);
+          ctx.fillStyle = "#000";
+          ctx.beginPath();
+          ctx.ellipse(sx, GROUND_Y + 2, rx, ry, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
       // Draw platforms (Phase 1)
       for (const plat of g.platforms) {
         drawPlatform(ctx, plat, g.camX);
