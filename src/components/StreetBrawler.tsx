@@ -1253,7 +1253,7 @@ function drawStickFigure(
         frontFoot = [e.facing * limbLen * 2.1, hipY - 2];
         backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
       } else if (style === "greenCandle") {
-        frontFoot = [e.facing * limbLen * 1.3, hipY + 2];
+        frontFoot = [e.facing * limbLen * 1.7, hipY + limbLen * 0.85];
         backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
       } else {
         frontFoot = [e.facing * limbLen * 1.5, hipY - 5];
