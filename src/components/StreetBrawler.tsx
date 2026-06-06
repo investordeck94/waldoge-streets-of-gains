@@ -2443,7 +2443,8 @@ export const StreetBrawler: FC = () => {
             p.attackCooldown = totalFrames + 4;
             c.specialEnergy -= Math.round(SPECIAL_ENERGY_COST * fightStyle.staminaCost);
             setEnergy(c.specialEnergy);
-            triggerShake(8, 16);
+            triggerShake(g.style === "brawler" ? 14 : 8, g.style === "brawler" ? 22 : 16);
+            g.specialFx = { style: g.style, timer: totalFrames, total: totalFrames };
             setComboName(move.name.toUpperCase() + "!");
             g.effects.push({
               x: p.x, y: p.y - 80, timer: 40,
