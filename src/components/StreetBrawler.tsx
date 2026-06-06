@@ -3949,7 +3949,7 @@ export const StreetBrawler: FC = () => {
       // Player ground shadow (helps judge platform landings)
       {
         const p = g.player;
-        if (p && p.alive) {
+        if (p && p.hp > 0) {
           const sx = p.x - g.camX;
           // Shadow shrinks/fades as the player rises above the ground.
           const heightAboveGround = Math.max(0, GROUND_Y - p.y);
