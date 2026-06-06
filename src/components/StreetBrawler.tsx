@@ -804,19 +804,21 @@ function drawStickFigure(
   const hipY = neckY + bodyLen;
   if (isPlayer) {
     // Waldoge cartoon torso: red/white striped sweater
-    const torsoH = hipY - neckY;
-    const topW = 14;      // narrow at neck/collar
-    const midW = 22;      // chest width
-    const botW = 20;      // hem width
+    // Beefed-up proportions so the body supports the head size.
+    const torsoH = (hipY - neckY) * 1.32;            // ~32% taller visually
+    const hemY = neckY + torsoH;                      // sweater hem (overlaps upper thigh)
+    const topW = 22;      // collar width
+    const midW = 34;      // chest width (+55%)
+    const botW = 30;      // hem width
     const collarH = Math.max(3, torsoH * 0.12);
 
     // Sweater silhouette (rounded barrel shape)
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(-topW / 2, neckY + collarH);
-    ctx.quadraticCurveTo(-midW / 2 - 2, neckY + torsoH * 0.45, -botW / 2, hipY);
-    ctx.lineTo(botW / 2, hipY);
-    ctx.quadraticCurveTo(midW / 2 + 2, neckY + torsoH * 0.45, topW / 2, neckY + collarH);
+    ctx.quadraticCurveTo(-midW / 2 - 3, neckY + torsoH * 0.45, -botW / 2, hemY);
+    ctx.lineTo(botW / 2, hemY);
+    ctx.quadraticCurveTo(midW / 2 + 3, neckY + torsoH * 0.45, topW / 2, neckY + collarH);
     ctx.closePath();
 
     // Clip stripes to sweater shape
@@ -824,7 +826,7 @@ function drawStickFigure(
     ctx.clip();
     // Base white/cream
     ctx.fillStyle = "#f5ece0";
-    ctx.fillRect(-midW, neckY, midW * 2, torsoH + 2);
+    ctx.fillRect(-midW, neckY, midW * 2, torsoH + 4);
     // Red stripes
     ctx.fillStyle = "#d92b2b";
     const stripeH = torsoH / 6;
@@ -834,9 +836,9 @@ function drawStickFigure(
     // WALDOGE chest label
     const labelY = neckY + torsoH * 0.5;
     ctx.fillStyle = "#1a1a1a";
-    ctx.fillRect(-9, labelY - 3, 18, 6);
+    ctx.fillRect(-14, labelY - 4, 28, 8);
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 4px sans-serif";
+    ctx.font = "bold 6px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("WALDOGE", 0, labelY + 0.5);
@@ -844,15 +846,15 @@ function drawStickFigure(
 
     // Sweater outline
     ctx.strokeStyle = "#1a1a1a";
-    ctx.lineWidth = 1.2;
+    ctx.lineWidth = 1.4;
     ctx.stroke();
 
     // Ribbed collar
     ctx.beginPath();
     ctx.moveTo(-topW / 2 - 1, neckY + collarH);
-    ctx.quadraticCurveTo(0, neckY + collarH - 4, topW / 2 + 1, neckY + collarH);
+    ctx.quadraticCurveTo(0, neckY + collarH - 5, topW / 2 + 1, neckY + collarH);
     ctx.lineTo(topW / 2, neckY);
-    ctx.quadraticCurveTo(0, neckY - 2, -topW / 2, neckY);
+    ctx.quadraticCurveTo(0, neckY - 3, -topW / 2, neckY);
     ctx.closePath();
     ctx.fillStyle = "#f5ece0";
     ctx.fill();
@@ -1057,7 +1059,10 @@ function drawStickFigure(
     }
   }
   ctx.strokeStyle = isPlayer ? styleColor : "#ff4444";
-  ctx.lineWidth = e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 4 : 3;
+  ctx.lineWidth = isPlayer
+    ? (e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 7 : 6)
+    : (e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 4 : 3);
+  ctx.lineCap = "round";
   ctx.stroke();
 
   // Rush style: cyan speed trail on punch
@@ -1113,7 +1118,7 @@ function drawStickFigure(
   // Boxing gloves on the player's hands
   if (isPlayer) {
     const drawGlove = (gx: number, gy: number, extended: boolean) => {
-      const r = extended ? 7 : 6;
+      const r = extended ? 11 : 10;
       // Wrist cuff
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
@@ -1294,7 +1299,8 @@ function drawStickFigure(
     }
   }
   ctx.strokeStyle = isPlayer ? styleColor : "#ff4444";
-  ctx.lineWidth = e.state === "spinkick" ? 4 : 3;
+  ctx.lineWidth = isPlayer ? (e.state === "spinkick" ? 7 : 6) : (e.state === "spinkick" ? 4 : 3);
+  ctx.lineCap = "round";
   ctx.stroke();
 
   // Red & white sneakers on the player's feet
@@ -1344,8 +1350,8 @@ function drawStickFigure(
     }
 
     const drawSneaker = (fx: number, fy: number) => {
-      const w = 12;
-      const h = 5;
+      const w = 19;
+      const h = 8;
       const dir = e.facing;
       ctx.save();
       ctx.translate(fx, fy);
