@@ -1225,15 +1225,19 @@ function drawStickFigure(
 
     if (e.state === "kick") {
       if (style === "muayThai") {
-        frontFoot = [e.facing * limbLen * 0.85, hipY - 22];
+        // Foot tucked back under thigh (knee-strike silhouette)
+        frontFoot = [e.facing * limbLen * 0.15, hipY - limbLen * 0.35];
+        backFoot = [-e.facing * limbLen * 0.1, hipY + limbLen];
       } else if (style === "rush") {
         frontFoot = [e.facing * limbLen * 2.1, hipY - 2];
+        backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
       } else if (style === "greenCandle") {
         frontFoot = [e.facing * limbLen * 1.3, hipY + 2];
+        backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
       } else {
         frontFoot = [e.facing * limbLen * 1.5, hipY - 5];
+        backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
       }
-      backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
     } else if (e.state === "jump" || e.state === "uppercut") {
       frontFoot = [e.facing * limbLen * 0.6, hipY + limbLen * 0.5];
       backFoot = [-e.facing * limbLen * 0.6, hipY + limbLen * 0.5];
