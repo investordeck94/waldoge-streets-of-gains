@@ -2648,6 +2648,60 @@ function drawChartScene(ctx: CanvasRenderingContext2D, camX: number, canvasW: nu
   }
   ctx.strokeStyle = "#00ff88"; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(canvasW, GROUND_Y); ctx.stroke();
+  // Trading terminals along back wall
+  for (let i = 0; i < 12; i++) {
+    const tx = i * 280 - (camX * 0.7) % 280;
+    if (tx < -120 || tx > canvasW + 40) continue;
+    // Terminal stand
+    ctx.fillStyle = "#0a1422"; ctx.fillRect(tx, GROUND_Y - 90, 110, 90);
+    // Screen
+    ctx.fillStyle = "#040a14"; ctx.fillRect(tx + 8, GROUND_Y - 82, 94, 56);
+    // Glow border
+    ctx.strokeStyle = "#00ff88"; ctx.shadowColor = "#00ff88"; ctx.shadowBlur = 6;
+    ctx.lineWidth = 1; ctx.strokeRect(tx + 8, GROUND_Y - 82, 94, 56);
+    ctx.shadowBlur = 0;
+    // Mini chart inside screen
+    ctx.strokeStyle = i % 2 === 0 ? "#00ff88" : "#ff4466"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let k = 0; k < 30; k++) {
+      const xx = tx + 10 + k * 3;
+      const yy = GROUND_Y - 55 + Math.sin((k + i) * 0.6) * 12 - k * 0.3;
+      if (k === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+    }
+    ctx.stroke();
+    // Tickers
+    ctx.fillStyle = "#00ff88"; ctx.font = "8px monospace"; ctx.textAlign = "left";
+    ctx.fillText(["DOGE", "WAL", "BTC", "SOL"][i % 4] + " +" + (i * 3 % 24) + "%", tx + 12, GROUND_Y - 32);
+    // Keyboard
+    ctx.fillStyle = "#1a2a3a"; ctx.fillRect(tx + 8, GROUND_Y - 20, 94, 8);
+  }
+  // Wooden crates scattered (ground props)
+  for (let i = 0; i < 14; i++) {
+    const cx = i * 240 + 80 - (camX * 0.95) % 240;
+    if (cx < -40 || cx > canvasW + 40) continue;
+    ctx.fillStyle = "#8a5828"; ctx.fillRect(cx, GROUND_Y - 22, 22, 22);
+    ctx.fillStyle = "#5a3818";
+    ctx.fillRect(cx, GROUND_Y - 22, 22, 2);
+    ctx.fillRect(cx, GROUND_Y - 4, 22, 4);
+    ctx.strokeStyle = "#3a2208"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, GROUND_Y - 22); ctx.lineTo(cx + 22, GROUND_Y - 4);
+    ctx.moveTo(cx + 22, GROUND_Y - 22); ctx.lineTo(cx, GROUND_Y - 4);
+    ctx.stroke();
+    // Doge stamp
+    ctx.fillStyle = "#ffd633"; ctx.font = "bold 8px monospace"; ctx.textAlign = "center";
+    ctx.fillText("DOGE", cx + 11, GROUND_Y - 10);
+  }
+  // Market hanging neon lights
+  for (let i = 0; i < 16; i++) {
+    const lx = i * 200 - (camX * 0.4) % 200;
+    ctx.strokeStyle = "#0a3a4a"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(lx, 0); ctx.lineTo(lx, 28); ctx.stroke();
+    const lc = i % 2 === 0 ? "#00ff88" : "#ff4466";
+    ctx.fillStyle = lc; ctx.shadowColor = lc; ctx.shadowBlur = 10;
+    ctx.fillRect(lx - 8, 28, 16, 6);
+    ctx.shadowBlur = 0;
+  }
 }
 
 function drawScene(ctx: CanvasRenderingContext2D, theme: SceneTheme, camX: number, canvasW: number, frameCount: number) {
