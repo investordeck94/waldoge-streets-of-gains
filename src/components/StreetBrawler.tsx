@@ -1021,12 +1021,21 @@ function drawStickFigure(
       ctx.beginPath();
     }
   }
-  ctx.strokeStyle = isPlayer ? styleColor : "#ff4444";
+  ctx.strokeStyle = isPlayer ? "#d92b2b" : "#ff4444";
   ctx.lineWidth = isPlayer
     ? (e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 7 : 6)
     : (e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 4 : 3);
   ctx.lineCap = "round";
   ctx.stroke();
+  // White stripe accent over arms (player Waldoge branding)
+  if (isPlayer) {
+    ctx.save();
+    ctx.strokeStyle = "#f5ece0";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 4]);
+    ctx.stroke();
+    ctx.restore();
+  }
 
   // Rush style: cyan speed trail on punch
   if (isPlayer && style === "rush" && e.state === "punch") {
