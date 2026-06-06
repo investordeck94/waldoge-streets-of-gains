@@ -742,9 +742,14 @@ function drawStickFigure(
       ctx.scale(0.95, 1);
       if (e.state === "kick") ctx.transform(1, 0, -0.22 * e.facing, 1, 0, 0);
     } else if (style === "greenCandle") {
-      // Hunched berserker — wider, shorter
-      ctx.scale(1.28, 0.82);
-      ctx.transform(1, 0, 0.08 * e.facing, 1, 0, 6);
+      // Hunched berserker — wider, shorter. Skip hunch during lariat so the
+      // body spin reads cleanly on screen.
+      if (e.state === "spinkick") {
+        ctx.scale(1.15, 1);
+      } else {
+        ctx.scale(1.28, 0.82);
+        ctx.transform(1, 0, 0.08 * e.facing, 1, 0, 6);
+      }
     }
   }
 
