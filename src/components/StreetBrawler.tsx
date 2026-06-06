@@ -1071,10 +1071,21 @@ function drawStickFigure(
   ctx.beginPath();
   if (e.state === "kick") {
     if (isPlayer && style === "muayThai") {
-      // Knee strike — front leg lifted high and bent up
+      // Knee strike — bent leg with visible knee
       ctx.moveTo(0, hipY);
-      ctx.lineTo(e.facing * limbLen * 0.7, hipY - 18);
+      ctx.lineTo(e.facing * limbLen * 0.5, hipY - 6);
+      ctx.lineTo(e.facing * limbLen * 0.85, hipY - 22);
+    } else if (isPlayer && style === "rush") {
+      // Long extended side kick
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * limbLen * 2.1, hipY - 2);
+    } else if (isPlayer && style === "greenCandle") {
+      // Axe / stomp kick — raised then driven down
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * limbLen * 0.5, hipY - limbLen * 1.1);
+      ctx.lineTo(e.facing * limbLen * 1.3, hipY + 2);
     } else {
+      // Brawler — standard front kick
       ctx.moveTo(0, hipY);
       ctx.lineTo(e.facing * limbLen * 1.5, hipY - 5);
     }
@@ -1096,11 +1107,33 @@ function drawStickFigure(
     ctx.moveTo(0, hipY);
     ctx.lineTo(limbLen, hipY + limbLen * 0.3);
   } else {
+    // Per-style idle/walk legs (silhouette stance)
     const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 12 : 0;
-    ctx.moveTo(0, hipY);
-    ctx.lineTo(-limbLen * 0.5 + swing, hipY + limbLen);
-    ctx.moveTo(0, hipY);
-    ctx.lineTo(limbLen * 0.5 - swing, hipY + limbLen);
+    if (isPlayer && style === "rush") {
+      // Lean: front foot far ahead, back foot trailing
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * (limbLen * 0.9 - swing * 0.5), hipY + limbLen);
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(-e.facing * (limbLen * 0.4 + swing * 0.5), hipY + limbLen);
+    } else if (isPlayer && style === "muayThai") {
+      // Compact stance, lead knee slightly raised
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * (limbLen * 0.35 - swing * 0.4), hipY + limbLen * 0.95);
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(-e.facing * (limbLen * 0.4 + swing * 0.4), hipY + limbLen);
+    } else if (isPlayer && style === "greenCandle") {
+      // Wide hunched berserker stance
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * (limbLen * 0.9 - swing * 0.6), hipY + limbLen);
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(-e.facing * (limbLen * 0.9 + swing * 0.6), hipY + limbLen);
+    } else {
+      // Brawler / enemies — neutral
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(-limbLen * 0.5 + swing, hipY + limbLen);
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(limbLen * 0.5 - swing, hipY + limbLen);
+    }
   }
   ctx.strokeStyle = isPlayer ? styleColor : "#ff4444";
   ctx.lineWidth = e.state === "spinkick" ? 4 : 3;
