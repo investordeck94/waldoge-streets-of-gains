@@ -802,12 +802,70 @@ function drawStickFigure(
   // Body
   const neckY = headCY + headR;
   const hipY = neckY + bodyLen;
-  ctx.beginPath();
-  ctx.moveTo(0, neckY);
-  ctx.lineTo(0, hipY);
-  ctx.strokeStyle = isPlayer ? styleColor : "#ff4444";
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  if (isPlayer) {
+    // Waldoge cartoon torso: red/white striped sweater
+    const torsoH = hipY - neckY;
+    const topW = 14;      // narrow at neck/collar
+    const midW = 22;      // chest width
+    const botW = 20;      // hem width
+    const collarH = Math.max(3, torsoH * 0.12);
+
+    // Sweater silhouette (rounded barrel shape)
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(-topW / 2, neckY + collarH);
+    ctx.quadraticCurveTo(-midW / 2 - 2, neckY + torsoH * 0.45, -botW / 2, hipY);
+    ctx.lineTo(botW / 2, hipY);
+    ctx.quadraticCurveTo(midW / 2 + 2, neckY + torsoH * 0.45, topW / 2, neckY + collarH);
+    ctx.closePath();
+
+    // Clip stripes to sweater shape
+    ctx.save();
+    ctx.clip();
+    // Base white/cream
+    ctx.fillStyle = "#f5ece0";
+    ctx.fillRect(-midW, neckY, midW * 2, torsoH + 2);
+    // Red stripes
+    ctx.fillStyle = "#d92b2b";
+    const stripeH = torsoH / 6;
+    for (let i = 0; i < 6; i += 2) {
+      ctx.fillRect(-midW, neckY + collarH + i * stripeH, midW * 2, stripeH);
+    }
+    // WALDOGE chest label
+    const labelY = neckY + torsoH * 0.5;
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(-9, labelY - 3, 18, 6);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 4px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("WALDOGE", 0, labelY + 0.5);
+    ctx.restore();
+
+    // Sweater outline
+    ctx.strokeStyle = "#1a1a1a";
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Ribbed collar
+    ctx.beginPath();
+    ctx.moveTo(-topW / 2 - 1, neckY + collarH);
+    ctx.quadraticCurveTo(0, neckY + collarH - 4, topW / 2 + 1, neckY + collarH);
+    ctx.lineTo(topW / 2, neckY);
+    ctx.quadraticCurveTo(0, neckY - 2, -topW / 2, neckY);
+    ctx.closePath();
+    ctx.fillStyle = "#f5ece0";
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(0, neckY);
+    ctx.lineTo(0, hipY);
+    ctx.strokeStyle = "#ff4444";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
 
   // Arms
   const shoulderY = neckY + 8;
