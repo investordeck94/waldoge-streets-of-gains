@@ -1304,6 +1304,59 @@ function drawStickFigure(
     ctx.fill();
   }
 
+  // Rush style speed cues — motion streaks while moving, afterimage ghost
+  // silhouettes during punch / dash. Drawn last so they layer on top, but
+  // remain translucent so the body silhouette stays readable.
+  if (isPlayer && style === "rush") {
+    const moving = e.state === "walk";
+    const attacking = e.state === "punch" || e.state === "dashpunch";
+    if (moving || attacking) {
+      ctx.save();
+      // Motion streaks behind the body
+      ctx.strokeStyle = "rgba(0,210,255,0.55)";
+      ctx.lineWidth = 2;
+      const streakCount = attacking ? 5 : 4;
+      for (let i = 1; i <= streakCount; i++) {
+        const off = -e.facing * i * (attacking ? 10 : 7);
+        ctx.globalAlpha = Math.max(0.05, 0.45 - i * 0.08);
+        ctx.beginPath();
+        ctx.moveTo(off, neckY + 6);
+        ctx.lineTo(off - e.facing * 16, neckY + 6 + (i % 2 ? 2 : -2));
+        ctx.moveTo(off, hipY - 4);
+        ctx.lineTo(off - e.facing * 18, hipY - 4 + (i % 2 ? -2 : 2));
+        ctx.moveTo(off, (neckY + hipY) / 2);
+        ctx.lineTo(off - e.facing * 20, (neckY + hipY) / 2);
+        ctx.stroke();
+      }
+      // Afterimage ghost silhouettes during punch/dash
+      if (attacking) {
+        ctx.strokeStyle = "rgba(0,200,255,0.4)";
+        ctx.lineWidth = 3;
+        for (let g = 1; g <= 2; g++) {
+          const gx = -e.facing * g * 14;
+          ctx.globalAlpha = 0.35 - g * 0.1;
+          // Body
+          ctx.beginPath();
+          ctx.moveTo(gx, neckY);
+          ctx.lineTo(gx, hipY);
+          // Head circle
+          ctx.moveTo(gx + headR, headCY);
+          ctx.arc(gx, headCY, headR, 0, Math.PI * 2);
+          // Front arm extended
+          ctx.moveTo(gx, neckY + 8);
+          ctx.lineTo(gx + e.facing * limbLen * 2.4, neckY + 10);
+          // Legs
+          ctx.moveTo(gx, hipY);
+          ctx.lineTo(gx + e.facing * limbLen * 0.7, hipY + limbLen);
+          ctx.moveTo(gx, hipY);
+          ctx.lineTo(gx - e.facing * limbLen * 0.4, hipY + limbLen);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+  }
+
   ctx.restore();
 
   // HP bar
