@@ -23,7 +23,7 @@ export const STYLES: Record<StyleName, FightStyle> = {
     speed: 1.5,
     damage: 0.7,
     staminaCost: 0.8,
-    label: "RUSH",
+    label: "BULL RUN",
     tint: "hsl(200 100% 60%)", // cyan/blue — fast & light
   },
   muayThai: {
