@@ -2072,6 +2072,7 @@ export const StreetBrawler: FC = () => {
       lookAhead: number;
       vx: number;
     };
+    specialFx: { style: StyleName; timer: number; total: number } | null;
   }>({
     player: createPlayer(),
     enemies: [],
@@ -2108,6 +2109,7 @@ export const StreetBrawler: FC = () => {
     healFlash: 0,
     camAnchor: 0.5,
     camLookAhead: 0,
+    specialFx: null,
     camPreset: "snappy",
     vxAvg: 0,
     vxHistory: [],
