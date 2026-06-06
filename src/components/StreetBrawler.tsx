@@ -755,10 +755,16 @@ function drawStickFigure(
     ctx.globalAlpha = 0.4;
   }
 
-  // Spin kick rotation
+  // Spin kick rotation — amount varies per style for recognizable silhouettes
   if (e.state === "spinkick") {
     const spinProgress = e.stateTimer / 18;
-    ctx.rotate(spinProgress * Math.PI * 2 * e.facing);
+    const spins =
+      isPlayer && style === "rush" ? 2.2 :        // tornado kick — extra spins
+      isPlayer && style === "greenCandle" ? 1.6 : // lariat — wide rotation
+      isPlayer && style === "muayThai" ? 1.1 :    // spinning elbow
+      isPlayer && style === "brawler" ? 0.55 :    // half-spin roundhouse
+      1;
+    ctx.rotate(spinProgress * Math.PI * 2 * spins * e.facing);
   }
 
   const headCY = -bodyLen - limbLen - headR;
