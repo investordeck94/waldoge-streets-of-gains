@@ -790,8 +790,10 @@ function drawStickFigure(
   const shoulderY = neckY + 8;
   ctx.beginPath();
   if (e.state === "punch") {
+    const punchReach = style === "brawler" ? 2.2 : 1.5;
+    const punchYOffset = style === "brawler" ? -3 : -5;
     ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen * 1.5, shoulderY - 5);
+    ctx.lineTo(e.facing * limbLen * punchReach, shoulderY + punchYOffset);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(-e.facing * limbLen * 0.6, shoulderY + 10);
     // Draw weapon in hand during punch
