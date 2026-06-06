@@ -2560,6 +2560,7 @@ export const StreetBrawler: FC = () => {
     attackActiveFrames: number;
     hitApplied: boolean;
     alleyObjects: AlleyObject[];
+    platforms: Platform[];
     animFrameCount: number;
     rain: RainDrop[];
     splashes: Splash[];
