@@ -732,6 +732,12 @@ function drawStickFigure(
   ctx.save();
   ctx.translate(sx, sy);
 
+  if (isPlayer && style === "greenCandle") {
+    ctx.scale(1.25, 0.8);
+  }
+
+
+
   if (e.state === "hit") ctx.globalAlpha = 0.6;
   if (e.state === "dead") {
     ctx.rotate((e.facing * Math.PI) / 3);
@@ -845,26 +851,21 @@ function drawStickFigure(
     ctx.lineTo(limbLen * 0.8, shoulderY + limbLen * 0.3);
   } else {
     const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
-    if (isPlayer && isRush) {
+    if (style === "rush") {
       ctx.moveTo(0, shoulderY);
-      ctx.lineTo(-limbLen * 0.4, shoulderY - 2 + swing * 0.3);
+      ctx.lineTo(-limbLen * 1.3, shoulderY + 4);
       ctx.moveTo(0, shoulderY);
-      ctx.lineTo(limbLen * 0.4, shoulderY - 2 - swing * 0.3);
-    } else if (isPlayer && isMuay) {
+      ctx.lineTo(limbLen * 1.3, shoulderY + 4);
+    } else if (style === "muayThai") {
       ctx.moveTo(0, shoulderY);
-      ctx.lineTo(-limbLen * 1.1, shoulderY + 14 + swing * 0.3);
+      ctx.lineTo(-limbLen * 0.35, shoulderY - 8);
       ctx.moveTo(0, shoulderY);
-      ctx.lineTo(limbLen * 1.1, shoulderY + 14 - swing * 0.3);
-    } else if (isPlayer && isGreen) {
+      ctx.lineTo(limbLen * 0.35, shoulderY - 8);
+    } else if (style === "greenCandle") {
       ctx.moveTo(0, shoulderY);
-      ctx.lineTo(-limbLen, shoulderY + 12 + swing * 0.4);
+      ctx.lineTo(-limbLen * 1.0, shoulderY + 16);
       ctx.moveTo(0, shoulderY);
-      ctx.lineTo(limbLen, shoulderY + 12 - swing * 0.4);
-    } else if (isPlayer && isBrawler) {
-      ctx.moveTo(0, shoulderY);
-      ctx.lineTo(-limbLen * 0.5, shoulderY + 4 + swing * 0.3);
-      ctx.moveTo(0, shoulderY);
-      ctx.lineTo(limbLen * 0.5, shoulderY + 4 - swing * 0.3);
+      ctx.lineTo(limbLen * 1.0, shoulderY + 16);
     } else {
       ctx.moveTo(0, shoulderY);
       ctx.lineTo(-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing);
