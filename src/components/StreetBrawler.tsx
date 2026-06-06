@@ -790,8 +790,10 @@ function drawStickFigure(
   const shoulderY = neckY + 8;
   ctx.beginPath();
   if (e.state === "punch") {
+    const punchReach = style === "brawler" ? 2.2 : 1.5;
+    const punchYOffset = style === "brawler" ? -3 : -5;
     ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen * 1.5, shoulderY - 5);
+    ctx.lineTo(e.facing * limbLen * punchReach, shoulderY + punchYOffset);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(-e.facing * limbLen * 0.6, shoulderY + 10);
     // Draw weapon in hand during punch
@@ -911,12 +913,21 @@ function drawStickFigure(
   ctx.stroke();
 
   // Rush style: cyan speed trail on punch
-  if (isPlayer && isRush && e.state === "punch") {
-    ctx.strokeStyle = "rgba(0,200,255,0.4)";
-    ctx.lineWidth = 6;
+  if (isPlayer && style === "rush" && e.state === "punch") {
+    ctx.strokeStyle = "rgba(0,200,255,0.5)";
+    ctx.lineWidth = 8;
     ctx.beginPath();
     ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen * 2.3, shoulderY);
+    ctx.lineTo(e.facing * limbLen * 3, shoulderY);
+    ctx.stroke();
+  }
+
+  // Green Candle: green energy ring on spin kick
+  if (isPlayer && style === "greenCandle" && e.state === "spinkick") {
+    ctx.strokeStyle = "rgba(0,255,100,0.45)";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(0, hipY, 32, 0, Math.PI * 2);
     ctx.stroke();
   }
 
@@ -998,8 +1009,14 @@ function drawStickFigure(
   // Legs
   ctx.beginPath();
   if (e.state === "kick") {
-    ctx.moveTo(0, hipY);
-    ctx.lineTo(e.facing * limbLen * 1.5, hipY - 5);
+    if (isPlayer && style === "muayThai") {
+      // Knee strike — front leg lifted high and bent up
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * limbLen * 0.7, hipY - 18);
+    } else {
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * limbLen * 1.5, hipY - 5);
+    }
     ctx.moveTo(0, hipY);
     ctx.lineTo(-e.facing * limbLen * 0.5, hipY + limbLen);
   } else if (e.state === "jump" || e.state === "uppercut") {
