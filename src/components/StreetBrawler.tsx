@@ -1350,8 +1350,8 @@ function drawStickFigure(
     }
 
     const drawSneaker = (fx: number, fy: number) => {
-      const w = 12;
-      const h = 5;
+      const w = 19;
+      const h = 8;
       const dir = e.facing;
       ctx.save();
       ctx.translate(fx, fy);
