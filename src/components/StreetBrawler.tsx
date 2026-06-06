@@ -877,11 +877,32 @@ function drawStickFigure(
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(e.facing * limbLen * 0.3, shoulderY + 5);
   } else if (e.state === "uppercut") {
-    // Both arms up
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen * 0.8, shoulderY - limbLen * 1.5);
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(-e.facing * limbLen * 0.3, shoulderY - limbLen);
+    if (isPlayer && style === "rush") {
+      // Rising dash uppercut — long angled strike
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(e.facing * limbLen * 1.9, shoulderY - limbLen * 1.3);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-e.facing * limbLen * 0.5, shoulderY + 6);
+    } else if (isPlayer && style === "muayThai") {
+      // Upward elbow — bent arm with elbow leading skyward
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(e.facing * limbLen * 0.55, shoulderY - 4);
+      ctx.lineTo(e.facing * limbLen * 0.2, shoulderY - limbLen * 1.7);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-e.facing * limbLen * 0.3, shoulderY - 6);
+    } else if (isPlayer && style === "greenCandle") {
+      // Brutal two-arm launcher — both arms thrust up & out
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(e.facing * limbLen * 0.9, shoulderY - limbLen * 1.7);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-e.facing * limbLen * 0.9, shoulderY - limbLen * 1.7);
+    } else {
+      // Brawler boxing uppercut — tight vertical front arm, back guard up
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(e.facing * limbLen * 0.55, shoulderY - limbLen * 1.8);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-e.facing * limbLen * 0.35, shoulderY - limbLen * 0.5);
+    }
   } else if (e.state === "dashpunch") {
     // Extended forward punch with both arms
     ctx.moveTo(0, shoulderY);
@@ -889,10 +910,31 @@ function drawStickFigure(
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(e.facing * limbLen * 1.5, shoulderY - 8);
   } else if (e.state === "spinkick" || e.state === "groundpound") {
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(-limbLen * 0.8, shoulderY + limbLen * 0.3);
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(limbLen * 0.8, shoulderY + limbLen * 0.3);
+    if (isPlayer && e.state === "spinkick" && style === "muayThai") {
+      // Spinning elbow — bent arm across chest
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 0.6, shoulderY - 10);
+      ctx.lineTo(-limbLen * 0.7, shoulderY - 14);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 0.5, shoulderY + 8);
+    } else if (isPlayer && e.state === "spinkick" && style === "greenCandle") {
+      // Berserker lariat — both arms extended wide (clothesline)
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-limbLen * 1.7, shoulderY - 2);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 1.7, shoulderY - 2);
+    } else if (isPlayer && e.state === "spinkick" && style === "rush") {
+      // Tornado kick — arms tucked tight for fast spin
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-limbLen * 0.45, shoulderY + 4);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 0.45, shoulderY + 4);
+    } else {
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(-limbLen * 0.8, shoulderY + limbLen * 0.3);
+      ctx.moveTo(0, shoulderY);
+      ctx.lineTo(limbLen * 0.8, shoulderY + limbLen * 0.3);
+    }
   } else {
     const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
     if (style === "rush") {
