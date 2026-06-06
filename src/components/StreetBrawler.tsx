@@ -732,8 +732,19 @@ function drawStickFigure(
   ctx.save();
   ctx.translate(sx, sy);
 
-  if (isPlayer && style === "greenCandle") {
-    ctx.scale(1.25, 0.8);
+  // Per-style stance transforms (silhouette differentiation while idle/walking)
+  if (isPlayer) {
+    if (style === "rush") {
+      // Forward-leaning ninja/speed stance
+      ctx.transform(1, 0, -0.18 * e.facing, 1, 0, 0);
+    } else if (style === "muayThai") {
+      // Compact upright Muay Thai stance
+      ctx.scale(0.95, 1);
+    } else if (style === "greenCandle") {
+      // Hunched berserker — wider, shorter
+      ctx.scale(1.28, 0.82);
+      ctx.transform(1, 0, 0.08 * e.facing, 1, 0, 6);
+    }
   }
 
 
@@ -790,18 +801,43 @@ function drawStickFigure(
   const shoulderY = neckY + 8;
   ctx.beginPath();
   if (e.state === "punch") {
-    const punchReach = style === "brawler" ? 2.2 : 1.5;
-    const punchYOffset = style === "brawler" ? -3 : -5;
+    // Per-style punch silhouettes
+    let frontArmEnd: [number, number];
+    let backArmEnd: [number, number];
+    let elbow: [number, number] | null = null;
+    if (isPlayer && style === "rush") {
+      // Lunging long jab
+      frontArmEnd = [e.facing * limbLen * 2.8, shoulderY + 2];
+      backArmEnd = [-e.facing * limbLen * 0.8, shoulderY + 12];
+    } else if (isPlayer && style === "muayThai") {
+      // Elbow strike — bent arm with visible elbow joint, guard hand high
+      elbow = [e.facing * limbLen * 0.6, shoulderY - 4];
+      frontArmEnd = [e.facing * limbLen * 0.4, shoulderY - 16];
+      backArmEnd = [-e.facing * limbLen * 0.3, shoulderY - 10];
+    } else if (isPlayer && style === "greenCandle") {
+      // Overhead smash
+      frontArmEnd = [e.facing * limbLen * 1.4, shoulderY - limbLen * 1.4];
+      backArmEnd = [-e.facing * limbLen * 0.5, shoulderY + 12];
+    } else {
+      // Brawler straight cross
+      frontArmEnd = [e.facing * limbLen * 2.2, shoulderY - 3];
+      backArmEnd = [-e.facing * limbLen * 0.6, shoulderY + 10];
+    }
     ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen * punchReach, shoulderY + punchYOffset);
+    if (elbow) {
+      ctx.lineTo(elbow[0], elbow[1]);
+      ctx.lineTo(frontArmEnd[0], frontArmEnd[1]);
+    } else {
+      ctx.lineTo(frontArmEnd[0], frontArmEnd[1]);
+    }
     ctx.moveTo(0, shoulderY);
-    ctx.lineTo(-e.facing * limbLen * 0.6, shoulderY + 10);
+    ctx.lineTo(backArmEnd[0], backArmEnd[1]);
     // Draw weapon in hand during punch
     if (weaponType) {
       ctx.stroke();
       ctx.beginPath();
-      const wX = e.facing * limbLen * 1.5;
-      const wY = shoulderY - 5;
+      const wX = frontArmEnd[0] * 0.85;
+      const wY = frontArmEnd[1] - 2;
       ctx.save();
       ctx.translate(wX, wY);
       ctx.rotate(e.facing * -0.3);
@@ -980,8 +1016,20 @@ function drawStickFigure(
     let backHand: [number, number] | null = null;
 
     if (e.state === "punch") {
-      frontHand = [e.facing * limbLen * 1.5, shoulderY - 5];
-      backHand = [-e.facing * limbLen * 0.6, shoulderY + 10];
+      if (style === "rush") {
+        frontHand = [e.facing * limbLen * 2.8, shoulderY + 2];
+        backHand = [-e.facing * limbLen * 0.8, shoulderY + 12];
+      } else if (style === "muayThai") {
+        // elbow tip (the striking surface)
+        frontHand = [e.facing * limbLen * 0.4, shoulderY - 16];
+        backHand = [-e.facing * limbLen * 0.3, shoulderY - 10];
+      } else if (style === "greenCandle") {
+        frontHand = [e.facing * limbLen * 1.4, shoulderY - limbLen * 1.4];
+        backHand = [-e.facing * limbLen * 0.5, shoulderY + 12];
+      } else {
+        frontHand = [e.facing * limbLen * 2.2, shoulderY - 3];
+        backHand = [-e.facing * limbLen * 0.6, shoulderY + 10];
+      }
     } else if (e.state === "kick") {
       frontHand = [-e.facing * limbLen * 0.5, shoulderY - 8];
       backHand = [e.facing * limbLen * 0.3, shoulderY + 5];
@@ -996,8 +1044,21 @@ function drawStickFigure(
       backHand = [limbLen * 0.8, shoulderY + limbLen * 0.3];
     } else {
       const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
-      frontHand = [-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing];
-      backHand = [limbLen * 0.7, shoulderY + limbLen * 0.8 - swing];
+      // Match per-style idle/walk arm geometry
+      if (style === "rush") {
+        frontHand = [limbLen * 1.3, shoulderY + 4];
+        backHand = [-limbLen * 1.3, shoulderY + 4];
+      } else if (style === "muayThai") {
+        // Hands high beside head (high guard)
+        frontHand = [limbLen * 0.35, shoulderY - 8];
+        backHand = [-limbLen * 0.35, shoulderY - 8];
+      } else if (style === "greenCandle") {
+        frontHand = [limbLen * 1.0, shoulderY + 16];
+        backHand = [-limbLen * 1.0, shoulderY + 16];
+      } else {
+        frontHand = [-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing];
+        backHand = [limbLen * 0.7, shoulderY + limbLen * 0.8 - swing];
+      }
     }
 
     const extended =
@@ -1010,10 +1071,21 @@ function drawStickFigure(
   ctx.beginPath();
   if (e.state === "kick") {
     if (isPlayer && style === "muayThai") {
-      // Knee strike — front leg lifted high and bent up
+      // Knee strike — bent leg with visible knee
       ctx.moveTo(0, hipY);
-      ctx.lineTo(e.facing * limbLen * 0.7, hipY - 18);
+      ctx.lineTo(e.facing * limbLen * 0.5, hipY - 6);
+      ctx.lineTo(e.facing * limbLen * 0.85, hipY - 22);
+    } else if (isPlayer && style === "rush") {
+      // Long extended side kick
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * limbLen * 2.1, hipY - 2);
+    } else if (isPlayer && style === "greenCandle") {
+      // Axe / stomp kick — raised then driven down
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * limbLen * 0.5, hipY - limbLen * 1.1);
+      ctx.lineTo(e.facing * limbLen * 1.3, hipY + 2);
     } else {
+      // Brawler — standard front kick
       ctx.moveTo(0, hipY);
       ctx.lineTo(e.facing * limbLen * 1.5, hipY - 5);
     }
@@ -1035,11 +1107,33 @@ function drawStickFigure(
     ctx.moveTo(0, hipY);
     ctx.lineTo(limbLen, hipY + limbLen * 0.3);
   } else {
+    // Per-style idle/walk legs (silhouette stance)
     const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 12 : 0;
-    ctx.moveTo(0, hipY);
-    ctx.lineTo(-limbLen * 0.5 + swing, hipY + limbLen);
-    ctx.moveTo(0, hipY);
-    ctx.lineTo(limbLen * 0.5 - swing, hipY + limbLen);
+    if (isPlayer && style === "rush") {
+      // Lean: front foot far ahead, back foot trailing
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * (limbLen * 0.9 - swing * 0.5), hipY + limbLen);
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(-e.facing * (limbLen * 0.4 + swing * 0.5), hipY + limbLen);
+    } else if (isPlayer && style === "muayThai") {
+      // Compact stance, lead knee slightly raised
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * (limbLen * 0.35 - swing * 0.4), hipY + limbLen * 0.95);
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(-e.facing * (limbLen * 0.4 + swing * 0.4), hipY + limbLen);
+    } else if (isPlayer && style === "greenCandle") {
+      // Wide hunched berserker stance
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(e.facing * (limbLen * 0.9 - swing * 0.6), hipY + limbLen);
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(-e.facing * (limbLen * 0.9 + swing * 0.6), hipY + limbLen);
+    } else {
+      // Brawler / enemies — neutral
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(-limbLen * 0.5 + swing, hipY + limbLen);
+      ctx.moveTo(0, hipY);
+      ctx.lineTo(limbLen * 0.5 - swing, hipY + limbLen);
+    }
   }
   ctx.strokeStyle = isPlayer ? styleColor : "#ff4444";
   ctx.lineWidth = e.state === "spinkick" ? 4 : 3;
@@ -1051,7 +1145,15 @@ function drawStickFigure(
     let backFoot: [number, number] | null = null;
 
     if (e.state === "kick") {
-      frontFoot = [e.facing * limbLen * 1.5, hipY - 5];
+      if (style === "muayThai") {
+        frontFoot = [e.facing * limbLen * 0.85, hipY - 22];
+      } else if (style === "rush") {
+        frontFoot = [e.facing * limbLen * 2.1, hipY - 2];
+      } else if (style === "greenCandle") {
+        frontFoot = [e.facing * limbLen * 1.3, hipY + 2];
+      } else {
+        frontFoot = [e.facing * limbLen * 1.5, hipY - 5];
+      }
       backFoot = [-e.facing * limbLen * 0.5, hipY + limbLen];
     } else if (e.state === "jump" || e.state === "uppercut") {
       frontFoot = [e.facing * limbLen * 0.6, hipY + limbLen * 0.5];
@@ -1064,8 +1166,19 @@ function drawStickFigure(
       backFoot = [-e.facing * limbLen, hipY + limbLen * 0.3];
     } else {
       const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 12 : 0;
-      frontFoot = [e.facing * (limbLen * 0.5 - swing), hipY + limbLen];
-      backFoot = [-e.facing * (limbLen * 0.5 + swing), hipY + limbLen];
+      if (style === "rush") {
+        frontFoot = [e.facing * (limbLen * 0.9 - swing * 0.5), hipY + limbLen];
+        backFoot = [-e.facing * (limbLen * 0.4 + swing * 0.5), hipY + limbLen];
+      } else if (style === "muayThai") {
+        frontFoot = [e.facing * (limbLen * 0.35 - swing * 0.4), hipY + limbLen * 0.95];
+        backFoot = [-e.facing * (limbLen * 0.4 + swing * 0.4), hipY + limbLen];
+      } else if (style === "greenCandle") {
+        frontFoot = [e.facing * (limbLen * 0.9 - swing * 0.6), hipY + limbLen];
+        backFoot = [-e.facing * (limbLen * 0.9 + swing * 0.6), hipY + limbLen];
+      } else {
+        frontFoot = [e.facing * (limbLen * 0.5 - swing), hipY + limbLen];
+        backFoot = [-e.facing * (limbLen * 0.5 + swing), hipY + limbLen];
+      }
     }
 
     const drawSneaker = (fx: number, fy: number) => {
