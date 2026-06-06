@@ -3821,6 +3821,11 @@ export const StreetBrawler: FC = () => {
         drawAlleyObject(ctx, obj, g.camX);
       }
 
+      // Draw platforms (Phase 1)
+      for (const plat of g.platforms) {
+        drawPlatform(ctx, plat, g.camX);
+      }
+
       // Draw rain
       ctx.save();
       for (const drop of g.rain) {
