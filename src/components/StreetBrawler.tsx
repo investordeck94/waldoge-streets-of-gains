@@ -1143,10 +1143,10 @@ function drawStickFigure(
   if (e.state === "kick") {
     if (isPlayer && style === "muayThai") {
       // Muay Thai knee strike — thigh raised high to torso, shin folded back/down underneath
-      const kneeX = e.facing * limbLen * 0.55;
+      const kneeX = e.facing * limbLen * 1.25;      // knee driven forward into opponent
       const kneeY = hipY - limbLen * 0.95;          // knee up at chest/torso level
-      const footX = e.facing * limbLen * 0.15;      // foot tucked back under thigh
-      const footY = hipY - limbLen * 0.35;          // shin folded, foot hidden behind body
+      const footX = e.facing * limbLen * 0.7;       // shin folded back underneath thigh
+      const footY = hipY - limbLen * 0.25;          // foot tucked, lower than knee
       ctx.moveTo(0, hipY);
       ctx.lineTo(kneeX, kneeY);                     // thigh up
       ctx.lineTo(footX, footY);                     // shin folded back
