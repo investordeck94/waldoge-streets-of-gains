@@ -1118,7 +1118,7 @@ function drawStickFigure(
   // Boxing gloves on the player's hands
   if (isPlayer) {
     const drawGlove = (gx: number, gy: number, extended: boolean) => {
-      const r = extended ? 7 : 6;
+      const r = extended ? 11 : 10;
       // Wrist cuff
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
