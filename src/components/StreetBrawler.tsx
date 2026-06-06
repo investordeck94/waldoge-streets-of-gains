@@ -1270,10 +1270,19 @@ function drawStickFigure(
       ctx.lineTo(limbLen * 0.5 - swing, hipY + limbLen);
     }
   }
-  ctx.strokeStyle = isPlayer ? styleColor : "#ff4444";
+  ctx.strokeStyle = isPlayer ? "#d92b2b" : "#ff4444";
   ctx.lineWidth = isPlayer ? (e.state === "spinkick" ? 7 : 6) : (e.state === "spinkick" ? 4 : 3);
   ctx.lineCap = "round";
   ctx.stroke();
+  // White stripe accent over legs (player Waldoge branding)
+  if (isPlayer) {
+    ctx.save();
+    ctx.strokeStyle = "#f5ece0";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 4]);
+    ctx.stroke();
+    ctx.restore();
+  }
 
   // Red & white sneakers on the player's feet
   if (isPlayer) {
