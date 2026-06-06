@@ -1299,7 +1299,8 @@ function drawStickFigure(
     }
   }
   ctx.strokeStyle = isPlayer ? styleColor : "#ff4444";
-  ctx.lineWidth = e.state === "spinkick" ? 4 : 3;
+  ctx.lineWidth = isPlayer ? (e.state === "spinkick" ? 7 : 6) : (e.state === "spinkick" ? 4 : 3);
+  ctx.lineCap = "round";
   ctx.stroke();
 
   // Red & white sneakers on the player's feet
