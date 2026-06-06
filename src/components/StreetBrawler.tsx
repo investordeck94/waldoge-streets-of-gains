@@ -870,6 +870,7 @@ function drawStickFigure(
       ctx.lineTo(-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing);
       ctx.moveTo(0, shoulderY);
       ctx.lineTo(limbLen * 0.7, shoulderY + limbLen * 0.8 - swing);
+    }
     // Draw weapon held at side when idle/walking
     if (weaponType) {
       ctx.stroke();
