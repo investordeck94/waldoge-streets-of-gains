@@ -2679,6 +2679,7 @@ export const StreetBrawler: FC = () => {
       { x: 2800, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
     ];
     g.alleyObjects = spawnAlleyObjects();
+    g.platforms = spawnPlatforms(0);
     g.animFrameCount = 0;
     // Initialize rain
     g.rain = [];
