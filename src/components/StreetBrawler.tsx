@@ -4306,6 +4306,57 @@ export const StreetBrawler: FC = () => {
         drawPlatform(ctx, plat, g.camX);
       }
 
+      // Level-specific decorations sitting ON TOP of platforms (lamps,
+      // crates, potted plants). Drawn after platforms so they layer correctly.
+      {
+        const theme = LEVELS[Math.min(g.level, LEVELS.length - 1)].theme;
+        for (const plat of g.platforms) {
+          const psx = plat.x - g.camX;
+          if (psx + plat.w < -40 || psx > CANVAS_W + 40) continue;
+          // Lamp post on the leftmost end of every platform
+          const lampX = psx + 10;
+          const lampBase = plat.y;
+          ctx.fillStyle = "#222"; ctx.fillRect(lampX, lampBase - 22, 2, 22);
+          ctx.fillStyle = "#444"; ctx.fillRect(lampX - 3, lampBase - 26, 8, 4);
+          ctx.fillStyle = "#ffeb88"; ctx.shadowColor = "#ffeb88"; ctx.shadowBlur = 8;
+          ctx.beginPath(); ctx.arc(lampX + 1, lampBase - 28, 4, 0, Math.PI * 2); ctx.fill();
+          ctx.shadowBlur = 0;
+
+          // Theme-specific extras (silhouettes; no collision, purely decorative)
+          if (theme === "chart") {
+            if (plat.w >= 140) {
+              const cx = psx + plat.w - 28;
+              const cy = plat.y - 20;
+              ctx.fillStyle = "#8a5828"; ctx.fillRect(cx, cy, 20, 20);
+              ctx.fillStyle = "#5a3818"; ctx.fillRect(cx, cy, 20, 2); ctx.fillRect(cx, cy + 18, 20, 2);
+              ctx.strokeStyle = "#3a2208"; ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(cx, cy); ctx.lineTo(cx + 20, cy + 20);
+              ctx.moveTo(cx + 20, cy); ctx.lineTo(cx, cy + 20);
+              ctx.stroke();
+            }
+          } else if (theme === "mall") {
+            const cx = psx + plat.w - 24;
+            const cy = plat.y;
+            ctx.fillStyle = "#7a3a8a"; ctx.fillRect(cx, cy - 12, 14, 12);
+            ctx.fillStyle = "#3a8030";
+            ctx.beginPath(); ctx.arc(cx + 7, cy - 15, 9, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#5aa848";
+            ctx.beginPath(); ctx.arc(cx + 3, cy - 20, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(cx + 11, cy - 20, 5, 0, Math.PI * 2); ctx.fill();
+          } else if (theme === "park" && plat.w >= 140) {
+            const cx = psx + plat.w - 30;
+            const cy = plat.y;
+            ctx.fillStyle = "#8a4a2a"; ctx.fillRect(cx, cy - 6, 24, 6);
+            const fc = ["#ff5a7a", "#ffd633", "#ff8844", "#fff"];
+            for (let k = 0; k < 4; k++) {
+              ctx.fillStyle = fc[k];
+              ctx.beginPath(); ctx.arc(cx + 4 + k * 6, cy - 8, 2.2, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+        }
+      }
+
       // Draw rain
       ctx.save();
       for (const drop of g.rain) {
