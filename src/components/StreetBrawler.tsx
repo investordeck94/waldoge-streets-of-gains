@@ -1486,7 +1486,7 @@ function drawStickFigure(
 // ============== PLATFORMS (Phase 1 — static, jump-through) ==============
 type PlatformStyle =
   | "fireEscape" | "dumpster" | "balcony" | "scaffold" | "rooftop"
-  | "awning" | "deck" | "treehouse" | "chart";
+  | "awning" | "deck" | "treehouse" | "chart" | "trestle" | "mallStair";
 interface Platform {
   x: number;       // left edge in world coords
   y: number;       // top surface y (player foot lands here)
@@ -1501,15 +1501,17 @@ interface Platform {
 // horizontal gaps ≤ ~70px so each platform is reachable with a normal jump.
 // Corridor segments abut (gap = 0) to form one continuous upper walkway.
 function spawnPlatforms(level: number): Platform[] {
-  // Per-level styling: [stair step style, long corridor style, descent style]
+  // All levels share the wooden-plank-on-steel-trestle look from the reference;
+  // mall uses a stair/balcony variant. Level-specific decorations (lamps,
+  // crates, potted plants) are drawn on TOP of corridor platforms later.
   const themeStyles: [PlatformStyle, PlatformStyle, PlatformStyle][] = [
-    ["fireEscape", "rooftop",  "fireEscape"], // 0 alley
-    ["fireEscape", "balcony",  "fireEscape"], // 1 city — scaffolding into rooftop catwalk
-    ["balcony",    "rooftop",  "balcony"],    // 2 suburbs
-    ["awning",     "balcony",  "awning"],     // 3 mall — awning up to upper balcony corridor
-    ["deck",       "deck",     "deck"],       // 4 park — wooden boardwalk
-    ["scaffold",   "balcony",  "scaffold"],   // 5 office
-    ["chart",      "chart",    "chart"],      // 6 dark doge — trading-chart catwalk
+    ["trestle",   "trestle",   "trestle"],   // 0 alley
+    ["trestle",   "trestle",   "trestle"],   // 1 city
+    ["trestle",   "trestle",   "trestle"],   // 2 suburbs
+    ["mallStair", "mallStair", "mallStair"], // 3 mall — balcony corridor over shops
+    ["trestle",   "trestle",   "trestle"],   // 4 park — wooden boardwalk
+    ["trestle",   "trestle",   "trestle"],   // 5 office
+    ["trestle",   "trestle",   "trestle"],   // 6 dark doge — trading-chart catwalk
   ];
   const [stairStyle, corridorStyle, descentStyle] =
     themeStyles[Math.min(level, themeStyles.length - 1)];
@@ -1788,6 +1790,102 @@ function drawPlatform(ctx: CanvasRenderingContext2D, plat: Platform, camX: numbe
       ctx.lineTo(sx + plat.w / 2, GROUND_Y);
       ctx.stroke();
       ctx.globalAlpha = 1;
+      break;
+    }
+    case "trestle": {
+      // Reference-style: thick wooden plank top on dark steel X-braced trestle.
+      const topH = 14;
+      // Wood plank surface (warm brown)
+      ctx.fillStyle = "#8a5230";
+      ctx.fillRect(sx, y, plat.w, topH);
+      ctx.fillStyle = "#a8693c"; // top highlight
+      ctx.fillRect(sx, y, plat.w, 3);
+      ctx.fillStyle = "#4a2a14"; // bottom shadow
+      ctx.fillRect(sx, y + topH - 3, plat.w, 3);
+      // Plank seams every ~22px
+      ctx.strokeStyle = "#3a1e0e"; ctx.lineWidth = 1;
+      for (let px = sx + 22; px < sx + plat.w; px += 22) {
+        ctx.beginPath(); ctx.moveTo(px, y + 1); ctx.lineTo(px, y + topH - 1); ctx.stroke();
+      }
+      // Steel trestle frame down to ground
+      const supTop = y + topH;
+      const supBot = GROUND_Y;
+      const supH = supBot - supTop;
+      if (supH > 4) {
+        ctx.strokeStyle = "#222a32"; ctx.lineWidth = 3;
+        // Outer legs (splayed slightly inward at bottom)
+        const innerInset = 6;
+        const baseInset = 14;
+        ctx.beginPath();
+        ctx.moveTo(sx + innerInset, supTop);
+        ctx.lineTo(sx + baseInset, supBot);
+        ctx.moveTo(sx + plat.w - innerInset, supTop);
+        ctx.lineTo(sx + plat.w - baseInset, supBot);
+        ctx.stroke();
+        // Top horizontal beam under plank
+        ctx.fillStyle = "#2a3038";
+        ctx.fillRect(sx + 4, supTop, plat.w - 8, 4);
+        // X cross-braces — one big X plus a horizontal mid-beam
+        ctx.strokeStyle = "#2a3038"; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(sx + innerInset + 4, supTop + 4);
+        ctx.lineTo(sx + plat.w - baseInset - 2, supBot - 2);
+        ctx.moveTo(sx + plat.w - innerInset - 4, supTop + 4);
+        ctx.lineTo(sx + baseInset + 2, supBot - 2);
+        ctx.stroke();
+        // Mid horizontal brace
+        if (supH > 50) {
+          const mid = supTop + supH / 2;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(sx + innerInset + 2, mid);
+          ctx.lineTo(sx + plat.w - innerInset - 2, mid);
+          ctx.stroke();
+        }
+        // Highlight on the left edge of each leg
+        ctx.strokeStyle = "#3a444e"; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(sx + innerInset - 1, supTop + 2);
+        ctx.lineTo(sx + baseInset - 1, supBot - 2);
+        ctx.stroke();
+      }
+      break;
+    }
+    case "mallStair": {
+      // Mall balcony/stair landing: cream wall, dark steel railing, brass cap.
+      const topH = 10;
+      // Landing slab
+      ctx.fillStyle = "#e8dcc4";
+      ctx.fillRect(sx, y, plat.w, topH);
+      ctx.fillStyle = "#c9b894";
+      ctx.fillRect(sx, y + topH - 2, plat.w, 2);
+      // Brass nosing
+      ctx.fillStyle = "#c9a84c";
+      ctx.fillRect(sx, y, plat.w, 2);
+      // Iron railing (dark posts + top rail)
+      ctx.strokeStyle = "#1a1a22"; ctx.lineWidth = 1.4;
+      for (let rx = sx + 6; rx < sx + plat.w - 4; rx += 14) {
+        ctx.beginPath(); ctx.moveTo(rx, y); ctx.lineTo(rx, y - 20); ctx.stroke();
+      }
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sx + 4, y - 20); ctx.lineTo(sx + plat.w - 4, y - 20); ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(sx + 4, y - 10); ctx.lineTo(sx + plat.w - 4, y - 10); ctx.stroke();
+      // Solid wall below landing down to ground (kept narrow so combat reads clearly)
+      const wallH = GROUND_Y - (y + topH);
+      if (wallH > 0) {
+        ctx.fillStyle = "#d8c8a4";
+        ctx.fillRect(sx + 6, y + topH, plat.w - 12, wallH);
+        ctx.fillStyle = "#b8a484";
+        ctx.fillRect(sx + 6, y + topH, 3, wallH);
+        ctx.fillStyle = "#3a3030";
+        // Stair tread shadows along left edge to suggest staircase
+        for (let sy = y + topH + 10; sy < GROUND_Y - 6; sy += 14) {
+          ctx.fillRect(sx + 8, sy, plat.w - 16, 1);
+        }
+      }
       break;
     }
   }
@@ -4206,6 +4304,57 @@ export const StreetBrawler: FC = () => {
       // Draw platforms (Phase 1)
       for (const plat of g.platforms) {
         drawPlatform(ctx, plat, g.camX);
+      }
+
+      // Level-specific decorations sitting ON TOP of platforms (lamps,
+      // crates, potted plants). Drawn after platforms so they layer correctly.
+      {
+        const theme = LEVELS[Math.min(g.level, LEVELS.length - 1)].theme;
+        for (const plat of g.platforms) {
+          const psx = plat.x - g.camX;
+          if (psx + plat.w < -40 || psx > CANVAS_W + 40) continue;
+          // Lamp post on the leftmost end of every platform
+          const lampX = psx + 10;
+          const lampBase = plat.y;
+          ctx.fillStyle = "#222"; ctx.fillRect(lampX, lampBase - 22, 2, 22);
+          ctx.fillStyle = "#444"; ctx.fillRect(lampX - 3, lampBase - 26, 8, 4);
+          ctx.fillStyle = "#ffeb88"; ctx.shadowColor = "#ffeb88"; ctx.shadowBlur = 8;
+          ctx.beginPath(); ctx.arc(lampX + 1, lampBase - 28, 4, 0, Math.PI * 2); ctx.fill();
+          ctx.shadowBlur = 0;
+
+          // Theme-specific extras (silhouettes; no collision, purely decorative)
+          if (theme === "chart") {
+            if (plat.w >= 140) {
+              const cx = psx + plat.w - 28;
+              const cy = plat.y - 20;
+              ctx.fillStyle = "#8a5828"; ctx.fillRect(cx, cy, 20, 20);
+              ctx.fillStyle = "#5a3818"; ctx.fillRect(cx, cy, 20, 2); ctx.fillRect(cx, cy + 18, 20, 2);
+              ctx.strokeStyle = "#3a2208"; ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(cx, cy); ctx.lineTo(cx + 20, cy + 20);
+              ctx.moveTo(cx + 20, cy); ctx.lineTo(cx, cy + 20);
+              ctx.stroke();
+            }
+          } else if (theme === "mall") {
+            const cx = psx + plat.w - 24;
+            const cy = plat.y;
+            ctx.fillStyle = "#7a3a8a"; ctx.fillRect(cx, cy - 12, 14, 12);
+            ctx.fillStyle = "#3a8030";
+            ctx.beginPath(); ctx.arc(cx + 7, cy - 15, 9, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#5aa848";
+            ctx.beginPath(); ctx.arc(cx + 3, cy - 20, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(cx + 11, cy - 20, 5, 0, Math.PI * 2); ctx.fill();
+          } else if (theme === "park" && plat.w >= 140) {
+            const cx = psx + plat.w - 30;
+            const cy = plat.y;
+            ctx.fillStyle = "#8a4a2a"; ctx.fillRect(cx, cy - 6, 24, 6);
+            const fc = ["#ff5a7a", "#ffd633", "#ff8844", "#fff"];
+            for (let k = 0; k < 4; k++) {
+              ctx.fillStyle = fc[k];
+              ctx.beginPath(); ctx.arc(cx + 4 + k * 6, cy - 8, 2.2, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+        }
       }
 
       // Draw rain
