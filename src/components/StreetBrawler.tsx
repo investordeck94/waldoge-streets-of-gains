@@ -1059,7 +1059,10 @@ function drawStickFigure(
     }
   }
   ctx.strokeStyle = isPlayer ? styleColor : "#ff4444";
-  ctx.lineWidth = e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 4 : 3;
+  ctx.lineWidth = isPlayer
+    ? (e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 7 : 6)
+    : (e.state === "uppercut" || e.state === "dashpunch" || e.state === "spinkick" ? 4 : 3);
+  ctx.lineCap = "round";
   ctx.stroke();
 
   // Rush style: cyan speed trail on punch
