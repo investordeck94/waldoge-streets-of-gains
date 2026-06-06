@@ -801,18 +801,43 @@ function drawStickFigure(
   const shoulderY = neckY + 8;
   ctx.beginPath();
   if (e.state === "punch") {
-    const punchReach = style === "brawler" ? 2.2 : 1.5;
-    const punchYOffset = style === "brawler" ? -3 : -5;
+    // Per-style punch silhouettes
+    let frontArmEnd: [number, number];
+    let backArmEnd: [number, number];
+    let elbow: [number, number] | null = null;
+    if (isPlayer && style === "rush") {
+      // Lunging long jab
+      frontArmEnd = [e.facing * limbLen * 2.8, shoulderY + 2];
+      backArmEnd = [-e.facing * limbLen * 0.8, shoulderY + 12];
+    } else if (isPlayer && style === "muayThai") {
+      // Elbow strike — bent arm with visible elbow joint, guard hand high
+      elbow = [e.facing * limbLen * 0.6, shoulderY - 4];
+      frontArmEnd = [e.facing * limbLen * 0.4, shoulderY - 16];
+      backArmEnd = [-e.facing * limbLen * 0.3, shoulderY - 10];
+    } else if (isPlayer && style === "greenCandle") {
+      // Overhead smash
+      frontArmEnd = [e.facing * limbLen * 1.4, shoulderY - limbLen * 1.4];
+      backArmEnd = [-e.facing * limbLen * 0.5, shoulderY + 12];
+    } else {
+      // Brawler straight cross
+      frontArmEnd = [e.facing * limbLen * 2.2, shoulderY - 3];
+      backArmEnd = [-e.facing * limbLen * 0.6, shoulderY + 10];
+    }
     ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen * punchReach, shoulderY + punchYOffset);
+    if (elbow) {
+      ctx.lineTo(elbow[0], elbow[1]);
+      ctx.lineTo(frontArmEnd[0], frontArmEnd[1]);
+    } else {
+      ctx.lineTo(frontArmEnd[0], frontArmEnd[1]);
+    }
     ctx.moveTo(0, shoulderY);
-    ctx.lineTo(-e.facing * limbLen * 0.6, shoulderY + 10);
+    ctx.lineTo(backArmEnd[0], backArmEnd[1]);
     // Draw weapon in hand during punch
     if (weaponType) {
       ctx.stroke();
       ctx.beginPath();
-      const wX = e.facing * limbLen * 1.5;
-      const wY = shoulderY - 5;
+      const wX = frontArmEnd[0] * 0.85;
+      const wY = frontArmEnd[1] - 2;
       ctx.save();
       ctx.translate(wX, wY);
       ctx.rotate(e.facing * -0.3);
