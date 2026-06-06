@@ -807,18 +807,31 @@ function drawStickFigure(
     // Beefed-up proportions so the body supports the head size.
     const torsoH = (hipY - neckY) * 1.32;            // ~32% taller visually
     const hemY = neckY + torsoH;                      // sweater hem (overlaps upper thigh)
-    const topW = 22;      // collar width
-    const midW = 34;      // chest width (+55%)
-    const botW = 30;      // hem width
+    const topW = 26;      // collar width (wider, fuller mascot neck)
+    const midW = 44;      // chest width (~30% wider, full mascot barrel)
+    const botW = 40;      // hem width (rounded bottom)
     const collarH = Math.max(3, torsoH * 0.12);
+    const shoulderY = neckY + torsoH * 0.18;
+    const chestY = neckY + torsoH * 0.5;
 
-    // Sweater silhouette (rounded barrel shape)
+    // Sweater silhouette — fuller, rounder mascot torso using bezier curves
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(-topW / 2, neckY + collarH);
-    ctx.quadraticCurveTo(-midW / 2 - 3, neckY + torsoH * 0.45, -botW / 2, hemY);
-    ctx.lineTo(botW / 2, hemY);
-    ctx.quadraticCurveTo(midW / 2 + 3, neckY + torsoH * 0.45, topW / 2, neckY + collarH);
+    // Left side: collar -> shoulder bulge -> chest -> hip (rounded barrel)
+    ctx.bezierCurveTo(
+      -midW / 2 - 4, shoulderY,
+      -midW / 2 - 2, chestY,
+      -botW / 2, hemY - 2
+    );
+    // Rounded hem
+    ctx.quadraticCurveTo(0, hemY + 4, botW / 2, hemY - 2);
+    // Right side back up
+    ctx.bezierCurveTo(
+      midW / 2 + 2, chestY,
+      midW / 2 + 4, shoulderY,
+      topW / 2, neckY + collarH
+    );
     ctx.closePath();
 
     // Clip stripes to sweater shape
