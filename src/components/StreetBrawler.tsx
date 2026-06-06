@@ -1482,7 +1482,9 @@ function drawStickFigure(
 }
 
 // ============== PLATFORMS (Phase 1 — static, jump-through) ==============
-type PlatformStyle = "fireEscape" | "dumpster" | "balcony" | "scaffold" | "rooftop";
+type PlatformStyle =
+  | "fireEscape" | "dumpster" | "balcony" | "scaffold" | "rooftop"
+  | "awning" | "deck" | "treehouse" | "chart";
 interface Platform {
   x: number;       // left edge in world coords
   y: number;       // top surface y (player foot lands here)
@@ -1491,32 +1493,30 @@ interface Platform {
   style: PlatformStyle;
 }
 
-// Per-level platform layouts. Heights are above GROUND_Y (320). Player feet land on `y`.
-// Layouts are hand-tuned to be reachable with the existing JUMP_FORCE (-12, GRAVITY 0.6).
-// Max jump height ≈ 120px, so platforms sit between y = 200 and y = 260.
+// Per-level platform layouts: connected climbing routes that ascend left→right.
+// Max jump rise ≈ 120px (JUMP_FORCE -12, GRAVITY 0.6); steps stay ≤ ~50px and
+// horizontal gaps ≤ ~90px so each platform is reachable with a normal jump.
 function spawnPlatforms(level: number): Platform[] {
   const themeStyles: PlatformStyle[][] = [
-    ["dumpster", "fireEscape", "dumpster", "fireEscape"],  // alley
-    ["balcony", "fireEscape", "balcony", "fireEscape"],     // city
-    ["rooftop", "balcony", "rooftop", "balcony"],           // suburbs
-    ["scaffold", "balcony", "scaffold", "balcony"],         // mall
-    ["rooftop", "scaffold", "rooftop", "scaffold"],         // park
-    ["balcony", "scaffold", "balcony", "scaffold"],         // office
-    ["scaffold", "rooftop", "scaffold", "rooftop"],         // chart
+    ["dumpster", "fireEscape", "fireEscape", "rooftop"],   // 0 alley
+    ["balcony", "fireEscape", "balcony", "rooftop"],        // 1 city
+    ["rooftop", "balcony", "rooftop", "balcony"],           // 2 suburbs
+    ["awning", "balcony", "scaffold", "awning"],            // 3 mall
+    ["deck", "scaffold", "treehouse", "deck"],              // 4 park
+    ["balcony", "scaffold", "balcony", "rooftop"],          // 5 office
+    ["scaffold", "chart", "chart", "chart"],                // 6 dark doge / chart
   ];
   const styles = themeStyles[Math.min(level, themeStyles.length - 1)];
-  const out: Platform[] = [];
-  // Place 4 platforms spaced across the level.
-  const positions = [
-    { x: 500,  y: 240, w: 140 },
-    { x: 1100, y: 215, w: 160 },
-    { x: 1800, y: 250, w: 130 },
-    { x: 2500, y: 220, w: 170 },
+  // Connected ascending route: foot-y steps of ~45px, horizontal gaps ~70px.
+  const route = [
+    { x: 420,  y: 265, w: 130 },
+    { x: 620,  y: 220, w: 130 },
+    { x: 820,  y: 178, w: 130 },
+    { x: 1020, y: 140, w: 150 },
   ];
-  positions.forEach((pos, i) => {
-    out.push({ x: pos.x, y: pos.y, w: pos.w, h: 12, style: styles[i % styles.length] });
-  });
-  return out;
+  return route.map((pos, i) => ({
+    x: pos.x, y: pos.y, w: pos.w, h: 12, style: styles[i % styles.length],
+  }));
 }
 
 function drawPlatform(ctx: CanvasRenderingContext2D, plat: Platform, camX: number) {
@@ -1639,6 +1639,131 @@ function drawPlatform(ctx: CanvasRenderingContext2D, plat: Platform, camX: numbe
           ctx.beginPath(); ctx.moveTo(sx + plat.w - 26, by); ctx.lineTo(sx + plat.w - 10, by); ctx.stroke();
         }
       }
+      break;
+    }
+    case "awning": {
+      // Mall storefront awning: striped fabric slope with hanging valance.
+      ctx.fillStyle = "#c43a3a";
+      ctx.fillRect(sx, y, plat.w, plat.h);
+      // Stripes
+      ctx.fillStyle = "#f0e8d8";
+      const stripeW = 14;
+      for (let i = 0; i < plat.w; i += stripeW * 2) {
+        ctx.fillRect(sx + i, y, stripeW, plat.h);
+      }
+      // Top trim
+      ctx.fillStyle = "#7a1a1a";
+      ctx.fillRect(sx, y, plat.w, 2);
+      // Scalloped valance
+      ctx.fillStyle = "#c43a3a";
+      for (let i = 0; i < plat.w; i += 12) {
+        ctx.beginPath();
+        ctx.arc(sx + i + 6, y + plat.h, 5, 0, Math.PI);
+        ctx.fill();
+      }
+      // Support brackets to wall
+      ctx.strokeStyle = "#2a2a30";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(sx, y); ctx.lineTo(sx - 6, y + 10);
+      ctx.moveTo(sx + plat.w, y); ctx.lineTo(sx + plat.w + 6, y + 10);
+      ctx.stroke();
+      break;
+    }
+    case "deck": {
+      // Wooden observation deck: thick plank top with log supports.
+      ctx.fillStyle = "#a87848";
+      ctx.fillRect(sx, y, plat.w, plat.h + 2);
+      ctx.fillStyle = "#7a5028";
+      for (let px = sx + 24; px < sx + plat.w; px += 24) {
+        ctx.fillRect(px, y, 1, plat.h);
+      }
+      ctx.fillStyle = "#5a3818";
+      ctx.fillRect(sx, y + plat.h, plat.w, 2);
+      // Top highlight
+      ctx.fillStyle = "#c89868";
+      ctx.fillRect(sx, y, plat.w, 2);
+      // Log supports
+      ctx.fillStyle = "#5a3818";
+      const colH = GROUND_Y - (y + plat.h + 2);
+      if (colH > 0) {
+        ctx.fillRect(sx + 10, y + plat.h + 2, 8, colH);
+        ctx.fillRect(sx + plat.w - 18, y + plat.h + 2, 8, colH);
+      }
+      // Low railing posts
+      ctx.strokeStyle = "#5a3818";
+      ctx.lineWidth = 1.5;
+      for (let rx = sx + 8; rx < sx + plat.w - 4; rx += 18) {
+        ctx.beginPath(); ctx.moveTo(rx, y); ctx.lineTo(rx, y - 12); ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.moveTo(sx + 6, y - 12); ctx.lineTo(sx + plat.w - 6, y - 12); ctx.stroke();
+      break;
+    }
+    case "treehouse": {
+      // Treehouse-style: wood plank with leafy canopy backdrop.
+      // Leaves behind
+      ctx.fillStyle = "#3a6a2a";
+      ctx.beginPath();
+      ctx.arc(sx + 10, y - 4, 10, 0, Math.PI * 2);
+      ctx.arc(sx + plat.w - 10, y - 4, 10, 0, Math.PI * 2);
+      ctx.arc(sx + plat.w / 2, y - 8, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#4a8a38";
+      ctx.beginPath();
+      ctx.arc(sx + 20, y - 8, 7, 0, Math.PI * 2);
+      ctx.arc(sx + plat.w - 20, y - 8, 7, 0, Math.PI * 2);
+      ctx.fill();
+      // Plank
+      ctx.fillStyle = "#8a5828";
+      ctx.fillRect(sx, y, plat.w, plat.h);
+      ctx.fillStyle = "#5a3818";
+      ctx.fillRect(sx, y + plat.h - 2, plat.w, 2);
+      ctx.fillStyle = "#a87848";
+      ctx.fillRect(sx, y, plat.w, 2);
+      // Rope supports up
+      ctx.strokeStyle = "#6a4828";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(sx + 6, y); ctx.lineTo(sx + 14, y - 18);
+      ctx.moveTo(sx + plat.w - 6, y); ctx.lineTo(sx + plat.w - 14, y - 18);
+      ctx.stroke();
+      break;
+    }
+    case "chart": {
+      // Trading-chart platform: glowing green candle bar with grid backdrop.
+      // Bar body
+      ctx.fillStyle = "#0a1a14";
+      ctx.fillRect(sx, y, plat.w, plat.h);
+      // Top neon line
+      ctx.fillStyle = "#2dff88";
+      ctx.fillRect(sx, y, plat.w, 2);
+      // Glow underside
+      ctx.fillStyle = "#1a4a30";
+      ctx.fillRect(sx, y + plat.h - 2, plat.w, 2);
+      // Grid lines on top surface
+      ctx.strokeStyle = "#2dff88";
+      ctx.globalAlpha = 0.35;
+      ctx.lineWidth = 0.6;
+      for (let gx = sx + 12; gx < sx + plat.w; gx += 16) {
+        ctx.beginPath(); ctx.moveTo(gx, y + 2); ctx.lineTo(gx, y + plat.h - 2); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      // Candle stem rising above
+      ctx.strokeStyle = "#2dff88";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(sx + plat.w / 2, y); ctx.lineTo(sx + plat.w / 2, y - 16);
+      ctx.stroke();
+      // Red candle wick column down to ground
+      ctx.strokeStyle = "#ff3a5a";
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(sx + plat.w / 2, y + plat.h);
+      ctx.lineTo(sx + plat.w / 2, GROUND_Y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
       break;
     }
   }
@@ -3819,6 +3944,26 @@ export const StreetBrawler: FC = () => {
       for (const obj of g.alleyObjects) {
         if (obj.broken && obj.breakTimer <= 0) continue;
         drawAlleyObject(ctx, obj, g.camX);
+      }
+
+      // Player ground shadow (helps judge platform landings)
+      {
+        const p = g.player;
+        if (p && p.hp > 0) {
+          const sx = p.x - g.camX;
+          // Shadow shrinks/fades as the player rises above the ground.
+          const heightAboveGround = Math.max(0, GROUND_Y - p.y);
+          const t = Math.min(1, heightAboveGround / 140);
+          const rx = 14 * (1 - t * 0.55);
+          const ry = 4 * (1 - t * 0.55);
+          ctx.save();
+          ctx.globalAlpha = 0.35 * (1 - t * 0.5);
+          ctx.fillStyle = "#000";
+          ctx.beginPath();
+          ctx.ellipse(sx, GROUND_Y + 2, rx, ry, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
       }
 
       // Draw platforms (Phase 1)
