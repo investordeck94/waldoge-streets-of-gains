@@ -803,26 +803,22 @@ function drawStickFigure(
   const neckY = headCY + headR;
   const hipY = neckY + bodyLen;
   if (isPlayer) {
-    // Stickman torso in Waldoge colors: thick red line with white stripe accents
-    ctx.lineCap = "round";
-    // Red torso bar
-    ctx.beginPath();
-    ctx.moveTo(0, neckY);
-    ctx.lineTo(0, hipY);
-    ctx.strokeStyle = "#d92b2b";
-    ctx.lineWidth = 7;
-    ctx.stroke();
-    // White horizontal stripe accents
-    ctx.strokeStyle = "#f5ece0";
-    ctx.lineWidth = 2;
+    // Where's Waldo stickman torso: alternating red/white horizontal bands
+    ctx.lineCap = "butt";
     const torsoH = hipY - neckY;
-    for (let i = 1; i <= 3; i++) {
-      const y = neckY + (torsoH * i) / 4;
-      ctx.beginPath();
-      ctx.moveTo(-4, y);
-      ctx.lineTo(4, y);
-      ctx.stroke();
+    const bandCount = 7;
+    const bandH = torsoH / bandCount;
+    const bandW = 10; // total stripe width across the stick body
+    for (let i = 0; i < bandCount; i++) {
+      ctx.fillStyle = i % 2 === 0 ? "#d92b2b" : "#f5ece0";
+      ctx.fillRect(-bandW / 2, neckY + i * bandH, bandW, bandH + 0.5);
     }
+    // Thin dark outline so the stripes read cleanly
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-bandW / 2, neckY, bandW, torsoH);
+    ctx.lineCap = "round";
+
   } else {
     ctx.beginPath();
     ctx.moveTo(0, neckY);
