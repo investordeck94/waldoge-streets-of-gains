@@ -1546,20 +1546,24 @@ function spawnPlatforms(level: number): Platform[] {
 }
 
 // Sprinkle health + power-up pickups along the platform route so vertical
-// traversal is rewarded. One pickup per platform, alternating types with a
-// bias toward health. Pickups are placed resting on the platform top.
-function spawnPlatformPickups(platforms: Platform[]): PowerUp[] {
+// traversal is rewarded. Easy = pickup on every platform; Normal = 3 total;
+// Black Monday = only 2 total. Pickups rest on the platform top.
+function spawnPlatformPickups(platforms: Platform[], diff: "easy" | "normal" | "blackMonday" = "normal"): PowerUp[] {
   const types: PowerUp["type"][] = ["health", "energy", "speed", "health", "damage", "energy", "health"];
+  const limit = diff === "easy" ? platforms.length : diff === "normal" ? 3 : 2;
+  // Pick evenly-spaced platforms so pickups are spread across the route
+  const step = platforms.length / Math.max(1, Math.min(limit, platforms.length));
   const out: PowerUp[] = [];
-  platforms.forEach((pl, i) => {
+  for (let i = 0; i < Math.min(limit, platforms.length); i++) {
+    const pl = platforms[Math.floor(i * step)];
     out.push({
       x: pl.x + pl.w / 2,
-      y: pl.y - 2, // resting on platform top
+      y: pl.y - 2,
       vy: 0,
       type: types[i % types.length],
-      timer: 100000, // effectively persistent until collected
+      timer: 100000,
     });
-  });
+  }
   return out;
 }
 
