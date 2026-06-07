@@ -2965,6 +2965,7 @@ export const StreetBrawler: FC = () => {
   const [styleName, setStyleName] = useState<StyleName>("brawler");
   const [sfxEnabled, setSfxEnabled] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const pausedRef = useRef(false);
   const [showCamDebug, setShowCamDebug] = useState(false);
   const camDebugRef = useRef(false);
