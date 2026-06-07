@@ -5049,7 +5049,7 @@ export const StreetBrawler: FC = () => {
       )}
       <div className="flex items-center gap-2 sm:gap-3">
         <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-        <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Street Brawler</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Waldoge: Street of Gains</h2>
       </div>
 
       <div
