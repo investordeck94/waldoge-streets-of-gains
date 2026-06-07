@@ -5303,7 +5303,7 @@ export const StreetBrawler: FC = () => {
                 </button>
               </div>
               <p className="text-[10px] text-muted-foreground">
-                Easy: standard goons & full platform pickups · Normal: more goons, 3 pickups · Black Monday: max goons, 2 pickups
+                Easy: standard goons, solo boss, full pickups · Normal: more goons, boss + 2 minions, faster boss · Black Monday: max goons, boss + 4 minions, brutal boss damage & speed
               </p>
             </div>
           </motion.div>
