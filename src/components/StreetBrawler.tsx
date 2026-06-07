@@ -4220,7 +4220,7 @@ export const StreetBrawler: FC = () => {
               const minionCount = BOSS_WAVE_MINIONS[g.difficulty] || 0;
               const minionWave = LEVELS[g.level].waves[LEVELS[g.level].waves.length - 1];
               const minions: Entity[] = Array.from({ length: minionCount }, (_, i) => ({
-                x: p.x + 350 + i * 110 + Math.random() * 120,
+                x: Math.min(LEVEL_WIDTH - 60, p.x + 350 + i * 110 + Math.random() * 120),
                 y: GROUND_Y, vy: 0, vx: 0,
                 width: 30, height: 70, facing: -1 as const,
                 hp: minionWave.hp, maxHp: minionWave.hp,
