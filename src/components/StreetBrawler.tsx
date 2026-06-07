@@ -2916,12 +2916,23 @@ function createPlayer(): Entity {
   };
 }
 
-function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number): Entity[] {
+type Difficulty = "easy" | "normal" | "blackMonday";
+
+// Difficulty multipliers — easy keeps original counts; normal & Black Monday
+// add waves of extra goons. HP stays the same so the fight just gets busier.
+const DIFFICULTY_ENEMY_MULT: Record<Difficulty, number> = {
+  easy: 1,
+  normal: 1.7,
+  blackMonday: 2.4,
+};
+
+function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, diff: Difficulty = "normal"): Entity[] {
   const lvl = LEVELS[Math.min(levelIndex, LEVELS.length - 1)];
   const w = lvl?.waves[waveIndex];
   if (!w) return [];
-  return Array.from({ length: w.count }, (_, i) => ({
-    x: playerX + 400 + i * 150 + Math.random() * 200,
+  const count = Math.max(1, Math.round(w.count * DIFFICULTY_ENEMY_MULT[diff]));
+  return Array.from({ length: count }, (_, i) => ({
+    x: playerX + 400 + i * 130 + Math.random() * 200,
     y: GROUND_Y, vy: 0, vx: 0,
     width: 30, height: 70, facing: -1 as const,
     hp: w.hp, maxHp: w.hp,
