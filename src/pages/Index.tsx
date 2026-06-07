@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 import { Header } from "@/components/Header";
-import { LandingPage } from "@/components/LandingPage";
+import { HomePage } from "@/components/HomePage";
 import { ChatTab } from "@/components/ChatTab";
 import { RaidTab } from "@/components/RaidTab";
 import { MemeTab } from "@/components/MemeTab";
-
 import { AboutTab } from "@/components/AboutTab";
 import { WheresWaldoge } from "@/components/WheresWaldoge";
 import { StreetBrawler } from "@/components/StreetBrawler";
@@ -17,19 +17,13 @@ import { useUsageTracking } from "@/hooks/useUsageTracking";
 const Index = () => {
   const { connected, publicKey, wallet, connecting } = useWallet();
   const navigate = useNavigate();
-  const { balance, tier, isWhale, isLoading } = useWaldogeBalance();
-  const { canUse, getRemainingUses, incrementUsage, clearHistory, isInFreeTrial, freeTrialTimeRemaining } = useUsageTracking(tier);
+  const { balance, tier, isLoading } = useWaldogeBalance();
+  const { canUse, getRemainingUses, incrementUsage, isInFreeTrial, freeTrialTimeRemaining } = useUsageTracking(tier);
+
+  // view = "home" shows the landing page; otherwise shows the terminal with active tab
+  const [view, setView] = useState<"home" | "terminal">("home");
   const [activeTab, setActiveTab] = useState("chat");
 
-  const handleTabChange = (tab: string) => {
-    if (tab === "tokens") {
-      navigate("/token-listings");
-      return;
-    }
-    setActiveTab(tab);
-  };
-
-  // Debug wallet state
   useEffect(() => {
     console.log("🔌 Index wallet state:", {
       connected,
@@ -39,18 +33,32 @@ const Index = () => {
     });
   }, [connected, connecting, publicKey, wallet]);
 
-  const handleLearnMore = () => {
-    setActiveTab("about");
+  const handleLaunchTool = (tab: string) => {
+    if (tab === "tokens") {
+      navigate("/token-listings");
+      return;
+    }
+    setActiveTab(tab);
+    setView("terminal");
+    // scroll to top when entering terminal
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
   };
 
-  // Token gates temporarily disabled - show main app to everyone
-  // Landing page only shown if user explicitly navigates there
-  // if (!connected && !connecting) {
-  //   return <LandingPage onLearnMore={handleLearnMore} />;
-  // }
+  const handleTabChange = (tab: string) => {
+    if (tab === "tokens") {
+      navigate("/token-listings");
+      return;
+    }
+    setActiveTab(tab);
+  };
+
+  if (view === "home") {
+    return <HomePage onLaunchTool={handleLaunchTool} />;
+  }
 
   const renderTabContent = () => {
-    const featureKey = activeTab === "chat" ? "chat" : activeTab === "raid" ? "raidGenerator" : "memeGenerator";
+    const featureKey =
+      activeTab === "chat" ? "chat" : activeTab === "raid" ? "raidGenerator" : "memeGenerator";
     const tabProps = {
       tier,
       canUse: canUse(featureKey),
@@ -88,6 +96,18 @@ const Index = () => {
         freeTrialTimeRemaining={freeTrialTimeRemaining}
       />
 
+      {/* Back-to-home strip */}
+      <div className="border-b border-border/30 bg-background/60 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-2">
+          <button
+            onClick={() => setView("home")}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-waldoge-red transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to home
+          </button>
+        </div>
+      </div>
+
       <main className="flex-1 min-h-0 container mx-auto px-2 sm:px-4 py-3 sm:py-6 relative z-10">
         <AnimatePresence mode="wait">
           <motion.div
@@ -102,14 +122,11 @@ const Index = () => {
         </AnimatePresence>
       </main>
 
-      {/* Background effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-waldoge-red/5 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-accent/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 right-1/3 w-48 h-48 bg-waldoge-cyan/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      {/* Disclaimer footer */}
       <footer className="py-3 text-center text-xs text-muted-foreground border-t border-border/30 relative z-10">
         🐕 For fun. No financial advice. Always DYOR.
       </footer>
