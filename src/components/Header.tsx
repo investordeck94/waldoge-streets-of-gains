@@ -6,7 +6,7 @@ import { Zap, Sparkles, Dog, Clock, Gamepad2, Coins, Swords } from "lucide-react
 import { useNavigate } from "react-router-dom";
 import { UserTier } from "@/hooks/useWaldogeBalance";
 import { cn } from "@/lib/utils";
-import waldogeMascot from "@/assets/waldoge-mascot.png";
+import waldogeLogoAsset from "@/assets/waldoge-logo.png.asset.json";
 
 interface HeaderProps {
   balance: number;
