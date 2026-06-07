@@ -3872,7 +3872,7 @@ export const StreetBrawler: FC = () => {
 
             if (e.attackCooldown <= 0) {
               const phase = e.bossPhase || 1;
-              const cdScale = Math.max(0.55, 1.25 - g.level * 0.1);
+              const cdScale = Math.max(0.45, 1.25 - g.level * 0.1) * (DIFFICULTY_BOSS_CD[g.difficulty] || 1);
               if (dist > 250 && phase >= 2) {
                 e.state = "boss_charge";
                 e.stateTimer = 30;
