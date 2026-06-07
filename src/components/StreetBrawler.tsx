@@ -5049,7 +5049,7 @@ export const StreetBrawler: FC = () => {
       )}
       <div className="flex items-center gap-2 sm:gap-3">
         <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-        <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Street Brawler</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Waldoge: Street of Gains</h2>
       </div>
 
       <div
@@ -5290,20 +5290,21 @@ export const StreetBrawler: FC = () => {
                   onClick={() => startGame("easy")}
                   className="px-5 py-3 bg-emerald-500 text-white rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
                 >
-                  <Play className="w-4 h-4" /> EASY
+                  <Play className="w-4 h-4" /> NEW TO CRYPTO
                 </button>
                 <button
                   onClick={() => startGame("normal")}
                   className="px-5 py-3 bg-primary text-primary-foreground rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
                 >
-                  <Play className="w-4 h-4" /> NORMAL
+                  <Play className="w-4 h-4" /> HALF A DEGEN
                 </button>
                 <button
                   onClick={() => startGame("blackMonday")}
                   className="px-5 py-3 bg-destructive text-destructive-foreground rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
                 >
-                  <Play className="w-4 h-4" /> BLACK MONDAY
+                  <Play className="w-4 h-4" /> FULL TRENCH MODE (2 CYCLES +)
                 </button>
+
               </div>
               <p className="text-[10px] text-muted-foreground">
                 Easy: standard goons, solo boss, full pickups · Normal: more goons, boss + 2 minions, faster boss · Black Monday: max goons, boss + 4 minions, brutal boss damage & speed

@@ -20,7 +20,7 @@ interface HeaderProps {
 
 const tabs = [
   { id: "chat", label: "Chat", icon: Dog },
-  { id: "brawler", label: "Street Brawler", icon: Swords },
+  { id: "brawler", label: "Street of Gains", icon: Swords },
   { id: "raid", label: "Raid Generator", icon: Zap },
   { id: "meme", label: "Meme Generator", icon: Sparkles },
   { id: "tokens", label: "Token Listings", icon: Coins },

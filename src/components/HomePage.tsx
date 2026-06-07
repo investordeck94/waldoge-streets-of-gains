@@ -25,7 +25,7 @@ const stats = [
 
 const tools = [
   { id: "chat", label: "AI Chat", desc: "Talk to Waldoge himself.", icon: MessageSquare },
-  { id: "brawler", label: "Street Brawler", desc: "Beat-em-up arcade mode.", icon: Swords },
+  { id: "brawler", label: "Waldoge: Street of Gains", desc: "Beat-em-up arcade mode.", icon: Swords },
   { id: "raid", label: "Raid Generator", desc: "Viral raid posts on demand.", icon: Rocket },
   { id: "meme", label: "Meme Generator", desc: "AI memes in seconds.", icon: ImageIcon },
   { id: "game", label: "Find Waldoge", desc: "Hidden object game.", icon: Gamepad2 },
@@ -267,7 +267,7 @@ export const HomePage: FC<HomePageProps> = ({ onLaunchTool }) => {
                   Get $WALDOGE on DEX Screener
                 </a>
                 <button onClick={() => onLaunchTool("brawler")} className="px-5 py-2.5 rounded-full border border-border bg-card/60 font-semibold text-sm hover:border-waldoge-red/50 transition-colors">
-                  Play Waldoge Combat
+                  Play Waldoge: Street of Gains
                 </button>
               </div>
               <p className="text-[11px] text-muted-foreground italic">
