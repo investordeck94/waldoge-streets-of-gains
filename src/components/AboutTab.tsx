@@ -58,8 +58,9 @@ export const AboutTab: FC = () => {
     {
       name: "Tier 2 - Chaos Mode",
       requirement: `≥ ${formatNumber(TIER_THRESHOLDS.TIER_2)} WALDOGE`,
-      color: "text-purple-400",
-      bgColor: "bg-purple-500/20",
+      color: "text-waldoge-red",
+      bgColor: "bg-waldoge-red/20",
+
       isChaos: true,
       features: [
         `${USAGE_LIMITS.TIER_2.chat} chat messages/day`,
@@ -110,7 +111,7 @@ export const AboutTab: FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               className={`glass-card p-6 relative overflow-hidden ${
-                tier.isChaos ? "border-purple-500/50" : ""
+                tier.isChaos ? "border-waldoge-red/60" : ""
               }`}
             >
               {tier.isChaos && (
