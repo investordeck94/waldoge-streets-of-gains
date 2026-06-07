@@ -4181,9 +4181,9 @@ export const StreetBrawler: FC = () => {
               text: "♥ FULL HP", color: "#22ff66", size: 18,
             });
             sfx(() => SFX.waveStart());
-            g.enemies = spawnEnemies(g.level, 0, p.x);
+            g.enemies = spawnEnemies(g.level, 0, p.x, g.difficulty);
             g.platforms = spawnPlatforms(g.level);
-            g.powerups.push(...spawnPlatformPickups(g.platforms));
+            g.powerups.push(...spawnPlatformPickups(g.platforms, g.difficulty));
             (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
           } else {
             // Next wave within current level
