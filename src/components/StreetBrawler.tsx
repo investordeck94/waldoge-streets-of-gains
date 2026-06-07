@@ -2932,7 +2932,24 @@ type Difficulty = "easy" | "normal" | "blackMonday";
 const DIFFICULTY_ENEMY_MULT: Record<Difficulty, number> = {
   easy: 1,
   normal: 1.7,
-  blackMonday: 2.4,
+  blackMonday: 3.0,
+};
+// Boss aggression scaling — lower cooldown + higher damage on harder modes
+const DIFFICULTY_BOSS_CD: Record<Difficulty, number> = {
+  easy: 1.0,
+  normal: 0.85,
+  blackMonday: 0.6,
+};
+const DIFFICULTY_BOSS_DMG: Record<Difficulty, number> = {
+  easy: 1.0,
+  normal: 1.15,
+  blackMonday: 1.4,
+};
+// Extra minions that join the boss fight
+const BOSS_WAVE_MINIONS: Record<Difficulty, number> = {
+  easy: 0,
+  normal: 2,
+  blackMonday: 4,
 };
 
 function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, diff: Difficulty = "normal"): Entity[] {
@@ -3855,7 +3872,7 @@ export const StreetBrawler: FC = () => {
 
             if (e.attackCooldown <= 0) {
               const phase = e.bossPhase || 1;
-              const cdScale = Math.max(0.55, 1.25 - g.level * 0.1);
+              const cdScale = Math.max(0.45, 1.25 - g.level * 0.1) * (DIFFICULTY_BOSS_CD[g.difficulty] || 1);
               if (dist > 250 && phase >= 2) {
                 e.state = "boss_charge";
                 e.stateTimer = 30;
@@ -3912,7 +3929,7 @@ export const StreetBrawler: FC = () => {
           if (bossHitFrame) {
             const range = e.state === "boss_slam" ? 100 : e.state === "boss_charge" ? 60 : 55;
             const baseDmg = e.state === "boss_slam" ? 6 : e.state === "boss_charge" ? 5 : e.state === "punch" ? 3 : 4;
-            const dmg = Math.max(2, Math.round(baseDmg * bossCfg.dmgMult));
+            const dmg = Math.max(2, Math.round(baseDmg * bossCfg.dmgMult * (DIFFICULTY_BOSS_DMG[g.difficulty] || 1)));
             const edx = p.x - e.x;
             const inRange = e.state === "boss_slam"
               ? Math.abs(edx) < range && Math.abs(p.y - e.y) < 70
@@ -4196,7 +4213,18 @@ export const StreetBrawler: FC = () => {
             setWave(g.wave);
             const isBossWave = g.wave === LEVELS[g.level].waves.length;
             if (isBossWave) {
-              g.enemies = [spawnBoss(p.x, g.level)];
+              const boss = spawnBoss(p.x, g.level);
+              const minionCount = BOSS_WAVE_MINIONS[g.difficulty] || 0;
+              const minionWave = LEVELS[g.level].waves[LEVELS[g.level].waves.length - 1];
+              const minions: Entity[] = Array.from({ length: minionCount }, (_, i) => ({
+                x: p.x + 350 + i * 110 + Math.random() * 120,
+                y: GROUND_Y, vy: 0, vx: 0,
+                width: 30, height: 70, facing: -1 as const,
+                hp: minionWave.hp, maxHp: minionWave.hp,
+                state: "idle" as AttackState, stateTimer: 0, attackCooldown: 0,
+                aiTimer: Math.random() * 60,
+              }));
+              g.enemies = [boss, ...minions];
               g.projectiles = [];
               // Trigger animated boss intro banner
               g.bossIntro = {
@@ -5275,7 +5303,7 @@ export const StreetBrawler: FC = () => {
                 </button>
               </div>
               <p className="text-[10px] text-muted-foreground">
-                Easy: standard goons & full platform pickups · Normal: more goons, 3 pickups · Black Monday: max goons, 2 pickups
+                Easy: standard goons, solo boss, full pickups · Normal: more goons, boss + 2 minions, faster boss · Black Monday: max goons, boss + 4 minions, brutal boss damage & speed
               </p>
             </div>
           </motion.div>
