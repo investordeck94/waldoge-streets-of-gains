@@ -1545,6 +1545,24 @@ function spawnPlatforms(level: number): Platform[] {
   return plats;
 }
 
+// Sprinkle health + power-up pickups along the platform route so vertical
+// traversal is rewarded. One pickup per platform, alternating types with a
+// bias toward health. Pickups are placed resting on the platform top.
+function spawnPlatformPickups(platforms: Platform[]): PowerUp[] {
+  const types: PowerUp["type"][] = ["health", "energy", "speed", "health", "damage", "energy", "health"];
+  const out: PowerUp[] = [];
+  platforms.forEach((pl, i) => {
+    out.push({
+      x: pl.x + pl.w / 2,
+      y: pl.y - 2, // resting on platform top
+      vy: 0,
+      type: types[i % types.length],
+      timer: 100000, // effectively persistent until collected
+    });
+  });
+  return out;
+}
+
 function drawPlatform(ctx: CanvasRenderingContext2D, plat: Platform, camX: number) {
   const sx = plat.x - camX;
   if (sx + plat.w < -40 || sx > CANVAS_W + 40) return;
