@@ -1546,20 +1546,24 @@ function spawnPlatforms(level: number): Platform[] {
 }
 
 // Sprinkle health + power-up pickups along the platform route so vertical
-// traversal is rewarded. One pickup per platform, alternating types with a
-// bias toward health. Pickups are placed resting on the platform top.
-function spawnPlatformPickups(platforms: Platform[]): PowerUp[] {
+// traversal is rewarded. Easy = pickup on every platform; Normal = 3 total;
+// Black Monday = only 2 total. Pickups rest on the platform top.
+function spawnPlatformPickups(platforms: Platform[], diff: "easy" | "normal" | "blackMonday" = "normal"): PowerUp[] {
   const types: PowerUp["type"][] = ["health", "energy", "speed", "health", "damage", "energy", "health"];
+  const limit = diff === "easy" ? platforms.length : diff === "normal" ? 3 : 2;
+  // Pick evenly-spaced platforms so pickups are spread across the route
+  const step = platforms.length / Math.max(1, Math.min(limit, platforms.length));
   const out: PowerUp[] = [];
-  platforms.forEach((pl, i) => {
+  for (let i = 0; i < Math.min(limit, platforms.length); i++) {
+    const pl = platforms[Math.floor(i * step)];
     out.push({
       x: pl.x + pl.w / 2,
-      y: pl.y - 2, // resting on platform top
+      y: pl.y - 2,
       vy: 0,
       type: types[i % types.length],
-      timer: 100000, // effectively persistent until collected
+      timer: 100000,
     });
-  });
+  }
   return out;
 }
 
@@ -2916,12 +2920,23 @@ function createPlayer(): Entity {
   };
 }
 
-function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number): Entity[] {
+type Difficulty = "easy" | "normal" | "blackMonday";
+
+// Difficulty multipliers — easy keeps original counts; normal & Black Monday
+// add waves of extra goons. HP stays the same so the fight just gets busier.
+const DIFFICULTY_ENEMY_MULT: Record<Difficulty, number> = {
+  easy: 1,
+  normal: 1.7,
+  blackMonday: 2.4,
+};
+
+function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, diff: Difficulty = "normal"): Entity[] {
   const lvl = LEVELS[Math.min(levelIndex, LEVELS.length - 1)];
   const w = lvl?.waves[waveIndex];
   if (!w) return [];
-  return Array.from({ length: w.count }, (_, i) => ({
-    x: playerX + 400 + i * 150 + Math.random() * 200,
+  const count = Math.max(1, Math.round(w.count * DIFFICULTY_ENEMY_MULT[diff]));
+  return Array.from({ length: count }, (_, i) => ({
+    x: playerX + 400 + i * 130 + Math.random() * 200,
     y: GROUND_Y, vy: 0, vx: 0,
     width: 30, height: 70, facing: -1 as const,
     hp: w.hp, maxHp: w.hp,
@@ -2950,6 +2965,7 @@ export const StreetBrawler: FC = () => {
   const [styleName, setStyleName] = useState<StyleName>("brawler");
   const [sfxEnabled, setSfxEnabled] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const pausedRef = useRef(false);
   const [showCamDebug, setShowCamDebug] = useState(false);
   const camDebugRef = useRef(false);
@@ -3039,6 +3055,7 @@ export const StreetBrawler: FC = () => {
     hitApplied: boolean;
     alleyObjects: AlleyObject[];
     platforms: Platform[];
+    difficulty: Difficulty;
     animFrameCount: number;
     rain: RainDrop[];
     splashes: Splash[];
@@ -3091,6 +3108,7 @@ export const StreetBrawler: FC = () => {
     hitApplied: false,
     alleyObjects: [],
     platforms: [],
+    difficulty: "normal" as Difficulty,
     animFrameCount: 0,
     rain: [],
     splashes: [],
@@ -3118,14 +3136,16 @@ export const StreetBrawler: FC = () => {
     gameRef.current.camPreset = camPreset;
   }, [camPreset]);
 
-  const startGame = useCallback(() => {
+  const startGame = useCallback((diff: Difficulty = "normal") => {
     const g = gameRef.current;
+    g.difficulty = diff;
+    setDifficulty(diff);
     g.player = createPlayer();
     g.wave = 0;
     g.level = 0;
     g.score = 0;
     g.camX = 0;
-    g.enemies = spawnEnemies(0, 0, 200);
+    g.enemies = spawnEnemies(0, 0, 200, diff);
     g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
     g.effects = [];
     g.powerups = [];
@@ -3158,7 +3178,7 @@ export const StreetBrawler: FC = () => {
     ];
     g.alleyObjects = spawnAlleyObjects();
     g.platforms = spawnPlatforms(0);
-    g.powerups = spawnPlatformPickups(g.platforms);
+    g.powerups = spawnPlatformPickups(g.platforms, diff);
     g.animFrameCount = 0;
     // Initialize rain
     g.rain = [];
@@ -4161,9 +4181,9 @@ export const StreetBrawler: FC = () => {
               text: "♥ FULL HP", color: "#22ff66", size: 18,
             });
             sfx(() => SFX.waveStart());
-            g.enemies = spawnEnemies(g.level, 0, p.x);
+            g.enemies = spawnEnemies(g.level, 0, p.x, g.difficulty);
             g.platforms = spawnPlatforms(g.level);
-            g.powerups.push(...spawnPlatformPickups(g.platforms));
+            g.powerups.push(...spawnPlatformPickups(g.platforms, g.difficulty));
             (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
           } else {
             // Next wave within current level
@@ -4185,7 +4205,7 @@ export const StreetBrawler: FC = () => {
               sfx(() => SFX.bossEntrance());
             } else {
               sfx(() => SFX.waveStart());
-              g.enemies = spawnEnemies(g.level, g.wave, p.x);
+              g.enemies = spawnEnemies(g.level, g.wave, p.x, g.difficulty);
             }
           }
         }
@@ -5227,12 +5247,32 @@ export const StreetBrawler: FC = () => {
                 <div className="glass-card p-2 flex justify-between"><span>L (in air)</span><span className="text-primary">Ground Pound</span></div>
               </div>
             </div>
-            <button
-              onClick={startGame}
-              className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-bold flex items-center gap-2 mx-auto hover:opacity-90 transition"
-            >
-              <Play className="w-5 h-5" /> START BRAWL
-            </button>
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-primary">CHOOSE DIFFICULTY</p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <button
+                  onClick={() => startGame("easy")}
+                  className="px-5 py-3 bg-emerald-500 text-white rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
+                >
+                  <Play className="w-4 h-4" /> EASY
+                </button>
+                <button
+                  onClick={() => startGame("normal")}
+                  className="px-5 py-3 bg-primary text-primary-foreground rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
+                >
+                  <Play className="w-4 h-4" /> NORMAL
+                </button>
+                <button
+                  onClick={() => startGame("blackMonday")}
+                  className="px-5 py-3 bg-destructive text-destructive-foreground rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
+                >
+                  <Play className="w-4 h-4" /> BLACK MONDAY
+                </button>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Easy: standard goons & full platform pickups · Normal: more goons, 3 pickups · Black Monday: max goons, 2 pickups
+              </p>
+            </div>
           </motion.div>
         )}
 
@@ -5258,7 +5298,7 @@ export const StreetBrawler: FC = () => {
             )}
             <p className="text-lg text-primary font-bold">Score: {score}</p>
             <button
-              onClick={startGame}
+              onClick={() => startGame(difficulty)}
               className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-bold flex items-center gap-2 mx-auto hover:opacity-90 transition"
             >
               <RotateCcw className="w-5 h-5" /> PLAY AGAIN
