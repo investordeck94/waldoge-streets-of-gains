@@ -246,13 +246,33 @@ export const HomePage: FC<HomePageProps> = ({ onLaunchTool }) => {
               <br /><br />
               Waldoge isn't here to scream. He's here to <span className="text-foreground font-semibold">wait</span> — patient, painted in red and white stripes, blending into every feed until the herd finally notices. By then, he's already on the next page.
             </p>
-            <div className="mt-6 flex gap-3">
-              <button onClick={() => scrollTo("buy")} className="px-5 py-2.5 rounded-full bg-waldoge-red text-waldoge-cream font-semibold text-sm hover:bg-waldoge-red-glow transition-colors">
-                Get $WALDOGE
-              </button>
-              <button onClick={() => onLaunchTool("game")} className="px-5 py-2.5 rounded-full border border-border bg-card/60 font-semibold text-sm hover:border-waldoge-red/50 transition-colors">
-                Play Find Waldoge
-              </button>
+            <div className="mt-6 space-y-3">
+              <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl border border-waldoge-red/30 bg-waldoge-red/5">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-waldoge-red font-semibold">CA</span>
+                <code className="text-xs font-mono break-all flex-1 min-w-0">D77tASqthikebejDx15MtphmZAbpU4Jxmr1JXgD2doge</code>
+                <button
+                  onClick={() => navigator.clipboard.writeText("D77tASqthikebejDx15MtphmZAbpU4Jxmr1JXgD2doge")}
+                  className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-waldoge-red/20 text-waldoge-red hover:bg-waldoge-red/30 transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+              <div className="flex gap-3 flex-wrap">
+                <a
+                  href="https://dexscreener.com/solana/2RPkBJ6bkwRqi18MrUsfQaNtTPV8DMpsuPBq6ReWzNhx"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-5 py-2.5 rounded-full bg-waldoge-red text-waldoge-cream font-semibold text-sm hover:bg-waldoge-red-glow transition-colors"
+                >
+                  Get $WALDOGE on DEX Screener
+                </a>
+                <button onClick={() => onLaunchTool("brawler")} className="px-5 py-2.5 rounded-full border border-border bg-card/60 font-semibold text-sm hover:border-waldoge-red/50 transition-colors">
+                  Play Waldoge Combat
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground italic">
+                No financial advice given. Community token.
+              </p>
             </div>
           </div>
 
