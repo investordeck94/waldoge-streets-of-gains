@@ -286,6 +286,7 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
     : e.bossName === "FUDDER" ? fudderHeadImg
     : e.bossName === "EXIT LIQUIDITY" ? exitLiquidityHeadImg
     : e.bossName === "MR MARKETER" ? mrMarketerHeadImg
+    : e.bossName === "TICKER THIEF" ? tickerThiefHeadImg
     : null;
   if (customHead && customHead.complete && customHead.naturalWidth > 0) {
     const imgSize = headR * 3.2;
