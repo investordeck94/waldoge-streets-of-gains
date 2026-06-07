@@ -3136,14 +3136,16 @@ export const StreetBrawler: FC = () => {
     gameRef.current.camPreset = camPreset;
   }, [camPreset]);
 
-  const startGame = useCallback(() => {
+  const startGame = useCallback((diff: Difficulty = "normal") => {
     const g = gameRef.current;
+    g.difficulty = diff;
+    setDifficulty(diff);
     g.player = createPlayer();
     g.wave = 0;
     g.level = 0;
     g.score = 0;
     g.camX = 0;
-    g.enemies = spawnEnemies(0, 0, 200);
+    g.enemies = spawnEnemies(0, 0, 200, diff);
     g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
     g.effects = [];
     g.powerups = [];
