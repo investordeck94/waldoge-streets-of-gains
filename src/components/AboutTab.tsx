@@ -58,8 +58,9 @@ export const AboutTab: FC = () => {
     {
       name: "Tier 2 - Chaos Mode",
       requirement: `≥ ${formatNumber(TIER_THRESHOLDS.TIER_2)} WALDOGE`,
-      color: "text-purple-400",
-      bgColor: "bg-purple-500/20",
+      color: "text-waldoge-red",
+      bgColor: "bg-waldoge-red/20",
+
       isChaos: true,
       features: [
         `${USAGE_LIMITS.TIER_2.chat} chat messages/day`,
