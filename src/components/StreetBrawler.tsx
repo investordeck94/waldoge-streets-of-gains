@@ -3107,6 +3107,7 @@ export const StreetBrawler: FC = () => {
     hitApplied: false,
     alleyObjects: [],
     platforms: [],
+    difficulty: "normal" as Difficulty,
     animFrameCount: 0,
     rain: [],
     splashes: [],
