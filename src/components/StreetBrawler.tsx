@@ -4047,8 +4047,20 @@ export const StreetBrawler: FC = () => {
       g.dmgBoostTimer = Math.max(0, g.dmgBoostTimer - 1);
 
       g.powerups = g.powerups.filter(pu => {
+        const prevY = pu.y;
         pu.vy += 0.3;
         pu.y += pu.vy;
+        // Platform landing — snap to top when crossing downward through a platform top
+        if (pu.vy > 0) {
+          for (const pl of g.platforms) {
+            const top = pl.y;
+            if (prevY <= top + 1 && pu.y >= top && pu.x >= pl.x && pu.x <= pl.x + pl.w) {
+              pu.y = top - 2;
+              pu.vy = 0;
+              break;
+            }
+          }
+        }
         if (pu.y >= GROUND_Y) { pu.y = GROUND_Y; pu.vy = 0; }
         pu.timer--;
 
