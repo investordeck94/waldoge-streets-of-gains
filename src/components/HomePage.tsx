@@ -267,7 +267,7 @@ export const HomePage: FC<HomePageProps> = ({ onLaunchTool }) => {
                   Get $WALDOGE on DEX Screener
                 </a>
                 <button onClick={() => onLaunchTool("brawler")} className="px-5 py-2.5 rounded-full border border-border bg-card/60 font-semibold text-sm hover:border-waldoge-red/50 transition-colors">
-                  Play Waldoge Combat
+                  Play Waldoge: Street of Gains
                 </button>
               </div>
               <p className="text-[11px] text-muted-foreground italic">
