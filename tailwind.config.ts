@@ -71,6 +71,9 @@ export default {
           space: "hsl(var(--waldoge-space))",
           nebula: "hsl(var(--waldoge-nebula))",
           success: "hsl(var(--waldoge-success))",
+          red: "hsl(var(--waldoge-red))",
+          "red-glow": "hsl(var(--waldoge-red-glow))",
+          cream: "hsl(var(--waldoge-cream))",
         },
         tier: {
           locked: "hsl(var(--tier-locked))",
