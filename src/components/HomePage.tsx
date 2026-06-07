@@ -207,7 +207,7 @@ export const HomePage: FC<HomePageProps> = ({ onLaunchTool }) => {
               WTF is <span className="text-waldoge-red">$WALDOGE</span>?
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
-              The crypto answer to "Where's Waldo?" — a striped-beanie shiba hiding in every chart, every feed, every wallet. Easy to miss. Impossible to forget.
+              Well firstly where is Waldoge &amp; who is he? — a striped Shiba Inu dressed in red &amp; white hiding in every chart, every feed, every wallet. Easy to miss. Impossible to forget coming through with the now you see me now you don't vibes.
             </p>
           </div>
 
