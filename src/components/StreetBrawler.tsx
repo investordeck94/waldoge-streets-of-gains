@@ -4213,7 +4213,18 @@ export const StreetBrawler: FC = () => {
             setWave(g.wave);
             const isBossWave = g.wave === LEVELS[g.level].waves.length;
             if (isBossWave) {
-              g.enemies = [spawnBoss(p.x, g.level)];
+              const boss = spawnBoss(p.x, g.level);
+              const minionCount = BOSS_WAVE_MINIONS[g.difficulty] || 0;
+              const minionWave = LEVELS[g.level].waves[LEVELS[g.level].waves.length - 1];
+              const minions: Entity[] = Array.from({ length: minionCount }, (_, i) => ({
+                x: p.x + 350 + i * 110 + Math.random() * 120,
+                y: GROUND_Y, vy: 0, vx: 0,
+                width: 30, height: 70, facing: -1 as const,
+                hp: minionWave.hp, maxHp: minionWave.hp,
+                state: "idle" as AttackState, stateTimer: 0, attackCooldown: 0,
+                aiTimer: Math.random() * 60,
+              }));
+              g.enemies = [boss, ...minions];
               g.projectiles = [];
               // Trigger animated boss intro banner
               g.bossIntro = {
