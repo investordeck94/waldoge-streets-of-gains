@@ -30,6 +30,9 @@ const exitLiquidityHeadImg: HTMLImageElement | null =
   typeof window !== "undefined" ? (() => { const i = new Image(); i.src = exitLiquidityBossHead; return i; })() : null;
 const mrMarketerHeadImg: HTMLImageElement | null =
   typeof window !== "undefined" ? (() => { const i = new Image(); i.src = mrMarketerBossHead; return i; })() : null;
+const tickerThiefHeadImg: HTMLImageElement | null =
+  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = tickerThiefBossHead; return i; })() : null;
+
 
 type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
   | "uppercut" | "spinkick" | "groundpound" | "dashpunch"
