@@ -1545,6 +1545,24 @@ function spawnPlatforms(level: number): Platform[] {
   return plats;
 }
 
+// Sprinkle health + power-up pickups along the platform route so vertical
+// traversal is rewarded. One pickup per platform, alternating types with a
+// bias toward health. Pickups are placed resting on the platform top.
+function spawnPlatformPickups(platforms: Platform[]): PowerUp[] {
+  const types: PowerUp["type"][] = ["health", "energy", "speed", "health", "damage", "energy", "health"];
+  const out: PowerUp[] = [];
+  platforms.forEach((pl, i) => {
+    out.push({
+      x: pl.x + pl.w / 2,
+      y: pl.y - 2, // resting on platform top
+      vy: 0,
+      type: types[i % types.length],
+      timer: 100000, // effectively persistent until collected
+    });
+  });
+  return out;
+}
+
 function drawPlatform(ctx: CanvasRenderingContext2D, plat: Platform, camX: number) {
   const sx = plat.x - camX;
   if (sx + plat.w < -40 || sx > CANVAS_W + 40) return;
@@ -3140,6 +3158,7 @@ export const StreetBrawler: FC = () => {
     ];
     g.alleyObjects = spawnAlleyObjects();
     g.platforms = spawnPlatforms(0);
+    g.powerups = spawnPlatformPickups(g.platforms);
     g.animFrameCount = 0;
     // Initialize rain
     g.rain = [];
@@ -4028,8 +4047,20 @@ export const StreetBrawler: FC = () => {
       g.dmgBoostTimer = Math.max(0, g.dmgBoostTimer - 1);
 
       g.powerups = g.powerups.filter(pu => {
+        const prevY = pu.y;
         pu.vy += 0.3;
         pu.y += pu.vy;
+        // Platform landing — snap to top when crossing downward through a platform top
+        if (pu.vy > 0) {
+          for (const pl of g.platforms) {
+            const top = pl.y;
+            if (prevY <= top + 1 && pu.y >= top && pu.x >= pl.x && pu.x <= pl.x + pl.w) {
+              pu.y = top - 2;
+              pu.vy = 0;
+              break;
+            }
+          }
+        }
         if (pu.y >= GROUND_Y) { pu.y = GROUND_Y; pu.vy = 0; }
         pu.timer--;
 
@@ -4132,6 +4163,7 @@ export const StreetBrawler: FC = () => {
             sfx(() => SFX.waveStart());
             g.enemies = spawnEnemies(g.level, 0, p.x);
             g.platforms = spawnPlatforms(g.level);
+            g.powerups.push(...spawnPlatformPickups(g.platforms));
             (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
           } else {
             // Next wave within current level
