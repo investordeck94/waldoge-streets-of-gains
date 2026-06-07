@@ -389,7 +389,7 @@ export const HomePage: FC<HomePageProps> = ({ onLaunchTool }) => {
               </button>
             </div>
             <p className="relative mt-6 text-xs text-muted-foreground">
-              🐕 For fun. No financial advice. Always DYOR.
+              🐕 No financial advice given. Community token. Always DYOR.
             </p>
           </div>
         </div>
