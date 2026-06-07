@@ -240,8 +240,11 @@ interface Projectile {
 
 function spawnBoss(playerX: number, levelIndex: number): Entity {
   const cfg = LEVELS[Math.min(levelIndex, LEVELS.length - 1)].boss;
+  // Clamp spawn x so the boss never appears past the level's right edge
+  // (which would leave them stuck off-world unable to reach the player).
+  const spawnX = Math.min(LEVEL_WIDTH - 80, Math.max(playerX + 350, playerX + 500));
   return {
-    x: playerX + 500, y: GROUND_Y, vy: 0, vx: 0,
+    x: spawnX, y: GROUND_Y, vy: 0, vx: 0,
     width: 50, height: 90, facing: -1,
     hp: cfg.hp, maxHp: cfg.hp,
     state: "idle", stateTimer: 0, attackCooldown: 60,
@@ -4217,7 +4220,7 @@ export const StreetBrawler: FC = () => {
               const minionCount = BOSS_WAVE_MINIONS[g.difficulty] || 0;
               const minionWave = LEVELS[g.level].waves[LEVELS[g.level].waves.length - 1];
               const minions: Entity[] = Array.from({ length: minionCount }, (_, i) => ({
-                x: p.x + 350 + i * 110 + Math.random() * 120,
+                x: Math.min(LEVEL_WIDTH - 60, p.x + 350 + i * 110 + Math.random() * 120),
                 y: GROUND_Y, vy: 0, vx: 0,
                 width: 30, height: 70, facing: -1 as const,
                 hp: minionWave.hp, maxHp: minionWave.hp,
