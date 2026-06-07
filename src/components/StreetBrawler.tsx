@@ -2932,7 +2932,24 @@ type Difficulty = "easy" | "normal" | "blackMonday";
 const DIFFICULTY_ENEMY_MULT: Record<Difficulty, number> = {
   easy: 1,
   normal: 1.7,
-  blackMonday: 2.4,
+  blackMonday: 3.0,
+};
+// Boss aggression scaling — lower cooldown + higher damage on harder modes
+const DIFFICULTY_BOSS_CD: Record<Difficulty, number> = {
+  easy: 1.0,
+  normal: 0.85,
+  blackMonday: 0.6,
+};
+const DIFFICULTY_BOSS_DMG: Record<Difficulty, number> = {
+  easy: 1.0,
+  normal: 1.15,
+  blackMonday: 1.4,
+};
+// Extra minions that join the boss fight
+const BOSS_WAVE_MINIONS: Record<Difficulty, number> = {
+  easy: 0,
+  normal: 2,
+  blackMonday: 4,
 };
 
 function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, diff: Difficulty = "normal"): Entity[] {
