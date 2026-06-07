@@ -111,7 +111,7 @@ export const AboutTab: FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               className={`glass-card p-6 relative overflow-hidden ${
-                tier.isChaos ? "border-purple-500/50" : ""
+                tier.isChaos ? "border-waldoge-red/60" : ""
               }`}
             >
               {tier.isChaos && (
