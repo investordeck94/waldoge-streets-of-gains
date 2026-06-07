@@ -72,43 +72,49 @@ export const Header: FC<HeaderProps> = ({
   const { connected } = useWallet();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
-      {/* Construction Notice Banner - hidden on very small screens */}
-      <div className="bg-accent/20 border-b border-accent/30 py-1 sm:py-2 px-4 hidden sm:block">
-        <p className="text-center text-xs sm:text-sm font-medium text-accent">
+    <header className="sticky top-0 z-50 w-full border-b border-waldoge-red/30 bg-background/85 backdrop-blur-xl">
+      {/* Red/white striped accent strip */}
+      <div
+        className="h-1 w-full"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(45deg, hsl(var(--waldoge-red)) 0 10px, hsl(var(--waldoge-cream)) 10px 20px)",
+        }}
+      />
+      {/* Construction Notice Banner */}
+      <div className="bg-waldoge-red/15 border-b border-waldoge-red/30 py-1 sm:py-2 px-4 hidden sm:block">
+        <p className="text-center text-xs sm:text-sm font-medium text-waldoge-red">
           🚧 Website under construction — Token gates temporarily lifted 🚧
         </p>
       </div>
       <div className="container mx-auto px-4">
-        {/* Top row - Logo, Balance, Wallet */}
+        {/* Top row */}
         <div className="flex items-center justify-between h-12 sm:h-16">
-          {/* Logo */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3"
           >
             <div className="relative">
-              <img 
-                src={waldogeMascot} 
-                alt="WALDOGE" 
+              <img
+                src={waldogeMascot}
+                alt="WALDOGE"
                 className="w-10 h-10 object-contain"
               />
               <motion.div
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ repeat: Infinity, duration: 2 }}
-                className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full"
+                className="absolute -top-1 -right-1 w-3 h-3 bg-waldoge-red rounded-full"
               />
             </div>
             <div>
-              <h1 className="font-display text-xl font-bold text-gradient-gold">
+              <h1 className="font-display text-xl font-bold text-waldoge-red">
                 WALDOGE AI
               </h1>
-              <p className="text-xs text-muted-foreground -mt-1">Terminal</p>
+              <p className="text-xs text-waldoge-cream/70 -mt-1">Terminal</p>
             </div>
           </motion.div>
 
-          {/* Right side - Balance & Wallet */}
           <div className="flex items-center gap-4">
             {connected && (
               <motion.div
@@ -117,8 +123,8 @@ export const Header: FC<HeaderProps> = ({
                 className="hidden sm:flex items-center gap-3"
               >
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Balance</p>
-                  <p className="font-display font-semibold text-primary">
+                  <p className="text-xs text-waldoge-cream/60">Balance</p>
+                  <p className="font-display font-semibold text-waldoge-red">
                     {isLoading ? (
                       <span className="animate-pulse">Loading...</span>
                     ) : (
@@ -130,10 +136,10 @@ export const Header: FC<HeaderProps> = ({
                   <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/20 border border-accent/40 rounded-full"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-waldoge-red/15 border border-waldoge-red/40 rounded-full"
                   >
-                    <Clock className="w-3.5 h-3.5 text-accent" />
-                    <span className="text-xs font-semibold text-accent">
+                    <Clock className="w-3.5 h-3.5 text-waldoge-red" />
+                    <span className="text-xs font-semibold text-waldoge-red">
                       Free Trial: {formatTimeRemaining(freeTrialTimeRemaining)}
                     </span>
                   </motion.div>
@@ -145,7 +151,7 @@ export const Header: FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Navigation tabs */}
+        {/* Tabs */}
         <nav className="flex gap-0.5 sm:gap-1 pb-1 sm:pb-2 overflow-x-auto custom-scrollbar">
           {tabs.map((tab) => (
             <motion.button
@@ -156,8 +162,8 @@ export const Header: FC<HeaderProps> = ({
               className={cn(
                 "relative px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap transition-colors",
                 activeTab === tab.id
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-waldoge-cream"
+                  : "text-waldoge-cream/60 hover:text-waldoge-cream"
               )}
               title={tab.label}
             >
@@ -169,7 +175,7 @@ export const Header: FC<HeaderProps> = ({
               {activeTab === tab.id && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute inset-0 bg-primary/10 border border-primary/30 rounded-lg -z-10"
+                  className="absolute inset-0 bg-waldoge-red border border-waldoge-red rounded-lg -z-10 shadow-[0_0_20px_hsl(var(--waldoge-red)/0.5)]"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
@@ -178,12 +184,12 @@ export const Header: FC<HeaderProps> = ({
         </nav>
       </div>
 
-      {/* Mobile balance display */}
+      {/* Mobile balance */}
       {connected && (
-        <div className="sm:hidden px-4 pb-3 flex items-center justify-between border-t border-border/30 pt-2">
+        <div className="sm:hidden px-4 pb-3 flex items-center justify-between border-t border-waldoge-red/20 pt-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Balance:</span>
-            <span className="font-display font-semibold text-primary text-sm">
+            <span className="text-xs text-waldoge-cream/60">Balance:</span>
+            <span className="font-display font-semibold text-waldoge-red text-sm">
               {isLoading ? "..." : `${balance.toLocaleString()} WALDOGE`}
             </span>
           </div>
