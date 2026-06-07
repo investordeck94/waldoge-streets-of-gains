@@ -5247,12 +5247,32 @@ export const StreetBrawler: FC = () => {
                 <div className="glass-card p-2 flex justify-between"><span>L (in air)</span><span className="text-primary">Ground Pound</span></div>
               </div>
             </div>
-            <button
-              onClick={startGame}
-              className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-bold flex items-center gap-2 mx-auto hover:opacity-90 transition"
-            >
-              <Play className="w-5 h-5" /> START BRAWL
-            </button>
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-primary">CHOOSE DIFFICULTY</p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <button
+                  onClick={() => startGame("easy")}
+                  className="px-5 py-3 bg-emerald-500 text-white rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
+                >
+                  <Play className="w-4 h-4" /> EASY
+                </button>
+                <button
+                  onClick={() => startGame("normal")}
+                  className="px-5 py-3 bg-primary text-primary-foreground rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
+                >
+                  <Play className="w-4 h-4" /> NORMAL
+                </button>
+                <button
+                  onClick={() => startGame("blackMonday")}
+                  className="px-5 py-3 bg-destructive text-destructive-foreground rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
+                >
+                  <Play className="w-4 h-4" /> BLACK MONDAY
+                </button>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Easy: standard goons & full platform pickups · Normal: more goons, 3 pickups · Black Monday: max goons, 2 pickups
+              </p>
+            </div>
           </motion.div>
         )}
 
