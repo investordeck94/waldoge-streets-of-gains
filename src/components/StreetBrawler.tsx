@@ -3178,7 +3178,7 @@ export const StreetBrawler: FC = () => {
     ];
     g.alleyObjects = spawnAlleyObjects();
     g.platforms = spawnPlatforms(0);
-    g.powerups = spawnPlatformPickups(g.platforms);
+    g.powerups = spawnPlatformPickups(g.platforms, diff);
     g.animFrameCount = 0;
     // Initialize rain
     g.rain = [];
