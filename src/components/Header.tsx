@@ -97,7 +97,7 @@ export const Header: FC<HeaderProps> = ({
           >
             <div className="relative">
               <img
-                src={waldogeMascot}
+                src={waldogeLogoAsset.url}
                 alt="WALDOGE"
                 className="w-10 h-10 object-contain"
               />
