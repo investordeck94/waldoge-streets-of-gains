@@ -4205,7 +4205,7 @@ export const StreetBrawler: FC = () => {
               sfx(() => SFX.bossEntrance());
             } else {
               sfx(() => SFX.waveStart());
-              g.enemies = spawnEnemies(g.level, g.wave, p.x);
+              g.enemies = spawnEnemies(g.level, g.wave, p.x, g.difficulty);
             }
           }
         }
