@@ -5298,7 +5298,7 @@ export const StreetBrawler: FC = () => {
             )}
             <p className="text-lg text-primary font-bold">Score: {score}</p>
             <button
-              onClick={startGame}
+              onClick={() => startGame(difficulty)}
               className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-bold flex items-center gap-2 mx-auto hover:opacity-90 transition"
             >
               <RotateCcw className="w-5 h-5" /> PLAY AGAIN
