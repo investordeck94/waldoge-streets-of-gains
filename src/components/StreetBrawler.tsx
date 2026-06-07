@@ -4151,6 +4151,7 @@ export const StreetBrawler: FC = () => {
             sfx(() => SFX.waveStart());
             g.enemies = spawnEnemies(g.level, 0, p.x);
             g.platforms = spawnPlatforms(g.level);
+            g.powerups.push(...spawnPlatformPickups(g.platforms));
             (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
           } else {
             // Next wave within current level
