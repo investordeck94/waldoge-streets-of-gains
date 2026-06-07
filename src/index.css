@@ -32,9 +32,9 @@
     --muted: 240 15% 12%;
     --muted-foreground: 240 5% 55%;
 
-    /* Accent - Cosmic purple */
-    --accent: 270 60% 50%;
-    --accent-foreground: 60 9% 95%;
+    /* Accent - Neon red */
+    --accent: 0 100% 55%;
+    --accent-foreground: 0 0% 100%;
 
     /* Destructive */
     --destructive: 0 72% 55%;
@@ -50,11 +50,11 @@
     /* Custom WALDOGE colors */
     --waldoge-gold: 45 95% 55%;
     --waldoge-gold-glow: 45 95% 65%;
-    --waldoge-purple: 270 60% 50%;
-    --waldoge-cyan: 185 70% 50%;
-    --waldoge-pink: 330 80% 60%;
+    --waldoge-purple: 0 100% 55%;
+    --waldoge-cyan: 0 0% 100%;
+    --waldoge-pink: 0 90% 60%;
     --waldoge-space: 240 20% 4%;
-    --waldoge-nebula: 260 40% 15%;
+    --waldoge-nebula: 0 40% 12%;
     --waldoge-success: 145 65% 45%;
     --waldoge-red: 0 75% 48%;
     --waldoge-red-glow: 0 85% 58%;
@@ -64,18 +64,19 @@
     --tier-locked: 0 0% 40%;
     --tier-preview: 240 15% 40%;
     --tier-basic: 45 95% 55%;
-    --tier-chaos: 270 80% 60%;
+    --tier-chaos: 0 100% 60%;
 
     /* Gradients */
     --gradient-gold: linear-gradient(135deg, hsl(45 95% 55%) 0%, hsl(35 90% 50%) 100%);
-    --gradient-cosmic: linear-gradient(135deg, hsl(270 60% 50%) 0%, hsl(185 70% 50%) 100%);
-    --gradient-space: linear-gradient(180deg, hsl(240 20% 6%) 0%, hsl(260 30% 10%) 50%, hsl(240 20% 4%) 100%);
-    --gradient-chaos: linear-gradient(135deg, hsl(270 80% 60%) 0%, hsl(330 80% 60%) 50%, hsl(45 95% 55%) 100%);
+    --gradient-cosmic: linear-gradient(135deg, hsl(0 100% 55%) 0%, hsl(0 0% 100%) 100%);
+    --gradient-space: linear-gradient(180deg, hsl(240 20% 6%) 0%, hsl(0 30% 8%) 50%, hsl(240 20% 4%) 100%);
+    --gradient-chaos: linear-gradient(135deg, hsl(0 100% 55%) 0%, hsl(0 0% 100%) 50%, hsl(0 90% 50%) 100%);
     --gradient-glow: radial-gradient(ellipse at center, hsl(45 95% 55% / 0.15) 0%, transparent 70%);
 
     /* Shadows */
     --shadow-gold: 0 0 30px hsl(45 95% 55% / 0.3);
-    --shadow-cosmic: 0 0 40px hsl(270 60% 50% / 0.3);
+    --shadow-cosmic: 0 0 40px hsl(0 100% 55% / 0.4);
+
     --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.4);
 
     /* Sidebar */
