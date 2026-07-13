@@ -2,6 +2,8 @@
 // Streams OpenAI-compatible SSE so it plugs into useStreamingChat unchanged.
 // Swap BARK_ZERO_SYSTEM_PROMPT below with the user's full personality prompt.
 
+import { loadBarkZeroContext } from "../_shared/barkZeroContext.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -159,6 +161,9 @@ Deno.serve(async (req) => {
       });
     }
 
+    const contextBlock = await loadBarkZeroContext();
+    const systemPrompt = BARK_ZERO_SYSTEM_PROMPT + contextBlock;
+
     const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -169,7 +174,7 @@ Deno.serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         stream: true,
         messages: [
-          { role: "system", content: BARK_ZERO_SYSTEM_PROMPT },
+          { role: "system", content: systemPrompt },
           ...messages,
         ],
       }),
