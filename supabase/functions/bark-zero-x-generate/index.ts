@@ -68,6 +68,7 @@ Deno.serve(async (req) => {
       "Return the JSON now.",
     ].filter(Boolean).join("\n");
 
+    const contextBlock = await loadBarkZeroContext();
     const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
@@ -75,7 +76,7 @@ Deno.serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: SYSTEM_PROMPT + contextBlock },
           { role: "user", content: userMsg },
         ],
       }),
