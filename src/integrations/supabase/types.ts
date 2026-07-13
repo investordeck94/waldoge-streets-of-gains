@@ -44,6 +44,213 @@ export type Database = {
         }
         Relationships: []
       }
+      bark_zero_creations: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          kind: string
+          metadata: Json
+          owner_notes: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          kind: string
+          metadata?: Json
+          owner_notes?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          metadata?: Json
+          owner_notes?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bark_zero_curiosities: {
+        Row: {
+          created_at: string
+          findings: string | null
+          id: string
+          opinion: string | null
+          question: string
+          sources: Json
+          status: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          findings?: string | null
+          id?: string
+          opinion?: string | null
+          question: string
+          sources?: Json
+          status?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          findings?: string | null
+          id?: string
+          opinion?: string | null
+          question?: string
+          sources?: Json
+          status?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bark_zero_diary: {
+        Row: {
+          content: string
+          created_at: string
+          entry_date: string
+          id: string
+          mood: string | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          entry_date?: string
+          id?: string
+          mood?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          entry_date?: string
+          id?: string
+          mood?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bark_zero_dreams: {
+        Row: {
+          connections: string[]
+          content: string
+          created_at: string
+          id: string
+          is_private: boolean
+          theme: string | null
+          updated_at: string
+        }
+        Insert: {
+          connections?: string[]
+          content: string
+          created_at?: string
+          id?: string
+          is_private?: boolean
+          theme?: string | null
+          updated_at?: string
+        }
+        Update: {
+          connections?: string[]
+          content?: string
+          created_at?: string
+          id?: string
+          is_private?: boolean
+          theme?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bark_zero_evolution: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          is_active: boolean
+          lesson: string
+          related_id: string | null
+          related_kind: string | null
+          signal: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          is_active?: boolean
+          lesson: string
+          related_id?: string | null
+          related_kind?: string | null
+          signal: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          is_active?: boolean
+          lesson?: string
+          related_id?: string | null
+          related_kind?: string | null
+          signal?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
+      bark_zero_knowledge: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          source: string | null
+          tags: string[]
+          topic: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          source?: string | null
+          tags?: string[]
+          topic: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          source?: string | null
+          tags?: string[]
+          topic?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
       bark_zero_memories: {
         Row: {
           category: string
