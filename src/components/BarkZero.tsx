@@ -357,6 +357,8 @@ export const BarkZero: FC = () => {
                 >
                   {active === "chat" ? (
                     <ChatPanel />
+                  ) : active === "xstudio" ? (
+                    <XStudioPanel />
                   ) : active === "launchlab" ? (
                     <LaunchLabPanel />
                   ) : (
