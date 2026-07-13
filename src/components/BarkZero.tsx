@@ -15,8 +15,10 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useStreamingChat, ChatMessage } from "@/hooks/useStreamingChat";
 import barkZeroLogo from "@/assets/bark-zero-logo.png";
+
+type ChatMessage = { role: "user" | "assistant"; content: string };
+const BARK_ZERO_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-chat`;
 
 type ToolId =
   | "chat"
@@ -55,12 +57,18 @@ const ChatPanel: FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
-  const { streamChat, cancelStream } = useStreamingChat();
+  const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, streaming]);
+
+  const cancelStream = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setStreaming(false);
+  };
 
   const send = async (textOverride?: string) => {
     const text = (textOverride ?? input).trim();
