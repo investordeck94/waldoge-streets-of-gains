@@ -15,8 +15,10 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useStreamingChat, ChatMessage } from "@/hooks/useStreamingChat";
 import barkZeroLogo from "@/assets/bark-zero-logo.png";
+
+type ChatMessage = { role: "user" | "assistant"; content: string };
+const BARK_ZERO_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-chat`;
 
 type ToolId =
   | "chat"
@@ -55,12 +57,18 @@ const ChatPanel: FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
-  const { streamChat, cancelStream } = useStreamingChat();
+  const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, streaming]);
+
+  const cancelStream = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setStreaming(false);
+  };
 
   const send = async (textOverride?: string) => {
     const text = (textOverride ?? input).trim();
@@ -73,32 +81,79 @@ const ChatPanel: FC = () => {
     // Add empty assistant placeholder we'll append to
     setMessages((m) => [...m, { role: "assistant", content: "" }]);
 
-    await streamChat({
-      messages: next,
-      chaosMode: false,
-      onDelta: (delta) => {
-        setMessages((m) => {
-          const copy = [...m];
-          const last = copy[copy.length - 1];
-          if (last?.role === "assistant") {
-            copy[copy.length - 1] = { ...last, content: last.content + delta };
-          }
-          return copy;
-        });
-      },
-      onDone: () => setStreaming(false),
-      onError: (err) => {
-        setMessages((m) => {
-          const copy = [...m];
-          const last = copy[copy.length - 1];
-          if (last?.role === "assistant" && last.content === "") {
-            copy[copy.length - 1] = { ...last, content: `⚠ ${err}` };
-          }
-          return copy;
-        });
+    const appendDelta = (delta: string) => {
+      setMessages((m) => {
+        const copy = [...m];
+        const last = copy[copy.length - 1];
+        if (last?.role === "assistant") {
+          copy[copy.length - 1] = { ...last, content: last.content + delta };
+        }
+        return copy;
+      });
+    };
+
+    const setError = (err: string) => {
+      setMessages((m) => {
+        const copy = [...m];
+        const last = copy[copy.length - 1];
+        if (last?.role === "assistant" && last.content === "") {
+          copy[copy.length - 1] = { ...last, content: `⚠ ${err}` };
+        }
+        return copy;
+      });
+    };
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    try {
+      const res = await fetch(BARK_ZERO_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ messages: next }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok || !res.body) {
+        const errBody = await res.text().catch(() => "");
+        setError(errBody || `Request failed (${res.status})`);
         setStreaming(false);
-      },
-    });
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buf.indexOf("\n")) !== -1) {
+          let line = buf.slice(0, idx);
+          buf = buf.slice(idx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const payload = line.slice(6).trim();
+          if (payload === "[DONE]") continue;
+          try {
+            const json = JSON.parse(payload);
+            const delta = json.choices?.[0]?.delta?.content;
+            if (delta) appendDelta(delta);
+          } catch {
+            /* ignore partial chunks */
+          }
+        }
+      }
+      setStreaming(false);
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
+      setError((err as Error).message || "Connection lost");
+      setStreaming(false);
+    }
   };
 
   return (
