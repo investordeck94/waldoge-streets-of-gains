@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.generate-raids]
 verify_jwt = false
+
+[functions.bark-zero-chat]
+verify_jwt = false
