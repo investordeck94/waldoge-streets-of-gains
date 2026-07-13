@@ -16,6 +16,10 @@ import {
   Twitter,
   Brain,
   ShieldCheck,
+  Compass,
+  NotebookPen,
+  Moon,
+  Library,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import barkZeroLogo from "@/assets/bark-zero-logo.png";
@@ -23,6 +27,12 @@ import { LaunchLabPanel } from "./bark-zero/LaunchLabPanel";
 import { XStudioPanel } from "./bark-zero/XStudioPanel";
 import { ConstitutionPanel } from "./bark-zero/ConstitutionPanel";
 import { MemoryPanel } from "./bark-zero/MemoryPanel";
+import { KnowledgePanel } from "./bark-zero/KnowledgePanel";
+import { CreativityPanel } from "./bark-zero/CreativityPanel";
+import { CuriosityPanel } from "./bark-zero/CuriosityPanel";
+import { DiaryPanel } from "./bark-zero/DiaryPanel";
+import { DreamsPanel } from "./bark-zero/DreamsPanel";
+import { EvolutionPanel } from "./bark-zero/EvolutionPanel";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 const BARK_ZERO_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-chat`;
@@ -32,6 +42,12 @@ type ToolId =
   | "xstudio"
   | "constitution"
   | "memory"
+  | "knowledge"
+  | "creativity"
+  | "curiosity"
+  | "diary"
+  | "dreams"
+  | "evolution"
   | "attention"
   | "launchlab"
   | "meme"
@@ -45,6 +61,12 @@ const tools: { id: ToolId; label: string; icon: typeof MessageSquare; desc: stri
   { id: "chat", label: "AI Chat", icon: MessageSquare, desc: "Talk to Bark Zero" },
   { id: "constitution", label: "Constitution", icon: ShieldCheck, desc: "Bark Zero's permanent principles" },
   { id: "memory", label: "Memory", icon: Brain, desc: "Long-term context Bark Zero remembers" },
+  { id: "knowledge", label: "Knowledge", icon: Library, desc: "Facts, history & lore Bark Zero knows" },
+  { id: "creativity", label: "Creativity Engine", icon: Sparkles, desc: "Daily creative sparks — memes, jokes, concepts" },
+  { id: "curiosity", label: "Curiosity Engine", icon: Compass, desc: "What Bark Zero wonders about" },
+  { id: "diary", label: "Bark's Diary", icon: NotebookPen, desc: "Daily inner monologue" },
+  { id: "dreams", label: "Dream Mode", icon: Moon, desc: "Idle creative dreams & connections" },
+  { id: "evolution", label: "Evolution", icon: TrendingUp, desc: "Lessons that refine Bark Zero's voice" },
   { id: "xstudio", label: "X Studio", icon: Twitter, desc: "Draft, approve & publish to X" },
   { id: "attention", label: "Attention Scanner", icon: Radar, desc: "Track what the market is watching" },
   { id: "launchlab", label: "Launch Lab", icon: FlaskConical, desc: "Design a token launch" },
@@ -55,6 +77,7 @@ const tools: { id: ToolId; label: string; icon: typeof MessageSquare; desc: stri
   { id: "narrative", label: "Narrative Scanner", icon: BookOpen, desc: "Emerging crypto narratives" },
   { id: "settings", label: "Settings", icon: SettingsIcon, desc: "Terminal preferences" },
 ];
+
 
 const suggestedPrompts = [
   "What's the strongest narrative in crypto right now?",
@@ -369,6 +392,18 @@ export const BarkZero: FC = () => {
                     <ConstitutionPanel />
                   ) : active === "memory" ? (
                     <MemoryPanel />
+                  ) : active === "knowledge" ? (
+                    <KnowledgePanel />
+                  ) : active === "creativity" ? (
+                    <CreativityPanel />
+                  ) : active === "curiosity" ? (
+                    <CuriosityPanel />
+                  ) : active === "diary" ? (
+                    <DiaryPanel />
+                  ) : active === "dreams" ? (
+                    <DreamsPanel />
+                  ) : active === "evolution" ? (
+                    <EvolutionPanel />
                   ) : active === "xstudio" ? (
                     <XStudioPanel />
                   ) : active === "launchlab" ? (
