@@ -1,8 +1,6 @@
 // Bark Zero — dedicated AI persona endpoint
+// Streams OpenAI-compatible SSE so it plugs into useStreamingChat unchanged.
 // Swap BARK_ZERO_SYSTEM_PROMPT below with the user's full personality prompt.
-
-import { streamText, convertToModelMessages, type UIMessage } from "npm:ai";
-import { createOpenAICompatible } from "npm:@ai-sdk/openai-compatible";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,24 +54,48 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { messages }: { messages: UIMessage[] } = await req.json();
+    const { messages } = await req.json();
+    if (!Array.isArray(messages)) {
+      return new Response(JSON.stringify({ error: "messages must be an array" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    const gateway = createOpenAICompatible({
-      name: "lovable",
-      baseURL: "https://ai.gateway.lovable.dev/v1",
+    const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
       headers: {
+        "Content-Type": "application/json",
         "Lovable-API-Key": key,
-        "X-Lovable-AIG-SDK": "vercel-ai-sdk",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        stream: true,
+        messages: [
+          { role: "system", content: BARK_ZERO_SYSTEM_PROMPT },
+          ...messages,
+        ],
+      }),
+    });
+
+    if (!upstream.ok || !upstream.body) {
+      const errText = await upstream.text().catch(() => "");
+      console.error("bark-zero gateway error:", upstream.status, errText);
+      return new Response(
+        JSON.stringify({ error: errText || `Gateway ${upstream.status}` }),
+        { status: upstream.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    return new Response(upstream.body, {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
       },
     });
-
-    const result = streamText({
-      model: gateway("google/gemini-3-flash-preview"),
-      system: BARK_ZERO_SYSTEM_PROMPT,
-      messages: await convertToModelMessages(messages),
-    });
-
-    return result.toUIMessageStreamResponse({ headers: corsHeaders });
   } catch (err) {
     console.error("bark-zero-chat error:", err);
     return new Response(
