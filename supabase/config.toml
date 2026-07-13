@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.bark-zero-launch-proposal]
 verify_jwt = false
+
+[functions.bark-zero-x-generate]
+verify_jwt = false
+
+[functions.bark-zero-x-publish]
+verify_jwt = false
