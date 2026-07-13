@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      bark_zero_constitution: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          priority: number
+          section: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          priority?: number
+          section: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          priority?: number
+          section?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bark_zero_memories: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          tags: string[]
+          title: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          tags?: string[]
+          title: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
       maze_leaderboard: {
         Row: {
           created_at: string
