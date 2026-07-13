@@ -1,6 +1,8 @@
 // Bark Zero — Launch Proposal generator
 // Returns a structured Launch Proposal JSON. Owner approval required before any launch.
 
+import { loadBarkZeroContext } from "../_shared/barkZeroContext.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
