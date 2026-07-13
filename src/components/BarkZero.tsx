@@ -13,16 +13,19 @@ import {
   Send,
   Sparkles,
   Loader2,
+  Twitter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import barkZeroLogo from "@/assets/bark-zero-logo.png";
 import { LaunchLabPanel } from "./bark-zero/LaunchLabPanel";
+import { XStudioPanel } from "./bark-zero/XStudioPanel";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 const BARK_ZERO_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-chat`;
 
 type ToolId =
   | "chat"
+  | "xstudio"
   | "attention"
   | "launchlab"
   | "meme"
@@ -34,6 +37,7 @@ type ToolId =
 
 const tools: { id: ToolId; label: string; icon: typeof MessageSquare; desc: string }[] = [
   { id: "chat", label: "AI Chat", icon: MessageSquare, desc: "Talk to Bark Zero" },
+  { id: "xstudio", label: "X Studio", icon: Twitter, desc: "Draft, approve & publish to X" },
   { id: "attention", label: "Attention Scanner", icon: Radar, desc: "Track what the market is watching" },
   { id: "launchlab", label: "Launch Lab", icon: FlaskConical, desc: "Design a token launch" },
   { id: "meme", label: "Meme Generator", icon: ImageIcon, desc: "Instant meme fuel" },
@@ -353,6 +357,8 @@ export const BarkZero: FC = () => {
                 >
                   {active === "chat" ? (
                     <ChatPanel />
+                  ) : active === "xstudio" ? (
+                    <XStudioPanel />
                   ) : active === "launchlab" ? (
                     <LaunchLabPanel />
                   ) : (
