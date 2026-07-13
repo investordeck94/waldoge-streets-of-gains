@@ -14,11 +14,15 @@ import {
   Sparkles,
   Loader2,
   Twitter,
+  Brain,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import barkZeroLogo from "@/assets/bark-zero-logo.png";
 import { LaunchLabPanel } from "./bark-zero/LaunchLabPanel";
 import { XStudioPanel } from "./bark-zero/XStudioPanel";
+import { ConstitutionPanel } from "./bark-zero/ConstitutionPanel";
+import { MemoryPanel } from "./bark-zero/MemoryPanel";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 const BARK_ZERO_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-chat`;
