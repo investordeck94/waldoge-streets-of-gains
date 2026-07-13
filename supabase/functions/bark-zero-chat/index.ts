@@ -2,6 +2,8 @@
 // Streams OpenAI-compatible SSE so it plugs into useStreamingChat unchanged.
 // Swap BARK_ZERO_SYSTEM_PROMPT below with the user's full personality prompt.
 
+import { loadBarkZeroContext } from "../_shared/barkZeroContext.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
