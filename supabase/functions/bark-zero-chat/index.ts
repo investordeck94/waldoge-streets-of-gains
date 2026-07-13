@@ -161,6 +161,9 @@ Deno.serve(async (req) => {
       });
     }
 
+    const contextBlock = await loadBarkZeroContext();
+    const systemPrompt = BARK_ZERO_SYSTEM_PROMPT + contextBlock;
+
     const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -171,7 +174,7 @@ Deno.serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         stream: true,
         messages: [
-          { role: "system", content: BARK_ZERO_SYSTEM_PROMPT },
+          { role: "system", content: systemPrompt },
           ...messages,
         ],
       }),
