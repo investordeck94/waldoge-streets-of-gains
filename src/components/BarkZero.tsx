@@ -30,6 +30,8 @@ const BARK_ZERO_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-ze
 type ToolId =
   | "chat"
   | "xstudio"
+  | "constitution"
+  | "memory"
   | "attention"
   | "launchlab"
   | "meme"
@@ -41,6 +43,8 @@ type ToolId =
 
 const tools: { id: ToolId; label: string; icon: typeof MessageSquare; desc: string }[] = [
   { id: "chat", label: "AI Chat", icon: MessageSquare, desc: "Talk to Bark Zero" },
+  { id: "constitution", label: "Constitution", icon: ShieldCheck, desc: "Bark Zero's permanent principles" },
+  { id: "memory", label: "Memory", icon: Brain, desc: "Long-term context Bark Zero remembers" },
   { id: "xstudio", label: "X Studio", icon: Twitter, desc: "Draft, approve & publish to X" },
   { id: "attention", label: "Attention Scanner", icon: Radar, desc: "Track what the market is watching" },
   { id: "launchlab", label: "Launch Lab", icon: FlaskConical, desc: "Design a token launch" },
