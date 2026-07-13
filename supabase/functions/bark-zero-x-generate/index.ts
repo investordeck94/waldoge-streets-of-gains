@@ -1,6 +1,8 @@
 // Bark Zero — X (Twitter) content generator
 // Generates a tweet, thread, or reply as structured JSON. Owner approval required before publish.
 
+import { loadBarkZeroContext } from "../_shared/barkZeroContext.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
