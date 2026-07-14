@@ -68,6 +68,8 @@ type ToolId =
   | "attention"
   | "launchlab"
   | "launchhistory"
+  | "marketintel"
+
   | "meme"
   | "art"
   | "wallet"
