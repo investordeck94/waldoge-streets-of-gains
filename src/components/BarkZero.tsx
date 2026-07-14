@@ -117,6 +117,7 @@ const ChatPanel: FC = () => {
     abortRef.current?.abort();
     abortRef.current = null;
     setStreaming(false);
+    barkAvatar.setState("idle");
   };
 
   const send = async (textOverride?: string) => {
