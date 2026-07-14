@@ -140,6 +140,21 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
+    const liveSources = detectLiveSources();
+    const mode: "live" | "ai_estimate" = liveSources.length ? "live" : "ai_estimate";
+
+    // Probe mode: return only which sources are configured (no scan, no cost).
+    if (body?.probe === true) {
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          mode,
+          liveSources: liveSources.map((s) => ({ id: s.id, label: s.label })),
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const requested: Category[] = Array.isArray(body?.categories) && body.categories.length
       ? body.categories.filter((c: string): c is Category => (CATEGORIES as readonly string[]).includes(c))
       : [...CATEGORIES];
@@ -153,7 +168,9 @@ Deno.serve(async (req) => {
         const parsed = await callModel(
           `Category: ${category}\nBrief: ${CATEGORY_BRIEF[category]}\nReturn the ranked items JSON.`,
           key,
+          liveSources,
         );
+
         const items = Array.isArray(parsed?.items) ? parsed.items : [];
         if (!items.length) { summary[category] = { count: 0 }; continue; }
 
