@@ -274,7 +274,7 @@ Deno.serve(async (req) => {
     // ————— Phase 2: proposal grounded in the chosen narrative —————
     const proposal = await callModel(
       [
-        { role: "system", content: PROPOSAL_SYSTEM + contextBlock },
+        { role: "system", content: PROPOSAL_SYSTEM + contextBlock + marketIntelBlock },
         {
           role: "user",
           content:
