@@ -65,6 +65,7 @@ type ToolId =
   | "evolution"
   | "attention"
   | "launchlab"
+  | "launchhistory"
   | "meme"
   | "art"
   | "wallet"
