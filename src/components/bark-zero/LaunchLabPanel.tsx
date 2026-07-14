@@ -183,8 +183,7 @@ export const LaunchLabPanel: FC = () => {
   const [status, setStatus] = useState<Status>("idle");
   const [proposal, setProposal] = useState<LaunchProposal | null>(null);
   const [landscape, setLandscape] = useState<Landscape | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [errorRaw, setErrorRaw] = useState<string | null>(null);
+  const [error, setError] = useState<FetchErrorDetails | null>(null);
   const [pipelinePhase, setPipelinePhase] = useState<string | null>(null);
   const [completedPhases, setCompletedPhases] = useState<Set<string>>(new Set());
 
