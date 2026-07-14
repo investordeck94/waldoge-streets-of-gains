@@ -101,6 +101,7 @@ Deno.serve(async (req) => {
   outbound.append("tickerImage", tickerImage as File, (tickerImage as File).name);
   if (twitterLink) outbound.append("twitterLink", twitterLink);
   if (telegramLink) outbound.append("telegramLink", telegramLink);
+  if (validateOnly) outbound.append("validateOnly", "true");
 
   let anonRes: Response;
   try {
