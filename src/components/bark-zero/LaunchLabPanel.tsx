@@ -501,6 +501,21 @@ export const LaunchLabPanel: FC = () => {
           <div className="mt-4 text-xs text-red-400 font-mono">⚠ {error}</div>
         )}
 
+        {rejection && (
+          <div className="mt-4 rounded-xl border border-red-500/40 bg-red-500/5 p-4">
+            <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-red-400 mb-2">
+              Bark Rejected This Landscape
+            </div>
+            <div className="text-sm text-white/85 leading-relaxed whitespace-pre-wrap">
+              {rejection.reason}
+            </div>
+            <div className="mt-2 text-[11px] text-white/50 font-mono">
+              Nothing here clears the bar. Sharpen the brief and try again — no generic memecoins.
+            </div>
+          </div>
+        )}
+
+
         <button
           onClick={() => generate()}
           disabled={status === "generating" || !brief.trim()}
