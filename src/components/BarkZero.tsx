@@ -371,9 +371,9 @@ export const BarkZero: FC = () => {
           </div>
 
 
-          <div className="grid lg:grid-cols-[280px,1fr] gap-6">
+          <div className="grid lg:grid-cols-[280px,minmax(0,1fr)] gap-6 min-w-0">
             {/* Sidebar tools */}
-            <aside className="rounded-2xl border border-neon/25 bg-black/60 backdrop-blur-xl p-2 h-fit lg:sticky lg:top-24">
+            <aside className="rounded-2xl border border-neon/25 bg-black/60 backdrop-blur-xl p-2 h-fit lg:sticky lg:top-24 min-w-0">
               <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-[0.25em] text-neon/70">
                 Modules
               </div>
@@ -401,7 +401,8 @@ export const BarkZero: FC = () => {
             </aside>
 
             {/* Active panel */}
-            <div>
+            <div className="min-w-0 max-w-full overflow-x-hidden">
+
               <AnimatePresence mode="wait">
                 <motion.div
                   key={active}
