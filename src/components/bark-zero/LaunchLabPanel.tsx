@@ -8,11 +8,13 @@ const LAUNCH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-
 
 type LaunchResult = {
   ok: boolean;
+  validateOnly?: boolean;
   mintAddress: string | null;
   requestId: string | null;
   signature: string | null;
   confirmed: boolean;
   broadcastError: string | null;
+  anoncoin?: unknown;
 };
 
 export type LaunchProposal = {
