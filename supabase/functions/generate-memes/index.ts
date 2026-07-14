@@ -4,7 +4,7 @@ import { verifyTierAndUsage } from "../_shared/tierVerification.ts";
 // Input validation constants
 const MAX_THEME_LENGTH = 500;
 const MAX_WALLET_LENGTH = 50;
-const MIN_WALLET_LENGTH = 5; // Reduced to allow "anonymous"
+const MIN_WALLET_LENGTH = 32; // Require real Solana wallet address; match chat/raids
 const VALID_MODES = ["caption", "prompt", "image"];
 
 interface MemeRequest {
@@ -21,8 +21,11 @@ function validateMemeRequest(body: unknown): { valid: true; data: MemeRequest } 
 
   const request = body as Record<string, unknown>;
 
-  // Validate wallet address (allow "anonymous" for non-connected users)
-  const walletAddress = typeof request.walletAddress === "string" ? request.walletAddress : "anonymous";
+  // Require a real wallet address (32-50 chars). No anonymous bypass.
+  if (typeof request.walletAddress !== "string") {
+    return { valid: false, error: "Wallet address is required" };
+  }
+  const walletAddress = request.walletAddress;
   if (walletAddress.length < MIN_WALLET_LENGTH || walletAddress.length > MAX_WALLET_LENGTH) {
     return { valid: false, error: "Valid wallet address is required" };
   }
@@ -166,19 +169,16 @@ serve(async (req) => {
 
     const { theme, mode, walletAddress, imageData } = validation.data;
 
-    // Server-side tier verification - skip for anonymous users
-    if (walletAddress !== "anonymous") {
-      const tierInfo = await verifyTierAndUsage(walletAddress, "memeGenerator");
-      
-      if (!tierInfo.allowed) {
-        const errorMsg = tierInfo.limit === 0 
-          ? ERROR_MESSAGES.tier_blocked 
-          : ERROR_MESSAGES.usage_limit;
-        return new Response(JSON.stringify({ error: errorMsg }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    // Server-side tier verification - always enforced (no anonymous bypass)
+    const tierInfo = await verifyTierAndUsage(walletAddress, "memeGenerator");
+    if (!tierInfo.allowed) {
+      const errorMsg = tierInfo.limit === 0
+        ? ERROR_MESSAGES.tier_blocked
+        : ERROR_MESSAGES.usage_limit;
+      return new Response(JSON.stringify({ error: errorMsg }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const sanitizedTheme = sanitizeContent(theme);
