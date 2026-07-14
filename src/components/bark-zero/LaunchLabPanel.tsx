@@ -141,6 +141,16 @@ export const LaunchLabPanel: FC = () => {
   const [validated, setValidated] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Pre-flight checks (gate "Approve Launch" in reviewing state)
+  const [ownerConfirmed, setOwnerConfirmed] = useState(false);
+  const [preflight, setPreflight] = useState<{
+    loading: boolean;
+    passed: boolean;
+    error: string | null;
+    mintAddress: string | null;
+    requestId: string | null;
+  }>({ loading: false, passed: false, error: null, mintAddress: null, requestId: null });
+
   // Auto-generated launch assets (logo / banner / telegram)
   const [assets, setAssets] = useState<Record<AssetKind, AssetState>>({
     logo: emptyAsset(), banner: emptyAsset(), telegram: emptyAsset(),
