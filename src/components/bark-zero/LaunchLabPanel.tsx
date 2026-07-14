@@ -272,12 +272,22 @@ export const LaunchLabPanel: FC = () => {
         </div>
 
         {launchResult ? (
-          <div className="rounded-xl border border-green-400/50 bg-green-500/5 p-5 space-y-3">
-            <div className="flex items-center gap-2 text-green-300 font-mono text-sm">
+          <div className={cn(
+            "rounded-xl border p-5 space-y-3",
+            launchResult.validateOnly
+              ? "border-neon/40 bg-neon/5"
+              : "border-green-400/50 bg-green-500/5",
+          )}>
+            <div className={cn(
+              "flex items-center gap-2 font-mono text-sm",
+              launchResult.validateOnly ? "text-neon" : "text-green-300",
+            )}>
               <CheckCircle2 className="w-5 h-5" />
-              {launchResult.confirmed
-                ? "Launch confirmed on Solana"
-                : "Launch submitted — confirmation pending"}
+              {launchResult.validateOnly
+                ? "Validation passed — token can be created"
+                : launchResult.confirmed
+                  ? "Launch confirmed on Solana"
+                  : "Launch submitted — confirmation pending"}
             </div>
             <div className="grid sm:grid-cols-2 gap-3 text-xs font-mono">
               <div>
@@ -288,17 +298,19 @@ export const LaunchLabPanel: FC = () => {
                 <div className="text-white/40 uppercase tracking-widest mb-1">Request ID</div>
                 <div className="text-white break-all">{launchResult.requestId ?? "—"}</div>
               </div>
-              <div className="sm:col-span-2">
-                <div className="text-white/40 uppercase tracking-widest mb-1">Tx Signature</div>
-                <div className="text-white break-all">{launchResult.signature ?? "—"}</div>
-              </div>
+              {!launchResult.validateOnly && (
+                <div className="sm:col-span-2">
+                  <div className="text-white/40 uppercase tracking-widest mb-1">Tx Signature</div>
+                  <div className="text-white break-all">{launchResult.signature ?? "—"}</div>
+                </div>
+              )}
             </div>
             {launchResult.broadcastError && (
               <div className="text-xs text-yellow-300/90 font-mono">
                 ⚠ {launchResult.broadcastError}
               </div>
             )}
-            {launchResult.signature && (
+            {launchResult.signature && !launchResult.validateOnly && (
               <a
                 href={`https://solscan.io/tx/${launchResult.signature}`}
                 target="_blank"
@@ -308,12 +320,32 @@ export const LaunchLabPanel: FC = () => {
                 view on Solscan ↗
               </a>
             )}
-            <button
-              onClick={reset}
-              className="block text-xs font-mono uppercase tracking-widest text-white/50 hover:text-neon"
-            >
-              ← draft another proposal
-            </button>
+            {launchResult.anoncoin !== undefined && (
+              <details className="text-xs">
+                <summary className="cursor-pointer text-white/50 font-mono uppercase tracking-widest">
+                  Raw API response
+                </summary>
+                <pre className="mt-2 p-3 rounded-lg bg-black/60 border border-white/10 text-[11px] text-white/80 overflow-x-auto whitespace-pre-wrap break-words">
+{JSON.stringify(launchResult.anoncoin, null, 2)}
+                </pre>
+              </details>
+            )}
+            <div className="flex gap-3 pt-1">
+              {launchResult.validateOnly && (
+                <button
+                  onClick={() => { setLaunchResult(null); setLaunchMode(null); }}
+                  className="text-xs font-mono uppercase tracking-widest text-neon hover:underline"
+                >
+                  ← back to launch form
+                </button>
+              )}
+              <button
+                onClick={reset}
+                className="text-xs font-mono uppercase tracking-widest text-white/50 hover:text-neon"
+              >
+                ← draft another proposal
+              </button>
+            </div>
           </div>
         ) : (
           <div className="rounded-xl border border-neon/25 bg-white/[0.02] p-5 space-y-4">
