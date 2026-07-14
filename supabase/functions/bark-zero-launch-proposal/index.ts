@@ -201,6 +201,19 @@ Deno.serve(async (req) => {
     );
 
     const narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
+
+    // Bark rejected the whole landscape — surface it, do not draft a proposal.
+    if (landscape?.rejected === true) {
+      return new Response(
+        JSON.stringify({
+          rejected: true,
+          reason: String(landscape?.reason ?? "Nothing in the current landscape clears the bar."),
+          landscape: { narratives, chosenId: null, rationale: "" },
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const chosen =
       narratives.find((n: any) => n?.id === landscape?.chosenId) ??
       narratives.slice().sort((a: any, b: any) => (b?.composite ?? 0) - (a?.composite ?? 0))[0];
@@ -211,6 +224,7 @@ Deno.serve(async (req) => {
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
 
     // ————— Phase 2: proposal grounded in the chosen narrative —————
     const proposal = await callModel(
