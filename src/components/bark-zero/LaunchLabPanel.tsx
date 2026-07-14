@@ -209,6 +209,7 @@ export const LaunchLabPanel: FC = () => {
 
   const reset = () => {
     setProposal(null);
+    setLandscape(null);
     setStatus("idle");
     setError(null);
     setTickerImage(null);
