@@ -126,6 +126,55 @@ const Section: FC<{ title: string; children: React.ReactNode }> = ({ title, chil
   </div>
 );
 
+const PIPELINE_STEPS: Array<{ id: string; label: string }> = [
+  { id: "landscape_scan",   label: "Scan Landscape" },
+  { id: "narrative_chosen", label: "Choose Best Narrative" },
+  { id: "token",            label: "Generate Token" },
+  { id: "marketing",        label: "Generate Marketing" },
+  { id: "xthread",          label: "Generate X Thread" },
+  { id: "telegram",         label: "Generate Telegram" },
+  { id: "assets",           label: "Draft Launch Assets" },
+  { id: "done",             label: "Ready for Approval" },
+];
+
+const PipelineProgress: FC<{ current: string | null; completed: Set<string> }> = ({ current, completed }) => (
+  <div className="mt-5 rounded-xl border border-neon/20 bg-black/40 p-4">
+    <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-neon/80 mb-3">
+      Bark Zero Pipeline
+    </div>
+    <ol className="space-y-2">
+      {PIPELINE_STEPS.map((step, i) => {
+        const isDone = completed.has(step.id);
+        const isActive = current === step.id && !isDone;
+        return (
+          <li key={step.id} className="flex items-center gap-3">
+            <div className={cn(
+              "w-6 h-6 rounded-full flex items-center justify-center border shrink-0 text-[10px] font-mono",
+              isDone   ? "bg-neon text-black border-neon" :
+              isActive ? "border-neon text-neon shadow-[0_0_12px_hsl(var(--neon)/0.6)]" :
+                         "border-white/15 text-white/40",
+            )}>
+              {isDone
+                ? <CheckCircle2 className="w-3.5 h-3.5" />
+                : isActive
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  : i + 1}
+            </div>
+            <span className={cn(
+              "text-xs font-mono",
+              isDone   ? "text-white/80" :
+              isActive ? "text-neon" :
+                         "text-white/40",
+            )}>
+              {step.label}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  </div>
+);
+
 export const LaunchLabPanel: FC = () => {
   const [brief, setBrief] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -133,6 +182,8 @@ export const LaunchLabPanel: FC = () => {
   const [landscape, setLandscape] = useState<Landscape | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [errorRaw, setErrorRaw] = useState<string | null>(null);
+  const [pipelinePhase, setPipelinePhase] = useState<string | null>(null);
+  const [completedPhases, setCompletedPhases] = useState<Set<string>>(new Set());
 
   const [rejection, setRejection] = useState<{ reason: string; landscape: Landscape | null } | null>(null);
 
@@ -291,33 +342,107 @@ export const LaunchLabPanel: FC = () => {
     setStatus("generating");
     setProposal(null);
     setLandscape(null);
+    setPipelinePhase("landscape_scan");
+    setCompletedPhases(new Set());
     try {
       const res = await fetch(ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Accept: "text/event-stream",
         },
         body: JSON.stringify({ brief: b }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || `Request failed (${res.status})`);
-        if (typeof data.rawResponse === "string") setErrorRaw(data.rawResponse);
+      if (!res.ok || !res.body) {
+        const errData = await res.json().catch(() => ({} as any));
+        setError(errData.error || `Request failed (${res.status})`);
+        if (typeof errData.rawResponse === "string") setErrorRaw(errData.rawResponse);
         setStatus("idle");
+        setPipelinePhase(null);
         return;
       }
-      if (data.rejected) {
 
-        setLandscape((data.landscape as Landscape) ?? null);
-        setRejection({ reason: String(data.reason ?? "Bark rejected the landscape."), landscape: (data.landscape as Landscape) ?? null });
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finalProposal: LaunchProposal | null = null;
+      let finalLandscape: Landscape | null = null;
+
+      const markComplete = (p: string) =>
+        setCompletedPhases((prev) => new Set(prev).add(p));
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+        for (const ev of events) {
+          const line = ev.split("\n").find((l) => l.startsWith("data: "));
+          if (!line) continue;
+          let msg: any;
+          try { msg = JSON.parse(line.slice(6)); } catch { continue; }
+          const phase = msg.phase as string;
+
+          if (phase === "landscape_scan") {
+            setPipelinePhase("landscape_scan");
+          } else if (phase === "narrative_chosen") {
+            markComplete("landscape_scan");
+            markComplete("narrative_chosen");
+            if (msg.landscape) setLandscape(msg.landscape as Landscape);
+            finalLandscape = (msg.landscape as Landscape) ?? finalLandscape;
+            setPipelinePhase("token");
+          } else if (phase === "token") {
+            markComplete("token");
+            setPipelinePhase("marketing");
+          } else if (phase === "marketing") {
+            markComplete("marketing");
+            setPipelinePhase("xthread");
+          } else if (phase === "xthread") {
+            markComplete("xthread");
+            setPipelinePhase("telegram");
+          } else if (phase === "telegram") {
+            markComplete("telegram");
+            setPipelinePhase("assets");
+          } else if (phase === "assets") {
+            markComplete("assets");
+            setPipelinePhase("done");
+          } else if (phase === "rejected") {
+            setLandscape((msg.landscape as Landscape) ?? null);
+            setRejection({
+              reason: String(msg.reason ?? "Bark rejected the landscape."),
+              landscape: (msg.landscape as Landscape) ?? null,
+            });
+            setStatus("idle");
+            setPipelinePhase(null);
+            return;
+          } else if (phase === "error") {
+            setError(msg.error || "Pipeline error");
+            if (typeof msg.rawResponse === "string") setErrorRaw(msg.rawResponse);
+            setStatus("idle");
+            setPipelinePhase(null);
+            return;
+          } else if (phase === "done") {
+            markComplete("done");
+            finalProposal = msg.proposal as LaunchProposal;
+            finalLandscape = (msg.landscape as Landscape) ?? finalLandscape;
+          }
+        }
+      }
+
+      if (!finalProposal) {
+        setError("Pipeline ended without a proposal.");
         setStatus("idle");
+        setPipelinePhase(null);
         return;
       }
-      const p = data.proposal as LaunchProposal;
-      setLandscape((data.landscape as Landscape) ?? null);
+
+      const p = finalProposal;
+      setLandscape(finalLandscape);
       setProposal(p);
       setStatus("reviewing");
+      setPipelinePhase(null);
 
       // Persist a new history record for this proposal
       try {
@@ -339,6 +464,7 @@ export const LaunchLabPanel: FC = () => {
     } catch (e) {
       setError((e as Error).message || "Connection lost");
       setStatus("idle");
+      setPipelinePhase(null);
     }
   };
 
@@ -552,11 +678,7 @@ export const LaunchLabPanel: FC = () => {
         </button>
 
         {status === "generating" && (
-          <div className="mt-4 text-[11px] text-white/50 font-mono leading-relaxed">
-            Bark Zero is scoring AI, meme, X, DogeOS, and Anoncoin narratives on attention,
-            originality, competition, viral potential, and community strength — then picking
-            the strongest opportunity before drafting.
-          </div>
+          <PipelineProgress current={pipelinePhase} completed={completedPhases} />
         )}
       </div>
     );
