@@ -1,5 +1,6 @@
 import { FC, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ownerSecretHeader } from "@/lib/ownerSecret";
 import { Loader2, Compass, Search, Trash2, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -34,7 +35,8 @@ export const CuriosityPanel: FC = () => {
     try {
       const res = await fetch(FN_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader() },
         body: JSON.stringify({ action: "curiosity_question", hint: hint || undefined }),
       });
       const j = await res.json();
@@ -51,7 +53,8 @@ export const CuriosityPanel: FC = () => {
     try {
       const res = await fetch(FN_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader() },
         body: JSON.stringify({ action: "curiosity_research", question: c.question }),
       });
       const j = await res.json();

@@ -1,5 +1,6 @@
 import { FC, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ownerSecretHeader } from "@/lib/ownerSecret";
 import {
   MessageSquare,
   Radar,
@@ -173,6 +174,7 @@ const ChatPanel: FC = () => {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader()
         },
         body: JSON.stringify({ messages: next }),
         signal: controller.signal,

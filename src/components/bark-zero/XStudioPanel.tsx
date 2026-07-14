@@ -1,5 +1,6 @@
 import { FC, useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import { ownerSecretHeader } from "@/lib/ownerSecret";
 import {
   Twitter, Loader2, Sparkles, CheckCircle2, PencilLine, XCircle, Trash2,
   Send, Clock, Pause, Power, ShieldAlert, TrendingUp, MessageSquare,
@@ -136,6 +137,7 @@ const ComposeTab: FC<{ onSaveDraft: (d: Draft) => void }> = ({ onSaveDraft }) =>
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader()
         },
         body: JSON.stringify({ kind, brief, replyingTo: kind === "reply" ? replyingTo : undefined }),
       });
@@ -316,6 +318,7 @@ const DraftsTab: FC<{
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader()
         },
         body: JSON.stringify({ kind: d.kind, text: d.text, posts: d.posts }),
       });
@@ -529,6 +532,7 @@ const SettingsTab: FC<{
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader()
         },
         // send a probe with no valid payload — we only care whether credentials exist
         body: JSON.stringify({ kind: "tweet", text: "" }),

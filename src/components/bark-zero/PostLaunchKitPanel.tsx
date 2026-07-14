@@ -1,5 +1,6 @@
 import { FC, useEffect, useRef, useState } from "react";
 import { Loader2, Copy, CheckCircle2, RefreshCw, Megaphone, MessageSquare, Twitter, Send, Globe, Sparkles, Reply } from "lucide-react";
+import { ownerSecretHeader } from "@/lib/ownerSecret";
 import { cn } from "@/lib/utils";
 import type { LaunchProposal } from "./LaunchLabPanel";
 
@@ -74,6 +75,7 @@ export const PostLaunchKitPanel: FC<Props> = ({ proposal, mintAddress, signature
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader()
         },
         body: JSON.stringify({
           tokenName: proposal.tokenName,

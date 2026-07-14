@@ -1,5 +1,6 @@
 import { FC, useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import { ownerSecretHeader } from "@/lib/ownerSecret";
 import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, Sparkles, Rocket, Upload, Radar, Trophy, RefreshCw, ImageIcon, Download, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -226,6 +227,7 @@ export const LaunchLabPanel: FC = () => {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader()
         },
         body: JSON.stringify({
           kind,
@@ -308,7 +310,8 @@ export const LaunchLabPanel: FC = () => {
       if (validateOnly) fd.append("validateOnly", "true");
       const res = await fetch(LAUNCH_ENDPOINT, {
         method: "POST",
-        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader() },
         body: fd,
       });
       const data = await res.json().catch(() => ({}));
@@ -350,6 +353,7 @@ export const LaunchLabPanel: FC = () => {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader()
           Accept: "text/event-stream",
         },
         body: JSON.stringify({ brief: b }),
@@ -559,7 +563,8 @@ export const LaunchLabPanel: FC = () => {
       fd.append("validateOnly", "true");
       const res = await fetch(LAUNCH_ENDPOINT, {
         method: "POST",
-        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader() },
         body: fd,
       });
       const data = await res.json().catch(() => ({}));

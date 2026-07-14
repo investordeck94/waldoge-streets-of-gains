@@ -1,5 +1,6 @@
 import { FC, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ownerSecretHeader } from "@/lib/ownerSecret";
 import { Loader2, Moon, Trash2, CloudMoon, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
@@ -27,7 +28,8 @@ export const DreamsPanel: FC = () => {
     try {
       const res = await fetch(FN_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader() },
         body: JSON.stringify({ action: "dream", hint: hint || undefined }),
       });
       const j = await res.json();
