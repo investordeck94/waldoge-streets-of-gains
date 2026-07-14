@@ -22,7 +22,20 @@ import {
   Library,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BarkZeroAvatar, type BarkZeroAvatarState } from "./bark-zero/BarkZeroAvatar";
+import { BarkZeroAvatar } from "./bark-zero/BarkZeroAvatar";
+import { barkAvatar, useBarkAvatar } from "./bark-zero/avatarStore";
+
+const BarkZeroAvatarHero: FC = () => {
+  const { state, signalTick, amplitude } = useBarkAvatar();
+  const [pulse, setPulse] = useState(false);
+  useEffect(() => {
+    if (signalTick === 0) return;
+    setPulse(true);
+    const t = window.setTimeout(() => setPulse(false), 50);
+    return () => window.clearTimeout(t);
+  }, [signalTick]);
+  return <BarkZeroAvatar state={state} amplitude={amplitude} signal={pulse} />;
+};
 import { LaunchLabPanel } from "./bark-zero/LaunchLabPanel";
 import { XStudioPanel } from "./bark-zero/XStudioPanel";
 import { ConstitutionPanel } from "./bark-zero/ConstitutionPanel";
