@@ -302,6 +302,57 @@ export type Database = {
         }
         Relationships: []
       }
+      bark_zero_market_intel: {
+        Row: {
+          bark_take: string | null
+          category: string
+          composite: number
+          created_at: string
+          id: string
+          is_active: boolean
+          rank: number | null
+          scanned_at: string
+          scores: Json
+          slug: string
+          source: string | null
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bark_take?: string | null
+          category: string
+          composite?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          rank?: number | null
+          scanned_at?: string
+          scores?: Json
+          slug: string
+          source?: string | null
+          summary: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bark_take?: string | null
+          category?: string
+          composite?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          rank?: number | null
+          scanned_at?: string
+          scores?: Json
+          slug?: string
+          source?: string | null
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bark_zero_memories: {
         Row: {
           category: string
