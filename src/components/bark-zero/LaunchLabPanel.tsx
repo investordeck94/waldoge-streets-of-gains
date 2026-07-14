@@ -5,6 +5,8 @@ import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, 
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { PostLaunchKitPanel } from "./PostLaunchKitPanel";
+import { TechnicalErrorPanel } from "./TechnicalErrorPanel";
+import { fromResponse, fromException, fromStreamPayload, type FetchErrorDetails } from "@/lib/fetchError";
 
 type LandscapeNarrative = {
   id: string;
@@ -181,8 +183,7 @@ export const LaunchLabPanel: FC = () => {
   const [status, setStatus] = useState<Status>("idle");
   const [proposal, setProposal] = useState<LaunchProposal | null>(null);
   const [landscape, setLandscape] = useState<Landscape | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [errorRaw, setErrorRaw] = useState<string | null>(null);
+  const [error, setError] = useState<FetchErrorDetails | null>(null);
   const [pipelinePhase, setPipelinePhase] = useState<string | null>(null);
   const [completedPhases, setCompletedPhases] = useState<Set<string>>(new Set());
 
@@ -196,7 +197,7 @@ export const LaunchLabPanel: FC = () => {
   const [launching, setLaunching] = useState(false);
   const [launchMode, setLaunchMode] = useState<"validate" | "launch" | null>(null);
   const [launchResult, setLaunchResult] = useState<LaunchResult | null>(null);
-  const [launchError, setLaunchError] = useState<string | null>(null);
+  const [launchError, setLaunchError] = useState<FetchErrorDetails | null>(null);
   const [launchFieldErrors, setLaunchFieldErrors] = useState<Record<string, string>>({});
   const [validated, setValidated] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -287,7 +288,7 @@ export const LaunchLabPanel: FC = () => {
   const submitLaunch = async (validateOnly = false) => {
     if (!proposal || launching) return;
     if (!validateOnly && !validated) {
-      setLaunchError("Validate the token first — validation must pass before launch.");
+      setLaunchError({ message: "Validate the token first — validation must pass before launch." });
       return;
     }
     setLaunchError(null);
@@ -314,20 +315,31 @@ export const LaunchLabPanel: FC = () => {
           ...ownerSecretHeader() },
         body: fd,
       });
-      const data = await res.json().catch(() => ({}));
+      // Read body text once so we can surface it even when JSON parsing fails.
+      const bodyText = await res.text();
+      let data: any = {};
+      try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { /* keep raw text */ }
       if (!res.ok) {
         if (data.fieldErrors) setLaunchFieldErrors(data.fieldErrors);
-        if (data.code === "duplicate_ticker") {
-          setLaunchError(`Ticker $${proposal.ticker} is already taken. Edit the proposal and pick another symbol.`);
-        } else {
-          setLaunchError(data.error || `${validateOnly ? "Validation" : "Launch"} failed (${res.status})`);
-        }
+        const friendly =
+          data.code === "duplicate_ticker"
+            ? `Ticker $${proposal.ticker} is already taken. Edit the proposal and pick another symbol.`
+            : data.error || `${validateOnly ? "Validation" : "Launch"} failed (HTTP ${res.status})`;
+        setLaunchError({
+          message: friendly,
+          functionName: "bark-zero-anoncoin-launch",
+          method: "POST",
+          url: LAUNCH_ENDPOINT,
+          status: res.status,
+          statusText: res.statusText,
+          responseBody: bodyText ? bodyText.slice(0, 4000) : undefined,
+        });
         return;
       }
       setLaunchResult(data as LaunchResult);
       if (validateOnly) setValidated(true);
     } catch (e) {
-      setLaunchError((e as Error).message || "Network error");
+      setLaunchError(fromException(e, { functionName: "bark-zero-anoncoin-launch", method: "POST", url: LAUNCH_ENDPOINT }));
     } finally {
       setLaunching(false);
     }
@@ -340,7 +352,6 @@ export const LaunchLabPanel: FC = () => {
     if (!b || status === "generating") return;
     setBrief(b);
     setError(null);
-    setErrorRaw(null);
     setRejection(null);
     setStatus("generating");
     setProposal(null);
@@ -359,9 +370,7 @@ export const LaunchLabPanel: FC = () => {
         body: JSON.stringify({ brief: b }),
       });
       if (!res.ok || !res.body) {
-        const errData = await res.json().catch(() => ({} as any));
-        setError(errData.error || `Request failed (${res.status})`);
-        if (typeof errData.rawResponse === "string") setErrorRaw(errData.rawResponse);
+        setError(await fromResponse(res, { functionName: "bark-zero-launch-proposal", method: "POST", url: ENDPOINT }));
         setStatus("idle");
         setPipelinePhase(null);
         return;
@@ -422,8 +431,7 @@ export const LaunchLabPanel: FC = () => {
             setPipelinePhase(null);
             return;
           } else if (phase === "error") {
-            setError(msg.error || "Pipeline error");
-            if (typeof msg.rawResponse === "string") setErrorRaw(msg.rawResponse);
+            setError(fromStreamPayload(msg, { functionName: "bark-zero-launch-proposal", url: ENDPOINT }));
             setStatus("idle");
             setPipelinePhase(null);
             return;
@@ -436,7 +444,7 @@ export const LaunchLabPanel: FC = () => {
       }
 
       if (!finalProposal) {
-        setError("Pipeline ended without a proposal.");
+        setError({ message: "Pipeline ended without a proposal.", functionName: "bark-zero-launch-proposal", url: ENDPOINT });
         setStatus("idle");
         setPipelinePhase(null);
         return;
@@ -466,7 +474,7 @@ export const LaunchLabPanel: FC = () => {
         if (!insErr && inserted?.id) setHistoryId(inserted.id);
       } catch { /* history is best-effort */ }
     } catch (e) {
-      setError((e as Error).message || "Connection lost");
+      setError(fromException(e, { functionName: "bark-zero-launch-proposal", method: "POST", url: ENDPOINT }));
       setStatus("idle");
       setPipelinePhase(null);
     }
@@ -634,19 +642,7 @@ export const LaunchLabPanel: FC = () => {
         </div>
 
         {error && (
-          <div className="mt-4 rounded-lg border border-red-500/40 bg-red-500/5 p-3">
-            <div className="text-xs text-red-400 font-mono">⚠ {error}</div>
-            {errorRaw && (
-              <details className="mt-2">
-                <summary className="text-[10px] font-mono uppercase tracking-widest text-red-300/70 cursor-pointer hover:text-red-300">
-                  show raw AI response
-                </summary>
-                <pre className="mt-2 max-h-48 overflow-auto text-[10px] text-white/60 font-mono whitespace-pre-wrap break-all bg-black/40 p-2 rounded">
-{errorRaw}
-                </pre>
-              </details>
-            )}
-          </div>
+          <TechnicalErrorPanel error={error} className="mt-4" />
         )}
 
 
@@ -888,7 +884,7 @@ export const LaunchLabPanel: FC = () => {
             )}
 
             {launchError && (
-              <div className="text-xs text-red-400 font-mono">⚠ {launchError}</div>
+              <TechnicalErrorPanel error={launchError} />
             )}
 
             <div className="flex flex-wrap gap-3">
