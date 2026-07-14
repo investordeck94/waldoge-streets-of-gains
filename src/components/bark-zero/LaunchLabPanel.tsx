@@ -306,7 +306,7 @@ export const LaunchLabPanel: FC = () => {
       try {
         const { data: inserted, error: insErr } = await supabase
           .from("bark_zero_launch_history")
-          .insert({
+          .insert([{
             token_name: p.tokenName,
             ticker: p.ticker,
             brief: b,
@@ -314,7 +314,7 @@ export const LaunchLabPanel: FC = () => {
             status: "reviewing",
             narrative_score: Math.round(p.narrativeScore ?? 0) || null,
             launch_score: Math.round(p.launchConfidence ?? 0) || null,
-          })
+          }])
           .select("id")
           .single();
         if (!insErr && inserted?.id) setHistoryId(inserted.id);
