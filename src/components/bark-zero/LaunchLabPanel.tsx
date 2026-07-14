@@ -353,15 +353,15 @@ export const LaunchLabPanel: FC = () => {
       // Insert a fresh history row for this relaunch
       supabase
         .from("bark_zero_launch_history")
-        .insert({
+        .insert([{
           token_name: parsed.proposal.tokenName,
           ticker: parsed.proposal.ticker,
           brief: parsed.brief ?? null,
-          proposal: parsed.proposal as unknown as Record<string, unknown>,
+          proposal: parsed.proposal as never,
           status: "reviewing",
           narrative_score: Math.round(parsed.proposal.narrativeScore ?? 0) || null,
           launch_score: Math.round(parsed.proposal.launchConfidence ?? 0) || null,
-        })
+        }])
         .select("id")
         .single()
         .then(({ data }) => { if (data?.id) setHistoryId(data.id); });
