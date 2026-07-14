@@ -89,8 +89,10 @@ const tools: { id: ToolId; label: string; icon: typeof MessageSquare; desc: stri
   { id: "evolution", label: "Evolution", icon: TrendingUp, desc: "Lessons that refine Bark Zero's voice" },
   { id: "xstudio", label: "X Studio", icon: Twitter, desc: "Draft, approve & publish to X" },
   { id: "attention", label: "Attention Scanner", icon: Radar, desc: "Track what the market is watching" },
+  { id: "marketintel", label: "Market Intel", icon: TrendingUp, desc: "Bark's continuous ranking of AI, DogeOS, Anoncoin, memes & X" },
   { id: "launchlab", label: "Launch Lab", icon: FlaskConical, desc: "Design a token launch" },
   { id: "launchhistory", label: "Launch History", icon: History, desc: "Every proposal Bark Zero has drafted" },
+
   { id: "meme", label: "Meme Generator", icon: ImageIcon, desc: "Instant meme fuel" },
   { id: "art", label: "Art Studio", icon: Palette, desc: "Generate on-brand visuals" },
   { id: "wallet", label: "Smart Wallet Scanner", icon: Wallet, desc: "Follow the smart money" },
