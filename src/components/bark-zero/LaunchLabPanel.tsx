@@ -1,6 +1,6 @@
 import { FC, useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, Sparkles, Rocket, Upload, Radar, Trophy, RefreshCw, ImageIcon, Download } from "lucide-react";
+import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, Sparkles, Rocket, Upload, Radar, Trophy, RefreshCw, ImageIcon, Download, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type LandscapeNarrative = {
@@ -140,6 +140,16 @@ export const LaunchLabPanel: FC = () => {
   const [launchFieldErrors, setLaunchFieldErrors] = useState<Record<string, string>>({});
   const [validated, setValidated] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Pre-flight checks (gate "Approve Launch" in reviewing state)
+  const [ownerConfirmed, setOwnerConfirmed] = useState(false);
+  const [preflight, setPreflight] = useState<{
+    loading: boolean;
+    passed: boolean;
+    error: string | null;
+    mintAddress: string | null;
+    requestId: string | null;
+  }>({ loading: false, passed: false, error: null, mintAddress: null, requestId: null });
 
   // Auto-generated launch assets (logo / banner / telegram)
   const [assets, setAssets] = useState<Record<AssetKind, AssetState>>({
@@ -304,8 +314,63 @@ export const LaunchLabPanel: FC = () => {
     setLaunchError(null);
     setLaunchFieldErrors({});
     setValidated(false);
+    setOwnerConfirmed(false);
+    setPreflight({ loading: false, passed: false, error: null, mintAddress: null, requestId: null });
     setAssets({ logo: emptyAsset(), banner: emptyAsset(), telegram: emptyAsset() });
     lastAutoRef.current = null;
+  };
+
+  const invalidatePreflight = () => {
+    setPreflight({ loading: false, passed: false, error: null, mintAddress: null, requestId: null });
+  };
+
+  const runPreflight = async () => {
+    if (!proposal || preflight.loading) return;
+    // Ensure we have an image — prefer explicit tickerImage, else the auto logo asset
+    let image: File | null = tickerImage;
+    if (!image && assets.logo.dataUrl) {
+      try {
+        image = await dataUrlToFile(
+          assets.logo.dataUrl,
+          assets.logo.filename ?? `${proposal.ticker.toLowerCase()}-logo.png`,
+        );
+      } catch { /* ignore */ }
+    }
+    if (!image) {
+      setPreflight({ loading: false, passed: false, error: "Logo not ready — wait for asset generation or upload one.", mintAddress: null, requestId: null });
+      return;
+    }
+    setPreflight({ loading: true, passed: false, error: null, mintAddress: null, requestId: null });
+    try {
+      const fd = new FormData();
+      fd.append("tickerName", proposal.tokenName);
+      fd.append("tickerSymbol", proposal.ticker);
+      fd.append("description", proposal.description);
+      fd.append("tickerImage", image);
+      fd.append("validateOnly", "true");
+      const res = await fetch(LAUNCH_ENDPOINT, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data.code === "duplicate_ticker"
+          ? `Ticker $${proposal.ticker} is already taken.`
+          : (data.error || `Validation failed (${res.status})`);
+        setPreflight({ loading: false, passed: false, error: msg, mintAddress: null, requestId: null });
+        return;
+      }
+      setPreflight({
+        loading: false,
+        passed: true,
+        error: null,
+        mintAddress: data.mintAddress ?? null,
+        requestId: data.requestId ?? null,
+      });
+    } catch (e) {
+      setPreflight({ loading: false, passed: false, error: (e as Error).message || "Network error", mintAddress: null, requestId: null });
+    }
   };
 
 
@@ -387,8 +452,14 @@ export const LaunchLabPanel: FC = () => {
 
   if (!proposal) return null;
 
-  const updateField = <K extends keyof LaunchProposal>(k: K, v: LaunchProposal[K]) =>
+  const updateField = <K extends keyof LaunchProposal>(k: K, v: LaunchProposal[K]) => {
     setProposal({ ...proposal, [k]: v });
+    // Any edit to identity/copy invalidates the preflight validation
+    if (k === "tokenName" || k === "ticker" || k === "description") {
+      invalidatePreflight();
+      setOwnerConfirmed(false);
+    }
+  };
 
   // ————— Approved: Anoncoin launch flow —————
   if (status === "approved") {
@@ -951,6 +1022,117 @@ export const LaunchLabPanel: FC = () => {
 
 
 
+      {/* ————— Pre-flight checklist (gates Approve Launch) ————— */}
+      {(() => {
+        const logoReady = !!(assets.logo.dataUrl || tickerImage);
+        const descriptionReady = (proposal.description ?? "").trim().length >= 20;
+        const tickerReady = /^[A-Z0-9]{2,10}$/.test(proposal.ticker ?? "");
+        const uniqueTicker = preflight.passed; // proven unique only after API validation
+        const apiValidated = preflight.passed;
+        const ownerReady = ownerConfirmed;
+        const canApprove = logoReady && descriptionReady && tickerReady && uniqueTicker && apiValidated && ownerReady;
+
+        const Check: FC<{ ok: boolean; label: string; hint?: string }> = ({ ok, label, hint }) => (
+          <li className="flex items-start gap-2">
+            {ok ? (
+              <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
+            ) : (
+              <Circle className="w-4 h-4 text-white/30 mt-0.5 shrink-0" />
+            )}
+            <div className="min-w-0">
+              <div className={cn("text-sm font-mono", ok ? "text-green-300" : "text-white/70")}>{label}</div>
+              {hint && <div className="text-[11px] text-white/50 leading-relaxed">{hint}</div>}
+            </div>
+          </li>
+        );
+
+        return (
+          <div className="rounded-xl border border-neon/30 bg-white/[0.02] p-4 space-y-4">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-neon" />
+                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-neon/80">
+                  Pre-flight Checks · required before Approve Launch
+                </div>
+              </div>
+              <button
+                onClick={runPreflight}
+                disabled={preflight.loading || !(logoReady && descriptionReady && tickerReady)}
+                className="inline-flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded border border-neon/50 bg-neon/10 text-neon hover:bg-neon/20 disabled:opacity-40"
+              >
+                {preflight.loading ? (
+                  <><Loader2 className="w-3 h-3 animate-spin" /> Validating...</>
+                ) : preflight.passed ? (
+                  <><RefreshCw className="w-3 h-3" /> Re-validate</>
+                ) : (
+                  <><ShieldAlert className="w-3 h-3" /> Run API Validation</>
+                )}
+              </button>
+            </div>
+
+            <ul className="space-y-2">
+              <Check
+                ok={tickerReady && uniqueTicker}
+                label={`Unique ticker ($${proposal.ticker || "—"})`}
+                hint={
+                  !tickerReady
+                    ? "Ticker must be 2–10 uppercase letters/digits."
+                    : !uniqueTicker
+                    ? "Uniqueness is proven only after API validation passes below."
+                    : preflight.mintAddress
+                    ? `Mint reserved: ${preflight.mintAddress.slice(0, 8)}…`
+                    : undefined
+                }
+              />
+              <Check
+                ok={logoReady}
+                label="Logo uploaded"
+                hint={logoReady ? undefined : "Wait for the auto-generated logo, or upload one on the launch screen."}
+              />
+              <Check
+                ok={descriptionReady}
+                label="Description complete"
+                hint={descriptionReady ? undefined : `Description too short (${(proposal.description ?? "").trim().length}/20 chars minimum).`}
+              />
+              <Check
+                ok={apiValidated}
+                label="API validation passed"
+                hint={
+                  preflight.error
+                    ? `⚠ ${preflight.error}`
+                    : apiValidated
+                    ? `Request ID: ${preflight.requestId ?? "—"}`
+                    : "Click Run API Validation to check with Anoncoin (no mint)."
+                }
+              />
+              <Check
+                ok={ownerReady}
+                label="Owner approval received"
+                hint="Tick the box below to confirm you personally reviewed this proposal."
+              />
+            </ul>
+
+            <label className="flex items-start gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={ownerConfirmed}
+                onChange={(e) => setOwnerConfirmed(e.target.checked)}
+                className="mt-1 accent-[hsl(var(--neon))]"
+              />
+              <span className="text-xs text-white/80 font-mono leading-relaxed">
+                I have reviewed the proposal, assets, and risks. I approve this launch as the owner.
+              </span>
+            </label>
+
+            {!canApprove && (
+              <div className="text-[11px] text-yellow-200/90 font-mono bg-yellow-500/5 border border-yellow-500/25 rounded p-2">
+                Approve Launch is disabled — resolve the unchecked items above.
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-3 flex items-start gap-2">
         <ShieldAlert className="w-4 h-4 text-yellow-400 mt-0.5 shrink-0" />
         <p className="text-xs text-yellow-100/90 font-mono leading-relaxed">
@@ -960,35 +1142,58 @@ export const LaunchLabPanel: FC = () => {
       </div>
 
       {/* Owner action bar */}
-      <div className="grid sm:grid-cols-3 gap-3 pt-2">
-        <button
-          onClick={() => setStatus("approved")}
-          className={cn(
-            "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all",
-            "bg-green-500/15 border border-green-400/50 text-green-300 hover:bg-green-500/25",
-          )}
-        >
-          <CheckCircle2 className="w-4 h-4" /> 🟢 Approve Launch
-        </button>
-        <button
-          onClick={() => setStatus(editing ? "reviewing" : "editing")}
-          className={cn(
-            "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all",
-            "bg-yellow-500/15 border border-yellow-400/50 text-yellow-200 hover:bg-yellow-500/25",
-          )}
-        >
-          <PencilLine className="w-4 h-4" /> 🟡 {editing ? "Done Editing" : "Edit Proposal"}
-        </button>
-        <button
-          onClick={() => setStatus("rejected")}
-          className={cn(
-            "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all",
-            "bg-red-500/15 border border-red-400/50 text-red-300 hover:bg-red-500/25",
-          )}
-        >
-          <XCircle className="w-4 h-4" /> 🔴 Reject
-        </button>
-      </div>
+      {(() => {
+        const logoReady = !!(assets.logo.dataUrl || tickerImage);
+        const descriptionReady = (proposal.description ?? "").trim().length >= 20;
+        const tickerReady = /^[A-Z0-9]{2,10}$/.test(proposal.ticker ?? "");
+        const canApprove = logoReady && descriptionReady && tickerReady && preflight.passed && ownerConfirmed;
+        const blockers: string[] = [];
+        if (!tickerReady) blockers.push("valid ticker");
+        if (!logoReady) blockers.push("logo");
+        if (!descriptionReady) blockers.push("description ≥ 20 chars");
+        if (!preflight.passed) blockers.push("API validation");
+        if (!ownerConfirmed) blockers.push("owner confirmation");
+        return (
+          <div className="grid sm:grid-cols-3 gap-3 pt-2">
+            <button
+              onClick={() => {
+                if (!canApprove) return;
+                // Carry validation over so the launch screen's step indicator reflects it
+                setValidated(true);
+                setStatus("approved");
+              }}
+              disabled={!canApprove}
+              title={canApprove ? undefined : `Blocked — needs: ${blockers.join(", ")}`}
+              className={cn(
+                "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all",
+                canApprove
+                  ? "bg-green-500/15 border border-green-400/50 text-green-300 hover:bg-green-500/25"
+                  : "bg-white/5 border border-white/10 text-white/30 cursor-not-allowed",
+              )}
+            >
+              <CheckCircle2 className="w-4 h-4" /> 🟢 Approve Launch
+            </button>
+            <button
+              onClick={() => setStatus(editing ? "reviewing" : "editing")}
+              className={cn(
+                "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all",
+                "bg-yellow-500/15 border border-yellow-400/50 text-yellow-200 hover:bg-yellow-500/25",
+              )}
+            >
+              <PencilLine className="w-4 h-4" /> 🟡 {editing ? "Done Editing" : "Edit Proposal"}
+            </button>
+            <button
+              onClick={() => setStatus("rejected")}
+              className={cn(
+                "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all",
+                "bg-red-500/15 border border-red-400/50 text-red-300 hover:bg-red-500/25",
+              )}
+            >
+              <XCircle className="w-4 h-4" /> 🔴 Reject
+            </button>
+          </div>
+        );
+      })()}
 
       <button
         onClick={() => generate(brief)}
