@@ -251,6 +251,57 @@ export type Database = {
         }
         Relationships: []
       }
+      bark_zero_launch_history: {
+        Row: {
+          brief: string | null
+          created_at: string
+          error: string | null
+          id: string
+          launch_score: number | null
+          mint_address: string | null
+          narrative_score: number | null
+          proposal: Json
+          request_id: string | null
+          signature: string | null
+          status: string
+          ticker: string
+          token_name: string
+          updated_at: string
+        }
+        Insert: {
+          brief?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          launch_score?: number | null
+          mint_address?: string | null
+          narrative_score?: number | null
+          proposal: Json
+          request_id?: string | null
+          signature?: string | null
+          status?: string
+          ticker: string
+          token_name: string
+          updated_at?: string
+        }
+        Update: {
+          brief?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          launch_score?: number | null
+          mint_address?: string | null
+          narrative_score?: number | null
+          proposal?: Json
+          request_id?: string | null
+          signature?: string | null
+          status?: string
+          ticker?: string
+          token_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bark_zero_memories: {
         Row: {
           category: string

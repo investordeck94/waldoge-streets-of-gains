@@ -20,6 +20,7 @@ import {
   NotebookPen,
   Moon,
   Library,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BarkZeroAvatar } from "./bark-zero/BarkZeroAvatar";
@@ -46,6 +47,7 @@ import { CuriosityPanel } from "./bark-zero/CuriosityPanel";
 import { DiaryPanel } from "./bark-zero/DiaryPanel";
 import { DreamsPanel } from "./bark-zero/DreamsPanel";
 import { EvolutionPanel } from "./bark-zero/EvolutionPanel";
+import { LaunchHistoryPanel } from "./bark-zero/LaunchHistoryPanel";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 const BARK_ZERO_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-chat`;
@@ -63,6 +65,7 @@ type ToolId =
   | "evolution"
   | "attention"
   | "launchlab"
+  | "launchhistory"
   | "meme"
   | "art"
   | "wallet"
@@ -83,6 +86,7 @@ const tools: { id: ToolId; label: string; icon: typeof MessageSquare; desc: stri
   { id: "xstudio", label: "X Studio", icon: Twitter, desc: "Draft, approve & publish to X" },
   { id: "attention", label: "Attention Scanner", icon: Radar, desc: "Track what the market is watching" },
   { id: "launchlab", label: "Launch Lab", icon: FlaskConical, desc: "Design a token launch" },
+  { id: "launchhistory", label: "Launch History", icon: History, desc: "Every proposal Bark Zero has drafted" },
   { id: "meme", label: "Meme Generator", icon: ImageIcon, desc: "Instant meme fuel" },
   { id: "art", label: "Art Studio", icon: Palette, desc: "Generate on-brand visuals" },
   { id: "wallet", label: "Smart Wallet Scanner", icon: Wallet, desc: "Follow the smart money" },
@@ -331,6 +335,15 @@ export const BarkZero: FC = () => {
   const [active, setActive] = useState<ToolId>("chat");
   const activeTool = tools.find((t) => t.id === active)!;
 
+  useEffect(() => {
+    const onNav = (e: Event) => {
+      const detail = (e as CustomEvent<{ tool?: ToolId }>).detail;
+      if (detail?.tool && tools.some((t) => t.id === detail.tool)) setActive(detail.tool);
+    };
+    window.addEventListener("barkZero:navigate", onNav);
+    return () => window.removeEventListener("barkZero:navigate", onNav);
+  }, []);
+
   return (
     <div className="bark-zero -mx-2 sm:-mx-4 -my-3 sm:-my-6 min-h-[calc(100vh-8rem)] bg-black text-white">
       <style>{`
@@ -433,6 +446,8 @@ export const BarkZero: FC = () => {
                     <XStudioPanel />
                   ) : active === "launchlab" ? (
                     <LaunchLabPanel />
+                  ) : active === "launchhistory" ? (
+                    <LaunchHistoryPanel />
                   ) : (
                     <ComingSoonPanel
                       label={activeTool.label}
