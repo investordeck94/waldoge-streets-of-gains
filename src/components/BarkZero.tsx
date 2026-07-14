@@ -22,7 +22,20 @@ import {
   Library,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import barkZeroLogo from "@/assets/bark-zero-logo.png";
+import { BarkZeroAvatar } from "./bark-zero/BarkZeroAvatar";
+import { barkAvatar, useBarkAvatar } from "./bark-zero/avatarStore";
+
+const BarkZeroAvatarHero: FC = () => {
+  const { state, signalTick, amplitude } = useBarkAvatar();
+  const [pulse, setPulse] = useState(false);
+  useEffect(() => {
+    if (signalTick === 0) return;
+    setPulse(true);
+    const t = window.setTimeout(() => setPulse(false), 50);
+    return () => window.clearTimeout(t);
+  }, [signalTick]);
+  return <BarkZeroAvatar state={state} amplitude={amplitude} signal={pulse} />;
+};
 import { LaunchLabPanel } from "./bark-zero/LaunchLabPanel";
 import { XStudioPanel } from "./bark-zero/XStudioPanel";
 import { ConstitutionPanel } from "./bark-zero/ConstitutionPanel";
@@ -104,6 +117,7 @@ const ChatPanel: FC = () => {
     abortRef.current?.abort();
     abortRef.current = null;
     setStreaming(false);
+    barkAvatar.setState("idle");
   };
 
   const send = async (textOverride?: string) => {
@@ -113,6 +127,7 @@ const ChatPanel: FC = () => {
     setMessages(next);
     setInput("");
     setStreaming(true);
+    barkAvatar.setState("thinking");
 
     // Add empty assistant placeholder we'll append to
     setMessages((m) => [...m, { role: "assistant", content: "" }]);
@@ -157,6 +172,7 @@ const ChatPanel: FC = () => {
         const errBody = await res.text().catch(() => "");
         setError(errBody || `Request failed (${res.status})`);
         setStreaming(false);
+        barkAvatar.setState("idle");
         return;
       }
 
@@ -185,10 +201,23 @@ const ChatPanel: FC = () => {
         }
       }
       setStreaming(false);
+      barkAvatar.setState("idle");
+      // "Signal Detected" — insightful reply heuristic
+      setMessages((m) => {
+        const last = m[m.length - 1];
+        if (last?.role === "assistant") {
+          const c = last.content;
+          if (c.length > 240 || /\b(signal|alpha|narrative|thesis|conviction)\b/i.test(c)) {
+            barkAvatar.pulseSignal();
+          }
+        }
+        return m;
+      });
     } catch (err) {
-      if ((err as Error).name === "AbortError") return;
+      if ((err as Error).name === "AbortError") { barkAvatar.setState("idle"); return; }
       setError((err as Error).message || "Connection lost");
       setStreaming(false);
+      barkAvatar.setState("idle");
     }
   };
 
@@ -332,20 +361,15 @@ export const BarkZero: FC = () => {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(var(--neon)/0.12),_transparent_60%)] pointer-events-none" />
 
         <div className="relative container mx-auto px-4 py-8">
-          {/* Hero */}
+          {/* Hero — reactive AI avatar */}
           <div className="text-center mb-8">
-            <img
-              src={barkZeroLogo}
-              alt="Bark Zero"
-              width={1152}
-              height={576}
-              className="mx-auto w-full max-w-lg h-auto"
-            />
-            <p className="text-xs font-mono uppercase tracking-[0.35em] text-neon mt-2">
+            <BarkZeroAvatarHero />
+            <p className="text-xs font-mono uppercase tracking-[0.35em] text-neon mt-4">
               Powered by $WALDOGE
             </p>
             <p className="mt-3 text-white/70 italic">"Respect the craft."</p>
           </div>
+
 
           <div className="grid lg:grid-cols-[280px,1fr] gap-6">
             {/* Sidebar tools */}
