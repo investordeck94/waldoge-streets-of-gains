@@ -284,6 +284,7 @@ export const LaunchLabPanel: FC = () => {
     if (!b || status === "generating") return;
     setBrief(b);
     setError(null);
+    setRejection(null);
     setStatus("generating");
     setProposal(null);
     setLandscape(null);
@@ -302,10 +303,17 @@ export const LaunchLabPanel: FC = () => {
         setStatus("idle");
         return;
       }
+      if (data.rejected) {
+        setLandscape((data.landscape as Landscape) ?? null);
+        setRejection({ reason: String(data.reason ?? "Bark rejected the landscape."), landscape: (data.landscape as Landscape) ?? null });
+        setStatus("idle");
+        return;
+      }
       const p = data.proposal as LaunchProposal;
       setLandscape((data.landscape as Landscape) ?? null);
       setProposal(p);
       setStatus("reviewing");
+
       // Persist a new history record for this proposal
       try {
         const { data: inserted, error: insErr } = await supabase
