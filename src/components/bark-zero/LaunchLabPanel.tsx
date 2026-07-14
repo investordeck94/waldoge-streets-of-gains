@@ -884,7 +884,7 @@ export const LaunchLabPanel: FC = () => {
             )}
 
             {launchError && (
-              <div className="text-xs text-red-400 font-mono">⚠ {launchError}</div>
+              <TechnicalErrorPanel error={launchError} />
             )}
 
             <div className="flex flex-wrap gap-3">
