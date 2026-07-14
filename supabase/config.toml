@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.bark-zero-x-publish]
 verify_jwt = false
+
+[functions.bark-zero-anoncoin-launch]
+verify_jwt = false
