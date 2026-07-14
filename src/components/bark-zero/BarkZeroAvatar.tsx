@@ -1,6 +1,7 @@
 import { FC, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import avatarSrc from "@/assets/bark-zero-avatar.png";
+import avatarAsset from "@/assets/bark-zero-avatar.png.asset.json";
+const avatarSrc = avatarAsset.url;
 
 export type BarkZeroAvatarState = "idle" | "thinking" | "speaking";
 
