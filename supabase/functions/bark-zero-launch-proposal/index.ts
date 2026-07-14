@@ -278,7 +278,10 @@ Deno.serve(async (req) => {
     });
   }
 
+  const stream = new ReadableStream({
+    async start(controller) {
       const encoder = new TextEncoder();
+
       let closed = false;
       const send = (phase: string, payload: Record<string, unknown> = {}) => {
         if (closed) return;
