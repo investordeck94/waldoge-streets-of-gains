@@ -75,6 +75,8 @@ Deno.serve(async (req) => {
   const description = (inbound.get("description") as string | null)?.trim();
   const twitterLink = (inbound.get("twitterLink") as string | null)?.trim() || "";
   const telegramLink = (inbound.get("telegramLink") as string | null)?.trim() || "";
+  const validateOnly =
+    ((inbound.get("validateOnly") as string | null) ?? "").toLowerCase() === "true";
   const tickerImage = inbound.get("tickerImage");
 
   const errors: Record<string, string> = {};
