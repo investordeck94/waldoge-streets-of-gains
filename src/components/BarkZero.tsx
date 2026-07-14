@@ -20,6 +20,7 @@ import {
   NotebookPen,
   Moon,
   Library,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BarkZeroAvatar } from "./bark-zero/BarkZeroAvatar";
