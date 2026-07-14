@@ -22,7 +22,7 @@ import {
   Library,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import barkZeroLogo from "@/assets/bark-zero-logo.png";
+import { BarkZeroAvatar, type BarkZeroAvatarState } from "./bark-zero/BarkZeroAvatar";
 import { LaunchLabPanel } from "./bark-zero/LaunchLabPanel";
 import { XStudioPanel } from "./bark-zero/XStudioPanel";
 import { ConstitutionPanel } from "./bark-zero/ConstitutionPanel";
