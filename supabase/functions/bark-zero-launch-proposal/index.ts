@@ -164,6 +164,22 @@ Return STRICT JSON: { "logoConcept": string, "artworkPrompt": string }
 Only JSON.
 `.trim();
 
+const FALLBACK_NARRATIVES_SYSTEM = `
+You are Bark Zero. Live data sources returned nothing. Generate 5 plausible narrative
+candidates from your own training. Clearly frame each as an AI-generated estimate.
+Same scoring rubric as the landscape scan. Pick the strongest as chosenId.
+
+Return STRICT JSON:
+{ "narratives": [ { "id": string, "category": "ai"|"meme"|"x"|"dogeos"|"anoncoin",
+  "title": string, "summary": string,
+  "scores": { "attention": number, "originality": number, "competition": number,
+              "viralPotential": number, "communityStrength": number },
+  "composite": number } ],
+  "chosenId": string, "rationale": string,
+  "source": "ai_estimate" }
+Only JSON. Exactly 5 narratives.
+`.trim();
+
 
 async function callModelRaw(messages: Array<{ role: string; content: string }>, key: string, extraSystem = ""): Promise<string> {
   const finalMessages = extraSystem
@@ -195,6 +211,49 @@ async function callModel<T = any>(messages: Array<{ role: string; content: strin
   );
 }
 
+async function runLandscapeScan(
+  brief: string,
+  contextBlock: string,
+  marketIntelBlock: string,
+  key: string,
+  sectionName: string,
+): Promise<any> {
+  return await callModel(
+    [
+      { role: "system", content: LANDSCAPE_SYSTEM + contextBlock + marketIntelBlock },
+      {
+        role: "user",
+        content:
+          `Owner brief: ${brief}\n\nScan the current crypto/culture landscape now. ` +
+          `Cover AI, meme, X trends, DogeOS, and Anoncoin. Return the landscape JSON.`,
+      },
+    ],
+    key,
+    sectionName,
+  );
+}
+
+async function runFallbackNarratives(
+  brief: string,
+  contextBlock: string,
+  key: string,
+): Promise<any> {
+  return await callModel(
+    [
+      { role: "system", content: FALLBACK_NARRATIVES_SYSTEM + contextBlock },
+      {
+        role: "user",
+        content:
+          `Owner brief: ${brief}\n\nLive sources returned nothing. Generate 5 AI-estimated ` +
+          `narrative candidates now and label them as estimates.`,
+      },
+    ],
+    key,
+    "Landscape fallback (AI-estimated narratives)",
+  );
+}
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -219,12 +278,24 @@ Deno.serve(async (req) => {
     });
   }
 
-  const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
+      const encoder = new TextEncoder();
+
+      let closed = false;
       const send = (phase: string, payload: Record<string, unknown> = {}) => {
-        const line = `data: ${JSON.stringify({ phase, ...payload })}\n\n`;
-        controller.enqueue(encoder.encode(line));
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ phase, ...payload })}\n\n`));
+        } catch (e) {
+          console.warn("send after close:", (e as Error).message);
+          closed = true;
+        }
+      };
+      const closeOnce = () => {
+        if (closed) return;
+        closed = true;
+        try { controller.close(); } catch { /* already closed */ }
       };
 
       try {
@@ -232,31 +303,63 @@ Deno.serve(async (req) => {
           loadBarkZeroContext(),
           loadMarketIntelBlock(),
         ]);
+        const hasLiveIntel = marketIntelBlock.trim().length > 0;
 
-        // ————— Step 1: Scan Landscape —————
-        send("landscape_scan");
-        const landscape = await callModel(
-          [
-            { role: "system", content: LANDSCAPE_SYSTEM + contextBlock + marketIntelBlock },
-            {
-              role: "user",
-              content:
-                `Owner brief: ${brief}\n\nScan the current crypto/culture landscape now. ` +
-                `Cover AI, meme, X trends, DogeOS, and Anoncoin. Return the landscape JSON.`,
-            },
-          ],
-          key,
-          "Step 1: Narrative analysis",
-        );
+        // ————— Step 1: Scan Landscape (with retry + AI fallback) —————
+        send("landscape_scan", { hasLiveIntel });
 
-        const narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
+        let landscape: any = null;
+        let landscapeSource: "live" | "ai_estimate" = hasLiveIntel ? "live" : "ai_estimate";
+        let fallbackReason: string | null = null;
+
+        // Attempt 1
+        try {
+          landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1: Narrative analysis");
+        } catch (e) {
+          fallbackReason = `landscape scan attempt 1 threw: ${(e as Error).message}`;
+          console.warn(fallbackReason);
+        }
+
+        let narratives: any[] = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
+
+        // Attempt 2 if empty (and not an explicit rejection)
+        if (!landscape?.rejected && narratives.length === 0) {
+          const reason = fallbackReason ?? "landscape scan attempt 1 returned zero narratives (empty response or filtering removed all candidates)";
+          console.warn(`Zero narratives on attempt 1: ${reason}. Retrying once.`);
+          try {
+            landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1 retry: Narrative analysis");
+            narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
+            if (narratives.length === 0) {
+              fallbackReason = "retry also returned zero narratives";
+            }
+          } catch (e) {
+            fallbackReason = `landscape scan retry threw: ${(e as Error).message}`;
+            console.warn(fallbackReason);
+          }
+        }
+
+        // AI-estimate fallback — never let the pipeline stop for lack of narratives.
+        if (!landscape?.rejected && narratives.length === 0) {
+          console.warn(`Falling back to AI-estimated narratives. Reason: ${fallbackReason ?? "unknown"}`);
+          landscapeSource = "ai_estimate";
+          try {
+            landscape = await runFallbackNarratives(brief, contextBlock, key);
+            narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
+          } catch (e) {
+            const msg = `AI-estimate fallback failed: ${(e as Error).message}`;
+            console.error(msg);
+            send("error", { error: msg, fallbackReason });
+            closeOnce();
+            return;
+          }
+        }
 
         if (landscape?.rejected === true) {
           send("rejected", {
             reason: String(landscape?.reason ?? "Nothing in the current landscape clears the bar."),
-            landscape: { narratives, chosenId: null, rationale: "" },
+            landscape: { narratives, chosenId: null, rationale: "", source: landscapeSource },
           });
-          controller.close();
+          closeOnce();
           return;
         }
 
@@ -265,8 +368,12 @@ Deno.serve(async (req) => {
           narratives.slice().sort((a: any, b: any) => (b?.composite ?? 0) - (a?.composite ?? 0))[0];
 
         if (!chosen) {
-          send("error", { error: "Landscape scan returned no narratives", landscape });
-          controller.close();
+          send("error", {
+            error: "Landscape pipeline could not produce any narrative even after AI-estimate fallback",
+            fallbackReason,
+            landscape,
+          });
+          closeOnce();
           return;
         }
 
@@ -274,7 +381,14 @@ Deno.serve(async (req) => {
         send("narrative_chosen", {
           chosen,
           rationale: landscape?.rationale ?? "",
-          landscape: { narratives, chosenId: chosen.id, rationale: landscape?.rationale ?? "" },
+          source: landscapeSource,
+          fallbackReason: landscapeSource === "ai_estimate" ? fallbackReason : null,
+          landscape: {
+            narratives,
+            chosenId: chosen.id,
+            rationale: landscape?.rationale ?? "",
+            source: landscapeSource,
+          },
         });
 
         // ————— Step 3: Generate Token —————
@@ -294,6 +408,7 @@ Deno.serve(async (req) => {
           "Step 3: Token proposal",
         );
         send("token", { tokenProposal });
+
 
         // ————— Step 4: Generate Marketing —————
         const marketing = await callModel(
@@ -374,11 +489,12 @@ Deno.serve(async (req) => {
         };
 
         send("done", {
-          landscape: { narratives, chosenId: chosen.id, rationale: landscape?.rationale ?? "" },
+          landscape: { narratives, chosenId: chosen.id, rationale: landscape?.rationale ?? "", source: landscapeSource },
           chosen,
           proposal,
+          source: landscapeSource,
         });
-        controller.close();
+        closeOnce();
       } catch (err: any) {
         console.error("bark-zero-launch-proposal stream error:", err);
         const message = err instanceof Error ? err.message : String(err);
@@ -386,8 +502,9 @@ Deno.serve(async (req) => {
           error: message,
           rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 2000) : undefined,
         });
-        controller.close();
+        closeOnce();
       }
+
     },
   });
 
