@@ -872,6 +872,85 @@ export const LaunchLabPanel: FC = () => {
         )}
       </div>
 
+      {/* ————— Auto-generated launch assets ————— */}
+      <div className="rounded-xl border border-neon/25 bg-white/[0.02] p-4">
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-neon" />
+            <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-neon/80">
+              Launch Assets · auto-generated
+            </div>
+          </div>
+          <div className="text-[10px] font-mono text-white/40">
+            Regenerate any asset individually before launch.
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-3 gap-3">
+          {(["logo", "banner", "telegram"] as AssetKind[]).map((kind) => {
+            const a = assets[kind];
+            const meta = ASSET_META[kind];
+            return (
+              <div key={kind} className="rounded-lg border border-white/10 bg-black/40 overflow-hidden flex flex-col">
+                <div className={cn("relative w-full bg-black/60", meta.aspect)}>
+                  {a.dataUrl ? (
+                    <img src={a.dataUrl} alt={meta.label} className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-white/40 text-xs font-mono">
+                      {a.loading ? (
+                        <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> rendering...</span>
+                      ) : a.error ? (
+                        <span className="text-red-400 px-2 text-center">⚠ {a.error}</span>
+                      ) : (
+                        <span>queued</span>
+                      )}
+                    </div>
+                  )}
+                  {a.loading && a.dataUrl && (
+                    <div className="absolute top-2 right-2 bg-black/70 rounded px-2 py-1 flex items-center gap-1 text-[10px] text-neon font-mono">
+                      <Loader2 className="w-3 h-3 animate-spin" /> refresh
+                    </div>
+                  )}
+                </div>
+                <div className="p-3 flex flex-col gap-2">
+                  <div>
+                    <div className="text-sm font-mono text-white">{meta.label}</div>
+                    <div className="text-[10px] text-white/40 font-mono">{meta.hint}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => regenerateAsset(kind)}
+                      disabled={a.loading}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs px-2 py-1.5 rounded border border-neon/40 text-neon hover:bg-neon/10 disabled:opacity-40 font-mono"
+                    >
+                      <RefreshCw className={cn("w-3 h-3", a.loading && "animate-spin")} />
+                      {a.dataUrl ? "Regenerate" : "Retry"}
+                    </button>
+                    {a.dataUrl && (
+                      <a
+                        href={a.dataUrl}
+                        download={a.filename ?? `${kind}.png`}
+                        className="flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded border border-white/20 text-white/70 hover:border-white/40 hover:text-white font-mono"
+                      >
+                        <Download className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {assets.logo.dataUrl && (
+          <div className="mt-3 text-[10px] font-mono text-white/50">
+            ✓ Logo auto-loaded as the Anoncoin launch ticker image. You can still upload a custom file below.
+          </div>
+        )}
+      </div>
+
+
+
       <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-3 flex items-start gap-2">
         <ShieldAlert className="w-4 h-4 text-yellow-400 mt-0.5 shrink-0" />
         <p className="text-xs text-yellow-100/90 font-mono leading-relaxed">
