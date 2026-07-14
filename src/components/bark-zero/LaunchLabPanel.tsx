@@ -153,6 +153,9 @@ export const LaunchLabPanel: FC = () => {
     requestId: string | null;
   }>({ loading: false, passed: false, error: null, mintAddress: null, requestId: null });
 
+  // Launch history persistence
+  const [historyId, setHistoryId] = useState<string | null>(null);
+
   // Auto-generated launch assets (logo / banner / telegram)
   const [assets, setAssets] = useState<Record<AssetKind, AssetState>>({
     logo: emptyAsset(), banner: emptyAsset(), telegram: emptyAsset(),
