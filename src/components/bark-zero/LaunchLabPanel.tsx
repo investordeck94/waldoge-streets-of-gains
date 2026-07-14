@@ -87,19 +87,29 @@ export const LaunchLabPanel: FC = () => {
   const [launchResult, setLaunchResult] = useState<LaunchResult | null>(null);
   const [launchError, setLaunchError] = useState<string | null>(null);
   const [launchFieldErrors, setLaunchFieldErrors] = useState<Record<string, string>>({});
+  const [validated, setValidated] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const invalidateValidation = () => {
+    setValidated(false);
+    setLaunchResult((r) => (r?.validateOnly ? null : r));
+  };
 
   const submitLaunch = async (validateOnly = false) => {
     if (!proposal || launching) return;
+    if (!validateOnly && !validated) {
+      setLaunchError("Validate the token first — validation must pass before launch.");
+      return;
+    }
     setLaunchError(null);
     setLaunchFieldErrors({});
-    setLaunchResult(null);
     if (!tickerImage) {
       setLaunchFieldErrors({ tickerImage: "Upload the token image" });
       return;
     }
     setLaunching(true);
     setLaunchMode(validateOnly ? "validate" : "launch");
+    if (validateOnly) setValidated(false);
     try {
       const fd = new FormData();
       fd.append("tickerName", proposal.tokenName);
@@ -125,6 +135,7 @@ export const LaunchLabPanel: FC = () => {
         return;
       }
       setLaunchResult(data as LaunchResult);
+      if (validateOnly) setValidated(true);
     } catch (e) {
       setLaunchError((e as Error).message || "Network error");
     } finally {
