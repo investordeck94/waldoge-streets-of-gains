@@ -70,6 +70,7 @@ type LaunchResult = {
 };
 
 export type LaunchProposal = {
+  barksAnalysis: string;
   tokenName: string;
   ticker: string;
   narrative: string;
@@ -92,6 +93,7 @@ export type LaunchProposal = {
   tokenomics: string;
   risks: string[];
 };
+
 
 type Status = "idle" | "generating" | "reviewing" | "editing" | "approved" | "rejected";
 
@@ -130,6 +132,8 @@ export const LaunchLabPanel: FC = () => {
   const [proposal, setProposal] = useState<LaunchProposal | null>(null);
   const [landscape, setLandscape] = useState<Landscape | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rejection, setRejection] = useState<{ reason: string; landscape: Landscape | null } | null>(null);
+
 
   // Anoncoin launch form state (only used after owner approval)
   const [tickerImage, setTickerImage] = useState<File | null>(null);
@@ -280,6 +284,7 @@ export const LaunchLabPanel: FC = () => {
     if (!b || status === "generating") return;
     setBrief(b);
     setError(null);
+    setRejection(null);
     setStatus("generating");
     setProposal(null);
     setLandscape(null);
@@ -298,10 +303,17 @@ export const LaunchLabPanel: FC = () => {
         setStatus("idle");
         return;
       }
+      if (data.rejected) {
+        setLandscape((data.landscape as Landscape) ?? null);
+        setRejection({ reason: String(data.reason ?? "Bark rejected the landscape."), landscape: (data.landscape as Landscape) ?? null });
+        setStatus("idle");
+        return;
+      }
       const p = data.proposal as LaunchProposal;
       setLandscape((data.landscape as Landscape) ?? null);
       setProposal(p);
       setStatus("reviewing");
+
       // Persist a new history record for this proposal
       try {
         const { data: inserted, error: insErr } = await supabase
@@ -488,6 +500,21 @@ export const LaunchLabPanel: FC = () => {
         {error && (
           <div className="mt-4 text-xs text-red-400 font-mono">⚠ {error}</div>
         )}
+
+        {rejection && (
+          <div className="mt-4 rounded-xl border border-red-500/40 bg-red-500/5 p-4">
+            <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-red-400 mb-2">
+              Bark Rejected This Landscape
+            </div>
+            <div className="text-sm text-white/85 leading-relaxed whitespace-pre-wrap">
+              {rejection.reason}
+            </div>
+            <div className="mt-2 text-[11px] text-white/50 font-mono">
+              Nothing here clears the bar. Sharpen the brief and try again — no generic memecoins.
+            </div>
+          </div>
+        )}
+
 
         <button
           onClick={() => generate()}
@@ -945,6 +972,31 @@ export const LaunchLabPanel: FC = () => {
       <div className="flex items-center justify-end">
         <div className="text-xs font-mono uppercase tracking-widest text-white/40">brief: {brief}</div>
       </div>
+
+      {proposal.barksAnalysis && (
+        <div className="rounded-xl border-2 border-neon/50 bg-neon/[0.04] p-5 shadow-[0_0_30px_-10px_rgba(74,222,128,0.4)]">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-neon">
+              ▸ Bark's Analysis
+            </div>
+            <div className="h-px flex-1 bg-neon/20" />
+          </div>
+          {editing ? (
+            <textarea
+              value={proposal.barksAnalysis}
+              onChange={(e) => updateField("barksAnalysis", e.target.value)}
+              rows={6}
+              className="w-full bg-black/40 border border-neon/20 rounded-lg p-3 text-sm text-white/90 font-mono leading-relaxed focus:outline-none focus:border-neon/60"
+            />
+          ) : (
+            <div className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap font-mono">
+              {proposal.barksAnalysis}
+            </div>
+          )}
+        </div>
+      )}
+
+
 
       <div className="grid sm:grid-cols-4 gap-3">
         <Score label="Meme" value={proposal.memeScore} />
