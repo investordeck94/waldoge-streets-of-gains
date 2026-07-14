@@ -2,6 +2,7 @@ import { FC, useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, Sparkles, Rocket, Upload, Radar, Trophy, RefreshCw, ImageIcon, Download, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PostLaunchKitPanel } from "./PostLaunchKitPanel";
 
 type LandscapeNarrative = {
   id: string;
