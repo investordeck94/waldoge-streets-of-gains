@@ -298,14 +298,75 @@ export const LaunchLabPanel: FC = () => {
         setStatus("idle");
         return;
       }
+      const p = data.proposal as LaunchProposal;
       setLandscape((data.landscape as Landscape) ?? null);
-      setProposal(data.proposal as LaunchProposal);
+      setProposal(p);
       setStatus("reviewing");
+      // Persist a new history record for this proposal
+      try {
+        const { data: inserted, error: insErr } = await supabase
+          .from("bark_zero_launch_history")
+          .insert({
+            token_name: p.tokenName,
+            ticker: p.ticker,
+            brief: b,
+            proposal: p as unknown as Record<string, unknown>,
+            status: "reviewing",
+            narrative_score: Math.round(p.narrativeScore ?? 0) || null,
+            launch_score: Math.round(p.launchConfidence ?? 0) || null,
+          })
+          .select("id")
+          .single();
+        if (!insErr && inserted?.id) setHistoryId(inserted.id);
+      } catch { /* history is best-effort */ }
     } catch (e) {
       setError((e as Error).message || "Connection lost");
       setStatus("idle");
     }
   };
+
+  // Push status/mint updates back into the history row
+  useEffect(() => {
+    if (!historyId) return;
+    const patch: Record<string, unknown> = { status };
+    if (status === "approved" && launchResult && !launchResult.validateOnly) {
+      patch.status = "launched";
+      patch.mint_address = launchResult.mintAddress;
+      patch.request_id = launchResult.requestId;
+      patch.signature = launchResult.signature;
+    }
+    supabase.from("bark_zero_launch_history").update(patch).eq("id", historyId).then(() => {});
+  }, [status, launchResult, historyId]);
+
+  // Pick up a "Relaunch" request from Launch History
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("barkZero:relaunch");
+      if (!raw) return;
+      sessionStorage.removeItem("barkZero:relaunch");
+      const parsed = JSON.parse(raw) as { proposal: LaunchProposal; brief?: string };
+      if (!parsed?.proposal) return;
+      setBrief(parsed.brief ?? "");
+      setProposal(parsed.proposal);
+      setLandscape(null);
+      setStatus("reviewing");
+      // Insert a fresh history row for this relaunch
+      supabase
+        .from("bark_zero_launch_history")
+        .insert({
+          token_name: parsed.proposal.tokenName,
+          ticker: parsed.proposal.ticker,
+          brief: parsed.brief ?? null,
+          proposal: parsed.proposal as unknown as Record<string, unknown>,
+          status: "reviewing",
+          narrative_score: Math.round(parsed.proposal.narrativeScore ?? 0) || null,
+          launch_score: Math.round(parsed.proposal.launchConfidence ?? 0) || null,
+        })
+        .select("id")
+        .single()
+        .then(({ data }) => { if (data?.id) setHistoryId(data.id); });
+    } catch { /* ignore */ }
+  }, []);
 
   const reset = () => {
     setProposal(null);
