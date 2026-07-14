@@ -132,6 +132,8 @@ export const LaunchLabPanel: FC = () => {
   const [proposal, setProposal] = useState<LaunchProposal | null>(null);
   const [landscape, setLandscape] = useState<Landscape | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorRaw, setErrorRaw] = useState<string | null>(null);
+
   const [rejection, setRejection] = useState<{ reason: string; landscape: Landscape | null } | null>(null);
 
 
