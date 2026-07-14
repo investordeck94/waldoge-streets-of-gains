@@ -2,6 +2,7 @@ import { FC, useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, Sparkles, Rocket, Upload, Radar, Trophy, RefreshCw, ImageIcon, Download, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PostLaunchKitPanel } from "./PostLaunchKitPanel";
 
 type LandscapeNarrative = {
   id: string;
@@ -534,7 +535,15 @@ export const LaunchLabPanel: FC = () => {
             >
               ← draft another proposal
             </button>
+
+            {/* Post-launch content kit — auto-generated on successful mint */}
+            <PostLaunchKitPanel
+              proposal={proposal}
+              mintAddress={launchResult.mintAddress}
+              signature={launchResult.signature}
+            />
           </div>
+
         ) : (
           <div className="rounded-xl border border-neon/25 bg-white/[0.02] p-5 space-y-4">
             <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-neon/80">Launch Details</div>
