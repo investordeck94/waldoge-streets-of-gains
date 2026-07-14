@@ -60,7 +60,38 @@ const CATEGORY_BRIEF: Record<Category, string> = {
   x: "X trends: what specific crypto/AI/culture conversations are spiking on X right now.",
 };
 
-async function callModel(userContent: string, key: string) {
+type DataSource = { id: string; label: string; envVar: string };
+const KNOWN_SOURCES: DataSource[] = [
+  { id: "perplexity", label: "Perplexity (live web search)", envVar: "PERPLEXITY_API_KEY" },
+  { id: "firecrawl", label: "Firecrawl (web scraping)", envVar: "FIRECRAWL_API_KEY" },
+  { id: "x", label: "X / Twitter API", envVar: "X_API_KEY" },
+  { id: "twitter", label: "X / Twitter API", envVar: "TWITTER_BEARER_TOKEN" },
+  { id: "coingecko", label: "CoinGecko", envVar: "COINGECKO_API_KEY" },
+  { id: "dune", label: "Dune Analytics", envVar: "DUNE_API_KEY" },
+];
+
+function detectLiveSources(): DataSource[] {
+  const seen = new Set<string>();
+  const out: DataSource[] = [];
+  for (const s of KNOWN_SOURCES) {
+    const v = Deno.env.get(s.envVar);
+    if (v && v.trim().length > 0 && !seen.has(s.label)) {
+      seen.add(s.label);
+      out.push(s);
+    }
+  }
+  return out;
+}
+
+function sourcesPromptBlock(sources: DataSource[]): string {
+  if (!sources.length) {
+    return `\n\n# DATA SOURCE STATUS — IMPORTANT\nYou have NO live data feeds connected. Every score is your own AI-generated estimate based on your training + Bark's constitution. In each item's "source" field, prefix it with "AI estimate — " (e.g. "AI estimate — where a human would look: X"). Do NOT invent real-time stats, prices, or follower counts.`;
+  }
+  const list = sources.map((s) => `- ${s.label}`).join("\n");
+  return `\n\n# DATA SOURCE STATUS — LIVE FEEDS CONNECTED\nYou have the following live data feeds available (referenced by orchestrator, not called by you directly this turn):\n${list}\nGround your item choices in what these feeds would surface today. In each item's "source" field, name the specific feed you'd verify from.`;
+}
+
+async function callModel(userContent: string, key: string, sources: DataSource[]) {
   const context = await loadBarkZeroContext();
   const res = await fetch(GATEWAY_URL, {
     method: "POST",
@@ -69,7 +100,7 @@ async function callModel(userContent: string, key: string) {
       model: MODEL,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: SYSTEM + context },
+        { role: "system", content: SYSTEM + context + sourcesPromptBlock(sources) },
         { role: "user", content: userContent },
       ],
     }),
@@ -89,6 +120,7 @@ async function callModel(userContent: string, key: string) {
     return JSON.parse(m[0]);
   }
 }
+
 
 function slugify(input: string): string {
   return String(input || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "item";
