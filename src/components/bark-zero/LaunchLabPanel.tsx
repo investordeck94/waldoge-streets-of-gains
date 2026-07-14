@@ -185,6 +185,7 @@ export const LaunchLabPanel: FC = () => {
     setLaunchResult(null);
     setLaunchError(null);
     setLaunchFieldErrors({});
+    setValidated(false);
   };
 
   // ————— Brief input state —————
