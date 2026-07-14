@@ -489,11 +489,12 @@ Deno.serve(async (req) => {
         };
 
         send("done", {
-          landscape: { narratives, chosenId: chosen.id, rationale: landscape?.rationale ?? "" },
+          landscape: { narratives, chosenId: chosen.id, rationale: landscape?.rationale ?? "", source: landscapeSource },
           chosen,
           proposal,
+          source: landscapeSource,
         });
-        controller.close();
+        closeOnce();
       } catch (err: any) {
         console.error("bark-zero-launch-proposal stream error:", err);
         const message = err instanceof Error ? err.message : String(err);
@@ -501,8 +502,9 @@ Deno.serve(async (req) => {
           error: message,
           rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 2000) : undefined,
         });
-        controller.close();
+        closeOnce();
       }
+
     },
   });
 
