@@ -314,8 +314,63 @@ export const LaunchLabPanel: FC = () => {
     setLaunchError(null);
     setLaunchFieldErrors({});
     setValidated(false);
+    setOwnerConfirmed(false);
+    setPreflight({ loading: false, passed: false, error: null, mintAddress: null, requestId: null });
     setAssets({ logo: emptyAsset(), banner: emptyAsset(), telegram: emptyAsset() });
     lastAutoRef.current = null;
+  };
+
+  const invalidatePreflight = () => {
+    setPreflight({ loading: false, passed: false, error: null, mintAddress: null, requestId: null });
+  };
+
+  const runPreflight = async () => {
+    if (!proposal || preflight.loading) return;
+    // Ensure we have an image — prefer explicit tickerImage, else the auto logo asset
+    let image: File | null = tickerImage;
+    if (!image && assets.logo.dataUrl) {
+      try {
+        image = await dataUrlToFile(
+          assets.logo.dataUrl,
+          assets.logo.filename ?? `${proposal.ticker.toLowerCase()}-logo.png`,
+        );
+      } catch { /* ignore */ }
+    }
+    if (!image) {
+      setPreflight({ loading: false, passed: false, error: "Logo not ready — wait for asset generation or upload one.", mintAddress: null, requestId: null });
+      return;
+    }
+    setPreflight({ loading: true, passed: false, error: null, mintAddress: null, requestId: null });
+    try {
+      const fd = new FormData();
+      fd.append("tickerName", proposal.tokenName);
+      fd.append("tickerSymbol", proposal.ticker);
+      fd.append("description", proposal.description);
+      fd.append("tickerImage", image);
+      fd.append("validateOnly", "true");
+      const res = await fetch(LAUNCH_ENDPOINT, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data.code === "duplicate_ticker"
+          ? `Ticker $${proposal.ticker} is already taken.`
+          : (data.error || `Validation failed (${res.status})`);
+        setPreflight({ loading: false, passed: false, error: msg, mintAddress: null, requestId: null });
+        return;
+      }
+      setPreflight({
+        loading: false,
+        passed: true,
+        error: null,
+        mintAddress: data.mintAddress ?? null,
+        requestId: data.requestId ?? null,
+      });
+    } catch (e) {
+      setPreflight({ loading: false, passed: false, error: (e as Error).message || "Network error", mintAddress: null, requestId: null });
+    }
   };
 
 
