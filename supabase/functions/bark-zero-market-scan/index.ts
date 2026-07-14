@@ -214,9 +214,16 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ ok: true, scannedAt, summary }),
+      JSON.stringify({
+        ok: true,
+        scannedAt,
+        summary,
+        mode,
+        liveSources: liveSources.map((s) => ({ id: s.id, label: s.label })),
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   } catch (err: any) {
     console.error("bark-zero-market-scan error:", err);
     const status = typeof err?.status === "number" ? err.status : 500;
