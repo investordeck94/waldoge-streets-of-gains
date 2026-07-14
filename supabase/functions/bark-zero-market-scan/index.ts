@@ -60,7 +60,38 @@ const CATEGORY_BRIEF: Record<Category, string> = {
   x: "X trends: what specific crypto/AI/culture conversations are spiking on X right now.",
 };
 
-async function callModel(userContent: string, key: string) {
+type DataSource = { id: string; label: string; envVar: string };
+const KNOWN_SOURCES: DataSource[] = [
+  { id: "perplexity", label: "Perplexity (live web search)", envVar: "PERPLEXITY_API_KEY" },
+  { id: "firecrawl", label: "Firecrawl (web scraping)", envVar: "FIRECRAWL_API_KEY" },
+  { id: "x", label: "X / Twitter API", envVar: "X_API_KEY" },
+  { id: "twitter", label: "X / Twitter API", envVar: "TWITTER_BEARER_TOKEN" },
+  { id: "coingecko", label: "CoinGecko", envVar: "COINGECKO_API_KEY" },
+  { id: "dune", label: "Dune Analytics", envVar: "DUNE_API_KEY" },
+];
+
+function detectLiveSources(): DataSource[] {
+  const seen = new Set<string>();
+  const out: DataSource[] = [];
+  for (const s of KNOWN_SOURCES) {
+    const v = Deno.env.get(s.envVar);
+    if (v && v.trim().length > 0 && !seen.has(s.label)) {
+      seen.add(s.label);
+      out.push(s);
+    }
+  }
+  return out;
+}
+
+function sourcesPromptBlock(sources: DataSource[]): string {
+  if (!sources.length) {
+    return `\n\n# DATA SOURCE STATUS — IMPORTANT\nYou have NO live data feeds connected. Every score is your own AI-generated estimate based on your training + Bark's constitution. In each item's "source" field, prefix it with "AI estimate — " (e.g. "AI estimate — where a human would look: X"). Do NOT invent real-time stats, prices, or follower counts.`;
+  }
+  const list = sources.map((s) => `- ${s.label}`).join("\n");
+  return `\n\n# DATA SOURCE STATUS — LIVE FEEDS CONNECTED\nYou have the following live data feeds available (referenced by orchestrator, not called by you directly this turn):\n${list}\nGround your item choices in what these feeds would surface today. In each item's "source" field, name the specific feed you'd verify from.`;
+}
+
+async function callModel(userContent: string, key: string, sources: DataSource[]) {
   const context = await loadBarkZeroContext();
   const res = await fetch(GATEWAY_URL, {
     method: "POST",
@@ -69,7 +100,7 @@ async function callModel(userContent: string, key: string) {
       model: MODEL,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: SYSTEM + context },
+        { role: "system", content: SYSTEM + context + sourcesPromptBlock(sources) },
         { role: "user", content: userContent },
       ],
     }),
@@ -90,6 +121,7 @@ async function callModel(userContent: string, key: string) {
   }
 }
 
+
 function slugify(input: string): string {
   return String(input || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "item";
 }
@@ -108,6 +140,21 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
+    const liveSources = detectLiveSources();
+    const mode: "live" | "ai_estimate" = liveSources.length ? "live" : "ai_estimate";
+
+    // Probe mode: return only which sources are configured (no scan, no cost).
+    if (body?.probe === true) {
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          mode,
+          liveSources: liveSources.map((s) => ({ id: s.id, label: s.label })),
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const requested: Category[] = Array.isArray(body?.categories) && body.categories.length
       ? body.categories.filter((c: string): c is Category => (CATEGORIES as readonly string[]).includes(c))
       : [...CATEGORIES];
@@ -121,7 +168,9 @@ Deno.serve(async (req) => {
         const parsed = await callModel(
           `Category: ${category}\nBrief: ${CATEGORY_BRIEF[category]}\nReturn the ranked items JSON.`,
           key,
+          liveSources,
         );
+
         const items = Array.isArray(parsed?.items) ? parsed.items : [];
         if (!items.length) { summary[category] = { count: 0 }; continue; }
 
@@ -165,9 +214,16 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ ok: true, scannedAt, summary }),
+      JSON.stringify({
+        ok: true,
+        scannedAt,
+        summary,
+        mode,
+        liveSources: liveSources.map((s) => ({ id: s.id, label: s.label })),
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   } catch (err: any) {
     console.error("bark-zero-market-scan error:", err);
     const status = typeof err?.status === "number" ? err.status : 500;

@@ -1,7 +1,8 @@
 import { FC, useEffect, useMemo, useState } from "react";
-import { Radar, Loader2, RefreshCw, TrendingUp } from "lucide-react";
+import { Radar, Loader2, RefreshCw, TrendingUp, AlertTriangle, Wifi } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+
 
 type IntelRow = {
   id: string;
@@ -29,12 +30,20 @@ const ORDER: IntelRow["category"][] = ["ai", "dogeos", "anoncoin", "meme", "x"];
 
 const SCAN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-market-scan`;
 
+type SourceInfo = { mode: "live" | "ai_estimate"; liveSources: { id: string; label: string }[] };
+
 export const MarketIntelPanel: FC = () => {
   const [rows, setRows] = useState<IntelRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastScan, setLastScan] = useState<string | null>(null);
+  const [sourceInfo, setSourceInfo] = useState<SourceInfo | null>(null);
+
+  const authHeader = () => ({
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+  });
 
   const load = async () => {
     setLoading(true);
@@ -54,7 +63,19 @@ export const MarketIntelPanel: FC = () => {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  const probeSources = async () => {
+    try {
+      const res = await fetch(SCAN_URL, {
+        method: "POST",
+        headers: authHeader(),
+        body: JSON.stringify({ probe: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) setSourceInfo({ mode: data.mode, liveSources: data.liveSources ?? [] });
+    } catch { /* non-fatal */ }
+  };
+
+  useEffect(() => { load(); probeSources(); }, []);
 
   const scan = async (categories?: IntelRow["category"][]) => {
     setScanning(true);
@@ -62,14 +83,12 @@ export const MarketIntelPanel: FC = () => {
     try {
       const res = await fetch(SCAN_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
+        headers: authHeader(),
         body: JSON.stringify(categories?.length ? { categories } : {}),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || `Scan failed (${res.status})`);
+      if (data?.mode) setSourceInfo({ mode: data.mode, liveSources: data.liveSources ?? [] });
       await load();
     } catch (e) {
       setError((e as Error).message ?? "Scan failed");
@@ -77,6 +96,7 @@ export const MarketIntelPanel: FC = () => {
       setScanning(false);
     }
   };
+
 
   const byCat = useMemo(() => {
     const m = new Map<IntelRow["category"], IntelRow[]>();
@@ -119,6 +139,42 @@ export const MarketIntelPanel: FC = () => {
         </div>
         {error && <div className="mt-3 text-xs text-red-400 font-mono">⚠ {error}</div>}
       </div>
+
+      {sourceInfo && (
+        sourceInfo.mode === "live" ? (
+          <div className="rounded-xl border border-neon/40 bg-neon/[0.06] p-4 flex items-start gap-3">
+            <Wifi className="w-4 h-4 text-neon shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-neon">
+                Live data connected
+              </div>
+              <div className="text-xs text-white/80 mt-1">
+                Scores are grounded in these feeds:
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {sourceInfo.liveSources.map((s) => (
+                  <span key={s.id} className="text-[10px] font-mono px-2 py-0.5 rounded bg-black/40 border border-neon/30 text-neon">
+                    {s.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-amber-400/40 bg-amber-400/[0.06] p-4 flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-amber-400">
+                AI-generated estimates
+              </div>
+              <div className="text-xs text-white/80 mt-1 leading-relaxed">
+                No live data feeds are connected. Scores and items reflect Bark's inference from training + constitution, not real-time market data. Connect Perplexity, Firecrawl, X/Twitter, CoinGecko, or Dune to ground the ranking in live sources.
+              </div>
+            </div>
+          </div>
+        )
+      )}
+
 
       {loading && !rows.length && (
         <div className="text-white/50 text-sm font-mono flex items-center gap-2">
