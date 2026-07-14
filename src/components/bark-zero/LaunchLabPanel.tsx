@@ -625,9 +625,11 @@ export const LaunchLabPanel: FC = () => {
               <h3 className="font-mono text-2xl text-white tracking-wide">
                 {proposal.tokenName} <span className="text-neon">· ${proposal.ticker}</span>
               </h3>
+            )}
           </div>
         </div>
       </div>
+
 
 
       {landscape && landscape.narratives.length > 0 && (
