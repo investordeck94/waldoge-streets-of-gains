@@ -133,6 +133,8 @@ export const LaunchLabPanel: FC = () => {
   const [landscape, setLandscape] = useState<Landscape | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [errorRaw, setErrorRaw] = useState<string | null>(null);
+  const [pipelinePhase, setPipelinePhase] = useState<string | null>(null);
+  const [completedPhases, setCompletedPhases] = useState<Set<string>>(new Set());
 
   const [rejection, setRejection] = useState<{ reason: string; landscape: Landscape | null } | null>(null);
 
