@@ -353,7 +353,7 @@ export const LaunchLabPanel: FC = () => {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          ...ownerSecretHeader()
+          ...ownerSecretHeader(),
           Accept: "text/event-stream",
         },
         body: JSON.stringify({ brief: b }),
