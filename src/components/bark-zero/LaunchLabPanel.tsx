@@ -70,6 +70,7 @@ type LaunchResult = {
 };
 
 export type LaunchProposal = {
+  barksAnalysis: string;
   tokenName: string;
   ticker: string;
   narrative: string;
@@ -92,6 +93,7 @@ export type LaunchProposal = {
   tokenomics: string;
   risks: string[];
 };
+
 
 type Status = "idle" | "generating" | "reviewing" | "editing" | "approved" | "rejected";
 
