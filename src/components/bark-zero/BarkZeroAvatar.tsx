@@ -135,22 +135,16 @@ export const BarkZeroAvatar: FC<Props> = ({
         transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
       >
         {/* Base logo — never redesigned */}
-        {/* Base logo — screen-blended so the pure black background drops out
-            and only the red/white ASCII strokes remain, blending naturally
-            with whatever surface sits behind the avatar. A soft radial mask
-            feathers the edges so the square image never shows a hard seam. */}
+        {/* Base logo — screen blend drops the pure-black background to
+            transparent on any surface, leaving just the red/white ASCII
+            strokes. No mask: the artwork already fills the square edge
+            to edge, so any feathering would clip the keyboard/text. */}
         <img
           src={avatarSrc}
           alt="Bark Zero"
           draggable={false}
           className="absolute inset-0 w-full h-full object-contain select-none"
-          style={{
-            mixBlendMode: "screen",
-            WebkitMaskImage:
-              "radial-gradient(circle at 50% 50%, #000 55%, rgba(0,0,0,0.75) 72%, transparent 92%)",
-            maskImage:
-              "radial-gradient(circle at 50% 50%, #000 55%, rgba(0,0,0,0.75) 72%, transparent 92%)",
-          }}
+          style={{ mixBlendMode: "screen" }}
         />
 
         {/* SVG overlay — animated pieces */}
