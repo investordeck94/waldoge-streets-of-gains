@@ -243,7 +243,7 @@ export const LaunchLabPanel: FC = () => {
   const updateField = <K extends keyof LaunchProposal>(k: K, v: LaunchProposal[K]) =>
     setProposal({ ...proposal, [k]: v });
 
-  // ————— Approved: manual launch checklist —————
+  // ————— Approved: Anoncoin launch flow —————
   if (status === "approved") {
     return (
       <div className="rounded-2xl border border-neon/40 bg-black/60 backdrop-blur-xl p-6 sm:p-8 min-h-[70vh] space-y-6">
@@ -252,7 +252,7 @@ export const LaunchLabPanel: FC = () => {
           <div>
             <h3 className="font-mono text-2xl text-white">Launch Approved</h3>
             <p className="text-xs text-white/50">
-              No launch API is configured. Bark Zero has prepared everything you need to launch manually.
+              Upload artwork and confirm to mint via Anoncoin. Bark Zero broadcasts the signed transaction to Solana.
             </p>
           </div>
         </div>
@@ -263,45 +263,147 @@ export const LaunchLabPanel: FC = () => {
             <div className="mt-1">{proposal.description}</div>
           </Section>
           <Section title="Suggested Liquidity">{proposal.suggestedLiquidity}</Section>
-          <Section title="Tokenomics">{proposal.tokenomics}</Section>
-          <Section title="Artwork Prompt">{proposal.artworkPrompt}</Section>
-          <Section title="Website Copy">{proposal.websiteCopy}</Section>
-          <Section title="Telegram Announcement">{proposal.telegramAnnouncement}</Section>
         </div>
 
-        <Section title="X Launch Thread">
-          <ol className="list-decimal ml-5 space-y-2">
-            {proposal.xThread.map((p, i) => (
-              <li key={i}>{p}</li>
-            ))}
-          </ol>
-        </Section>
+        {launchResult ? (
+          <div className="rounded-xl border border-green-400/50 bg-green-500/5 p-5 space-y-3">
+            <div className="flex items-center gap-2 text-green-300 font-mono text-sm">
+              <CheckCircle2 className="w-5 h-5" />
+              {launchResult.confirmed
+                ? "Launch confirmed on Solana"
+                : "Launch submitted — confirmation pending"}
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3 text-xs font-mono">
+              <div>
+                <div className="text-white/40 uppercase tracking-widest mb-1">Mint Address</div>
+                <div className="text-white break-all">{launchResult.mintAddress ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-white/40 uppercase tracking-widest mb-1">Request ID</div>
+                <div className="text-white break-all">{launchResult.requestId ?? "—"}</div>
+              </div>
+              <div className="sm:col-span-2">
+                <div className="text-white/40 uppercase tracking-widest mb-1">Tx Signature</div>
+                <div className="text-white break-all">{launchResult.signature ?? "—"}</div>
+              </div>
+            </div>
+            {launchResult.broadcastError && (
+              <div className="text-xs text-yellow-300/90 font-mono">
+                ⚠ {launchResult.broadcastError}
+              </div>
+            )}
+            {launchResult.signature && (
+              <a
+                href={`https://solscan.io/tx/${launchResult.signature}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block text-xs font-mono text-neon hover:underline"
+              >
+                view on Solscan ↗
+              </a>
+            )}
+            <button
+              onClick={reset}
+              className="block text-xs font-mono uppercase tracking-widest text-white/50 hover:text-neon"
+            >
+              ← draft another proposal
+            </button>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-neon/25 bg-white/[0.02] p-5 space-y-4">
+            <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-neon/80">Launch Details</div>
 
-        <Section title="Marketing Plan">
-          <ul className="list-disc ml-5 space-y-1">
-            {proposal.marketingPlan.map((p, i) => (
-              <li key={i}>{p}</li>
-            ))}
-          </ul>
-        </Section>
+            <div>
+              <label className="block text-xs font-mono text-white/60 mb-1">Ticker Image *</label>
+              <div className="flex items-center gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setTickerImage(e.target.files?.[0] ?? null)}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-neon/30 bg-neon/5 text-neon text-xs font-mono hover:bg-neon/10"
+                >
+                  <Upload className="w-4 h-4" /> {tickerImage ? "Change image" : "Choose image"}
+                </button>
+                <span className="text-xs text-white/60 truncate">
+                  {tickerImage ? `${tickerImage.name} (${Math.round(tickerImage.size / 1024)} KB)` : "PNG or JPG, ≤ 4MB"}
+                </span>
+              </div>
+              {launchFieldErrors.tickerImage && (
+                <div className="mt-1 text-xs text-red-400 font-mono">{launchFieldErrors.tickerImage}</div>
+              )}
+            </div>
 
-        <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4 flex items-start gap-2">
-          <ShieldAlert className="w-4 h-4 text-yellow-400 mt-0.5 shrink-0" />
-          <p className="text-xs text-yellow-100/90 font-mono leading-relaxed">
-            Bark Zero has not signed anything, spent any funds, or created any on-chain transaction.
-            Use the assets above to launch on your platform of choice.
-          </p>
-        </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-mono text-white/60 mb-1">Twitter (optional)</label>
+                <input
+                  value={twitterLink}
+                  onChange={(e) => setTwitterLink(e.target.value)}
+                  placeholder="https://x.com/..."
+                  className="w-full bg-black/60 border border-neon/20 focus:border-neon/60 focus:outline-none rounded-lg px-3 py-2 text-sm text-white font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono text-white/60 mb-1">Telegram (optional)</label>
+                <input
+                  value={telegramLink}
+                  onChange={(e) => setTelegramLink(e.target.value)}
+                  placeholder="https://t.me/..."
+                  className="w-full bg-black/60 border border-neon/20 focus:border-neon/60 focus:outline-none rounded-lg px-3 py-2 text-sm text-white font-mono"
+                />
+              </div>
+            </div>
 
-        <button
-          onClick={reset}
-          className="text-xs font-mono uppercase tracking-widest text-neon hover:underline"
-        >
-          ← draft another proposal
-        </button>
+            {launchError && (
+              <div className="text-xs text-red-400 font-mono">⚠ {launchError}</div>
+            )}
+
+            <button
+              onClick={submitLaunch}
+              disabled={launching}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-neon text-black font-semibold hover:bg-neon/80 disabled:opacity-40 transition-colors"
+            >
+              {launching ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Minting & broadcasting...</>
+              ) : (
+                <><Rocket className="w-4 h-4" /> Confirm Launch on Anoncoin</>
+              )}
+            </button>
+
+            <p className="text-[11px] text-white/40 font-mono leading-relaxed">
+              Owner-triggered only. Bark Zero submits to Anoncoin with server-held credentials and broadcasts the returned signed transaction to Solana before the blockhash expires.
+            </p>
+          </div>
+        )}
+
+        <details className="text-xs">
+          <summary className="cursor-pointer text-white/50 font-mono uppercase tracking-widest">
+            Marketing assets
+          </summary>
+          <div className="mt-3 grid sm:grid-cols-2 gap-3">
+            <Section title="Tokenomics">{proposal.tokenomics}</Section>
+            <Section title="Artwork Prompt">{proposal.artworkPrompt}</Section>
+            <Section title="Website Copy">{proposal.websiteCopy}</Section>
+            <Section title="Telegram Announcement">{proposal.telegramAnnouncement}</Section>
+          </div>
+          <div className="mt-3">
+            <Section title="X Launch Thread">
+              <ol className="list-decimal ml-5 space-y-2">
+                {proposal.xThread.map((p, i) => <li key={i}>{p}</li>)}
+              </ol>
+            </Section>
+          </div>
+        </details>
       </div>
     );
   }
+
 
   // ————— Rejected —————
   if (status === "rejected") {
