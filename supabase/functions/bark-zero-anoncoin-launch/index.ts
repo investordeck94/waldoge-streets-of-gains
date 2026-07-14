@@ -75,6 +75,8 @@ Deno.serve(async (req) => {
   const description = (inbound.get("description") as string | null)?.trim();
   const twitterLink = (inbound.get("twitterLink") as string | null)?.trim() || "";
   const telegramLink = (inbound.get("telegramLink") as string | null)?.trim() || "";
+  const validateOnly =
+    ((inbound.get("validateOnly") as string | null) ?? "").toLowerCase() === "true";
   const tickerImage = inbound.get("tickerImage");
 
   const errors: Record<string, string> = {};
@@ -99,6 +101,7 @@ Deno.serve(async (req) => {
   outbound.append("tickerImage", tickerImage as File, (tickerImage as File).name);
   if (twitterLink) outbound.append("twitterLink", twitterLink);
   if (telegramLink) outbound.append("telegramLink", telegramLink);
+  if (validateOnly) outbound.append("validateOnly", "true");
 
   let anonRes: Response;
   try {
@@ -156,6 +159,21 @@ Deno.serve(async (req) => {
     "signedTx",
     "serializedTransaction",
   ]);
+
+  // In validate-only mode Anoncoin will not return a signed transaction —
+  // just echo the validation result back to the frontend.
+  if (validateOnly) {
+    return json({
+      ok: true,
+      validateOnly: true,
+      mintAddress: mintAddress ?? null,
+      requestId: requestId ?? null,
+      signature: null,
+      confirmed: false,
+      broadcastError: null,
+      anoncoin: payload,
+    });
+  }
 
   if (!signedTxB64) {
     return json(

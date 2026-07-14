@@ -8,11 +8,13 @@ const LAUNCH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-
 
 type LaunchResult = {
   ok: boolean;
+  validateOnly?: boolean;
   mintAddress: string | null;
   requestId: string | null;
   signature: string | null;
   confirmed: boolean;
   broadcastError: string | null;
+  anoncoin?: unknown;
 };
 
 export type LaunchProposal = {
@@ -81,12 +83,13 @@ export const LaunchLabPanel: FC = () => {
   const [twitterLink, setTwitterLink] = useState("");
   const [telegramLink, setTelegramLink] = useState("");
   const [launching, setLaunching] = useState(false);
+  const [launchMode, setLaunchMode] = useState<"validate" | "launch" | null>(null);
   const [launchResult, setLaunchResult] = useState<LaunchResult | null>(null);
   const [launchError, setLaunchError] = useState<string | null>(null);
   const [launchFieldErrors, setLaunchFieldErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const submitLaunch = async () => {
+  const submitLaunch = async (validateOnly = false) => {
     if (!proposal || launching) return;
     setLaunchError(null);
     setLaunchFieldErrors({});
@@ -96,6 +99,7 @@ export const LaunchLabPanel: FC = () => {
       return;
     }
     setLaunching(true);
+    setLaunchMode(validateOnly ? "validate" : "launch");
     try {
       const fd = new FormData();
       fd.append("tickerName", proposal.tokenName);
@@ -104,6 +108,7 @@ export const LaunchLabPanel: FC = () => {
       fd.append("tickerImage", tickerImage);
       if (twitterLink.trim()) fd.append("twitterLink", twitterLink.trim());
       if (telegramLink.trim()) fd.append("telegramLink", telegramLink.trim());
+      if (validateOnly) fd.append("validateOnly", "true");
       const res = await fetch(LAUNCH_ENDPOINT, {
         method: "POST",
         headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
@@ -115,7 +120,7 @@ export const LaunchLabPanel: FC = () => {
         if (data.code === "duplicate_ticker") {
           setLaunchError(`Ticker $${proposal.ticker} is already taken. Edit the proposal and pick another symbol.`);
         } else {
-          setLaunchError(data.error || `Launch failed (${res.status})`);
+          setLaunchError(data.error || `${validateOnly ? "Validation" : "Launch"} failed (${res.status})`);
         }
         return;
       }
@@ -126,6 +131,7 @@ export const LaunchLabPanel: FC = () => {
       setLaunching(false);
     }
   };
+
 
 
   const generate = async (text?: string) => {
@@ -266,12 +272,22 @@ export const LaunchLabPanel: FC = () => {
         </div>
 
         {launchResult ? (
-          <div className="rounded-xl border border-green-400/50 bg-green-500/5 p-5 space-y-3">
-            <div className="flex items-center gap-2 text-green-300 font-mono text-sm">
+          <div className={cn(
+            "rounded-xl border p-5 space-y-3",
+            launchResult.validateOnly
+              ? "border-neon/40 bg-neon/5"
+              : "border-green-400/50 bg-green-500/5",
+          )}>
+            <div className={cn(
+              "flex items-center gap-2 font-mono text-sm",
+              launchResult.validateOnly ? "text-neon" : "text-green-300",
+            )}>
               <CheckCircle2 className="w-5 h-5" />
-              {launchResult.confirmed
-                ? "Launch confirmed on Solana"
-                : "Launch submitted — confirmation pending"}
+              {launchResult.validateOnly
+                ? "Validation passed — token can be created"
+                : launchResult.confirmed
+                  ? "Launch confirmed on Solana"
+                  : "Launch submitted — confirmation pending"}
             </div>
             <div className="grid sm:grid-cols-2 gap-3 text-xs font-mono">
               <div>
@@ -282,17 +298,19 @@ export const LaunchLabPanel: FC = () => {
                 <div className="text-white/40 uppercase tracking-widest mb-1">Request ID</div>
                 <div className="text-white break-all">{launchResult.requestId ?? "—"}</div>
               </div>
-              <div className="sm:col-span-2">
-                <div className="text-white/40 uppercase tracking-widest mb-1">Tx Signature</div>
-                <div className="text-white break-all">{launchResult.signature ?? "—"}</div>
-              </div>
+              {!launchResult.validateOnly && (
+                <div className="sm:col-span-2">
+                  <div className="text-white/40 uppercase tracking-widest mb-1">Tx Signature</div>
+                  <div className="text-white break-all">{launchResult.signature ?? "—"}</div>
+                </div>
+              )}
             </div>
             {launchResult.broadcastError && (
               <div className="text-xs text-yellow-300/90 font-mono">
                 ⚠ {launchResult.broadcastError}
               </div>
             )}
-            {launchResult.signature && (
+            {launchResult.signature && !launchResult.validateOnly && (
               <a
                 href={`https://solscan.io/tx/${launchResult.signature}`}
                 target="_blank"
@@ -302,12 +320,32 @@ export const LaunchLabPanel: FC = () => {
                 view on Solscan ↗
               </a>
             )}
-            <button
-              onClick={reset}
-              className="block text-xs font-mono uppercase tracking-widest text-white/50 hover:text-neon"
-            >
-              ← draft another proposal
-            </button>
+            {launchResult.anoncoin !== undefined && (
+              <details className="text-xs">
+                <summary className="cursor-pointer text-white/50 font-mono uppercase tracking-widest">
+                  Raw API response
+                </summary>
+                <pre className="mt-2 p-3 rounded-lg bg-black/60 border border-white/10 text-[11px] text-white/80 overflow-x-auto whitespace-pre-wrap break-words">
+{JSON.stringify(launchResult.anoncoin, null, 2)}
+                </pre>
+              </details>
+            )}
+            <div className="flex gap-3 pt-1">
+              {launchResult.validateOnly && (
+                <button
+                  onClick={() => { setLaunchResult(null); setLaunchMode(null); }}
+                  className="text-xs font-mono uppercase tracking-widest text-neon hover:underline"
+                >
+                  ← back to launch form
+                </button>
+              )}
+              <button
+                onClick={reset}
+                className="text-xs font-mono uppercase tracking-widest text-white/50 hover:text-neon"
+              >
+                ← draft another proposal
+              </button>
+            </div>
           </div>
         ) : (
           <div className="rounded-xl border border-neon/25 bg-white/[0.02] p-5 space-y-4">
@@ -364,17 +402,30 @@ export const LaunchLabPanel: FC = () => {
               <div className="text-xs text-red-400 font-mono">⚠ {launchError}</div>
             )}
 
-            <button
-              onClick={submitLaunch}
-              disabled={launching}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-neon text-black font-semibold hover:bg-neon/80 disabled:opacity-40 transition-colors"
-            >
-              {launching ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Minting & broadcasting...</>
-              ) : (
-                <><Rocket className="w-4 h-4" /> Confirm Launch on Anoncoin</>
-              )}
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => submitLaunch(true)}
+                disabled={launching}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-lg border border-neon/50 bg-neon/10 text-neon font-semibold hover:bg-neon/20 disabled:opacity-40 transition-colors"
+              >
+                {launching && launchMode === "validate" ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Validating...</>
+                ) : (
+                  <><ShieldAlert className="w-4 h-4" /> Validate Token (Test)</>
+                )}
+              </button>
+              <button
+                onClick={() => submitLaunch(false)}
+                disabled={launching}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-neon text-black font-semibold hover:bg-neon/80 disabled:opacity-40 transition-colors"
+              >
+                {launching && launchMode === "launch" ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Minting & broadcasting...</>
+                ) : (
+                  <><Rocket className="w-4 h-4" /> Confirm Launch on Anoncoin</>
+                )}
+              </button>
+            </div>
 
             <p className="text-[11px] text-white/40 font-mono leading-relaxed">
               Owner-triggered only. Bark Zero submits to Anoncoin with server-held credentials and broadcasts the returned signed transaction to Solana before the blockhash expires.
