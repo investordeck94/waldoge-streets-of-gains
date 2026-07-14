@@ -132,6 +132,8 @@ export const LaunchLabPanel: FC = () => {
   const [proposal, setProposal] = useState<LaunchProposal | null>(null);
   const [landscape, setLandscape] = useState<Landscape | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorRaw, setErrorRaw] = useState<string | null>(null);
+
   const [rejection, setRejection] = useState<{ reason: string; landscape: Landscape | null } | null>(null);
 
 
@@ -284,6 +286,7 @@ export const LaunchLabPanel: FC = () => {
     if (!b || status === "generating") return;
     setBrief(b);
     setError(null);
+    setErrorRaw(null);
     setRejection(null);
     setStatus("generating");
     setProposal(null);
@@ -300,10 +303,12 @@ export const LaunchLabPanel: FC = () => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data.error || `Request failed (${res.status})`);
+        if (typeof data.rawResponse === "string") setErrorRaw(data.rawResponse);
         setStatus("idle");
         return;
       }
       if (data.rejected) {
+
         setLandscape((data.landscape as Landscape) ?? null);
         setRejection({ reason: String(data.reason ?? "Bark rejected the landscape."), landscape: (data.landscape as Landscape) ?? null });
         setStatus("idle");
@@ -498,8 +503,22 @@ export const LaunchLabPanel: FC = () => {
         </div>
 
         {error && (
-          <div className="mt-4 text-xs text-red-400 font-mono">⚠ {error}</div>
+          <div className="mt-4 rounded-lg border border-red-500/40 bg-red-500/5 p-3">
+            <div className="text-xs text-red-400 font-mono">⚠ {error}</div>
+            {errorRaw && (
+              <details className="mt-2">
+                <summary className="text-[10px] font-mono uppercase tracking-widest text-red-300/70 cursor-pointer hover:text-red-300">
+                  show raw AI response
+                </summary>
+                <pre className="mt-2 max-h-48 overflow-auto text-[10px] text-white/60 font-mono whitespace-pre-wrap break-all bg-black/40 p-2 rounded">
+{errorRaw}
+                </pre>
+              </details>
+            )}
+          </div>
         )}
+
+
 
         {rejection && (
           <div className="mt-4 rounded-xl border border-red-500/40 bg-red-500/5 p-4">

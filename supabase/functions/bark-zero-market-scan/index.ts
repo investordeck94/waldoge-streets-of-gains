@@ -112,14 +112,10 @@ async function callModel(userContent: string, key: string, sources: DataSource[]
   }
   const data = await res.json();
   const raw: string = data.choices?.[0]?.message?.content ?? "";
-  try {
-    return JSON.parse(raw);
-  } catch {
-    const m = String(raw).match(/\{[\s\S]*\}/);
-    if (!m) throw Object.assign(new Error("Model returned malformed JSON"), { status: 502 });
-    return JSON.parse(m[0]);
-  }
+  const { extractJson } = await import("../_shared/extractJson.ts");
+  return extractJson(raw);
 }
+
 
 
 function slugify(input: string): string {

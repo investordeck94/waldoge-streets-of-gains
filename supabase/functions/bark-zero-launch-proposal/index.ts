@@ -6,6 +6,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { loadBarkZeroContext } from "../_shared/barkZeroContext.ts";
+import { extractJson, extractJsonWithRetry } from "../_shared/extractJson.ts";
+
 
 async function loadMarketIntelBlock(): Promise<string> {
   try {
@@ -179,14 +181,17 @@ Only JSON. No prose before or after.
 `.trim();
 
 
-async function callModel(messages: Array<{ role: string; content: string }>, key: string) {
+async function callModelRaw(messages: Array<{ role: string; content: string }>, key: string, extraSystem = ""): Promise<string> {
+  const finalMessages = extraSystem
+    ? messages.map((m, i) => (i === 0 && m.role === "system" ? { ...m, content: m.content + extraSystem } : m))
+    : messages;
   const res = await fetch(GATEWAY_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
     body: JSON.stringify({
       model: MODEL,
       response_format: { type: "json_object" },
-      messages,
+      messages: finalMessages,
     }),
   });
   if (!res.ok) {
@@ -195,15 +200,15 @@ async function callModel(messages: Array<{ role: string; content: string }>, key
     throw Object.assign(new Error(errText || `Gateway ${res.status}`), { status });
   }
   const data = await res.json();
-  const raw: string = data.choices?.[0]?.message?.content ?? "";
-  try {
-    return JSON.parse(raw);
-  } catch {
-    const match = String(raw).match(/\{[\s\S]*\}/);
-    if (!match) throw Object.assign(new Error("Model returned malformed JSON"), { status: 502, raw });
-    return JSON.parse(match[0]);
-  }
+  return String(data.choices?.[0]?.message?.content ?? "");
 }
+
+async function callModel<T = any>(messages: Array<{ role: string; content: string }>, key: string): Promise<T> {
+  return await extractJsonWithRetry<T>((strictReminder) =>
+    callModelRaw(messages, key, strictReminder),
+  );
+}
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -303,9 +308,18 @@ Deno.serve(async (req) => {
   } catch (err: any) {
     console.error("bark-zero-launch-proposal error:", err);
     const status = typeof err?.status === "number" ? err.status : 500;
+    const message = err instanceof Error ? err.message : String(err);
+    const userMessage = status === 502
+      ? "Bark's response wasn't valid JSON, even after a retry. Please try generating the proposal again."
+      : message;
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
+      JSON.stringify({
+        error: userMessage,
+        details: message,
+        rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 2000) : undefined,
+      }),
       { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   }
 });
