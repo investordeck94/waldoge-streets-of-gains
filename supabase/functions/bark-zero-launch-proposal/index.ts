@@ -234,7 +234,7 @@ Deno.serve(async (req) => {
     // ————— Phase 1: landscape scan —————
     const landscape = await callModel(
       [
-        { role: "system", content: LANDSCAPE_SYSTEM + contextBlock },
+        { role: "system", content: LANDSCAPE_SYSTEM + contextBlock + marketIntelBlock },
         {
           role: "user",
           content:
