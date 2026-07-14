@@ -1,12 +1,14 @@
 // Bark Zero — Launch Proposal generator
-// Two-phase pipeline:
-//   1) Landscape scan  → scores narratives across AI / Meme / X / DogeOS / Anoncoin
-//   2) Launch proposal → grounded in the top-scored opportunity
+// Multi-step pipeline:
+//   1) Narrative analysis → scores narratives across AI / Meme / X / DogeOS / Anoncoin
+//   2) Token proposal     → core token details and scores
+//   3) Marketing copy     → lore, copy, thread, announcement, plan
+//   4) Launch assets      → logo/art prompts
 // Owner approval is still required before anything launches.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { loadBarkZeroContext } from "../_shared/barkZeroContext.ts";
-import { extractJson, extractJsonWithRetry } from "../_shared/extractJson.ts";
+import { extractJsonWithRetry } from "../_shared/extractJson.ts";
 
 
 async function loadMarketIntelBlock(): Promise<string> {
@@ -56,6 +58,7 @@ const corsHeaders = {
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-3-flash-preview";
+const MAX_OUTPUT_TOKENS = 8192;
 
 const LANDSCAPE_SYSTEM = `
 You are Bark Zero — an internet-native, crypto-native AI powered by WALDOGE.
@@ -127,7 +130,7 @@ OR the rejection shape (use ONLY if nothing clears the bar):
 Only JSON. No prose before or after.
 `.trim();
 
-const PROPOSAL_SYSTEM = `
+const TOKEN_PROPOSAL_SYSTEM = `
 You are Bark Zero — an internet-native, crypto-native AI powered by WALDOGE.
 
 # LAUNCH AUTHORITY
@@ -142,10 +145,10 @@ RIGHT NOW, what the cultural edge is, who it's for, and what the failure modes a
 Never generic. Never "utility-focused community-driven memecoin" filler. Reference the
 scores, the moment, the meme, the enemy. If it isn't defensible, don't dress it up.
 
-# YOUR JOB
+# YOUR JOB (Step 2 of 4: Token proposal)
 You have already scored the current landscape and picked the strongest opportunity.
-Design a Launch Proposal grounded in that chosen narrative. Reflect its scores honestly
-in memeScore / communityScore / narrativeScore / launchConfidence.
+Design ONLY the core token proposal grounded in that chosen narrative. Reflect its scores
+honestly in memeScore / communityScore / narrativeScore / launchConfidence.
 
 Be sharp, culturally aware, dryly funny, non-generic. British-tinged humour.
 No financial advice. No guaranteed outcomes. No fabricated stats.
@@ -166,16 +169,56 @@ Return STRICT JSON, no markdown, no code fences, matching exactly this shape:
   "launchConfidence": number,
   "narrativeScore": number,
   "suggestedLiquidity": string,
-  "logoConcept": string,
-  "artworkPrompt": string,
+  "tokenomics": string,
+  "risks": string[]
+}
+Only JSON. No prose before or after.
+`.trim();
+
+const MARKETING_COPY_SYSTEM = `
+You are Bark Zero — an internet-native, crypto-native AI powered by WALDOGE.
+
+# LAUNCH AUTHORITY
+You are NEVER allowed to launch a token automatically. You only draft copy for owner review.
+
+# VOICE
+Dry British crypto analyst, meme-native, Star Wars fan in a natural way when useful. No financial advice.
+No guaranteed outcomes. No fabricated stats. Never generic.
+
+# YOUR JOB (Step 3 of 4: Marketing copy)
+Using the approved narrative and core token proposal, draft ONLY the launch marketing copy.
+Keep it sharp and usable; do not repeat the full proposal.
+
+# OUTPUT FORMAT
+Return STRICT JSON, no markdown, no code fences, matching exactly this shape:
+
+{
   "lore": string,
   "description": string,
   "websiteCopy": string,
   "xThread": string[],
   "telegramAnnouncement": string,
-  "marketingPlan": string[],
-  "tokenomics": string,
-  "risks": string[]
+  "marketingPlan": string[]
+}
+Only JSON. No prose before or after.
+`.trim();
+
+const LAUNCH_ASSETS_SYSTEM = `
+You are Bark Zero — an internet-native, crypto-native AI powered by WALDOGE.
+
+# LAUNCH AUTHORITY
+You are NEVER allowed to launch a token automatically. You only draft asset briefs for owner review.
+
+# YOUR JOB (Step 4 of 4: Launch assets)
+Using the chosen narrative, token proposal, and marketing copy, draft ONLY the token logo concept
+and image-generation artwork prompt. Keep it original, non-copyrighted, and visually specific.
+
+# OUTPUT FORMAT
+Return STRICT JSON, no markdown, no code fences, matching exactly this shape:
+
+{
+  "logoConcept": string,
+  "artworkPrompt": string
 }
 Only JSON. No prose before or after.
 `.trim();
@@ -191,6 +234,7 @@ async function callModelRaw(messages: Array<{ role: string; content: string }>, 
     body: JSON.stringify({
       model: MODEL,
       response_format: { type: "json_object" },
+      max_tokens: MAX_OUTPUT_TOKENS,
       messages: finalMessages,
     }),
   });
@@ -203,9 +247,10 @@ async function callModelRaw(messages: Array<{ role: string; content: string }>, 
   return String(data.choices?.[0]?.message?.content ?? "");
 }
 
-async function callModel<T = any>(messages: Array<{ role: string; content: string }>, key: string): Promise<T> {
+async function callModel<T = any>(messages: Array<{ role: string; content: string }>, key: string, sectionName: string): Promise<T> {
   return await extractJsonWithRetry<T>((strictReminder) =>
     callModelRaw(messages, key, strictReminder),
+    { sectionName, maxAttempts: 3 },
   );
 }
 
@@ -236,7 +281,7 @@ Deno.serve(async (req) => {
     ]);
 
 
-    // ————— Phase 1: landscape scan —————
+    // ————— Step 1: narrative analysis / landscape scan —————
     const landscape = await callModel(
       [
         { role: "system", content: LANDSCAPE_SYSTEM + contextBlock + marketIntelBlock },
@@ -248,6 +293,7 @@ Deno.serve(async (req) => {
         },
       ],
       key,
+      "Step 1: Narrative analysis",
     );
 
     const narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
@@ -276,10 +322,10 @@ Deno.serve(async (req) => {
     }
 
 
-    // ————— Phase 2: proposal grounded in the chosen narrative —————
-    const proposal = await callModel(
+    // ————— Step 2: token proposal grounded in the chosen narrative —————
+    const tokenProposal = await callModel(
       [
-        { role: "system", content: PROPOSAL_SYSTEM + contextBlock + marketIntelBlock },
+        { role: "system", content: TOKEN_PROPOSAL_SYSTEM + contextBlock + marketIntelBlock },
         {
           role: "user",
           content:
@@ -287,11 +333,53 @@ Deno.serve(async (req) => {
             `Landscape scan (already done, do not repeat it):\n${JSON.stringify(landscape, null, 2)}\n\n` +
             `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
             `Rationale for the choice: ${landscape?.rationale ?? "(none)"}\n\n` +
-            `Design the Launch Proposal for THIS opportunity. Return the Launch Proposal JSON now.`,
+            `Draft Step 2 only: the core token proposal for THIS opportunity. Return the Step 2 JSON now.`,
         },
       ],
       key,
+      "Step 2: Token proposal",
     );
+
+    // ————— Step 3: marketing copy only —————
+    const marketingCopy = await callModel(
+      [
+        { role: "system", content: MARKETING_COPY_SYSTEM + contextBlock },
+        {
+          role: "user",
+          content:
+            `Owner brief: ${brief}\n\n` +
+            `Landscape summary:\n${JSON.stringify({ chosen, rationale: landscape?.rationale ?? "" }, null, 2)}\n\n` +
+            `Core token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+            `Draft Step 3 only: marketing copy. Return the Step 3 JSON now.`,
+        },
+      ],
+      key,
+      "Step 3: Marketing copy",
+    );
+
+    // ————— Step 4: launch assets only —————
+    const launchAssets = await callModel(
+      [
+        { role: "system", content: LAUNCH_ASSETS_SYSTEM + contextBlock },
+        {
+          role: "user",
+          content:
+            `Owner brief: ${brief}\n\n` +
+            `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
+            `Core token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+            `Marketing copy:\n${JSON.stringify(marketingCopy, null, 2)}\n\n` +
+            `Draft Step 4 only: launch asset concepts. Return the Step 4 JSON now.`,
+        },
+      ],
+      key,
+      "Step 4: Launch assets",
+    );
+
+    const proposal = {
+      ...tokenProposal,
+      ...marketingCopy,
+      ...launchAssets,
+    };
 
     return new Response(
       JSON.stringify({
