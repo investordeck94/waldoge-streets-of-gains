@@ -162,6 +162,12 @@ export const LaunchLabPanel: FC = () => {
     setProposal(null);
     setStatus("idle");
     setError(null);
+    setTickerImage(null);
+    setTwitterLink("");
+    setTelegramLink("");
+    setLaunchResult(null);
+    setLaunchError(null);
+    setLaunchFieldErrors({});
   };
 
   // ————— Brief input state —————
