@@ -1,7 +1,36 @@
 import { FC, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, Sparkles, Rocket, Upload } from "lucide-react";
+import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, Sparkles, Rocket, Upload, Radar, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+type LandscapeNarrative = {
+  id: string;
+  category: "ai" | "meme" | "x" | "dogeos" | "anoncoin" | string;
+  title: string;
+  summary: string;
+  scores: {
+    attention: number;
+    originality: number;
+    competition: number;
+    viralPotential: number;
+    communityStrength: number;
+  };
+  composite: number;
+};
+
+type Landscape = {
+  narratives: LandscapeNarrative[];
+  chosenId: string;
+  rationale: string;
+};
+
+const CATEGORY_LABEL: Record<string, string> = {
+  ai: "AI",
+  meme: "Meme",
+  x: "X Trends",
+  dogeos: "DogeOS",
+  anoncoin: "Anoncoin",
+};
 
 const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-launch-proposal`;
 const LAUNCH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-anoncoin-launch`;
