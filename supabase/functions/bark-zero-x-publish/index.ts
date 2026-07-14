@@ -1,3 +1,4 @@
+import { requireOwner } from "../_shared/ownerAuth.ts";
 // Bark Zero — X (Twitter) publish endpoint
 // Publishes a tweet or thread using OAuth 1.0a User Context (required to post as a user).
 // Expects secrets: BARK_ZERO_X_CONSUMER_KEY, BARK_ZERO_X_CONSUMER_SECRET,
@@ -6,7 +7,7 @@
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-owner-secret",
 };
 
 const X_API = "https://api.x.com/2/tweets";
@@ -97,6 +98,7 @@ async function postTweet(text: string, replyToId: string | null, creds: {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const _auth = requireOwner(req); if (_auth) return _auth;
 
   try {
     const consumerKey = Deno.env.get("BARK_ZERO_X_CONSUMER_KEY");

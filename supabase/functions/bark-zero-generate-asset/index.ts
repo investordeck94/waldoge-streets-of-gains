@@ -1,3 +1,4 @@
+import { requireOwner } from "../_shared/ownerAuth.ts";
 // Generates a single launch asset (logo | banner | telegram) via Lovable AI Gateway.
 // Returns { b64_json, mimeType, filename } — non-streaming for simplicity.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
@@ -29,7 +30,8 @@ function buildPrompt(kind: Kind, params: {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: { ...corsHeaders, "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-owner-secret" } });
+  const _auth = requireOwner(req); if (_auth) return _auth;
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },

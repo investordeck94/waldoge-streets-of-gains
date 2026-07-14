@@ -1,3 +1,4 @@
+import { requireOwner } from "../_shared/ownerAuth.ts";
 // Bark Zero — Launch Proposal generator (streaming pipeline)
 // SSE pipeline phases emitted to the client:
 //   1) landscape_scan     — scanning the current crypto/culture landscape
@@ -57,7 +58,7 @@ async function loadMarketIntelBlock(): Promise<string> {
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-owner-secret",
 };
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
@@ -257,6 +258,7 @@ async function runFallbackNarratives(
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const _auth = requireOwner(req); if (_auth) return _auth;
 
   const key = Deno.env.get("LOVABLE_API_KEY");
   if (!key) {

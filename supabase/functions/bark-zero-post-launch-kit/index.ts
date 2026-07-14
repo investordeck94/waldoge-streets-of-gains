@@ -1,3 +1,4 @@
+import { requireOwner } from "../_shared/ownerAuth.ts";
 // Bark Zero — Post-launch content kit
 // After a successful Anoncoin launch, generate the full marketing kit in one shot:
 // X announcement, X thread, Telegram announcement, Discord announcement,
@@ -7,7 +8,7 @@ import { loadBarkZeroContext } from "../_shared/barkZeroContext.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-owner-secret",
 };
 
 const SYSTEM_PROMPT = `
@@ -55,6 +56,7 @@ function extractJson(raw: string): unknown {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const _auth = requireOwner(req); if (_auth) return _auth;
 
   try {
     const key = Deno.env.get("LOVABLE_API_KEY");

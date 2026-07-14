@@ -1,3 +1,4 @@
+import { requireOwner } from "../_shared/ownerAuth.ts";
 // Bark Zero Inner Life generator — creates diary entries, dreams, curiosity
 // questions/opinions, creativity sparks, and evolution reflections.
 // Every output is stored as a draft (or private) — nothing publishes.
@@ -11,7 +12,8 @@ const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 type Action = "diary" | "dream" | "curiosity_question" | "curiosity_research" | "creation" | "evolution_reflection";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: { ...corsHeaders, "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-owner-secret" } });
+  const _auth = requireOwner(req); if (_auth) return _auth;
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   const supaUrl = Deno.env.get("SUPABASE_URL");
   const supaKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");

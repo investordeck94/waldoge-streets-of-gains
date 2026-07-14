@@ -1,3 +1,4 @@
+import { requireOwner } from "../_shared/ownerAuth.ts";
 // Bark Zero → Anoncoin launch proxy + Solana broadcaster.
 // Never exposes ANONCOIN_API_KEY to the frontend. Accepts a multipart/form-data
 // request from the client, forwards it to Anoncoin with the server-side
@@ -9,7 +10,7 @@ import { Connection, VersionedTransaction, Transaction } from "npm:@solana/web3.
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-owner-secret",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -52,6 +53,7 @@ function tryDecodeTx(raw: Uint8Array) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const _auth = requireOwner(req); if (_auth) return _auth;
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   const apiKey = Deno.env.get("ANONCOIN_API_KEY");

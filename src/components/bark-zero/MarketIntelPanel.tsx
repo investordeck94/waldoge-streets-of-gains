@@ -1,5 +1,6 @@
 import { FC, useEffect, useMemo, useState } from "react";
 import { Radar, Loader2, RefreshCw, TrendingUp, AlertTriangle, Wifi } from "lucide-react";
+import { ownerSecretHeader } from "@/lib/ownerSecret";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,7 @@ export const MarketIntelPanel: FC = () => {
   const authHeader = () => ({
     "Content-Type": "application/json",
     Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          ...ownerSecretHeader()
   });
 
   const load = async () => {
