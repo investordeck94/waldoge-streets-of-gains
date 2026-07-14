@@ -76,6 +76,58 @@ export const LaunchLabPanel: FC = () => {
   const [proposal, setProposal] = useState<LaunchProposal | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Anoncoin launch form state (only used after owner approval)
+  const [tickerImage, setTickerImage] = useState<File | null>(null);
+  const [twitterLink, setTwitterLink] = useState("");
+  const [telegramLink, setTelegramLink] = useState("");
+  const [launching, setLaunching] = useState(false);
+  const [launchResult, setLaunchResult] = useState<LaunchResult | null>(null);
+  const [launchError, setLaunchError] = useState<string | null>(null);
+  const [launchFieldErrors, setLaunchFieldErrors] = useState<Record<string, string>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const submitLaunch = async () => {
+    if (!proposal || launching) return;
+    setLaunchError(null);
+    setLaunchFieldErrors({});
+    setLaunchResult(null);
+    if (!tickerImage) {
+      setLaunchFieldErrors({ tickerImage: "Upload the token image" });
+      return;
+    }
+    setLaunching(true);
+    try {
+      const fd = new FormData();
+      fd.append("tickerName", proposal.tokenName);
+      fd.append("tickerSymbol", proposal.ticker);
+      fd.append("description", proposal.description);
+      fd.append("tickerImage", tickerImage);
+      if (twitterLink.trim()) fd.append("twitterLink", twitterLink.trim());
+      if (telegramLink.trim()) fd.append("telegramLink", telegramLink.trim());
+      const res = await fetch(LAUNCH_ENDPOINT, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (data.fieldErrors) setLaunchFieldErrors(data.fieldErrors);
+        if (data.code === "duplicate_ticker") {
+          setLaunchError(`Ticker $${proposal.ticker} is already taken. Edit the proposal and pick another symbol.`);
+        } else {
+          setLaunchError(data.error || `Launch failed (${res.status})`);
+        }
+        return;
+      }
+      setLaunchResult(data as LaunchResult);
+    } catch (e) {
+      setLaunchError((e as Error).message || "Network error");
+    } finally {
+      setLaunching(false);
+    }
+  };
+
+
   const generate = async (text?: string) => {
     const b = (text ?? brief).trim();
     if (!b || status === "generating") return;
