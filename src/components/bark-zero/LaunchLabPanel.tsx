@@ -277,14 +277,22 @@ export const LaunchLabPanel: FC = () => {
         >
           {status === "generating" ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" /> Drafting proposal...
+              <Loader2 className="w-4 h-4 animate-spin" /> Scanning landscape & drafting proposal...
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4" /> Generate Launch Proposal
+              <Radar className="w-4 h-4" /> Scan Landscape & Generate Proposal
             </>
           )}
         </button>
+
+        {status === "generating" && (
+          <div className="mt-4 text-[11px] text-white/50 font-mono leading-relaxed">
+            Bark Zero is scoring AI, meme, X, DogeOS, and Anoncoin narratives on attention,
+            originality, competition, viral potential, and community strength — then picking
+            the strongest opportunity before drafting.
+          </div>
+        )}
       </div>
     );
   }
