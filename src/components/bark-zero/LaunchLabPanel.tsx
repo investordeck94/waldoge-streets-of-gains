@@ -105,6 +105,7 @@ export const LaunchLabPanel: FC = () => {
   const [brief, setBrief] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [proposal, setProposal] = useState<LaunchProposal | null>(null);
+  const [landscape, setLandscape] = useState<Landscape | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Anoncoin launch form state (only used after owner approval)
