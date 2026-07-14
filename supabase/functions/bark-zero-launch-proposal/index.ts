@@ -308,9 +308,18 @@ Deno.serve(async (req) => {
   } catch (err: any) {
     console.error("bark-zero-launch-proposal error:", err);
     const status = typeof err?.status === "number" ? err.status : 500;
+    const message = err instanceof Error ? err.message : String(err);
+    const userMessage = status === 502
+      ? "Bark's response wasn't valid JSON, even after a retry. Please try generating the proposal again."
+      : message;
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
+      JSON.stringify({
+        error: userMessage,
+        details: message,
+        rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 2000) : undefined,
+      }),
       { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   }
 });
