@@ -96,17 +96,19 @@ Deno.serve(async (req) => {
     const raw = data.choices?.[0]?.message?.content ?? "";
     let draft: unknown;
     try {
-      draft = JSON.parse(raw);
-    } catch {
-      const match = String(raw).match(/\{[\s\S]*\}/);
-      if (!match) {
-        return new Response(
-          JSON.stringify({ error: "Bark Zero returned malformed JSON", raw }),
-          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      draft = JSON.parse(match[0]);
+      const { extractJson } = await import("../_shared/extractJson.ts");
+      draft = extractJson(String(raw));
+    } catch (err: any) {
+      return new Response(
+        JSON.stringify({
+          error: "Bark Zero returned malformed JSON. Try again.",
+          details: err?.message,
+          rawResponse: String(raw).slice(0, 2000),
+        }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
+
 
     return new Response(JSON.stringify({ draft }), {
       status: 200,
