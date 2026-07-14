@@ -420,8 +420,7 @@ export const LaunchLabPanel: FC = () => {
             setPipelinePhase(null);
             return;
           } else if (phase === "error") {
-            setError(msg.error || "Pipeline error");
-            if (typeof msg.rawResponse === "string") setErrorRaw(msg.rawResponse);
+            setError(fromStreamPayload(msg, { functionName: "bark-zero-launch-proposal", url: ENDPOINT }));
             setStatus("idle");
             setPipelinePhase(null);
             return;
