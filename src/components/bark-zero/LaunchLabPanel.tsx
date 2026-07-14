@@ -304,7 +304,10 @@ export const LaunchLabPanel: FC = () => {
     setLaunchError(null);
     setLaunchFieldErrors({});
     setValidated(false);
+    setAssets({ logo: emptyAsset(), banner: emptyAsset(), telegram: emptyAsset() });
+    lastAutoRef.current = null;
   };
+
 
   // ————— Brief input state —————
   if (status === "idle" || status === "generating") {
