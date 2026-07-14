@@ -629,11 +629,7 @@ export const LaunchLabPanel: FC = () => {
         </button>
 
         {status === "generating" && (
-          <div className="mt-4 text-[11px] text-white/50 font-mono leading-relaxed">
-            Bark Zero is scoring AI, meme, X, DogeOS, and Anoncoin narratives on attention,
-            originality, competition, viral potential, and community strength — then picking
-            the strongest opportunity before drafting.
-          </div>
+          <PipelineProgress current={pipelinePhase} completed={completedPhases} />
         )}
       </div>
     );
