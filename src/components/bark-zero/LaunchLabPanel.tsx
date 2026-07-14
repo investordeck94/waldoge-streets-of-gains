@@ -359,9 +359,7 @@ export const LaunchLabPanel: FC = () => {
         body: JSON.stringify({ brief: b }),
       });
       if (!res.ok || !res.body) {
-        const errData = await res.json().catch(() => ({} as any));
-        setError(errData.error || `Request failed (${res.status})`);
-        if (typeof errData.rawResponse === "string") setErrorRaw(errData.rawResponse);
+        setError(await fromResponse(res, { functionName: "bark-zero-launch-proposal", method: "POST", url: ENDPOINT }));
         setStatus("idle");
         setPipelinePhase(null);
         return;
