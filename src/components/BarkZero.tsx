@@ -332,20 +332,15 @@ export const BarkZero: FC = () => {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(var(--neon)/0.12),_transparent_60%)] pointer-events-none" />
 
         <div className="relative container mx-auto px-4 py-8">
-          {/* Hero */}
+          {/* Hero — reactive AI avatar */}
           <div className="text-center mb-8">
-            <img
-              src={barkZeroLogo}
-              alt="Bark Zero"
-              width={1152}
-              height={576}
-              className="mx-auto w-full max-w-lg h-auto"
-            />
-            <p className="text-xs font-mono uppercase tracking-[0.35em] text-neon mt-2">
+            <BarkZeroAvatarHero />
+            <p className="text-xs font-mono uppercase tracking-[0.35em] text-neon mt-4">
               Powered by $WALDOGE
             </p>
             <p className="mt-3 text-white/70 italic">"Respect the craft."</p>
           </div>
+
 
           <div className="grid lg:grid-cols-[280px,1fr] gap-6">
             {/* Sidebar tools */}
