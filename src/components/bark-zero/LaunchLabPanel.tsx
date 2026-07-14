@@ -197,7 +197,7 @@ export const LaunchLabPanel: FC = () => {
   const [launching, setLaunching] = useState(false);
   const [launchMode, setLaunchMode] = useState<"validate" | "launch" | null>(null);
   const [launchResult, setLaunchResult] = useState<LaunchResult | null>(null);
-  const [launchError, setLaunchError] = useState<string | null>(null);
+  const [launchError, setLaunchError] = useState<FetchErrorDetails | null>(null);
   const [launchFieldErrors, setLaunchFieldErrors] = useState<Record<string, string>>({});
   const [validated, setValidated] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
