@@ -141,6 +141,70 @@ export const LaunchLabPanel: FC = () => {
   const [validated, setValidated] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Auto-generated launch assets (logo / banner / telegram)
+  const [assets, setAssets] = useState<Record<AssetKind, AssetState>>({
+    logo: emptyAsset(), banner: emptyAsset(), telegram: emptyAsset(),
+  });
+
+  const generateAsset = async (kind: AssetKind, p: LaunchProposal) => {
+    setAssets((prev) => ({ ...prev, [kind]: { ...prev[kind], loading: true, error: null } }));
+    try {
+      const res = await fetch(ASSET_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          kind,
+          tokenName: p.tokenName,
+          ticker: p.ticker,
+          logoConcept: p.logoConcept,
+          artworkPrompt: p.artworkPrompt,
+          narrative: p.narrative,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.b64_json) {
+        setAssets((prev) => ({ ...prev, [kind]: { ...emptyAsset(), error: data.error || `Failed (${res.status})` } }));
+        return;
+      }
+      const dataUrl = `data:${data.mimeType || "image/png"};base64,${data.b64_json}`;
+      setAssets((prev) => ({
+        ...prev,
+        [kind]: { dataUrl, filename: data.filename || `${p.ticker.toLowerCase()}-${kind}.png`, loading: false, error: null },
+      }));
+      // Auto-set the token logo as the launch ticker image if user hasn't picked one
+      if (kind === "logo") {
+        try {
+          const file = await dataUrlToFile(dataUrl, data.filename || `${p.ticker.toLowerCase()}-logo.png`);
+          setTickerImage((existing) => existing ?? file);
+        } catch { /* ignore */ }
+      }
+    } catch (e) {
+      setAssets((prev) => ({ ...prev, [kind]: { ...emptyAsset(), error: (e as Error).message || "Network error" } }));
+    }
+  };
+
+  const regenerateAsset = (kind: AssetKind) => {
+    if (!proposal) return;
+    if (kind === "logo") invalidateValidation();
+    generateAsset(kind, proposal);
+  };
+
+  // Auto-fire all three when a fresh proposal arrives
+  const lastAutoRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!proposal) return;
+    const sig = `${proposal.tokenName}::${proposal.ticker}`;
+    if (lastAutoRef.current === sig) return;
+    lastAutoRef.current = sig;
+    setAssets({ logo: emptyAsset(), banner: emptyAsset(), telegram: emptyAsset() });
+    (["logo", "banner", "telegram"] as AssetKind[]).forEach((k) => generateAsset(k, proposal));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [proposal?.tokenName, proposal?.ticker]);
+
+
   const invalidateValidation = () => {
     setValidated(false);
     setLaunchResult((r) => (r?.validateOnly ? null : r));
