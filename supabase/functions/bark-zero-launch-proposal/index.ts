@@ -225,7 +225,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const contextBlock = await loadBarkZeroContext();
+    const [contextBlock, marketIntelBlock] = await Promise.all([
+      loadBarkZeroContext(),
+      loadMarketIntelBlock(),
+    ]);
+
 
     // ————— Phase 1: landscape scan —————
     const landscape = await callModel(
