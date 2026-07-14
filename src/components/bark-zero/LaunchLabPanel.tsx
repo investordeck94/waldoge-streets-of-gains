@@ -433,7 +433,7 @@ export const LaunchLabPanel: FC = () => {
       }
 
       if (!finalProposal) {
-        setError("Pipeline ended without a proposal.");
+        setError({ message: "Pipeline ended without a proposal.", functionName: "bark-zero-launch-proposal", url: ENDPOINT });
         setStatus("idle");
         setPipelinePhase(null);
         return;
