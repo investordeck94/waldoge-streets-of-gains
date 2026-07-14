@@ -341,7 +341,6 @@ export const LaunchLabPanel: FC = () => {
     if (!b || status === "generating") return;
     setBrief(b);
     setError(null);
-    setErrorRaw(null);
     setRejection(null);
     setStatus("generating");
     setProposal(null);
