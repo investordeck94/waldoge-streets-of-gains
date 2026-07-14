@@ -164,6 +164,22 @@ Return STRICT JSON: { "logoConcept": string, "artworkPrompt": string }
 Only JSON.
 `.trim();
 
+const FALLBACK_NARRATIVES_SYSTEM = `
+You are Bark Zero. Live data sources returned nothing. Generate 5 plausible narrative
+candidates from your own training. Clearly frame each as an AI-generated estimate.
+Same scoring rubric as the landscape scan. Pick the strongest as chosenId.
+
+Return STRICT JSON:
+{ "narratives": [ { "id": string, "category": "ai"|"meme"|"x"|"dogeos"|"anoncoin",
+  "title": string, "summary": string,
+  "scores": { "attention": number, "originality": number, "competition": number,
+              "viralPotential": number, "communityStrength": number },
+  "composite": number } ],
+  "chosenId": string, "rationale": string,
+  "source": "ai_estimate" }
+Only JSON. Exactly 5 narratives.
+`.trim();
+
 
 async function callModelRaw(messages: Array<{ role: string; content: string }>, key: string, extraSystem = ""): Promise<string> {
   const finalMessages = extraSystem
@@ -194,6 +210,49 @@ async function callModel<T = any>(messages: Array<{ role: string; content: strin
     { sectionName, maxAttempts: 3 },
   );
 }
+
+async function runLandscapeScan(
+  brief: string,
+  contextBlock: string,
+  marketIntelBlock: string,
+  key: string,
+  sectionName: string,
+): Promise<any> {
+  return await callModel(
+    [
+      { role: "system", content: LANDSCAPE_SYSTEM + contextBlock + marketIntelBlock },
+      {
+        role: "user",
+        content:
+          `Owner brief: ${brief}\n\nScan the current crypto/culture landscape now. ` +
+          `Cover AI, meme, X trends, DogeOS, and Anoncoin. Return the landscape JSON.`,
+      },
+    ],
+    key,
+    sectionName,
+  );
+}
+
+async function runFallbackNarratives(
+  brief: string,
+  contextBlock: string,
+  key: string,
+): Promise<any> {
+  return await callModel(
+    [
+      { role: "system", content: FALLBACK_NARRATIVES_SYSTEM + contextBlock },
+      {
+        role: "user",
+        content:
+          `Owner brief: ${brief}\n\nLive sources returned nothing. Generate 5 AI-estimated ` +
+          `narrative candidates now and label them as estimates.`,
+      },
+    ],
+    key,
+    "Landscape fallback (AI-estimated narratives)",
+  );
+}
+
 
 
 Deno.serve(async (req) => {
