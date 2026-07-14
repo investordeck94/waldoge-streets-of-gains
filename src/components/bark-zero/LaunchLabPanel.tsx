@@ -370,17 +370,30 @@ export const LaunchLabPanel: FC = () => {
               <div className="text-xs text-red-400 font-mono">⚠ {launchError}</div>
             )}
 
-            <button
-              onClick={submitLaunch}
-              disabled={launching}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-neon text-black font-semibold hover:bg-neon/80 disabled:opacity-40 transition-colors"
-            >
-              {launching ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Minting & broadcasting...</>
-              ) : (
-                <><Rocket className="w-4 h-4" /> Confirm Launch on Anoncoin</>
-              )}
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => submitLaunch(true)}
+                disabled={launching}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-lg border border-neon/50 bg-neon/10 text-neon font-semibold hover:bg-neon/20 disabled:opacity-40 transition-colors"
+              >
+                {launching && launchMode === "validate" ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Validating...</>
+                ) : (
+                  <><ShieldAlert className="w-4 h-4" /> Validate Token (Test)</>
+                )}
+              </button>
+              <button
+                onClick={() => submitLaunch(false)}
+                disabled={launching}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-neon text-black font-semibold hover:bg-neon/80 disabled:opacity-40 transition-colors"
+              >
+                {launching && launchMode === "launch" ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Minting & broadcasting...</>
+                ) : (
+                  <><Rocket className="w-4 h-4" /> Confirm Launch on Anoncoin</>
+                )}
+              </button>
+            </div>
 
             <p className="text-[11px] text-white/40 font-mono leading-relaxed">
               Owner-triggered only. Bark Zero submits to Anoncoin with server-held credentials and broadcasts the returned signed transaction to Solana before the blockhash expires.
