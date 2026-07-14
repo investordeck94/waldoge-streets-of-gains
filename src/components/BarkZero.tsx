@@ -342,6 +342,55 @@ const ComingSoonPanel: FC<{ label: string; desc: string; icon: typeof MessageSqu
 export const BarkZero: FC = () => {
   const [active, setActive] = useState<ToolId>("chat");
   const activeTool = tools.find((t) => t.id === active)!;
+  const [unlocked, setUnlocked] = useState<boolean>(() => {
+    try { return (localStorage.getItem("bark_zero_owner_secret") ?? "").length > 0; } catch { return false; }
+  });
+  const [secretInput, setSecretInput] = useState("");
+
+  if (!unlocked) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] bg-black text-white flex items-center justify-center p-6">
+        <div className="max-w-md w-full rounded-2xl border border-[hsl(145,100%,55%)]/30 bg-black/70 p-8 space-y-4">
+          <div className="flex items-center gap-2 text-[hsl(145,100%,55%)]">
+            <ShieldCheck className="w-5 h-5" />
+            <h2 className="font-mono text-lg tracking-widest uppercase">Owner Access Required</h2>
+          </div>
+          <p className="text-white/60 text-sm">
+            Bark Zero admin tools call paid AI, launch real tokens, and post from the official X account.
+            Enter the owner secret to unlock. It is stored only in this browser.
+          </p>
+          <input
+            type="password"
+            autoFocus
+            value={secretInput}
+            onChange={(e) => setSecretInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && secretInput.trim()) {
+                try { localStorage.setItem("bark_zero_owner_secret", secretInput.trim()); } catch {}
+                setUnlocked(true);
+              }
+            }}
+            placeholder="owner secret"
+            className="w-full bg-black/60 border border-white/20 focus:border-[hsl(145,100%,55%)]/60 focus:outline-none rounded-lg px-4 py-3 text-sm text-white font-mono"
+          />
+          <button
+            onClick={() => {
+              if (!secretInput.trim()) return;
+              try { localStorage.setItem("bark_zero_owner_secret", secretInput.trim()); } catch {}
+              setUnlocked(true);
+            }}
+            className="w-full px-4 py-3 rounded-lg bg-[hsl(145,100%,55%)] text-black font-mono uppercase text-xs tracking-widest hover:opacity-90"
+          >
+            Unlock Bark Zero
+          </button>
+          <p className="text-white/40 text-xs">
+            Wrong secret? Every request will return 401 until it matches the server value.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
 
   useEffect(() => {
     const onNav = (e: Event) => {
