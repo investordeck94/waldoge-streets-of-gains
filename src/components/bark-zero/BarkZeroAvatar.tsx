@@ -1,6 +1,6 @@
 import { FC, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import avatarAsset from "@/assets/bark-zero-avatar.png.asset.json";
+import avatarAsset from "@/assets/bark-zero-avatar-transparent.png.asset.json";
 const avatarSrc = avatarAsset.url;
 
 export type BarkZeroAvatarState = "idle" | "thinking" | "speaking";
@@ -144,7 +144,6 @@ export const BarkZeroAvatar: FC<Props> = ({
           alt="Bark Zero"
           draggable={false}
           className="absolute inset-0 w-full h-full object-contain select-none"
-          style={{ mixBlendMode: "screen" }}
         />
 
         {/* SVG overlay — animated pieces */}
