@@ -4,7 +4,48 @@
 //   2) Launch proposal → grounded in the top-scored opportunity
 // Owner approval is still required before anything launches.
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { loadBarkZeroContext } from "../_shared/barkZeroContext.ts";
+
+async function loadMarketIntelBlock(): Promise<string> {
+  try {
+    const url = Deno.env.get("SUPABASE_URL");
+    const srk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !srk) return "";
+    const supabase = createClient(url, srk, { auth: { persistSession: false } });
+    const { data } = await supabase
+      .from("bark_zero_market_intel")
+      .select("category, title, summary, composite, rank, bark_take, scanned_at")
+      .eq("is_active", true)
+      .order("category", { ascending: true })
+      .order("rank", { ascending: true })
+      .limit(60);
+    const rows = (data ?? []) as Array<{
+      category: string; title: string; summary: string;
+      composite: number; rank: number | null; bark_take: string | null; scanned_at: string;
+    }>;
+    if (!rows.length) return "";
+    const byCat = new Map<string, typeof rows>();
+    for (const r of rows) {
+      const arr = byCat.get(r.category) ?? [];
+      arr.push(r); byCat.set(r.category, arr);
+    }
+    const blocks = [...byCat.entries()].map(([cat, list]) => {
+      const lines = list.slice(0, 8).map((r) =>
+        `  ${r.rank ?? "?"}. [${r.composite}] ${r.title} — ${r.summary}${r.bark_take ? ` // Bark: ${r.bark_take}` : ""}`
+      ).join("\n");
+      return `### ${cat.toUpperCase()}\n${lines}`;
+    }).join("\n\n");
+    const scannedAt = rows[0]?.scanned_at ?? "";
+    return `\n\n# BARK ZERO MARKET INTEL (live ranking — use this)\n` +
+      `Last scanned: ${scannedAt}. Prefer these ranked items over inventing new ones. ` +
+      `You may add fresh items only if they clearly beat the ranked list on composite score.\n\n${blocks}`;
+  } catch (err) {
+    console.error("loadMarketIntelBlock error:", err);
+    return "";
+  }
+}
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
