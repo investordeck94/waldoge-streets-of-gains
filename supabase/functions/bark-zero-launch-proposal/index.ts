@@ -1,9 +1,13 @@
-// Bark Zero — Launch Proposal generator
-// Multi-step pipeline:
-//   1) Narrative analysis → scores narratives across AI / Meme / X / DogeOS / Anoncoin
-//   2) Token proposal     → core token details and scores
-//   3) Marketing copy     → lore, copy, thread, announcement, plan
-//   4) Launch assets      → logo/art prompts
+// Bark Zero — Launch Proposal generator (streaming pipeline)
+// SSE pipeline phases emitted to the client:
+//   1) landscape_scan     — scanning the current crypto/culture landscape
+//   2) narrative_chosen   — narrative picked (or rejection)
+//   3) token              — token proposal drafted
+//   4) marketing          — lore / description / website / marketing plan
+//   5) xthread            — X thread drafted
+//   6) telegram           — Telegram announcement drafted
+//   7) assets             — logo + artwork prompt drafted
+//      done               — full merged proposal ready for owner approval
 // Owner approval is still required before anything launches.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -69,95 +73,41 @@ You NEVER launch, spend, sign or transact. This is research only.
 
 # TASTE (non-negotiable)
 You are OPINIONATED. You reject weak, generic, derivative or already-saturated ideas outright.
-You do NOT propose "AI x meme on Solana" filler, recycled dog/cat coins with no angle,
-"community-driven utility" nothingburgers, or anything that sounds like a hackathon submission.
-If the owner's brief is lazy ("make a memecoin", "surprise me"), you still refuse to be generic —
-you find the sharpest cultural edge you can defend.
-
 If, after scanning, NOTHING clears the bar (composite < 62 on the winner, or the only options are
 derivative), you REJECT and return the rejection shape below instead of picking a weak winner.
 
-# YOUR JOB (this call)
+# YOUR JOB
 Given the owner's brief, survey the CURRENT landscape and identify 5-8 concrete narrative
-opportunities. Cover ALL of these categories (at least one narrative per category when relevant):
-  - "ai"        — AI narratives (agents, autonomous, inference, GPU, robotics)
-  - "meme"      — meme narratives (animal memes, characters, cultural moments)
-  - "x"         — trends emerging on X / crypto Twitter right now
-  - "dogeos"    — DogeOS ecosystem angles
-  - "anoncoin"  — Anoncoin ecosystem angles
+opportunities across: "ai", "meme", "x", "dogeos", "anoncoin".
 
-Score each narrative 1-100 on:
-  attention, originality, competition (LOWER = better, i.e. less crowded scores higher),
-  viralPotential, communityStrength.
+Score each 1-100 on: attention, originality, competition (LOWER = better),
+viralPotential, communityStrength.
+composite = round(0.25*attention + 0.20*originality + 0.20*(101 - competition)
+                  + 0.20*viralPotential + 0.15*communityStrength).
 
-Compute a composite = round(0.25*attention + 0.20*originality + 0.20*(101 - competition)
-                             + 0.20*viralPotential + 0.15*communityStrength).
+Pick the STRONGEST opportunity and explain WHY in 2-4 sentences. British-tinged dry humour.
 
-Pick the STRONGEST opportunity and explain WHY in 2-4 sentences — reference the scores.
-Be sharp, culturally aware, dryly funny, non-generic. British-tinged humour. No fabricated stats.
-
-# OUTPUT FORMAT — STRICT JSON, no markdown, no code fences
-
-Either the normal shape:
-{
-  "narratives": [
-    {
-      "id": string,
-      "category": "ai" | "meme" | "x" | "dogeos" | "anoncoin",
-      "title": string,
-      "summary": string,
-      "scores": {
-        "attention": number,
-        "originality": number,
-        "competition": number,
-        "viralPotential": number,
-        "communityStrength": number
-      },
-      "composite": number
-    }
-  ],
-  "chosenId": string,
-  "rationale": string
-}
-
-OR the rejection shape (use ONLY if nothing clears the bar):
-{
-  "rejected": true,
-  "reason": string,          // 2-4 sentences, opinionated, name what's weak
-  "narratives": [ ... ]      // still return the scored landscape so the owner sees your work
-}
-
-Only JSON. No prose before or after.
+# OUTPUT FORMAT — STRICT JSON
+Either:
+{ "narratives": [ { "id": string, "category": "ai"|"meme"|"x"|"dogeos"|"anoncoin",
+  "title": string, "summary": string,
+  "scores": { "attention": number, "originality": number, "competition": number,
+              "viralPotential": number, "communityStrength": number },
+  "composite": number } ],
+  "chosenId": string, "rationale": string }
+OR rejection: { "rejected": true, "reason": string, "narratives": [ ... ] }
+Only JSON.
 `.trim();
 
 const TOKEN_PROPOSAL_SYSTEM = `
-You are Bark Zero — an internet-native, crypto-native AI powered by WALDOGE.
-
-# LAUNCH AUTHORITY
-You are NEVER allowed to launch a token automatically.
-You NEVER spend funds, sign wallet transactions or create on-chain transactions.
-Every proposal MUST be reviewed and explicitly approved by the owner before anything happens.
-
-# TASTE (non-negotiable)
-You are OPINIONATED. Every proposal you draft must begin with "Bark's Analysis" —
-a sharp, first-person take that argues WHY this specific narrative is worth launching
-RIGHT NOW, what the cultural edge is, who it's for, and what the failure modes are.
-Never generic. Never "utility-focused community-driven memecoin" filler. Reference the
-scores, the moment, the meme, the enemy. If it isn't defensible, don't dress it up.
-
-# YOUR JOB (Step 2 of 4: Token proposal)
-You have already scored the current landscape and picked the strongest opportunity.
-Design ONLY the core token proposal grounded in that chosen narrative. Reflect its scores
-honestly in memeScore / communityScore / narrativeScore / launchConfidence.
-
-Be sharp, culturally aware, dryly funny, non-generic. British-tinged humour.
+You are Bark Zero. Draft ONLY the core token proposal for the already-chosen narrative.
+Begin with "Bark's Analysis" — sharp, first-person, opinionated, argues why THIS, why NOW,
+who it's for, and failure modes. Never generic filler. British-tinged humour.
 No financial advice. No guaranteed outcomes. No fabricated stats.
 
-# OUTPUT FORMAT
-Return STRICT JSON, no markdown, no code fences, matching exactly this shape:
-
+Return STRICT JSON, no markdown, no code fences, matching:
 {
-  "barksAnalysis": string,   // REQUIRED. 4-8 sentences. First-person. Opinionated. Starts with "Bark's Analysis:". Argues why THIS narrative, why NOW, cultural edge, target audience, failure modes.
+  "barksAnalysis": string,
   "tokenName": string,
   "ticker": string,
   "narrative": string,
@@ -172,55 +122,46 @@ Return STRICT JSON, no markdown, no code fences, matching exactly this shape:
   "tokenomics": string,
   "risks": string[]
 }
-Only JSON. No prose before or after.
+Only JSON.
 `.trim();
 
-const MARKETING_COPY_SYSTEM = `
-You are Bark Zero — an internet-native, crypto-native AI powered by WALDOGE.
+const MARKETING_SYSTEM = `
+You are Bark Zero. Draft ONLY narrative marketing copy for the approved proposal.
+No X thread here. No Telegram announcement here — those are separate steps.
+Dry British crypto analyst. No financial advice. Never generic.
 
-# LAUNCH AUTHORITY
-You are NEVER allowed to launch a token automatically. You only draft copy for owner review.
-
-# VOICE
-Dry British crypto analyst, meme-native, Star Wars fan in a natural way when useful. No financial advice.
-No guaranteed outcomes. No fabricated stats. Never generic.
-
-# YOUR JOB (Step 3 of 4: Marketing copy)
-Using the approved narrative and core token proposal, draft ONLY the launch marketing copy.
-Keep it sharp and usable; do not repeat the full proposal.
-
-# OUTPUT FORMAT
-Return STRICT JSON, no markdown, no code fences, matching exactly this shape:
-
+Return STRICT JSON matching:
 {
   "lore": string,
   "description": string,
   "websiteCopy": string,
-  "xThread": string[],
-  "telegramAnnouncement": string,
   "marketingPlan": string[]
 }
-Only JSON. No prose before or after.
+Only JSON.
+`.trim();
+
+const XTHREAD_SYSTEM = `
+You are Bark Zero. Draft ONLY the launch X thread (5-9 posts, each <= 270 chars, first post is a hook).
+Sharp, dry, meme-native. No emojis-only posts. No hashtags spam. No fabricated stats.
+
+Return STRICT JSON: { "xThread": string[] }
+Only JSON.
+`.trim();
+
+const TELEGRAM_SYSTEM = `
+You are Bark Zero. Draft ONLY the Telegram launch announcement — one message, punchy,
+scannable, uses short line breaks. British-tinged dry humour. No fabricated stats.
+
+Return STRICT JSON: { "telegramAnnouncement": string }
+Only JSON.
 `.trim();
 
 const LAUNCH_ASSETS_SYSTEM = `
-You are Bark Zero — an internet-native, crypto-native AI powered by WALDOGE.
+You are Bark Zero. Draft ONLY the token logo concept and an image-generation artwork prompt.
+Original, non-copyrighted, visually specific.
 
-# LAUNCH AUTHORITY
-You are NEVER allowed to launch a token automatically. You only draft asset briefs for owner review.
-
-# YOUR JOB (Step 4 of 4: Launch assets)
-Using the chosen narrative, token proposal, and marketing copy, draft ONLY the token logo concept
-and image-generation artwork prompt. Keep it original, non-copyrighted, and visually specific.
-
-# OUTPUT FORMAT
-Return STRICT JSON, no markdown, no code fences, matching exactly this shape:
-
-{
-  "logoConcept": string,
-  "artworkPrompt": string
-}
-Only JSON. No prose before or after.
+Return STRICT JSON: { "logoConcept": string, "artworkPrompt": string }
+Only JSON.
 `.trim();
 
 
@@ -258,156 +199,204 @@ async function callModel<T = any>(messages: Array<{ role: string; content: strin
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  try {
-    const key = Deno.env.get("LOVABLE_API_KEY");
-    if (!key) {
-      return new Response(JSON.stringify({ error: "Missing LOVABLE_API_KEY" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { brief } = await req.json();
-    if (typeof brief !== "string" || brief.trim().length === 0) {
-      return new Response(JSON.stringify({ error: "brief must be a non-empty string" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const [contextBlock, marketIntelBlock] = await Promise.all([
-      loadBarkZeroContext(),
-      loadMarketIntelBlock(),
-    ]);
-
-
-    // ————— Step 1: narrative analysis / landscape scan —————
-    const landscape = await callModel(
-      [
-        { role: "system", content: LANDSCAPE_SYSTEM + contextBlock + marketIntelBlock },
-        {
-          role: "user",
-          content:
-            `Owner brief: ${brief}\n\nScan the current crypto/culture landscape now. ` +
-            `Cover AI, meme, X trends, DogeOS, and Anoncoin. Return the landscape JSON.`,
-        },
-      ],
-      key,
-      "Step 1: Narrative analysis",
-    );
-
-    const narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
-
-    // Bark rejected the whole landscape — surface it, do not draft a proposal.
-    if (landscape?.rejected === true) {
-      return new Response(
-        JSON.stringify({
-          rejected: true,
-          reason: String(landscape?.reason ?? "Nothing in the current landscape clears the bar."),
-          landscape: { narratives, chosenId: null, rationale: "" },
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const chosen =
-      narratives.find((n: any) => n?.id === landscape?.chosenId) ??
-      narratives.slice().sort((a: any, b: any) => (b?.composite ?? 0) - (a?.composite ?? 0))[0];
-
-    if (!chosen) {
-      return new Response(
-        JSON.stringify({ error: "Landscape scan returned no narratives", landscape }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-
-    // ————— Step 2: token proposal grounded in the chosen narrative —————
-    const tokenProposal = await callModel(
-      [
-        { role: "system", content: TOKEN_PROPOSAL_SYSTEM + contextBlock + marketIntelBlock },
-        {
-          role: "user",
-          content:
-            `Owner brief: ${brief}\n\n` +
-            `Landscape scan (already done, do not repeat it):\n${JSON.stringify(landscape, null, 2)}\n\n` +
-            `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
-            `Rationale for the choice: ${landscape?.rationale ?? "(none)"}\n\n` +
-            `Draft Step 2 only: the core token proposal for THIS opportunity. Return the Step 2 JSON now.`,
-        },
-      ],
-      key,
-      "Step 2: Token proposal",
-    );
-
-    // ————— Step 3: marketing copy only —————
-    const marketingCopy = await callModel(
-      [
-        { role: "system", content: MARKETING_COPY_SYSTEM + contextBlock },
-        {
-          role: "user",
-          content:
-            `Owner brief: ${brief}\n\n` +
-            `Landscape summary:\n${JSON.stringify({ chosen, rationale: landscape?.rationale ?? "" }, null, 2)}\n\n` +
-            `Core token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
-            `Draft Step 3 only: marketing copy. Return the Step 3 JSON now.`,
-        },
-      ],
-      key,
-      "Step 3: Marketing copy",
-    );
-
-    // ————— Step 4: launch assets only —————
-    const launchAssets = await callModel(
-      [
-        { role: "system", content: LAUNCH_ASSETS_SYSTEM + contextBlock },
-        {
-          role: "user",
-          content:
-            `Owner brief: ${brief}\n\n` +
-            `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
-            `Core token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
-            `Marketing copy:\n${JSON.stringify(marketingCopy, null, 2)}\n\n` +
-            `Draft Step 4 only: launch asset concepts. Return the Step 4 JSON now.`,
-        },
-      ],
-      key,
-      "Step 4: Launch assets",
-    );
-
-    const proposal = {
-      ...tokenProposal,
-      ...marketingCopy,
-      ...launchAssets,
-    };
-
-    return new Response(
-      JSON.stringify({
-        landscape: {
-          narratives,
-          chosenId: chosen.id,
-          rationale: landscape?.rationale ?? "",
-        },
-        chosen,
-        proposal,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-  } catch (err: any) {
-    console.error("bark-zero-launch-proposal error:", err);
-    const status = typeof err?.status === "number" ? err.status : 500;
-    const message = err instanceof Error ? err.message : String(err);
-    const userMessage = status === 502
-      ? "Bark's response wasn't valid JSON, even after a retry. Please try generating the proposal again."
-      : message;
-    return new Response(
-      JSON.stringify({
-        error: userMessage,
-        details: message,
-        rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 2000) : undefined,
-      }),
-      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-
+  const key = Deno.env.get("LOVABLE_API_KEY");
+  if (!key) {
+    return new Response(JSON.stringify({ error: "Missing LOVABLE_API_KEY" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
+
+  let brief = "";
+  try {
+    const body = await req.json();
+    brief = typeof body?.brief === "string" ? body.brief.trim() : "";
+  } catch { /* ignore */ }
+  if (!brief) {
+    return new Response(JSON.stringify({ error: "brief must be a non-empty string" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (phase: string, payload: Record<string, unknown> = {}) => {
+        const line = `data: ${JSON.stringify({ phase, ...payload })}\n\n`;
+        controller.enqueue(encoder.encode(line));
+      };
+
+      try {
+        const [contextBlock, marketIntelBlock] = await Promise.all([
+          loadBarkZeroContext(),
+          loadMarketIntelBlock(),
+        ]);
+
+        // ————— Step 1: Scan Landscape —————
+        send("landscape_scan");
+        const landscape = await callModel(
+          [
+            { role: "system", content: LANDSCAPE_SYSTEM + contextBlock + marketIntelBlock },
+            {
+              role: "user",
+              content:
+                `Owner brief: ${brief}\n\nScan the current crypto/culture landscape now. ` +
+                `Cover AI, meme, X trends, DogeOS, and Anoncoin. Return the landscape JSON.`,
+            },
+          ],
+          key,
+          "Step 1: Narrative analysis",
+        );
+
+        const narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
+
+        if (landscape?.rejected === true) {
+          send("rejected", {
+            reason: String(landscape?.reason ?? "Nothing in the current landscape clears the bar."),
+            landscape: { narratives, chosenId: null, rationale: "" },
+          });
+          controller.close();
+          return;
+        }
+
+        const chosen =
+          narratives.find((n: any) => n?.id === landscape?.chosenId) ??
+          narratives.slice().sort((a: any, b: any) => (b?.composite ?? 0) - (a?.composite ?? 0))[0];
+
+        if (!chosen) {
+          send("error", { error: "Landscape scan returned no narratives", landscape });
+          controller.close();
+          return;
+        }
+
+        // ————— Step 2: Choose Best Narrative —————
+        send("narrative_chosen", {
+          chosen,
+          rationale: landscape?.rationale ?? "",
+          landscape: { narratives, chosenId: chosen.id, rationale: landscape?.rationale ?? "" },
+        });
+
+        // ————— Step 3: Generate Token —————
+        const tokenProposal = await callModel(
+          [
+            { role: "system", content: TOKEN_PROPOSAL_SYSTEM + contextBlock + marketIntelBlock },
+            {
+              role: "user",
+              content:
+                `Owner brief: ${brief}\n\n` +
+                `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
+                `Rationale: ${landscape?.rationale ?? "(none)"}\n\n` +
+                `Draft the token proposal JSON now.`,
+            },
+          ],
+          key,
+          "Step 3: Token proposal",
+        );
+        send("token", { tokenProposal });
+
+        // ————— Step 4: Generate Marketing —————
+        const marketing = await callModel(
+          [
+            { role: "system", content: MARKETING_SYSTEM + contextBlock },
+            {
+              role: "user",
+              content:
+                `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
+                `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+                `Draft the marketing JSON now.`,
+            },
+          ],
+          key,
+          "Step 4: Marketing",
+        );
+        send("marketing", { marketing });
+
+        // ————— Step 5: Generate X Thread —————
+        const xthread = await callModel(
+          [
+            { role: "system", content: XTHREAD_SYSTEM + contextBlock },
+            {
+              role: "user",
+              content:
+                `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+                `Marketing context:\n${JSON.stringify(marketing, null, 2)}\n\n` +
+                `Draft the xThread JSON now.`,
+            },
+          ],
+          key,
+          "Step 5: X Thread",
+        );
+        send("xthread", { xthread });
+
+        // ————— Step 6: Generate Telegram —————
+        const telegram = await callModel(
+          [
+            { role: "system", content: TELEGRAM_SYSTEM + contextBlock },
+            {
+              role: "user",
+              content:
+                `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+                `Marketing context:\n${JSON.stringify(marketing, null, 2)}\n\n` +
+                `Draft the telegramAnnouncement JSON now.`,
+            },
+          ],
+          key,
+          "Step 6: Telegram",
+        );
+        send("telegram", { telegram });
+
+        // ————— Step 7: Launch Assets —————
+        const launchAssets = await callModel(
+          [
+            { role: "system", content: LAUNCH_ASSETS_SYSTEM + contextBlock },
+            {
+              role: "user",
+              content:
+                `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
+                `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+                `Marketing:\n${JSON.stringify(marketing, null, 2)}\n\n` +
+                `Draft the launch asset concepts JSON now.`,
+            },
+          ],
+          key,
+          "Step 7: Launch assets",
+        );
+        send("assets", { launchAssets });
+
+        // ————— Ready for Approval —————
+        const proposal = {
+          ...tokenProposal,
+          ...marketing,
+          xThread: Array.isArray(xthread?.xThread) ? xthread.xThread : [],
+          telegramAnnouncement: String(telegram?.telegramAnnouncement ?? ""),
+          ...launchAssets,
+        };
+
+        send("done", {
+          landscape: { narratives, chosenId: chosen.id, rationale: landscape?.rationale ?? "" },
+          chosen,
+          proposal,
+        });
+        controller.close();
+      } catch (err: any) {
+        console.error("bark-zero-launch-proposal stream error:", err);
+        const message = err instanceof Error ? err.message : String(err);
+        send("error", {
+          error: message,
+          rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 2000) : undefined,
+        });
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+    },
+  });
 });
