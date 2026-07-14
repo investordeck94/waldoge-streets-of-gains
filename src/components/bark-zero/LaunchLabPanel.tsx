@@ -286,6 +286,7 @@ export const LaunchLabPanel: FC = () => {
     if (!b || status === "generating") return;
     setBrief(b);
     setError(null);
+    setErrorRaw(null);
     setRejection(null);
     setStatus("generating");
     setProposal(null);
@@ -302,10 +303,12 @@ export const LaunchLabPanel: FC = () => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data.error || `Request failed (${res.status})`);
+        if (typeof data.rawResponse === "string") setErrorRaw(data.rawResponse);
         setStatus("idle");
         return;
       }
       if (data.rejected) {
+
         setLandscape((data.landscape as Landscape) ?? null);
         setRejection({ reason: String(data.reason ?? "Bark rejected the landscape."), landscape: (data.landscape as Landscape) ?? null });
         setStatus("idle");
