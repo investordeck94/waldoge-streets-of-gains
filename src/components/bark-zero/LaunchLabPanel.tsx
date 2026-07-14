@@ -452,8 +452,14 @@ export const LaunchLabPanel: FC = () => {
 
   if (!proposal) return null;
 
-  const updateField = <K extends keyof LaunchProposal>(k: K, v: LaunchProposal[K]) =>
+  const updateField = <K extends keyof LaunchProposal>(k: K, v: LaunchProposal[K]) => {
     setProposal({ ...proposal, [k]: v });
+    // Any edit to identity/copy invalidates the preflight validation
+    if (k === "tokenName" || k === "ticker" || k === "description") {
+      invalidatePreflight();
+      setOwnerConfirmed(false);
+    }
+  };
 
   // ————— Approved: Anoncoin launch flow —————
   if (status === "approved") {
