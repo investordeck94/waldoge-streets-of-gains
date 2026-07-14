@@ -126,6 +126,7 @@ const ChatPanel: FC = () => {
     setMessages(next);
     setInput("");
     setStreaming(true);
+    barkAvatar.setState("thinking");
 
     // Add empty assistant placeholder we'll append to
     setMessages((m) => [...m, { role: "assistant", content: "" }]);
@@ -170,6 +171,7 @@ const ChatPanel: FC = () => {
         const errBody = await res.text().catch(() => "");
         setError(errBody || `Request failed (${res.status})`);
         setStreaming(false);
+        barkAvatar.setState("idle");
         return;
       }
 
@@ -198,10 +200,23 @@ const ChatPanel: FC = () => {
         }
       }
       setStreaming(false);
+      barkAvatar.setState("idle");
+      // "Signal Detected" — insightful reply heuristic
+      setMessages((m) => {
+        const last = m[m.length - 1];
+        if (last?.role === "assistant") {
+          const c = last.content;
+          if (c.length > 240 || /\b(signal|alpha|narrative|thesis|conviction)\b/i.test(c)) {
+            barkAvatar.pulseSignal();
+          }
+        }
+        return m;
+      });
     } catch (err) {
-      if ((err as Error).name === "AbortError") return;
+      if ((err as Error).name === "AbortError") { barkAvatar.setState("idle"); return; }
       setError((err as Error).message || "Connection lost");
       setStreaming(false);
+      barkAvatar.setState("idle");
     }
   };
 
