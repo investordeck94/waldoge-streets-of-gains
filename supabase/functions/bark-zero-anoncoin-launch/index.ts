@@ -160,6 +160,21 @@ Deno.serve(async (req) => {
     "serializedTransaction",
   ]);
 
+  // In validate-only mode Anoncoin will not return a signed transaction —
+  // just echo the validation result back to the frontend.
+  if (validateOnly) {
+    return json({
+      ok: true,
+      validateOnly: true,
+      mintAddress: mintAddress ?? null,
+      requestId: requestId ?? null,
+      signature: null,
+      confirmed: false,
+      broadcastError: null,
+      anoncoin: payload,
+    });
+  }
+
   if (!signedTxB64) {
     return json(
       {
