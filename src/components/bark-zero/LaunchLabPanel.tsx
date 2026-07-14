@@ -126,6 +126,55 @@ const Section: FC<{ title: string; children: React.ReactNode }> = ({ title, chil
   </div>
 );
 
+const PIPELINE_STEPS: Array<{ id: string; label: string }> = [
+  { id: "landscape_scan",   label: "Scan Landscape" },
+  { id: "narrative_chosen", label: "Choose Best Narrative" },
+  { id: "token",            label: "Generate Token" },
+  { id: "marketing",        label: "Generate Marketing" },
+  { id: "xthread",          label: "Generate X Thread" },
+  { id: "telegram",         label: "Generate Telegram" },
+  { id: "assets",           label: "Draft Launch Assets" },
+  { id: "done",             label: "Ready for Approval" },
+];
+
+const PipelineProgress: FC<{ current: string | null; completed: Set<string> }> = ({ current, completed }) => (
+  <div className="mt-5 rounded-xl border border-neon/20 bg-black/40 p-4">
+    <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-neon/80 mb-3">
+      Bark Zero Pipeline
+    </div>
+    <ol className="space-y-2">
+      {PIPELINE_STEPS.map((step, i) => {
+        const isDone = completed.has(step.id);
+        const isActive = current === step.id && !isDone;
+        return (
+          <li key={step.id} className="flex items-center gap-3">
+            <div className={cn(
+              "w-6 h-6 rounded-full flex items-center justify-center border shrink-0 text-[10px] font-mono",
+              isDone   ? "bg-neon text-black border-neon" :
+              isActive ? "border-neon text-neon shadow-[0_0_12px_hsl(var(--neon)/0.6)]" :
+                         "border-white/15 text-white/40",
+            )}>
+              {isDone
+                ? <CheckCircle2 className="w-3.5 h-3.5" />
+                : isActive
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  : i + 1}
+            </div>
+            <span className={cn(
+              "text-xs font-mono",
+              isDone   ? "text-white/80" :
+              isActive ? "text-neon" :
+                         "text-white/40",
+            )}>
+              {step.label}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  </div>
+);
+
 export const LaunchLabPanel: FC = () => {
   const [brief, setBrief] = useState("");
   const [status, setStatus] = useState<Status>("idle");
