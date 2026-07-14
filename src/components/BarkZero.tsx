@@ -47,6 +47,7 @@ import { CuriosityPanel } from "./bark-zero/CuriosityPanel";
 import { DiaryPanel } from "./bark-zero/DiaryPanel";
 import { DreamsPanel } from "./bark-zero/DreamsPanel";
 import { EvolutionPanel } from "./bark-zero/EvolutionPanel";
+import { LaunchHistoryPanel } from "./bark-zero/LaunchHistoryPanel";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 const BARK_ZERO_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-chat`;
