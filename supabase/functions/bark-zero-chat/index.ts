@@ -1,3 +1,4 @@
+import { requireOwner } from "../_shared/ownerAuth.ts";
 // Bark Zero — dedicated AI persona endpoint
 // Streams OpenAI-compatible SSE so it plugs into useStreamingChat unchanged.
 // Swap BARK_ZERO_SYSTEM_PROMPT below with the user's full personality prompt.
@@ -143,6 +144,7 @@ Always remember: Respect the craft.
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const _auth = requireOwner(req); if (_auth) return _auth;
 
   try {
     const key = Deno.env.get("LOVABLE_API_KEY");

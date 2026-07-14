@@ -1,3 +1,4 @@
+import { requireOwner } from "../_shared/ownerAuth.ts";
 // Bark Zero — Market Intelligence Scanner
 // Continuously scans AI narratives, DogeOS ecosystem, Anoncoin launches,
 // successful memes, and X trends. Scores each item, ranks them, and upserts
@@ -124,6 +125,7 @@ function slugify(input: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const _auth = requireOwner(req); if (_auth) return _auth;
 
   try {
     const key = Deno.env.get("LOVABLE_API_KEY");

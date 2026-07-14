@@ -1,3 +1,4 @@
+import { requireOwner } from "../_shared/ownerAuth.ts";
 // Bark Zero — X (Twitter) content generator
 // Generates a tweet, thread, or reply as structured JSON. Owner approval required before publish.
 
@@ -37,6 +38,7 @@ Only JSON. No prose before or after.
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const _auth = requireOwner(req); if (_auth) return _auth;
 
   try {
     const key = Deno.env.get("LOVABLE_API_KEY");
