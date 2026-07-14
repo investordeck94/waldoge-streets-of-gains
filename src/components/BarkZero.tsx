@@ -335,6 +335,15 @@ export const BarkZero: FC = () => {
   const [active, setActive] = useState<ToolId>("chat");
   const activeTool = tools.find((t) => t.id === active)!;
 
+  useEffect(() => {
+    const onNav = (e: Event) => {
+      const detail = (e as CustomEvent<{ tool?: ToolId }>).detail;
+      if (detail?.tool && tools.some((t) => t.id === detail.tool)) setActive(detail.tool);
+    };
+    window.addEventListener("barkZero:navigate", onNav);
+    return () => window.removeEventListener("barkZero:navigate", onNav);
+  }, []);
+
   return (
     <div className="bark-zero -mx-2 sm:-mx-4 -my-3 sm:-my-6 min-h-[calc(100vh-8rem)] bg-black text-white">
       <style>{`
