@@ -6,6 +6,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { loadBarkZeroContext } from "../_shared/barkZeroContext.ts";
+import { extractJson, extractJsonWithRetry } from "../_shared/extractJson.ts";
+
 
 async function loadMarketIntelBlock(): Promise<string> {
   try {
