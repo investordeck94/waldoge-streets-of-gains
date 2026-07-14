@@ -50,7 +50,35 @@ Deno.serve(async (req) => {
   const aiJson = await ai.json();
   const raw = aiJson.choices?.[0]?.message?.content ?? "{}";
   let parsed: Record<string, unknown> = {};
-  try { parsed = JSON.parse(raw); } catch { return json({ error: "Model returned invalid JSON", raw }, 502); }
+  const tryParse = (s: string) => { try { return JSON.parse(s); } catch { return null; } };
+  const extractJson = (s: string): Record<string, unknown> | null => {
+    let cleaned = s.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+    const start = cleaned.search(/[\{\[]/);
+    if (start === -1) return null;
+    const openCh = cleaned[start];
+    const closeCh = openCh === "[" ? "]" : "}";
+    // Walk and find matching close by depth, respecting strings
+    let depth = 0, inStr = false, esc = false, end = -1;
+    for (let i = start; i < cleaned.length; i++) {
+      const c = cleaned[i];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (c === "\\") esc = true;
+        else if (c === '"') inStr = false;
+      } else {
+        if (c === '"') inStr = true;
+        else if (c === openCh) depth++;
+        else if (c === closeCh) { depth--; if (depth === 0) { end = i; break; } }
+      }
+    }
+    if (end === -1) end = cleaned.lastIndexOf(closeCh);
+    const slice = cleaned.substring(start, end + 1)
+      .replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+    return tryParse(slice) as Record<string, unknown> | null;
+  };
+  const direct = tryParse(raw);
+  parsed = (direct ?? extractJson(raw)) as Record<string, unknown>;
+  if (!parsed) return json({ error: "Model returned invalid JSON", raw }, 502);
 
   // Persist based on action
   try {
