@@ -288,7 +288,7 @@ export const LaunchLabPanel: FC = () => {
   const submitLaunch = async (validateOnly = false) => {
     if (!proposal || launching) return;
     if (!validateOnly && !validated) {
-      setLaunchError("Validate the token first — validation must pass before launch.");
+      setLaunchError({ message: "Validate the token first — validation must pass before launch." });
       return;
     }
     setLaunchError(null);
