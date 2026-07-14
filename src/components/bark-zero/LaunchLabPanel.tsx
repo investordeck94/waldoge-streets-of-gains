@@ -315,20 +315,31 @@ export const LaunchLabPanel: FC = () => {
           ...ownerSecretHeader() },
         body: fd,
       });
-      const data = await res.json().catch(() => ({}));
+      // Read body text once so we can surface it even when JSON parsing fails.
+      const bodyText = await res.text();
+      let data: any = {};
+      try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { /* keep raw text */ }
       if (!res.ok) {
         if (data.fieldErrors) setLaunchFieldErrors(data.fieldErrors);
-        if (data.code === "duplicate_ticker") {
-          setLaunchError(`Ticker $${proposal.ticker} is already taken. Edit the proposal and pick another symbol.`);
-        } else {
-          setLaunchError(data.error || `${validateOnly ? "Validation" : "Launch"} failed (${res.status})`);
-        }
+        const friendly =
+          data.code === "duplicate_ticker"
+            ? `Ticker $${proposal.ticker} is already taken. Edit the proposal and pick another symbol.`
+            : data.error || `${validateOnly ? "Validation" : "Launch"} failed (HTTP ${res.status})`;
+        setLaunchError({
+          message: friendly,
+          functionName: "bark-zero-anoncoin-launch",
+          method: "POST",
+          url: LAUNCH_ENDPOINT,
+          status: res.status,
+          statusText: res.statusText,
+          responseBody: bodyText ? bodyText.slice(0, 4000) : undefined,
+        });
         return;
       }
       setLaunchResult(data as LaunchResult);
       if (validateOnly) setValidated(true);
     } catch (e) {
-      setLaunchError((e as Error).message || "Network error");
+      setLaunchError(fromException(e, { functionName: "bark-zero-anoncoin-launch", method: "POST", url: LAUNCH_ENDPOINT }));
     } finally {
       setLaunching(false);
     }
