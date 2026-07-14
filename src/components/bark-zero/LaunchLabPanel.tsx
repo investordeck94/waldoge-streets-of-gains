@@ -310,7 +310,7 @@ export const LaunchLabPanel: FC = () => {
             token_name: p.tokenName,
             ticker: p.ticker,
             brief: b,
-            proposal: p as unknown as Record<string, unknown>,
+            proposal: p as never,
             status: "reviewing",
             narrative_score: Math.round(p.narrativeScore ?? 0) || null,
             launch_score: Math.round(p.launchConfidence ?? 0) || null,
