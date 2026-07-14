@@ -1,7 +1,8 @@
 import { FC, useEffect, useMemo, useState } from "react";
-import { Radar, Loader2, RefreshCw, TrendingUp } from "lucide-react";
+import { Radar, Loader2, RefreshCw, TrendingUp, AlertTriangle, Wifi } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+
 
 type IntelRow = {
   id: string;
