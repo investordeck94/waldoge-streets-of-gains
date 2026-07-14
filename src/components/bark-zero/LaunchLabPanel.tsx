@@ -459,7 +459,13 @@ export const LaunchLabPanel: FC = () => {
                 )}
               </button>
               <button
-                onClick={() => submitLaunch(false)}
+                onClick={() => {
+                  if (!validated) return;
+                  const ok = window.confirm(
+                    `Approve launch of ${proposal.tokenName} ($${proposal.ticker}) on Anoncoin?\n\nThis will mint the token and broadcast the signed transaction to Solana mainnet. This action cannot be undone.`,
+                  );
+                  if (ok) submitLaunch(false);
+                }}
                 disabled={launching || !validated}
                 title={!validated ? "Validate the token first" : undefined}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-neon text-black font-semibold hover:bg-neon/80 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -467,7 +473,7 @@ export const LaunchLabPanel: FC = () => {
                 {launching && launchMode === "launch" ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Minting & broadcasting...</>
                 ) : (
-                  <><Rocket className="w-4 h-4" /> Launch to Anoncoin</>
+                  <><Rocket className="w-4 h-4" /> Approve & Launch to Anoncoin</>
                 )}
               </button>
             </div>
