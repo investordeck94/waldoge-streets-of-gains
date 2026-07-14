@@ -355,7 +355,7 @@ export const BarkZero: FC = () => {
         }
       `}</style>
 
-      <div className="relative">
+      <div className="relative overflow-x-hidden [&_*]:break-words [&_pre]:whitespace-pre-wrap [&_textarea]:max-w-full">
         {/* subtle grid backdrop */}
         <div className="absolute inset-0 bg-grid pointer-events-none opacity-60" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(var(--neon)/0.12),_transparent_60%)] pointer-events-none" />
