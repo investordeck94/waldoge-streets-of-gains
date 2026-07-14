@@ -973,6 +973,31 @@ export const LaunchLabPanel: FC = () => {
         <div className="text-xs font-mono uppercase tracking-widest text-white/40">brief: {brief}</div>
       </div>
 
+      {proposal.barksAnalysis && (
+        <div className="rounded-xl border-2 border-neon/50 bg-neon/[0.04] p-5 shadow-[0_0_30px_-10px_rgba(74,222,128,0.4)]">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-neon">
+              ▸ Bark's Analysis
+            </div>
+            <div className="h-px flex-1 bg-neon/20" />
+          </div>
+          {editing ? (
+            <textarea
+              value={proposal.barksAnalysis}
+              onChange={(e) => updateField("barksAnalysis", e.target.value)}
+              rows={6}
+              className="w-full bg-black/40 border border-neon/20 rounded-lg p-3 text-sm text-white/90 font-mono leading-relaxed focus:outline-none focus:border-neon/60"
+            />
+          ) : (
+            <div className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap font-mono">
+              {proposal.barksAnalysis}
+            </div>
+          )}
+        </div>
+      )}
+
+
+
       <div className="grid sm:grid-cols-4 gap-3">
         <Score label="Meme" value={proposal.memeScore} />
         <Score label="Community" value={proposal.communityScore} />
