@@ -5,6 +5,8 @@ import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, 
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { PostLaunchKitPanel } from "./PostLaunchKitPanel";
+import { TechnicalErrorPanel } from "./TechnicalErrorPanel";
+import { fromResponse, fromException, fromStreamPayload, type FetchErrorDetails } from "@/lib/fetchError";
 
 type LandscapeNarrative = {
   id: string;
