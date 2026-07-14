@@ -182,6 +182,7 @@ export const LaunchLabPanel: FC = () => {
     setError(null);
     setStatus("generating");
     setProposal(null);
+    setLandscape(null);
     try {
       const res = await fetch(ENDPOINT, {
         method: "POST",
@@ -197,6 +198,7 @@ export const LaunchLabPanel: FC = () => {
         setStatus("idle");
         return;
       }
+      setLandscape((data.landscape as Landscape) ?? null);
       setProposal(data.proposal as LaunchProposal);
       setStatus("reviewing");
     } catch (e) {
