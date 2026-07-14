@@ -1,9 +1,19 @@
-import { FC, useState } from "react";
+import { FC, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, Sparkles } from "lucide-react";
+import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, Sparkles, Rocket, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-launch-proposal`;
+const LAUNCH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-anoncoin-launch`;
+
+type LaunchResult = {
+  ok: boolean;
+  mintAddress: string | null;
+  requestId: string | null;
+  signature: string | null;
+  confirmed: boolean;
+  broadcastError: string | null;
+};
 
 export type LaunchProposal = {
   tokenName: string;
