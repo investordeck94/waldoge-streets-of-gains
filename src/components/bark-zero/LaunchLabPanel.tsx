@@ -34,6 +34,27 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-launch-proposal`;
 const LAUNCH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-anoncoin-launch`;
+const ASSET_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-generate-asset`;
+
+type AssetKind = "logo" | "banner" | "telegram";
+type AssetState = {
+  dataUrl: string | null;
+  filename: string | null;
+  loading: boolean;
+  error: string | null;
+};
+const emptyAsset = (): AssetState => ({ dataUrl: null, filename: null, loading: false, error: null });
+const ASSET_META: Record<AssetKind, { label: string; aspect: string; hint: string }> = {
+  logo:     { label: "Token Logo",       aspect: "aspect-square",   hint: "Square · used as ticker image" },
+  banner:   { label: "X Banner",         aspect: "aspect-[3/2]",    hint: "Wide · header for X profile" },
+  telegram: { label: "Telegram Profile", aspect: "aspect-square",   hint: "Square · TG group / channel" },
+};
+
+async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], filename, { type: blob.type || "image/png" });
+}
 
 type LaunchResult = {
   ok: boolean;
