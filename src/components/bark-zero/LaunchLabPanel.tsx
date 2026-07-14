@@ -463,7 +463,7 @@ export const LaunchLabPanel: FC = () => {
         if (!insErr && inserted?.id) setHistoryId(inserted.id);
       } catch { /* history is best-effort */ }
     } catch (e) {
-      setError((e as Error).message || "Connection lost");
+      setError(fromException(e, { functionName: "bark-zero-launch-proposal", method: "POST", url: ENDPOINT }));
       setStatus("idle");
       setPipelinePhase(null);
     }
