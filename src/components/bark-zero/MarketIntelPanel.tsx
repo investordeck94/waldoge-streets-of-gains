@@ -30,12 +30,20 @@ const ORDER: IntelRow["category"][] = ["ai", "dogeos", "anoncoin", "meme", "x"];
 
 const SCAN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-market-scan`;
 
+type SourceInfo = { mode: "live" | "ai_estimate"; liveSources: { id: string; label: string }[] };
+
 export const MarketIntelPanel: FC = () => {
   const [rows, setRows] = useState<IntelRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastScan, setLastScan] = useState<string | null>(null);
+  const [sourceInfo, setSourceInfo] = useState<SourceInfo | null>(null);
+
+  const authHeader = () => ({
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+  });
 
   const load = async () => {
     setLoading(true);
@@ -55,7 +63,19 @@ export const MarketIntelPanel: FC = () => {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  const probeSources = async () => {
+    try {
+      const res = await fetch(SCAN_URL, {
+        method: "POST",
+        headers: authHeader(),
+        body: JSON.stringify({ probe: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) setSourceInfo({ mode: data.mode, liveSources: data.liveSources ?? [] });
+    } catch { /* non-fatal */ }
+  };
+
+  useEffect(() => { load(); probeSources(); }, []);
 
   const scan = async (categories?: IntelRow["category"][]) => {
     setScanning(true);
@@ -63,14 +83,12 @@ export const MarketIntelPanel: FC = () => {
     try {
       const res = await fetch(SCAN_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
+        headers: authHeader(),
         body: JSON.stringify(categories?.length ? { categories } : {}),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || `Scan failed (${res.status})`);
+      if (data?.mode) setSourceInfo({ mode: data.mode, liveSources: data.liveSources ?? [] });
       await load();
     } catch (e) {
       setError((e as Error).message ?? "Scan failed");
@@ -78,6 +96,7 @@ export const MarketIntelPanel: FC = () => {
       setScanning(false);
     }
   };
+
 
   const byCat = useMemo(() => {
     const m = new Map<IntelRow["category"], IntelRow[]>();
