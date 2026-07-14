@@ -446,6 +446,8 @@ export const BarkZero: FC = () => {
                     <XStudioPanel />
                   ) : active === "launchlab" ? (
                     <LaunchLabPanel />
+                  ) : active === "launchhistory" ? (
+                    <LaunchHistoryPanel />
                   ) : (
                     <ComingSoonPanel
                       label={activeTool.label}
