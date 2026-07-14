@@ -1,7 +1,36 @@
 import { FC, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, Sparkles, Rocket, Upload } from "lucide-react";
+import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, Sparkles, Rocket, Upload, Radar, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+type LandscapeNarrative = {
+  id: string;
+  category: "ai" | "meme" | "x" | "dogeos" | "anoncoin" | string;
+  title: string;
+  summary: string;
+  scores: {
+    attention: number;
+    originality: number;
+    competition: number;
+    viralPotential: number;
+    communityStrength: number;
+  };
+  composite: number;
+};
+
+type Landscape = {
+  narratives: LandscapeNarrative[];
+  chosenId: string;
+  rationale: string;
+};
+
+const CATEGORY_LABEL: Record<string, string> = {
+  ai: "AI",
+  meme: "Meme",
+  x: "X Trends",
+  dogeos: "DogeOS",
+  anoncoin: "Anoncoin",
+};
 
 const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-launch-proposal`;
 const LAUNCH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-anoncoin-launch`;
@@ -76,6 +105,7 @@ export const LaunchLabPanel: FC = () => {
   const [brief, setBrief] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [proposal, setProposal] = useState<LaunchProposal | null>(null);
+  const [landscape, setLandscape] = useState<Landscape | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Anoncoin launch form state (only used after owner approval)
@@ -152,6 +182,7 @@ export const LaunchLabPanel: FC = () => {
     setError(null);
     setStatus("generating");
     setProposal(null);
+    setLandscape(null);
     try {
       const res = await fetch(ENDPOINT, {
         method: "POST",
@@ -167,6 +198,7 @@ export const LaunchLabPanel: FC = () => {
         setStatus("idle");
         return;
       }
+      setLandscape((data.landscape as Landscape) ?? null);
       setProposal(data.proposal as LaunchProposal);
       setStatus("reviewing");
     } catch (e) {
@@ -177,6 +209,7 @@ export const LaunchLabPanel: FC = () => {
 
   const reset = () => {
     setProposal(null);
+    setLandscape(null);
     setStatus("idle");
     setError(null);
     setTickerImage(null);
@@ -244,14 +277,22 @@ export const LaunchLabPanel: FC = () => {
         >
           {status === "generating" ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" /> Drafting proposal...
+              <Loader2 className="w-4 h-4 animate-spin" /> Scanning landscape & drafting proposal...
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4" /> Generate Launch Proposal
+              <Radar className="w-4 h-4" /> Scan Landscape & Generate Proposal
             </>
           )}
         </button>
+
+        {status === "generating" && (
+          <div className="mt-4 text-[11px] text-white/50 font-mono leading-relaxed">
+            Bark Zero is scoring AI, meme, X, DogeOS, and Anoncoin narratives on attention,
+            originality, competition, viral potential, and community strength — then picking
+            the strongest opportunity before drafting.
+          </div>
+        )}
       </div>
     );
   }
@@ -587,6 +628,88 @@ export const LaunchLabPanel: FC = () => {
             )}
           </div>
         </div>
+      </div>
+
+
+
+      {landscape && landscape.narratives.length > 0 && (
+        <details open className="rounded-xl border border-neon/25 bg-white/[0.02] p-4">
+          <summary className="cursor-pointer flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.25em] text-neon/80">
+            <Radar className="w-3.5 h-3.5" /> Landscape Scan · {landscape.narratives.length} narratives scored
+          </summary>
+
+          <div className="mt-4 rounded-lg border border-neon/40 bg-neon/5 p-3 flex items-start gap-2">
+            <Trophy className="w-4 h-4 text-neon mt-0.5 shrink-0" />
+            <div className="text-xs text-white/85 leading-relaxed">
+              <div className="font-mono text-neon mb-1">
+                Chosen: {landscape.narratives.find(n => n.id === landscape.chosenId)?.title ?? landscape.chosenId}
+                {landscape.narratives.find(n => n.id === landscape.chosenId) && (
+                  <span className="text-white/50 ml-2">
+                    (composite {landscape.narratives.find(n => n.id === landscape.chosenId)?.composite})
+                  </span>
+                )}
+              </div>
+              <div className="whitespace-pre-wrap">{landscape.rationale}</div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-2">
+            {[...landscape.narratives]
+              .sort((a, b) => (b.composite ?? 0) - (a.composite ?? 0))
+              .map((n) => {
+                const isChosen = n.id === landscape.chosenId;
+                return (
+                  <div
+                    key={n.id}
+                    className={cn(
+                      "rounded-lg border p-3",
+                      isChosen
+                        ? "border-neon/60 bg-neon/10"
+                        : "border-white/10 bg-white/[0.02]",
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[9px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded bg-white/10 text-white/70 shrink-0">
+                          {CATEGORY_LABEL[n.category] ?? n.category}
+                        </span>
+                        <span className="font-mono text-sm text-white truncate">{n.title}</span>
+                      </div>
+                      <span className={cn(
+                        "text-[10px] font-mono uppercase tracking-widest",
+                        isChosen ? "text-neon" : "text-white/50",
+                      )}>
+                        composite {n.composite}
+                      </span>
+                    </div>
+                    <div className="text-xs text-white/70 mb-2 leading-relaxed">{n.summary}</div>
+                    <div className="grid grid-cols-5 gap-2 text-[9px] font-mono uppercase tracking-widest">
+                      {[
+                        ["Attn", n.scores?.attention],
+                        ["Orig", n.scores?.originality],
+                        ["Comp", n.scores?.competition],
+                        ["Viral", n.scores?.viralPotential],
+                        ["Comm", n.scores?.communityStrength],
+                      ].map(([label, v]) => (
+                        <div key={String(label)} className="text-center">
+                          <div className="text-white/40">{label as string}</div>
+                          <div className={cn("text-sm", isChosen ? "text-neon" : "text-white/80")}>
+                            {Math.round((v as number) ?? 0)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          <div className="mt-3 text-[10px] text-white/40 font-mono">
+            Competition scored inversely — higher = less crowded space.
+          </div>
+        </details>
+      )}
+
+      <div className="flex items-center justify-end">
         <div className="text-xs font-mono uppercase tracking-widest text-white/40">brief: {brief}</div>
       </div>
 
