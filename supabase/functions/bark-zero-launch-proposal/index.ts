@@ -411,8 +411,15 @@ async function runFallbackNarratives(
 Deno.serve(async (req) => {
   const reqId = crypto.randomUUID().slice(0, 8);
   tlog(reqId, "request received", { method: req.method, url: req.url });
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  const _auth = requireOwner(req); if (_auth) { tlog(reqId, "auth rejected"); return _auth; }
+  if (req.method === "OPTIONS") {
+    tlog(reqId, "OPTIONS response returned");
+    return new Response(null, { headers: corsHeaders });
+  }
+  const _auth = requireOwner(req);
+  if (_auth) {
+    tlog(reqId, "auth rejected");
+    return _auth;
+  }
 
   const key = Deno.env.get("LOVABLE_API_KEY");
   if (!key) {
@@ -425,10 +432,10 @@ Deno.serve(async (req) => {
 
   let brief = "";
   try {
-    const body = await req.json();
+    const body = await traceAwait(reqId, "request body JSON parse", () => req.json());
     brief = typeof body?.brief === "string" ? body.brief.trim() : "";
   } catch (e: any) {
-    tlog(reqId, "body parse failed", { message: e?.message });
+    tlog(reqId, "body parse failed", errorDetails(e));
   }
   if (!brief) {
     tlog(reqId, "validation failed: empty brief");
@@ -442,7 +449,7 @@ Deno.serve(async (req) => {
   // Client disconnect surveillance
   try {
     req.signal.addEventListener("abort", () => {
-      tlog(reqId, "client disconnected (request.signal.aborted)");
+      tlog(reqId, "request.signal.aborted fired", { aborted: req.signal.aborted, reason: String(req.signal.reason ?? "") });
     });
   } catch { /* ignore */ }
 
@@ -461,17 +468,20 @@ Deno.serve(async (req) => {
           eventCount++;
           tlog(reqId, "SSE event written", { phase, eventCount });
         } catch (e) {
-          console.warn(`[${reqId}] send after close:`, (e as Error).message);
+          tlog(reqId, "SSE event write failed", { phase, ...errorDetails(e) });
           closed = true;
         }
       };
       const ping = () => {
-        if (closed) return;
+        if (closed) { tlog(reqId, "heartbeat skipped (closed)"); return; }
         try {
           controller.enqueue(encoder.encode(`: ping ${Date.now()}\n\n`));
           pingCount++;
-          tlog(reqId, "heartbeat written", { pingCount });
-        } catch { closed = true; }
+          tlog(reqId, "heartbeat sent", { pingCount });
+        } catch (e) {
+          tlog(reqId, "heartbeat write failed", { pingCount, ...errorDetails(e) });
+          closed = true;
+        }
       };
       const closeOnce = (where: string) => {
         if (closed) { tlog(reqId, "closeOnce noop", { where }); return; }
@@ -486,11 +496,12 @@ Deno.serve(async (req) => {
 
 
       try {
-        const [contextBlock, marketIntelBlock] = await Promise.all([
-          loadBarkZeroContext(),
-          loadMarketIntelBlock(),
-        ]);
+        const [contextBlock, marketIntelBlock] = await traceAwait(reqId, "context + market intel load", () => Promise.all([
+          traceAwait(reqId, "Bark Zero context load", () => loadBarkZeroContext()),
+          loadMarketIntelBlock(reqId),
+        ]));
         const hasLiveIntel = marketIntelBlock.trim().length > 0;
+        tlog(reqId, "context + market intel ready", { contextChars: contextBlock.length, marketIntelChars: marketIntelBlock.length, hasLiveIntel });
 
         // ————— Step 1: Scan Landscape (with retry + AI fallback) —————
         send("landscape_scan", { hasLiveIntel });
@@ -502,41 +513,50 @@ Deno.serve(async (req) => {
 
         // Attempt 1
         try {
-          landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1: Narrative analysis", reqId);
+          landscape = await traceAwait(reqId, "run landscape scan attempt 1", () =>
+            runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1: Narrative analysis", reqId, req.signal),
+          );
         } catch (e) {
           fallbackReason = `landscape scan attempt 1 threw: ${(e as Error).message}`;
-          console.warn(fallbackReason);
+          tlog(reqId, "landscape scan attempt 1 caught", { fallbackReason, ...errorDetails(e) });
         }
 
         let narratives: any[] = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
+        tlog(reqId, "landscape scan attempt 1 evaluated", { narratives: narratives.length, rejected: landscape?.rejected === true });
 
         // Attempt 2 if empty (and not an explicit rejection)
         if (!landscape?.rejected && narratives.length === 0) {
           const reason = fallbackReason ?? "landscape scan attempt 1 returned zero narratives (empty response or filtering removed all candidates)";
-          console.warn(`Zero narratives on attempt 1: ${reason}. Retrying once.`);
+          tlog(reqId, "zero narratives on attempt 1; retrying", { reason });
           try {
-            landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1 retry: Narrative analysis", reqId);
+            landscape = await traceAwait(reqId, "run landscape scan attempt 2", () =>
+              runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1 retry: Narrative analysis", reqId, req.signal),
+            );
             narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
+            tlog(reqId, "landscape scan attempt 2 evaluated", { narratives: narratives.length, rejected: landscape?.rejected === true });
             if (narratives.length === 0) {
               fallbackReason = "retry also returned zero narratives";
             }
           } catch (e) {
             fallbackReason = `landscape scan retry threw: ${(e as Error).message}`;
-            console.warn(fallbackReason);
+            tlog(reqId, "landscape scan attempt 2 caught", { fallbackReason, ...errorDetails(e) });
           }
         }
 
         // AI-estimate fallback — never let the pipeline stop for lack of narratives.
         if (!landscape?.rejected && narratives.length === 0) {
-          console.warn(`Falling back to AI-estimated narratives. Reason: ${fallbackReason ?? "unknown"}`);
+          tlog(reqId, "falling back to AI-estimated narratives", { fallbackReason: fallbackReason ?? "unknown" });
           landscapeSource = "ai_estimate";
           try {
-            landscape = await runFallbackNarratives(brief, contextBlock, key, reqId);
+            landscape = await traceAwait(reqId, "run fallback narratives", () =>
+              runFallbackNarratives(brief, contextBlock, key, reqId, req.signal),
+            );
             narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
+            tlog(reqId, "fallback narratives evaluated", { narratives: narratives.length });
           } catch (e) {
             const msg = `AI-estimate fallback failed: ${(e as Error).message}`;
-            console.error(msg);
-            send("error", { error: msg, fallbackReason });
+            tlog(reqId, "fallback narratives caught", { message: msg, fallbackReason, ...errorDetails(e) });
+            send("error", { error: msg, fallbackReason, ...errorDetails(e) });
             closeOnce("inline");
             return;
           }
@@ -554,6 +574,7 @@ Deno.serve(async (req) => {
         const chosen =
           narratives.find((n: any) => n?.id === landscape?.chosenId) ??
           narratives.slice().sort((a: any, b: any) => (b?.composite ?? 0) - (a?.composite ?? 0))[0];
+        tlog(reqId, "narrative chosen evaluated", { chosenId: chosen?.id, composite: chosen?.composite, source: landscapeSource });
 
         if (!chosen) {
           send("error", {
@@ -580,90 +601,100 @@ Deno.serve(async (req) => {
         });
 
         // ————— Step 3: Generate Token —————
-        const tokenProposal = await callModel(
-          [
-            { role: "system", content: TOKEN_PROPOSAL_SYSTEM + contextBlock + marketIntelBlock },
-            {
-              role: "user",
-              content:
-                `Owner brief: ${brief}\n\n` +
-                `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
-                `Rationale: ${landscape?.rationale ?? "(none)"}\n\n` +
-                `Draft the token proposal JSON now.`,
-            },
-          ],
-          key,
-          "Step 3: Token proposal", reqId,
+        const tokenProposal = await traceAwait(reqId, "run token proposal phase", () =>
+          callModel(
+            [
+              { role: "system", content: TOKEN_PROPOSAL_SYSTEM + contextBlock + marketIntelBlock },
+              {
+                role: "user",
+                content:
+                  `Owner brief: ${brief}\n\n` +
+                  `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
+                  `Rationale: ${landscape?.rationale ?? "(none)"}\n\n` +
+                  `Draft the token proposal JSON now.`,
+              },
+            ],
+            key,
+            "Step 3: Token proposal", reqId, req.signal,
+          ),
         );
         send("token", { tokenProposal });
 
 
         // ————— Step 4: Generate Marketing —————
-        const marketing = await callModel(
-          [
-            { role: "system", content: MARKETING_SYSTEM + contextBlock },
-            {
-              role: "user",
-              content:
-                `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
-                `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
-                `Draft the marketing JSON now.`,
-            },
-          ],
-          key,
-          "Step 4: Marketing", reqId,
+        const marketing = await traceAwait(reqId, "run marketing phase", () =>
+          callModel(
+            [
+              { role: "system", content: MARKETING_SYSTEM + contextBlock },
+              {
+                role: "user",
+                content:
+                  `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
+                  `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+                  `Draft the marketing JSON now.`,
+              },
+            ],
+            key,
+            "Step 4: Marketing", reqId, req.signal,
+          ),
         );
         send("marketing", { marketing });
 
         // ————— Step 5: Generate X Thread —————
-        const xthread = await callModel(
-          [
-            { role: "system", content: XTHREAD_SYSTEM + contextBlock },
-            {
-              role: "user",
-              content:
-                `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
-                `Marketing context:\n${JSON.stringify(marketing, null, 2)}\n\n` +
-                `Draft the xThread JSON now.`,
-            },
-          ],
-          key,
-          "Step 5: X Thread", reqId,
+        const xthread = await traceAwait(reqId, "run X thread phase", () =>
+          callModel(
+            [
+              { role: "system", content: XTHREAD_SYSTEM + contextBlock },
+              {
+                role: "user",
+                content:
+                  `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+                  `Marketing context:\n${JSON.stringify(marketing, null, 2)}\n\n` +
+                  `Draft the xThread JSON now.`,
+              },
+            ],
+            key,
+            "Step 5: X Thread", reqId, req.signal,
+          ),
         );
         send("xthread", { xthread });
 
         // ————— Step 6: Generate Telegram —————
-        const telegram = await callModel(
-          [
-            { role: "system", content: TELEGRAM_SYSTEM + contextBlock },
-            {
-              role: "user",
-              content:
-                `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
-                `Marketing context:\n${JSON.stringify(marketing, null, 2)}\n\n` +
-                `Draft the telegramAnnouncement JSON now.`,
-            },
-          ],
-          key,
-          "Step 6: Telegram", reqId,
+        const telegram = await traceAwait(reqId, "run Telegram phase", () =>
+          callModel(
+            [
+              { role: "system", content: TELEGRAM_SYSTEM + contextBlock },
+              {
+                role: "user",
+                content:
+                  `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+                  `Marketing context:\n${JSON.stringify(marketing, null, 2)}\n\n` +
+                  `Draft the telegramAnnouncement JSON now.`,
+              },
+            ],
+            key,
+            "Step 6: Telegram", reqId, req.signal,
+          ),
         );
         send("telegram", { telegram });
 
         // ————— Step 7: Launch Assets —————
-        const launchAssets = await callModel(
-          [
-            { role: "system", content: LAUNCH_ASSETS_SYSTEM + contextBlock },
-            {
-              role: "user",
-              content:
-                `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
-                `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
-                `Marketing:\n${JSON.stringify(marketing, null, 2)}\n\n` +
-                `Draft the launch asset concepts JSON now.`,
-            },
-          ],
-          key,
-          "Step 7: Launch assets", reqId,
+        const launchAssets = await traceAwait(reqId, "run launch assets phase", () =>
+          callModel(
+            [
+              { role: "system", content: LAUNCH_ASSETS_SYSTEM + contextBlock },
+              {
+                role: "user",
+                content:
+                  `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
+                  `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+                  `Marketing:\n${JSON.stringify(marketing, null, 2)}\n\n` +
+                  `Draft the launch asset concepts JSON now.`,
+              },
+            ],
+            key,
+            "Step 7: Launch assets", reqId, req.signal,
+          ),
         );
         send("assets", { launchAssets });
 
@@ -700,12 +731,18 @@ Deno.serve(async (req) => {
           error: message,
           stack: stack.slice(0, 2000),
           rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 2000) : undefined,
+          name: err?.name,
+          status: err?.status,
+          code: err?.code,
         });
         closeOnce("error");
       }
 
 
 
+    },
+    cancel(reason) {
+      tlog(reqId, "stream cancelled", { reason: String(reason ?? "") });
     },
   });
 
