@@ -243,7 +243,7 @@ Deno.serve(async (req) => {
   let confirmed = false;
   let broadcastError: string | null = null;
   try {
-    const raw = base64ToBytes(signedTxB64);
+    const raw = decodeTxBytes(signedTxB64);
     const conn = new Connection(SOLANA_RPC, "confirmed");
     signature = await conn.sendRawTransaction(raw, {
       skipPreflight: false,
