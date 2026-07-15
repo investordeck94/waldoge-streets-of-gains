@@ -41,6 +41,12 @@ const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-la
 const LAUNCH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-anoncoin-launch`;
 const ASSET_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-generate-asset`;
 
+const launchTraceId = () => Math.random().toString(36).slice(2, 10);
+
+const traceLog = (traceId: string, message: string, extra?: Record<string, unknown>) => {
+  console.log(`[${new Date().toISOString()}] [LaunchLab ${traceId}] ${message}`, extra ?? {});
+};
+
 type AssetKind = "logo" | "banner" | "telegram";
 type AssetState = {
   dataUrl: string | null;
