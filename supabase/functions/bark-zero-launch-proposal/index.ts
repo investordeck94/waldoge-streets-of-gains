@@ -15,25 +15,88 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { loadBarkZeroContext } from "../_shared/barkZeroContext.ts";
 import { extractJsonWithRetry } from "../_shared/extractJson.ts";
 
+type TraceExtra = Record<string, unknown>;
 
-async function loadMarketIntelBlock(): Promise<string> {
+function ts() { return new Date().toISOString(); }
+
+function stackSite(depth = 3) {
+  const line = new Error().stack?.split("\n")[depth]?.trim() ?? "unknown";
+  const match = line.match(/(?:file:\/\/)?([^\s()]+\.ts:\d+:\d+)/);
+  return match?.[1] ?? line;
+}
+
+function safeExtra(extra?: TraceExtra) {
+  if (!extra) return "";
+  try { return " " + JSON.stringify(extra); }
+  catch { return " {\"extra\":\"[unserializable]\"}"; }
+}
+
+function errorDetails(err: unknown, rawResponse?: unknown): TraceExtra {
+  const e = err as Error & { status?: number; response?: { status?: number }; rawResponse?: string };
+  return {
+    name: e?.name ?? "Error",
+    message: e?.message ?? String(err),
+    status: e?.status ?? e?.response?.status,
+    stack: e?.stack ? String(e.stack).slice(0, 4000) : undefined,
+    rawResponse: typeof rawResponse === "string"
+      ? rawResponse.slice(0, 1000)
+      : typeof e?.rawResponse === "string"
+        ? e.rawResponse.slice(0, 1000)
+        : undefined,
+  };
+}
+
+function tlog(reqId: string, msg: string, extra?: TraceExtra) {
+  const at = stackSite(3);
+  console.log(`[${ts()}] [${reqId}] ${msg}${safeExtra({ at, ...extra })}`);
+}
+
+async function traceAwait<T>(
+  reqId: string,
+  label: string,
+  operation: () => Promise<T>,
+  extra?: TraceExtra,
+): Promise<T> {
+  const awaitAt = stackSite(3);
+  const startedAt = Date.now();
+  tlog(reqId, "await started", { label, awaitAt, ...extra });
   try {
+    const result = await operation();
+    tlog(reqId, "await completed", { label, awaitAt, ms: Date.now() - startedAt, ...extra });
+    return result;
+  } catch (err) {
+    tlog(reqId, "await failed", { label, awaitAt, ms: Date.now() - startedAt, ...extra, ...errorDetails(err) });
+    throw err;
+  }
+}
+
+async function loadMarketIntelBlock(reqId = "-"): Promise<string> {
+  try {
+    tlog(reqId, "market intel load started");
     const url = Deno.env.get("SUPABASE_URL");
     const srk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!url || !srk) return "";
+    if (!url || !srk) {
+      tlog(reqId, "market intel skipped: missing backend env");
+      return "";
+    }
     const supabase = createClient(url, srk, { auth: { persistSession: false } });
-    const { data } = await supabase
-      .from("bark_zero_market_intel")
-      .select("category, title, summary, composite, rank, bark_take, scanned_at")
-      .eq("is_active", true)
-      .order("category", { ascending: true })
-      .order("rank", { ascending: true })
-      .limit(60);
+    const { data } = await traceAwait(reqId, "market intel query", () =>
+      supabase
+        .from("bark_zero_market_intel")
+        .select("category, title, summary, composite, rank, bark_take, scanned_at")
+        .eq("is_active", true)
+        .order("category", { ascending: true })
+        .order("rank", { ascending: true })
+        .limit(60),
+    );
     const rows = (data ?? []) as Array<{
       category: string; title: string; summary: string;
       composite: number; rank: number | null; bark_take: string | null; scanned_at: string;
     }>;
-    if (!rows.length) return "";
+    if (!rows.length) {
+      tlog(reqId, "market intel load completed: zero rows");
+      return "";
+    }
     const byCat = new Map<string, typeof rows>();
     for (const r of rows) {
       const arr = byCat.get(r.category) ?? [];
@@ -46,11 +109,13 @@ async function loadMarketIntelBlock(): Promise<string> {
       return `### ${cat.toUpperCase()}\n${lines}`;
     }).join("\n\n");
     const scannedAt = rows[0]?.scanned_at ?? "";
-    return `\n\n# BARK ZERO MARKET INTEL (live ranking — use this)\n` +
+    const block = `\n\n# BARK ZERO MARKET INTEL (live ranking — use this)\n` +
       `Last scanned: ${scannedAt}. Prefer these ranked items over inventing new ones. ` +
       `You may add fresh items only if they clearly beat the ranked list on composite score.\n\n${blocks}`;
+    tlog(reqId, "market intel load completed", { rows: rows.length, chars: block.length });
+    return block;
   } catch (err) {
-    console.error("loadMarketIntelBlock error:", err);
+    tlog(reqId, "market intel load failed", errorDetails(err));
     return "";
   }
 }
@@ -184,59 +249,81 @@ Only JSON. Exactly 5 narratives.
 
 const AI_TIMEOUT_MS = 30_000;
 
-function ts() { return new Date().toISOString(); }
-function tlog(reqId: string, msg: string, extra?: Record<string, unknown>) {
-  const suffix = extra ? " " + JSON.stringify(extra) : "";
-  console.log(`[${ts()}] [${reqId}] ${msg}${suffix}`);
-}
-
 async function callModelRaw(
   messages: Array<{ role: string; content: string }>,
   key: string,
   extraSystem = "",
   reqId = "-",
   sectionName = "unknown",
+  parentSignal?: AbortSignal,
 ): Promise<string> {
   const finalMessages = extraSystem
     ? messages.map((m, i) => (i === 0 && m.role === "system" ? { ...m, content: m.content + extraSystem } : m))
     : messages;
   const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(new Error(`AI timeout after ${AI_TIMEOUT_MS}ms`)), AI_TIMEOUT_MS);
-  tlog(reqId, `AI request started`, { section: sectionName });
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    tlog(reqId, "AI timeout fired", { section: sectionName, timeoutMs: AI_TIMEOUT_MS });
+    ac.abort(new DOMException(`AI timeout after ${AI_TIMEOUT_MS}ms`, "TimeoutError"));
+  }, AI_TIMEOUT_MS);
+  const onParentAbort = () => {
+    tlog(reqId, "request.signal.aborted fired during AI request", { section: sectionName });
+    ac.abort(new DOMException("Client disconnected", "AbortError"));
+  };
+  if (parentSignal?.aborted) onParentAbort();
+  else parentSignal?.addEventListener("abort", onParentAbort, { once: true });
+  tlog(reqId, "external AI request started", { section: sectionName, timeoutMs: AI_TIMEOUT_MS });
   const startedAt = Date.now();
   let res: Response;
   try {
-    res = await fetch(GATEWAY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
-      body: JSON.stringify({
-        model: MODEL,
-        response_format: { type: "json_object" },
-        max_tokens: MAX_OUTPUT_TOKENS,
-        messages: finalMessages,
+    res = await traceAwait(reqId, "external AI fetch", () =>
+      fetch(GATEWAY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
+        body: JSON.stringify({
+          model: MODEL,
+          response_format: { type: "json_object" },
+          max_tokens: MAX_OUTPUT_TOKENS,
+          messages: finalMessages,
+        }),
+        signal: ac.signal,
       }),
-      signal: ac.signal,
-    });
+      { section: sectionName, timeoutMs: AI_TIMEOUT_MS },
+    );
   } catch (e: any) {
     clearTimeout(timer);
+    parentSignal?.removeEventListener("abort", onParentAbort);
     const name = e?.name || "Error";
     const message = e?.message || String(e);
-    tlog(reqId, `AI fetch threw`, { section: sectionName, name, message, ms: Date.now() - startedAt });
-    throw Object.assign(new Error(`${sectionName}: fetch failed (${name}): ${message}`), { status: 504, cause: e });
+    tlog(reqId, timedOut ? "AI request timed out" : "AI fetch threw", {
+      section: sectionName,
+      timedOut,
+      name,
+      message,
+      ms: Date.now() - startedAt,
+      ...errorDetails(e),
+    });
+    throw Object.assign(new Error(`${sectionName}: ${timedOut ? "AI request timed out" : `fetch failed (${name}): ${message}`}`), {
+      status: 504,
+      code: timedOut ? "ai_timeout" : undefined,
+      cause: e,
+    });
   }
   clearTimeout(timer);
-  tlog(reqId, `AI request finished`, { section: sectionName, status: res.status, ms: Date.now() - startedAt });
+  parentSignal?.removeEventListener("abort", onParentAbort);
+  tlog(reqId, "external AI request finished", { section: sectionName, status: res.status, ms: Date.now() - startedAt });
   if (!res.ok) {
-    const errText = await res.text().catch(() => "");
+    const errText = await traceAwait(reqId, "external AI error body read", () => res.text().catch(() => ""), { section: sectionName, status: res.status });
     tlog(reqId, `AI non-ok body`, { section: sectionName, status: res.status, body: errText.slice(0, 500) });
     const status = res.status === 429 || res.status === 402 ? res.status : 500;
     throw Object.assign(new Error(errText || `Gateway ${res.status}`), { status, rawResponse: errText });
   }
   let data: any;
   try {
-    data = await res.json();
+    data = await traceAwait(reqId, "external AI response envelope JSON parse", () => res.json(), { section: sectionName, status: res.status });
   } catch (e: any) {
-    tlog(reqId, `AI JSON parse (envelope) failed`, { section: sectionName, name: e?.name, message: e?.message });
+    tlog(reqId, `AI JSON parse (envelope) failed`, { section: sectionName, ...errorDetails(e) });
     throw Object.assign(new Error(`${sectionName}: gateway envelope not JSON: ${e?.message}`), { status: 502 });
   }
   const content = String(data.choices?.[0]?.message?.content ?? "");
@@ -249,11 +336,24 @@ async function callModel<T = any>(
   key: string,
   sectionName: string,
   reqId = "-",
+  parentSignal?: AbortSignal,
 ): Promise<T> {
-  return await extractJsonWithRetry<T>((strictReminder) =>
-    callModelRaw(messages, key, strictReminder, reqId, sectionName),
-    { sectionName, maxAttempts: 3 },
-  );
+  tlog(reqId, "AI phase started", { section: sectionName });
+  try {
+    const parsed = await traceAwait(reqId, "AI phase JSON extraction", () =>
+      extractJsonWithRetry<T>((strictReminder) =>
+        callModelRaw(messages, key, strictReminder, reqId, sectionName, parentSignal),
+        { sectionName, maxAttempts: 3 },
+      ),
+      { section: sectionName },
+    );
+    tlog(reqId, "JSON parsed", { section: sectionName });
+    tlog(reqId, "AI phase finished", { section: sectionName });
+    return parsed;
+  } catch (err) {
+    tlog(reqId, "AI phase failed", { section: sectionName, ...errorDetails(err) });
+    throw err;
+  }
 }
 
 async function runLandscapeScan(
@@ -263,6 +363,7 @@ async function runLandscapeScan(
   key: string,
   sectionName: string,
   reqId = "-",
+  parentSignal?: AbortSignal,
 ): Promise<any> {
   return await callModel(
     [
@@ -277,6 +378,7 @@ async function runLandscapeScan(
     key,
     sectionName,
     reqId,
+    parentSignal,
   );
 }
 
@@ -285,6 +387,7 @@ async function runFallbackNarratives(
   contextBlock: string,
   key: string,
   reqId = "-",
+  parentSignal?: AbortSignal,
 ): Promise<any> {
   return await callModel(
     [
@@ -299,6 +402,7 @@ async function runFallbackNarratives(
     key,
     "Landscape fallback (AI-estimated narratives)",
     reqId,
+    parentSignal,
   );
 }
 
@@ -307,8 +411,15 @@ async function runFallbackNarratives(
 Deno.serve(async (req) => {
   const reqId = crypto.randomUUID().slice(0, 8);
   tlog(reqId, "request received", { method: req.method, url: req.url });
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  const _auth = requireOwner(req); if (_auth) { tlog(reqId, "auth rejected"); return _auth; }
+  if (req.method === "OPTIONS") {
+    tlog(reqId, "OPTIONS response returned");
+    return new Response(null, { headers: corsHeaders });
+  }
+  const _auth = requireOwner(req);
+  if (_auth) {
+    tlog(reqId, "auth rejected");
+    return _auth;
+  }
 
   const key = Deno.env.get("LOVABLE_API_KEY");
   if (!key) {
@@ -321,10 +432,10 @@ Deno.serve(async (req) => {
 
   let brief = "";
   try {
-    const body = await req.json();
+    const body = await traceAwait(reqId, "request body JSON parse", () => req.json());
     brief = typeof body?.brief === "string" ? body.brief.trim() : "";
   } catch (e: any) {
-    tlog(reqId, "body parse failed", { message: e?.message });
+    tlog(reqId, "body parse failed", errorDetails(e));
   }
   if (!brief) {
     tlog(reqId, "validation failed: empty brief");
@@ -338,7 +449,7 @@ Deno.serve(async (req) => {
   // Client disconnect surveillance
   try {
     req.signal.addEventListener("abort", () => {
-      tlog(reqId, "client disconnected (request.signal.aborted)");
+      tlog(reqId, "request.signal.aborted fired", { aborted: req.signal.aborted, reason: String(req.signal.reason ?? "") });
     });
   } catch { /* ignore */ }
 
@@ -357,17 +468,20 @@ Deno.serve(async (req) => {
           eventCount++;
           tlog(reqId, "SSE event written", { phase, eventCount });
         } catch (e) {
-          console.warn(`[${reqId}] send after close:`, (e as Error).message);
+          tlog(reqId, "SSE event write failed", { phase, ...errorDetails(e) });
           closed = true;
         }
       };
       const ping = () => {
-        if (closed) return;
+        if (closed) { tlog(reqId, "heartbeat skipped (closed)"); return; }
         try {
           controller.enqueue(encoder.encode(`: ping ${Date.now()}\n\n`));
           pingCount++;
-          tlog(reqId, "heartbeat written", { pingCount });
-        } catch { closed = true; }
+          tlog(reqId, "heartbeat sent", { pingCount });
+        } catch (e) {
+          tlog(reqId, "heartbeat write failed", { pingCount, ...errorDetails(e) });
+          closed = true;
+        }
       };
       const closeOnce = (where: string) => {
         if (closed) { tlog(reqId, "closeOnce noop", { where }); return; }
@@ -382,11 +496,12 @@ Deno.serve(async (req) => {
 
 
       try {
-        const [contextBlock, marketIntelBlock] = await Promise.all([
-          loadBarkZeroContext(),
-          loadMarketIntelBlock(),
-        ]);
+        const [contextBlock, marketIntelBlock] = await traceAwait(reqId, "context + market intel load", () => Promise.all([
+          traceAwait(reqId, "Bark Zero context load", () => loadBarkZeroContext()),
+          loadMarketIntelBlock(reqId),
+        ]));
         const hasLiveIntel = marketIntelBlock.trim().length > 0;
+        tlog(reqId, "context + market intel ready", { contextChars: contextBlock.length, marketIntelChars: marketIntelBlock.length, hasLiveIntel });
 
         // ————— Step 1: Scan Landscape (with retry + AI fallback) —————
         send("landscape_scan", { hasLiveIntel });
@@ -398,41 +513,50 @@ Deno.serve(async (req) => {
 
         // Attempt 1
         try {
-          landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1: Narrative analysis", reqId);
+          landscape = await traceAwait(reqId, "run landscape scan attempt 1", () =>
+            runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1: Narrative analysis", reqId, req.signal),
+          );
         } catch (e) {
           fallbackReason = `landscape scan attempt 1 threw: ${(e as Error).message}`;
-          console.warn(fallbackReason);
+          tlog(reqId, "landscape scan attempt 1 caught", { fallbackReason, ...errorDetails(e) });
         }
 
         let narratives: any[] = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
+        tlog(reqId, "landscape scan attempt 1 evaluated", { narratives: narratives.length, rejected: landscape?.rejected === true });
 
         // Attempt 2 if empty (and not an explicit rejection)
         if (!landscape?.rejected && narratives.length === 0) {
           const reason = fallbackReason ?? "landscape scan attempt 1 returned zero narratives (empty response or filtering removed all candidates)";
-          console.warn(`Zero narratives on attempt 1: ${reason}. Retrying once.`);
+          tlog(reqId, "zero narratives on attempt 1; retrying", { reason });
           try {
-            landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1 retry: Narrative analysis", reqId);
+            landscape = await traceAwait(reqId, "run landscape scan attempt 2", () =>
+              runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1 retry: Narrative analysis", reqId, req.signal),
+            );
             narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
+            tlog(reqId, "landscape scan attempt 2 evaluated", { narratives: narratives.length, rejected: landscape?.rejected === true });
             if (narratives.length === 0) {
               fallbackReason = "retry also returned zero narratives";
             }
           } catch (e) {
             fallbackReason = `landscape scan retry threw: ${(e as Error).message}`;
-            console.warn(fallbackReason);
+            tlog(reqId, "landscape scan attempt 2 caught", { fallbackReason, ...errorDetails(e) });
           }
         }
 
         // AI-estimate fallback — never let the pipeline stop for lack of narratives.
         if (!landscape?.rejected && narratives.length === 0) {
-          console.warn(`Falling back to AI-estimated narratives. Reason: ${fallbackReason ?? "unknown"}`);
+          tlog(reqId, "falling back to AI-estimated narratives", { fallbackReason: fallbackReason ?? "unknown" });
           landscapeSource = "ai_estimate";
           try {
-            landscape = await runFallbackNarratives(brief, contextBlock, key, reqId);
+            landscape = await traceAwait(reqId, "run fallback narratives", () =>
+              runFallbackNarratives(brief, contextBlock, key, reqId, req.signal),
+            );
             narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
+            tlog(reqId, "fallback narratives evaluated", { narratives: narratives.length });
           } catch (e) {
             const msg = `AI-estimate fallback failed: ${(e as Error).message}`;
-            console.error(msg);
-            send("error", { error: msg, fallbackReason });
+            tlog(reqId, "fallback narratives caught", { message: msg, fallbackReason, ...errorDetails(e) });
+            send("error", { error: msg, fallbackReason, ...errorDetails(e) });
             closeOnce("inline");
             return;
           }
@@ -450,6 +574,7 @@ Deno.serve(async (req) => {
         const chosen =
           narratives.find((n: any) => n?.id === landscape?.chosenId) ??
           narratives.slice().sort((a: any, b: any) => (b?.composite ?? 0) - (a?.composite ?? 0))[0];
+        tlog(reqId, "narrative chosen evaluated", { chosenId: chosen?.id, composite: chosen?.composite, source: landscapeSource });
 
         if (!chosen) {
           send("error", {
@@ -476,90 +601,100 @@ Deno.serve(async (req) => {
         });
 
         // ————— Step 3: Generate Token —————
-        const tokenProposal = await callModel(
-          [
-            { role: "system", content: TOKEN_PROPOSAL_SYSTEM + contextBlock + marketIntelBlock },
-            {
-              role: "user",
-              content:
-                `Owner brief: ${brief}\n\n` +
-                `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
-                `Rationale: ${landscape?.rationale ?? "(none)"}\n\n` +
-                `Draft the token proposal JSON now.`,
-            },
-          ],
-          key,
-          "Step 3: Token proposal", reqId,
+        const tokenProposal = await traceAwait(reqId, "run token proposal phase", () =>
+          callModel(
+            [
+              { role: "system", content: TOKEN_PROPOSAL_SYSTEM + contextBlock + marketIntelBlock },
+              {
+                role: "user",
+                content:
+                  `Owner brief: ${brief}\n\n` +
+                  `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
+                  `Rationale: ${landscape?.rationale ?? "(none)"}\n\n` +
+                  `Draft the token proposal JSON now.`,
+              },
+            ],
+            key,
+            "Step 3: Token proposal", reqId, req.signal,
+          ),
         );
         send("token", { tokenProposal });
 
 
         // ————— Step 4: Generate Marketing —————
-        const marketing = await callModel(
-          [
-            { role: "system", content: MARKETING_SYSTEM + contextBlock },
-            {
-              role: "user",
-              content:
-                `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
-                `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
-                `Draft the marketing JSON now.`,
-            },
-          ],
-          key,
-          "Step 4: Marketing", reqId,
+        const marketing = await traceAwait(reqId, "run marketing phase", () =>
+          callModel(
+            [
+              { role: "system", content: MARKETING_SYSTEM + contextBlock },
+              {
+                role: "user",
+                content:
+                  `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
+                  `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+                  `Draft the marketing JSON now.`,
+              },
+            ],
+            key,
+            "Step 4: Marketing", reqId, req.signal,
+          ),
         );
         send("marketing", { marketing });
 
         // ————— Step 5: Generate X Thread —————
-        const xthread = await callModel(
-          [
-            { role: "system", content: XTHREAD_SYSTEM + contextBlock },
-            {
-              role: "user",
-              content:
-                `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
-                `Marketing context:\n${JSON.stringify(marketing, null, 2)}\n\n` +
-                `Draft the xThread JSON now.`,
-            },
-          ],
-          key,
-          "Step 5: X Thread", reqId,
+        const xthread = await traceAwait(reqId, "run X thread phase", () =>
+          callModel(
+            [
+              { role: "system", content: XTHREAD_SYSTEM + contextBlock },
+              {
+                role: "user",
+                content:
+                  `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+                  `Marketing context:\n${JSON.stringify(marketing, null, 2)}\n\n` +
+                  `Draft the xThread JSON now.`,
+              },
+            ],
+            key,
+            "Step 5: X Thread", reqId, req.signal,
+          ),
         );
         send("xthread", { xthread });
 
         // ————— Step 6: Generate Telegram —————
-        const telegram = await callModel(
-          [
-            { role: "system", content: TELEGRAM_SYSTEM + contextBlock },
-            {
-              role: "user",
-              content:
-                `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
-                `Marketing context:\n${JSON.stringify(marketing, null, 2)}\n\n` +
-                `Draft the telegramAnnouncement JSON now.`,
-            },
-          ],
-          key,
-          "Step 6: Telegram", reqId,
+        const telegram = await traceAwait(reqId, "run Telegram phase", () =>
+          callModel(
+            [
+              { role: "system", content: TELEGRAM_SYSTEM + contextBlock },
+              {
+                role: "user",
+                content:
+                  `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+                  `Marketing context:\n${JSON.stringify(marketing, null, 2)}\n\n` +
+                  `Draft the telegramAnnouncement JSON now.`,
+              },
+            ],
+            key,
+            "Step 6: Telegram", reqId, req.signal,
+          ),
         );
         send("telegram", { telegram });
 
         // ————— Step 7: Launch Assets —————
-        const launchAssets = await callModel(
-          [
-            { role: "system", content: LAUNCH_ASSETS_SYSTEM + contextBlock },
-            {
-              role: "user",
-              content:
-                `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
-                `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
-                `Marketing:\n${JSON.stringify(marketing, null, 2)}\n\n` +
-                `Draft the launch asset concepts JSON now.`,
-            },
-          ],
-          key,
-          "Step 7: Launch assets", reqId,
+        const launchAssets = await traceAwait(reqId, "run launch assets phase", () =>
+          callModel(
+            [
+              { role: "system", content: LAUNCH_ASSETS_SYSTEM + contextBlock },
+              {
+                role: "user",
+                content:
+                  `Chosen opportunity:\n${JSON.stringify(chosen, null, 2)}\n\n` +
+                  `Token proposal:\n${JSON.stringify(tokenProposal, null, 2)}\n\n` +
+                  `Marketing:\n${JSON.stringify(marketing, null, 2)}\n\n` +
+                  `Draft the launch asset concepts JSON now.`,
+              },
+            ],
+            key,
+            "Step 7: Launch assets", reqId, req.signal,
+          ),
         );
         send("assets", { launchAssets });
 
@@ -596,12 +731,18 @@ Deno.serve(async (req) => {
           error: message,
           stack: stack.slice(0, 2000),
           rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 2000) : undefined,
+          name: err?.name,
+          status: err?.status,
+          code: err?.code,
         });
         closeOnce("error");
       }
 
 
 
+    },
+    cancel(reason) {
+      tlog(reqId, "stream cancelled", { reason: String(reason ?? "") });
     },
   });
 

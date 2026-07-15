@@ -41,6 +41,12 @@ const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-la
 const LAUNCH_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-anoncoin-launch`;
 const ASSET_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-generate-asset`;
 
+const launchTraceId = () => Math.random().toString(36).slice(2, 10);
+
+const traceLog = (traceId: string, message: string, extra?: Record<string, unknown>) => {
+  console.log(`[${new Date().toISOString()}] [LaunchLab ${traceId}] ${message}`, extra ?? {});
+};
+
 type AssetKind = "logo" | "banner" | "telegram";
 type AssetState = {
   dataUrl: string | null;
@@ -215,6 +221,34 @@ export const LaunchLabPanel: FC = () => {
   // Launch history persistence
   const [historyId, setHistoryId] = useState<string | null>(null);
 
+  const activeStreamRef = useRef<{
+    traceId: string;
+    reader: ReadableStreamDefaultReader<Uint8Array> | null;
+    abortController: AbortController | null;
+  } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      const active = activeStreamRef.current;
+      if (!active) return;
+      if (active.reader) {
+        traceLog(active.traceId, "reader.cancel()", { reason: "component unmounted" });
+        active.reader.cancel("component unmounted").catch((e) => {
+          traceLog(active.traceId, "reader.cancel() exception", {
+            name: (e as Error)?.name,
+            message: (e as Error)?.message ?? String(e),
+            stack: (e as Error)?.stack,
+          });
+        });
+      }
+      if (active.abortController && !active.abortController.signal.aborted) {
+        traceLog(active.traceId, "AbortController.abort() requested", { reason: "component unmounted" });
+        active.abortController.abort("component unmounted");
+      }
+      activeStreamRef.current = null;
+    };
+  }, []);
+
   // Auto-generated launch assets (logo / banner / telegram)
   const [assets, setAssets] = useState<Record<AssetKind, AssetState>>({
     logo: emptyAsset(), banner: emptyAsset(), telegram: emptyAsset(),
@@ -350,6 +384,13 @@ export const LaunchLabPanel: FC = () => {
   const generate = async (text?: string) => {
     const b = (text ?? brief).trim();
     if (!b || status === "generating") return;
+    const traceId = launchTraceId();
+    const abortController = new AbortController();
+    activeStreamRef.current = { traceId, reader: null, abortController };
+    abortController.signal.addEventListener("abort", () => {
+      traceLog(traceId, "AbortController.abort()", { reason: String(abortController.signal.reason ?? "") });
+      traceLog(traceId, "stream aborted", { reason: String(abortController.signal.reason ?? "") });
+    });
     setBrief(b);
     setError(null);
     setRejection(null);
@@ -358,6 +399,7 @@ export const LaunchLabPanel: FC = () => {
     setLandscape(null);
     setPipelinePhase("landscape_scan");
     setCompletedPhases(new Set());
+    traceLog(traceId, "fetch started", { functionName: "bark-zero-launch-proposal", briefLen: b.length });
     try {
       const res = await fetch(ENDPOINT, {
         method: "POST",
@@ -368,6 +410,13 @@ export const LaunchLabPanel: FC = () => {
           Accept: "text/event-stream",
         },
         body: JSON.stringify({ brief: b }),
+        signal: abortController.signal,
+      });
+      traceLog(traceId, "response headers received", {
+        status: res.status,
+        statusText: res.statusText,
+        contentType: res.headers.get("content-type"),
+        cacheControl: res.headers.get("cache-control"),
       });
       if (!res.ok || !res.body) {
         setError(await fromResponse(res, { functionName: "bark-zero-launch-proposal", method: "POST", url: ENDPOINT }));
@@ -377,26 +426,53 @@ export const LaunchLabPanel: FC = () => {
       }
 
       const reader = res.body.getReader();
+      if (activeStreamRef.current?.traceId === traceId) activeStreamRef.current.reader = reader;
       const decoder = new TextDecoder();
       let buffer = "";
       let finalProposal: LaunchProposal | null = null;
       let finalLandscape: Landscape | null = null;
+      let chunkCount = 0;
+      let firstChunkSeen = false;
+      let eventCount = 0;
+      let heartbeatCount = 0;
 
       const markComplete = (p: string) =>
         setCompletedPhases((prev) => new Set(prev).add(p));
 
       while (true) {
         const { value, done } = await reader.read();
-        if (done) break;
+        traceLog(traceId, "reader.read() completed", { done, bytes: value?.byteLength ?? 0 });
+        if (done) {
+          traceLog(traceId, "stream completed", { chunkCount, eventCount, heartbeatCount });
+          break;
+        }
+        chunkCount += 1;
+        if (!firstChunkSeen) {
+          firstChunkSeen = true;
+          traceLog(traceId, "first SSE chunk received", { bytes: value?.byteLength ?? 0 });
+        }
         buffer += decoder.decode(value, { stream: true });
         const events = buffer.split("\n\n");
         buffer = events.pop() ?? "";
         for (const ev of events) {
+          if (ev.startsWith(":")) {
+            heartbeatCount += 1;
+            traceLog(traceId, "heartbeat received", { heartbeatCount, raw: ev.slice(0, 120) });
+            continue;
+          }
           const line = ev.split("\n").find((l) => l.startsWith("data: "));
           if (!line) continue;
           let msg: any;
-          try { msg = JSON.parse(line.slice(6)); } catch { continue; }
+          try { msg = JSON.parse(line.slice(6)); } catch (parseErr) {
+            traceLog(traceId, "streamed event JSON parse exception", {
+              message: (parseErr as Error).message,
+              raw: line.slice(0, 1000),
+            });
+            continue;
+          }
           const phase = msg.phase as string;
+          eventCount += 1;
+          traceLog(traceId, "streamed event received", { phase, eventCount });
 
           if (phase === "landscape_scan") {
             setPipelinePhase("landscape_scan");
@@ -455,6 +531,7 @@ export const LaunchLabPanel: FC = () => {
       setProposal(p);
       setStatus("reviewing");
       setPipelinePhase(null);
+      if (activeStreamRef.current?.traceId === traceId) activeStreamRef.current = null;
 
       // Persist a new history record for this proposal
       try {
@@ -474,9 +551,19 @@ export const LaunchLabPanel: FC = () => {
         if (!insErr && inserted?.id) setHistoryId(inserted.id);
       } catch { /* history is best-effort */ }
     } catch (e) {
+      traceLog(traceId, "fetch exception", {
+        name: (e as Error)?.name,
+        message: (e as Error)?.message ?? String(e),
+        stack: (e as Error)?.stack,
+      });
+      if (abortController.signal.aborted) {
+        traceLog(traceId, "stream aborted", { reason: String(abortController.signal.reason ?? "") });
+      }
       setError(fromException(e, { functionName: "bark-zero-launch-proposal", method: "POST", url: ENDPOINT }));
       setStatus("idle");
       setPipelinePhase(null);
+    } finally {
+      if (activeStreamRef.current?.traceId === traceId) activeStreamRef.current = null;
     }
   };
 
