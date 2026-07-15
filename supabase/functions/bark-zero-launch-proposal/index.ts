@@ -605,7 +605,7 @@ Deno.serve(async (req) => {
     },
   });
 
-  return new Response(stream, {
+  const response = new Response(stream, {
     headers: {
       ...corsHeaders,
       "Content-Type": "text/event-stream",
@@ -614,5 +614,8 @@ Deno.serve(async (req) => {
       "X-Accel-Buffering": "no",
     },
   });
+  tlog(reqId, "response returned");
+  return response;
 });
+
 
