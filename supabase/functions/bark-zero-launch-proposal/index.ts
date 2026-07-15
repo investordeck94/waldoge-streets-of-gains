@@ -508,16 +508,20 @@ Deno.serve(async (req) => {
           proposal,
           source: landscapeSource,
         });
+        clearInterval(heartbeat);
         closeOnce();
       } catch (err: any) {
-        console.error("bark-zero-launch-proposal stream error:", err);
+        clearInterval(heartbeat);
+        console.error("bark-zero-launch-proposal stream error:", err?.stack || err);
         const message = err instanceof Error ? err.message : String(err);
         send("error", {
           error: message,
+          stack: err?.stack ? String(err.stack).slice(0, 2000) : undefined,
           rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 2000) : undefined,
         });
         closeOnce();
       }
+
 
     },
   });
