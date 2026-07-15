@@ -41,6 +41,35 @@ function base64ToBytes(b64: string): Uint8Array {
   return out;
 }
 
+// Anoncoin returns `signedTransaction` as base58, not base64.
+function base58ToBytes(s: string): Uint8Array {
+  const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  const MAP: Record<string, number> = {};
+  for (let i = 0; i < ALPHABET.length; i++) MAP[ALPHABET[i]] = i;
+  let zeros = 0;
+  while (zeros < s.length && s[zeros] === "1") zeros++;
+  const bytes: number[] = [];
+  for (let i = zeros; i < s.length; i++) {
+    const v = MAP[s[i]];
+    if (v === undefined) throw new Error("Invalid base58 character");
+    let carry = v;
+    for (let j = 0; j < bytes.length; j++) {
+      carry += bytes[j] * 58;
+      bytes[j] = carry & 0xff;
+      carry >>= 8;
+    }
+    while (carry) { bytes.push(carry & 0xff); carry >>= 8; }
+  }
+  const out = new Uint8Array(zeros + bytes.length);
+  for (let i = 0; i < bytes.length; i++) out[zeros + i] = bytes[bytes.length - 1 - i];
+  return out;
+}
+
+function decodeTxBytes(s: string): Uint8Array {
+  // Try base58 first (per Anoncoin docs); fall back to base64.
+  try { return base58ToBytes(s); } catch { return base64ToBytes(s); }
+}
+
 function tryDecodeTx(raw: Uint8Array) {
   // Prefer versioned transaction (v0 / new format), fall back to legacy.
   try {
