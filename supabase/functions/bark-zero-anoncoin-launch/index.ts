@@ -128,10 +128,27 @@ Deno.serve(async (req) => {
   }
 
   if (!anonRes.ok) {
+    // Anoncoin's own error envelope: { status:false, message:"..." }
     const msg =
-      pickString(payload, ["error", "message", "detail"]) ||
+      pickString(payload, ["message", "error", "detail"]) ||
       `Anoncoin API returned ${anonRes.status}`;
     const isDup = /duplicate|already|exists|taken/i.test(msg);
+
+    // The /services/v2/create-coin-tx endpoint is currently marked
+    // "Coming Soon" in Anoncoin's public docs and returns a 404 HTML page
+    // (Express "Cannot POST ..."). Surface that clearly instead of the raw HTML.
+    if (anonRes.status === 404) {
+      return json(
+        {
+          error:
+            "Anoncoin's create-coin endpoint is not live yet (their docs list it as 'Coming Soon'). Nothing to fix on our side — retry once Anoncoin ships /services/v2/create-coin-tx.",
+          code: "anoncoin_endpoint_not_live",
+          anoncoin: payload,
+        },
+        503,
+      );
+    }
+
     return json(
       {
         error: msg,
@@ -140,6 +157,11 @@ Deno.serve(async (req) => {
       },
       anonRes.status === 409 || isDup ? 409 : 400,
     );
+  }
+
+  // Anoncoin wraps successful payloads as { status, message, data:{...} }.
+  if (payload && payload.data && typeof payload.data === "object") {
+    payload = { ...payload.data, requestId: payload.requestId };
   }
 
   const mintAddress = pickString(payload, [
