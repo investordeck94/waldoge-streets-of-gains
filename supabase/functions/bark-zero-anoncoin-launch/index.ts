@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
       return json(
         {
           error:
-            "Anoncoin's create-coin endpoint is not live yet (their docs list it as 'Coming Soon'). Nothing to fix on our side — retry once Anoncoin ships /services/v2/create-coin-tx.",
+            "Anoncoin token launch is temporarily unavailable.\n\nThe official Anoncoin public launch endpoint (POST /services/v2/create-coin-tx) has not been released yet. Your proposal has been generated successfully, but token deployment cannot proceed until Anoncoin enables the endpoint.",
           code: "anoncoin_endpoint_not_live",
           anoncoin: payload,
         },
