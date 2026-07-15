@@ -182,32 +182,76 @@ Only JSON. Exactly 5 narratives.
 `.trim();
 
 
-async function callModelRaw(messages: Array<{ role: string; content: string }>, key: string, extraSystem = ""): Promise<string> {
+const AI_TIMEOUT_MS = 30_000;
+
+function ts() { return new Date().toISOString(); }
+function tlog(reqId: string, msg: string, extra?: Record<string, unknown>) {
+  const suffix = extra ? " " + JSON.stringify(extra) : "";
+  console.log(`[${ts()}] [${reqId}] ${msg}${suffix}`);
+}
+
+async function callModelRaw(
+  messages: Array<{ role: string; content: string }>,
+  key: string,
+  extraSystem = "",
+  reqId = "-",
+  sectionName = "unknown",
+): Promise<string> {
   const finalMessages = extraSystem
     ? messages.map((m, i) => (i === 0 && m.role === "system" ? { ...m, content: m.content + extraSystem } : m))
     : messages;
-  const res = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
-    body: JSON.stringify({
-      model: MODEL,
-      response_format: { type: "json_object" },
-      max_tokens: MAX_OUTPUT_TOKENS,
-      messages: finalMessages,
-    }),
-  });
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(new Error(`AI timeout after ${AI_TIMEOUT_MS}ms`)), AI_TIMEOUT_MS);
+  tlog(reqId, `AI request started`, { section: sectionName });
+  const startedAt = Date.now();
+  let res: Response;
+  try {
+    res = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
+      body: JSON.stringify({
+        model: MODEL,
+        response_format: { type: "json_object" },
+        max_tokens: MAX_OUTPUT_TOKENS,
+        messages: finalMessages,
+      }),
+      signal: ac.signal,
+    });
+  } catch (e: any) {
+    clearTimeout(timer);
+    const name = e?.name || "Error";
+    const message = e?.message || String(e);
+    tlog(reqId, `AI fetch threw`, { section: sectionName, name, message, ms: Date.now() - startedAt });
+    throw Object.assign(new Error(`${sectionName}: fetch failed (${name}): ${message}`), { status: 504, cause: e });
+  }
+  clearTimeout(timer);
+  tlog(reqId, `AI request finished`, { section: sectionName, status: res.status, ms: Date.now() - startedAt });
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
+    tlog(reqId, `AI non-ok body`, { section: sectionName, status: res.status, body: errText.slice(0, 500) });
     const status = res.status === 429 || res.status === 402 ? res.status : 500;
-    throw Object.assign(new Error(errText || `Gateway ${res.status}`), { status });
+    throw Object.assign(new Error(errText || `Gateway ${res.status}`), { status, rawResponse: errText });
   }
-  const data = await res.json();
-  return String(data.choices?.[0]?.message?.content ?? "");
+  let data: any;
+  try {
+    data = await res.json();
+  } catch (e: any) {
+    tlog(reqId, `AI JSON parse (envelope) failed`, { section: sectionName, name: e?.name, message: e?.message });
+    throw Object.assign(new Error(`${sectionName}: gateway envelope not JSON: ${e?.message}`), { status: 502 });
+  }
+  const content = String(data.choices?.[0]?.message?.content ?? "");
+  tlog(reqId, `AI response received`, { section: sectionName, contentLen: content.length });
+  return content;
 }
 
-async function callModel<T = any>(messages: Array<{ role: string; content: string }>, key: string, sectionName: string): Promise<T> {
+async function callModel<T = any>(
+  messages: Array<{ role: string; content: string }>,
+  key: string,
+  sectionName: string,
+  reqId = "-",
+): Promise<T> {
   return await extractJsonWithRetry<T>((strictReminder) =>
-    callModelRaw(messages, key, strictReminder),
+    callModelRaw(messages, key, strictReminder, reqId, sectionName),
     { sectionName, maxAttempts: 3 },
   );
 }
