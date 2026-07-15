@@ -41,6 +41,35 @@ function base64ToBytes(b64: string): Uint8Array {
   return out;
 }
 
+// Anoncoin returns `signedTransaction` as base58, not base64.
+function base58ToBytes(s: string): Uint8Array {
+  const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  const MAP: Record<string, number> = {};
+  for (let i = 0; i < ALPHABET.length; i++) MAP[ALPHABET[i]] = i;
+  let zeros = 0;
+  while (zeros < s.length && s[zeros] === "1") zeros++;
+  const bytes: number[] = [];
+  for (let i = zeros; i < s.length; i++) {
+    const v = MAP[s[i]];
+    if (v === undefined) throw new Error("Invalid base58 character");
+    let carry = v;
+    for (let j = 0; j < bytes.length; j++) {
+      carry += bytes[j] * 58;
+      bytes[j] = carry & 0xff;
+      carry >>= 8;
+    }
+    while (carry) { bytes.push(carry & 0xff); carry >>= 8; }
+  }
+  const out = new Uint8Array(zeros + bytes.length);
+  for (let i = 0; i < bytes.length; i++) out[zeros + i] = bytes[bytes.length - 1 - i];
+  return out;
+}
+
+function decodeTxBytes(s: string): Uint8Array {
+  // Try base58 first (per Anoncoin docs); fall back to base64.
+  try { return base58ToBytes(s); } catch { return base64ToBytes(s); }
+}
+
 function tryDecodeTx(raw: Uint8Array) {
   // Prefer versioned transaction (v0 / new format), fall back to legacy.
   try {
@@ -128,10 +157,27 @@ Deno.serve(async (req) => {
   }
 
   if (!anonRes.ok) {
+    // Anoncoin's own error envelope: { status:false, message:"..." }
     const msg =
-      pickString(payload, ["error", "message", "detail"]) ||
+      pickString(payload, ["message", "error", "detail"]) ||
       `Anoncoin API returned ${anonRes.status}`;
     const isDup = /duplicate|already|exists|taken/i.test(msg);
+
+    // The /services/v2/create-coin-tx endpoint is currently marked
+    // "Coming Soon" in Anoncoin's public docs and returns a 404 HTML page
+    // (Express "Cannot POST ..."). Surface that clearly instead of the raw HTML.
+    if (anonRes.status === 404) {
+      return json(
+        {
+          error:
+            "Anoncoin's create-coin endpoint is not live yet (their docs list it as 'Coming Soon'). Nothing to fix on our side — retry once Anoncoin ships /services/v2/create-coin-tx.",
+          code: "anoncoin_endpoint_not_live",
+          anoncoin: payload,
+        },
+        503,
+      );
+    }
+
     return json(
       {
         error: msg,
@@ -140,6 +186,11 @@ Deno.serve(async (req) => {
       },
       anonRes.status === 409 || isDup ? 409 : 400,
     );
+  }
+
+  // Anoncoin wraps successful payloads as { status, message, data:{...} }.
+  if (payload && payload.data && typeof payload.data === "object") {
+    payload = { ...payload.data, requestId: payload.requestId };
   }
 
   const mintAddress = pickString(payload, [
@@ -192,7 +243,7 @@ Deno.serve(async (req) => {
   let confirmed = false;
   let broadcastError: string | null = null;
   try {
-    const raw = base64ToBytes(signedTxB64);
+    const raw = decodeTxBytes(signedTxB64);
     const conn = new Connection(SOLANA_RPC, "confirmed");
     signature = await conn.sendRawTransaction(raw, {
       skipPreflight: false,
