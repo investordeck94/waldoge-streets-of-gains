@@ -398,7 +398,7 @@ Deno.serve(async (req) => {
 
         // Attempt 1
         try {
-          landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1: Narrative analysis");
+          landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1: Narrative analysis", reqId);
         } catch (e) {
           fallbackReason = `landscape scan attempt 1 threw: ${(e as Error).message}`;
           console.warn(fallbackReason);
@@ -411,7 +411,7 @@ Deno.serve(async (req) => {
           const reason = fallbackReason ?? "landscape scan attempt 1 returned zero narratives (empty response or filtering removed all candidates)";
           console.warn(`Zero narratives on attempt 1: ${reason}. Retrying once.`);
           try {
-            landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1 retry: Narrative analysis");
+            landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1 retry: Narrative analysis", reqId);
             narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
             if (narratives.length === 0) {
               fallbackReason = "retry also returned zero narratives";
@@ -427,7 +427,7 @@ Deno.serve(async (req) => {
           console.warn(`Falling back to AI-estimated narratives. Reason: ${fallbackReason ?? "unknown"}`);
           landscapeSource = "ai_estimate";
           try {
-            landscape = await runFallbackNarratives(brief, contextBlock, key);
+            landscape = await runFallbackNarratives(brief, contextBlock, key, reqId);
             narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
           } catch (e) {
             const msg = `AI-estimate fallback failed: ${(e as Error).message}`;
