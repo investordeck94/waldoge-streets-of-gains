@@ -578,19 +578,28 @@ Deno.serve(async (req) => {
           proposal,
           source: landscapeSource,
         });
+        tlog(reqId, "stream completed", { eventCount, pingCount });
         clearInterval(heartbeat);
-        closeOnce("inline");
+        closeOnce("success");
       } catch (err: any) {
         clearInterval(heartbeat);
-        console.error("bark-zero-launch-proposal stream error:", err?.stack || err);
         const message = err instanceof Error ? err.message : String(err);
+        const stack = err?.stack ? String(err.stack) : "";
+        tlog(reqId, "stream error caught", {
+          name: err?.name,
+          message,
+          status: err?.status,
+          stack: stack.slice(0, 1500),
+          rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 500) : undefined,
+        });
         send("error", {
           error: message,
-          stack: err?.stack ? String(err.stack).slice(0, 2000) : undefined,
+          stack: stack.slice(0, 2000),
           rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 2000) : undefined,
         });
-        closeOnce("inline");
+        closeOnce("error");
       }
+
 
 
     },
