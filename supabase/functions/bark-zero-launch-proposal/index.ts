@@ -294,11 +294,22 @@ Deno.serve(async (req) => {
           closed = true;
         }
       };
+      const ping = () => {
+        if (closed) return;
+        try { controller.enqueue(encoder.encode(`: ping ${Date.now()}\n\n`)); }
+        catch { closed = true; }
+      };
       const closeOnce = () => {
         if (closed) return;
         closed = true;
         try { controller.close(); } catch { /* already closed */ }
       };
+
+      // Flush a comment immediately so Safari/iOS commits to the streaming
+      // response before the first long AI call, and every 10s afterwards so
+      // mobile networks don't drop the idle fetch between phases.
+      ping();
+      const heartbeat = setInterval(ping, 10_000);
 
       try {
         const [contextBlock, marketIntelBlock] = await Promise.all([
@@ -309,6 +320,7 @@ Deno.serve(async (req) => {
 
         // ————— Step 1: Scan Landscape (with retry + AI fallback) —————
         send("landscape_scan", { hasLiveIntel });
+
 
         let landscape: any = null;
         let landscapeSource: "live" | "ai_estimate" = hasLiveIntel ? "live" : "ai_estimate";
