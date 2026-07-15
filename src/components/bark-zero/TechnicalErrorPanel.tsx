@@ -21,7 +21,7 @@ export function TechnicalErrorPanel({ error, className = "", title = "⚠" }: Pr
 
   return (
     <div className={`rounded-lg border border-red-500/40 bg-red-500/5 p-3 ${className}`}>
-      <div className="text-xs text-red-400 font-mono">
+      <div className="text-xs text-red-400 font-mono whitespace-pre-wrap">
         {title} {error.message}
       </div>
 
