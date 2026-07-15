@@ -262,6 +262,7 @@ async function runLandscapeScan(
   marketIntelBlock: string,
   key: string,
   sectionName: string,
+  reqId = "-",
 ): Promise<any> {
   return await callModel(
     [
@@ -275,6 +276,7 @@ async function runLandscapeScan(
     ],
     key,
     sectionName,
+    reqId,
   );
 }
 
@@ -282,6 +284,7 @@ async function runFallbackNarratives(
   brief: string,
   contextBlock: string,
   key: string,
+  reqId = "-",
 ): Promise<any> {
   return await callModel(
     [
@@ -295,6 +298,7 @@ async function runFallbackNarratives(
     ],
     key,
     "Landscape fallback (AI-estimated narratives)",
+    reqId,
   );
 }
 
