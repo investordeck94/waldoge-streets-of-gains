@@ -182,32 +182,76 @@ Only JSON. Exactly 5 narratives.
 `.trim();
 
 
-async function callModelRaw(messages: Array<{ role: string; content: string }>, key: string, extraSystem = ""): Promise<string> {
+const AI_TIMEOUT_MS = 30_000;
+
+function ts() { return new Date().toISOString(); }
+function tlog(reqId: string, msg: string, extra?: Record<string, unknown>) {
+  const suffix = extra ? " " + JSON.stringify(extra) : "";
+  console.log(`[${ts()}] [${reqId}] ${msg}${suffix}`);
+}
+
+async function callModelRaw(
+  messages: Array<{ role: string; content: string }>,
+  key: string,
+  extraSystem = "",
+  reqId = "-",
+  sectionName = "unknown",
+): Promise<string> {
   const finalMessages = extraSystem
     ? messages.map((m, i) => (i === 0 && m.role === "system" ? { ...m, content: m.content + extraSystem } : m))
     : messages;
-  const res = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
-    body: JSON.stringify({
-      model: MODEL,
-      response_format: { type: "json_object" },
-      max_tokens: MAX_OUTPUT_TOKENS,
-      messages: finalMessages,
-    }),
-  });
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(new Error(`AI timeout after ${AI_TIMEOUT_MS}ms`)), AI_TIMEOUT_MS);
+  tlog(reqId, `AI request started`, { section: sectionName });
+  const startedAt = Date.now();
+  let res: Response;
+  try {
+    res = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
+      body: JSON.stringify({
+        model: MODEL,
+        response_format: { type: "json_object" },
+        max_tokens: MAX_OUTPUT_TOKENS,
+        messages: finalMessages,
+      }),
+      signal: ac.signal,
+    });
+  } catch (e: any) {
+    clearTimeout(timer);
+    const name = e?.name || "Error";
+    const message = e?.message || String(e);
+    tlog(reqId, `AI fetch threw`, { section: sectionName, name, message, ms: Date.now() - startedAt });
+    throw Object.assign(new Error(`${sectionName}: fetch failed (${name}): ${message}`), { status: 504, cause: e });
+  }
+  clearTimeout(timer);
+  tlog(reqId, `AI request finished`, { section: sectionName, status: res.status, ms: Date.now() - startedAt });
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
+    tlog(reqId, `AI non-ok body`, { section: sectionName, status: res.status, body: errText.slice(0, 500) });
     const status = res.status === 429 || res.status === 402 ? res.status : 500;
-    throw Object.assign(new Error(errText || `Gateway ${res.status}`), { status });
+    throw Object.assign(new Error(errText || `Gateway ${res.status}`), { status, rawResponse: errText });
   }
-  const data = await res.json();
-  return String(data.choices?.[0]?.message?.content ?? "");
+  let data: any;
+  try {
+    data = await res.json();
+  } catch (e: any) {
+    tlog(reqId, `AI JSON parse (envelope) failed`, { section: sectionName, name: e?.name, message: e?.message });
+    throw Object.assign(new Error(`${sectionName}: gateway envelope not JSON: ${e?.message}`), { status: 502 });
+  }
+  const content = String(data.choices?.[0]?.message?.content ?? "");
+  tlog(reqId, `AI response received`, { section: sectionName, contentLen: content.length });
+  return content;
 }
 
-async function callModel<T = any>(messages: Array<{ role: string; content: string }>, key: string, sectionName: string): Promise<T> {
+async function callModel<T = any>(
+  messages: Array<{ role: string; content: string }>,
+  key: string,
+  sectionName: string,
+  reqId = "-",
+): Promise<T> {
   return await extractJsonWithRetry<T>((strictReminder) =>
-    callModelRaw(messages, key, strictReminder),
+    callModelRaw(messages, key, strictReminder, reqId, sectionName),
     { sectionName, maxAttempts: 3 },
   );
 }
@@ -218,6 +262,7 @@ async function runLandscapeScan(
   marketIntelBlock: string,
   key: string,
   sectionName: string,
+  reqId = "-",
 ): Promise<any> {
   return await callModel(
     [
@@ -231,6 +276,7 @@ async function runLandscapeScan(
     ],
     key,
     sectionName,
+    reqId,
   );
 }
 
@@ -238,6 +284,7 @@ async function runFallbackNarratives(
   brief: string,
   contextBlock: string,
   key: string,
+  reqId = "-",
 ): Promise<any> {
   return await callModel(
     [
@@ -251,17 +298,21 @@ async function runFallbackNarratives(
     ],
     key,
     "Landscape fallback (AI-estimated narratives)",
+    reqId,
   );
 }
 
 
 
 Deno.serve(async (req) => {
+  const reqId = crypto.randomUUID().slice(0, 8);
+  tlog(reqId, "request received", { method: req.method, url: req.url });
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  const _auth = requireOwner(req); if (_auth) return _auth;
+  const _auth = requireOwner(req); if (_auth) { tlog(reqId, "auth rejected"); return _auth; }
 
   const key = Deno.env.get("LOVABLE_API_KEY");
   if (!key) {
+    tlog(reqId, "missing LOVABLE_API_KEY");
     return new Response(JSON.stringify({ error: "Missing LOVABLE_API_KEY" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -272,44 +323,63 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     brief = typeof body?.brief === "string" ? body.brief.trim() : "";
-  } catch { /* ignore */ }
+  } catch (e: any) {
+    tlog(reqId, "body parse failed", { message: e?.message });
+  }
   if (!brief) {
+    tlog(reqId, "validation failed: empty brief");
     return new Response(JSON.stringify({ error: "brief must be a non-empty string" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  tlog(reqId, "request validated", { briefLen: brief.length });
+
+  // Client disconnect surveillance
+  try {
+    req.signal.addEventListener("abort", () => {
+      tlog(reqId, "client disconnected (request.signal.aborted)");
+    });
+  } catch { /* ignore */ }
 
   const stream = new ReadableStream({
     async start(controller) {
+      tlog(reqId, "SSE stream created");
       const encoder = new TextEncoder();
 
       let closed = false;
+      let eventCount = 0;
+      let pingCount = 0;
       const send = (phase: string, payload: Record<string, unknown> = {}) => {
-        if (closed) return;
+        if (closed) { tlog(reqId, "send skipped (closed)", { phase }); return; }
         try {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ phase, ...payload })}\n\n`));
+          eventCount++;
+          tlog(reqId, "SSE event written", { phase, eventCount });
         } catch (e) {
-          console.warn("send after close:", (e as Error).message);
+          console.warn(`[${reqId}] send after close:`, (e as Error).message);
           closed = true;
         }
       };
       const ping = () => {
         if (closed) return;
-        try { controller.enqueue(encoder.encode(`: ping ${Date.now()}\n\n`)); }
-        catch { closed = true; }
+        try {
+          controller.enqueue(encoder.encode(`: ping ${Date.now()}\n\n`));
+          pingCount++;
+          tlog(reqId, "heartbeat written", { pingCount });
+        } catch { closed = true; }
       };
-      const closeOnce = () => {
-        if (closed) return;
+      const closeOnce = (where: string) => {
+        if (closed) { tlog(reqId, "closeOnce noop", { where }); return; }
         closed = true;
-        try { controller.close(); } catch { /* already closed */ }
+        try { controller.close(); tlog(reqId, "controller.close() called", { where }); }
+        catch (e: any) { tlog(reqId, "controller.close() threw", { where, message: e?.message }); }
       };
 
-      // Flush a comment immediately so Safari/iOS commits to the streaming
-      // response before the first long AI call, and every 10s afterwards so
-      // mobile networks don't drop the idle fetch between phases.
-      ping();
+      ping(); // first bytes flushed
+      tlog(reqId, "first bytes flushed");
       const heartbeat = setInterval(ping, 10_000);
+
 
       try {
         const [contextBlock, marketIntelBlock] = await Promise.all([
@@ -328,7 +398,7 @@ Deno.serve(async (req) => {
 
         // Attempt 1
         try {
-          landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1: Narrative analysis");
+          landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1: Narrative analysis", reqId);
         } catch (e) {
           fallbackReason = `landscape scan attempt 1 threw: ${(e as Error).message}`;
           console.warn(fallbackReason);
@@ -341,7 +411,7 @@ Deno.serve(async (req) => {
           const reason = fallbackReason ?? "landscape scan attempt 1 returned zero narratives (empty response or filtering removed all candidates)";
           console.warn(`Zero narratives on attempt 1: ${reason}. Retrying once.`);
           try {
-            landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1 retry: Narrative analysis");
+            landscape = await runLandscapeScan(brief, contextBlock, marketIntelBlock, key, "Step 1 retry: Narrative analysis", reqId);
             narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
             if (narratives.length === 0) {
               fallbackReason = "retry also returned zero narratives";
@@ -357,13 +427,13 @@ Deno.serve(async (req) => {
           console.warn(`Falling back to AI-estimated narratives. Reason: ${fallbackReason ?? "unknown"}`);
           landscapeSource = "ai_estimate";
           try {
-            landscape = await runFallbackNarratives(brief, contextBlock, key);
+            landscape = await runFallbackNarratives(brief, contextBlock, key, reqId);
             narratives = Array.isArray(landscape?.narratives) ? landscape.narratives : [];
           } catch (e) {
             const msg = `AI-estimate fallback failed: ${(e as Error).message}`;
             console.error(msg);
             send("error", { error: msg, fallbackReason });
-            closeOnce();
+            closeOnce("inline");
             return;
           }
         }
@@ -373,7 +443,7 @@ Deno.serve(async (req) => {
             reason: String(landscape?.reason ?? "Nothing in the current landscape clears the bar."),
             landscape: { narratives, chosenId: null, rationale: "", source: landscapeSource },
           });
-          closeOnce();
+          closeOnce("inline");
           return;
         }
 
@@ -387,7 +457,7 @@ Deno.serve(async (req) => {
             fallbackReason,
             landscape,
           });
-          closeOnce();
+          closeOnce("inline");
           return;
         }
 
@@ -419,7 +489,7 @@ Deno.serve(async (req) => {
             },
           ],
           key,
-          "Step 3: Token proposal",
+          "Step 3: Token proposal", reqId,
         );
         send("token", { tokenProposal });
 
@@ -437,7 +507,7 @@ Deno.serve(async (req) => {
             },
           ],
           key,
-          "Step 4: Marketing",
+          "Step 4: Marketing", reqId,
         );
         send("marketing", { marketing });
 
@@ -454,7 +524,7 @@ Deno.serve(async (req) => {
             },
           ],
           key,
-          "Step 5: X Thread",
+          "Step 5: X Thread", reqId,
         );
         send("xthread", { xthread });
 
@@ -471,7 +541,7 @@ Deno.serve(async (req) => {
             },
           ],
           key,
-          "Step 6: Telegram",
+          "Step 6: Telegram", reqId,
         );
         send("telegram", { telegram });
 
@@ -489,7 +559,7 @@ Deno.serve(async (req) => {
             },
           ],
           key,
-          "Step 7: Launch assets",
+          "Step 7: Launch assets", reqId,
         );
         send("assets", { launchAssets });
 
@@ -508,25 +578,34 @@ Deno.serve(async (req) => {
           proposal,
           source: landscapeSource,
         });
+        tlog(reqId, "stream completed", { eventCount, pingCount });
         clearInterval(heartbeat);
-        closeOnce();
+        closeOnce("success");
       } catch (err: any) {
         clearInterval(heartbeat);
-        console.error("bark-zero-launch-proposal stream error:", err?.stack || err);
         const message = err instanceof Error ? err.message : String(err);
+        const stack = err?.stack ? String(err.stack) : "";
+        tlog(reqId, "stream error caught", {
+          name: err?.name,
+          message,
+          status: err?.status,
+          stack: stack.slice(0, 1500),
+          rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 500) : undefined,
+        });
         send("error", {
           error: message,
-          stack: err?.stack ? String(err.stack).slice(0, 2000) : undefined,
+          stack: stack.slice(0, 2000),
           rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 2000) : undefined,
         });
-        closeOnce();
+        closeOnce("error");
       }
+
 
 
     },
   });
 
-  return new Response(stream, {
+  const response = new Response(stream, {
     headers: {
       ...corsHeaders,
       "Content-Type": "text/event-stream",
@@ -535,5 +614,8 @@ Deno.serve(async (req) => {
       "X-Accel-Buffering": "no",
     },
   });
+  tlog(reqId, "response returned");
+  return response;
 });
+
 
