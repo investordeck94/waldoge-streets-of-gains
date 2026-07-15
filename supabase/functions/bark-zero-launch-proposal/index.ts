@@ -301,11 +301,14 @@ async function runFallbackNarratives(
 
 
 Deno.serve(async (req) => {
+  const reqId = crypto.randomUUID().slice(0, 8);
+  tlog(reqId, "request received", { method: req.method, url: req.url });
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  const _auth = requireOwner(req); if (_auth) return _auth;
+  const _auth = requireOwner(req); if (_auth) { tlog(reqId, "auth rejected"); return _auth; }
 
   const key = Deno.env.get("LOVABLE_API_KEY");
   if (!key) {
+    tlog(reqId, "missing LOVABLE_API_KEY");
     return new Response(JSON.stringify({ error: "Missing LOVABLE_API_KEY" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -316,44 +319,63 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     brief = typeof body?.brief === "string" ? body.brief.trim() : "";
-  } catch { /* ignore */ }
+  } catch (e: any) {
+    tlog(reqId, "body parse failed", { message: e?.message });
+  }
   if (!brief) {
+    tlog(reqId, "validation failed: empty brief");
     return new Response(JSON.stringify({ error: "brief must be a non-empty string" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  tlog(reqId, "request validated", { briefLen: brief.length });
+
+  // Client disconnect surveillance
+  try {
+    req.signal.addEventListener("abort", () => {
+      tlog(reqId, "client disconnected (request.signal.aborted)");
+    });
+  } catch { /* ignore */ }
 
   const stream = new ReadableStream({
     async start(controller) {
+      tlog(reqId, "SSE stream created");
       const encoder = new TextEncoder();
 
       let closed = false;
+      let eventCount = 0;
+      let pingCount = 0;
       const send = (phase: string, payload: Record<string, unknown> = {}) => {
-        if (closed) return;
+        if (closed) { tlog(reqId, "send skipped (closed)", { phase }); return; }
         try {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ phase, ...payload })}\n\n`));
+          eventCount++;
+          tlog(reqId, "SSE event written", { phase, eventCount });
         } catch (e) {
-          console.warn("send after close:", (e as Error).message);
+          console.warn(`[${reqId}] send after close:`, (e as Error).message);
           closed = true;
         }
       };
       const ping = () => {
         if (closed) return;
-        try { controller.enqueue(encoder.encode(`: ping ${Date.now()}\n\n`)); }
-        catch { closed = true; }
+        try {
+          controller.enqueue(encoder.encode(`: ping ${Date.now()}\n\n`));
+          pingCount++;
+          tlog(reqId, "heartbeat written", { pingCount });
+        } catch { closed = true; }
       };
-      const closeOnce = () => {
-        if (closed) return;
+      const closeOnce = (where: string) => {
+        if (closed) { tlog(reqId, "closeOnce noop", { where }); return; }
         closed = true;
-        try { controller.close(); } catch { /* already closed */ }
+        try { controller.close(); tlog(reqId, "controller.close() called", { where }); }
+        catch (e: any) { tlog(reqId, "controller.close() threw", { where, message: e?.message }); }
       };
 
-      // Flush a comment immediately so Safari/iOS commits to the streaming
-      // response before the first long AI call, and every 10s afterwards so
-      // mobile networks don't drop the idle fetch between phases.
-      ping();
+      ping(); // first bytes flushed
+      tlog(reqId, "first bytes flushed");
       const heartbeat = setInterval(ping, 10_000);
+
 
       try {
         const [contextBlock, marketIntelBlock] = await Promise.all([
