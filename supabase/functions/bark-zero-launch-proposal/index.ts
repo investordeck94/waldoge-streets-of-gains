@@ -429,7 +429,7 @@ Deno.serve(async (req) => {
             const msg = `AI-estimate fallback failed: ${(e as Error).message}`;
             console.error(msg);
             send("error", { error: msg, fallbackReason });
-            closeOnce();
+            closeOnce("inline");
             return;
           }
         }
@@ -439,7 +439,7 @@ Deno.serve(async (req) => {
             reason: String(landscape?.reason ?? "Nothing in the current landscape clears the bar."),
             landscape: { narratives, chosenId: null, rationale: "", source: landscapeSource },
           });
-          closeOnce();
+          closeOnce("inline");
           return;
         }
 
@@ -453,7 +453,7 @@ Deno.serve(async (req) => {
             fallbackReason,
             landscape,
           });
-          closeOnce();
+          closeOnce("inline");
           return;
         }
 
@@ -485,7 +485,7 @@ Deno.serve(async (req) => {
             },
           ],
           key,
-          "Step 3: Token proposal",
+          "Step 3: Token proposal", reqId,
         );
         send("token", { tokenProposal });
 
@@ -503,7 +503,7 @@ Deno.serve(async (req) => {
             },
           ],
           key,
-          "Step 4: Marketing",
+          "Step 4: Marketing", reqId,
         );
         send("marketing", { marketing });
 
@@ -520,7 +520,7 @@ Deno.serve(async (req) => {
             },
           ],
           key,
-          "Step 5: X Thread",
+          "Step 5: X Thread", reqId,
         );
         send("xthread", { xthread });
 
@@ -537,7 +537,7 @@ Deno.serve(async (req) => {
             },
           ],
           key,
-          "Step 6: Telegram",
+          "Step 6: Telegram", reqId,
         );
         send("telegram", { telegram });
 
@@ -555,7 +555,7 @@ Deno.serve(async (req) => {
             },
           ],
           key,
-          "Step 7: Launch assets",
+          "Step 7: Launch assets", reqId,
         );
         send("assets", { launchAssets });
 
@@ -575,7 +575,7 @@ Deno.serve(async (req) => {
           source: landscapeSource,
         });
         clearInterval(heartbeat);
-        closeOnce();
+        closeOnce("inline");
       } catch (err: any) {
         clearInterval(heartbeat);
         console.error("bark-zero-launch-proposal stream error:", err?.stack || err);
@@ -585,7 +585,7 @@ Deno.serve(async (req) => {
           stack: err?.stack ? String(err.stack).slice(0, 2000) : undefined,
           rawResponse: typeof err?.rawResponse === "string" ? err.rawResponse.slice(0, 2000) : undefined,
         });
-        closeOnce();
+        closeOnce("inline");
       }
 
 
