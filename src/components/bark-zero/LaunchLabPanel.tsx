@@ -221,6 +221,34 @@ export const LaunchLabPanel: FC = () => {
   // Launch history persistence
   const [historyId, setHistoryId] = useState<string | null>(null);
 
+  const activeStreamRef = useRef<{
+    traceId: string;
+    reader: ReadableStreamDefaultReader<Uint8Array> | null;
+    abortController: AbortController | null;
+  } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      const active = activeStreamRef.current;
+      if (!active) return;
+      if (active.reader) {
+        traceLog(active.traceId, "reader.cancel()", { reason: "component unmounted" });
+        active.reader.cancel("component unmounted").catch((e) => {
+          traceLog(active.traceId, "reader.cancel() exception", {
+            name: (e as Error)?.name,
+            message: (e as Error)?.message ?? String(e),
+            stack: (e as Error)?.stack,
+          });
+        });
+      }
+      if (active.abortController && !active.abortController.signal.aborted) {
+        traceLog(active.traceId, "AbortController.abort() requested", { reason: "component unmounted" });
+        active.abortController.abort("component unmounted");
+      }
+      activeStreamRef.current = null;
+    };
+  }, []);
+
   // Auto-generated launch assets (logo / banner / telegram)
   const [assets, setAssets] = useState<Record<AssetKind, AssetState>>({
     logo: emptyAsset(), banner: emptyAsset(), telegram: emptyAsset(),
@@ -358,6 +386,7 @@ export const LaunchLabPanel: FC = () => {
     if (!b || status === "generating") return;
     const traceId = launchTraceId();
     const abortController = new AbortController();
+    activeStreamRef.current = { traceId, reader: null, abortController };
     abortController.signal.addEventListener("abort", () => {
       traceLog(traceId, "AbortController.abort()", { reason: String(abortController.signal.reason ?? "") });
       traceLog(traceId, "stream aborted", { reason: String(abortController.signal.reason ?? "") });
@@ -397,6 +426,7 @@ export const LaunchLabPanel: FC = () => {
       }
 
       const reader = res.body.getReader();
+      if (activeStreamRef.current?.traceId === traceId) activeStreamRef.current.reader = reader;
       const decoder = new TextDecoder();
       let buffer = "";
       let finalProposal: LaunchProposal | null = null;
@@ -501,6 +531,7 @@ export const LaunchLabPanel: FC = () => {
       setProposal(p);
       setStatus("reviewing");
       setPipelinePhase(null);
+      if (activeStreamRef.current?.traceId === traceId) activeStreamRef.current = null;
 
       // Persist a new history record for this proposal
       try {
@@ -531,6 +562,8 @@ export const LaunchLabPanel: FC = () => {
       setError(fromException(e, { functionName: "bark-zero-launch-proposal", method: "POST", url: ENDPOINT }));
       setStatus("idle");
       setPipelinePhase(null);
+    } finally {
+      if (activeStreamRef.current?.traceId === traceId) activeStreamRef.current = null;
     }
   };
 
