@@ -356,6 +356,12 @@ export const LaunchLabPanel: FC = () => {
   const generate = async (text?: string) => {
     const b = (text ?? brief).trim();
     if (!b || status === "generating") return;
+    const traceId = launchTraceId();
+    const abortController = new AbortController();
+    abortController.signal.addEventListener("abort", () => {
+      traceLog(traceId, "AbortController.abort()", { reason: String(abortController.signal.reason ?? "") });
+      traceLog(traceId, "stream aborted", { reason: String(abortController.signal.reason ?? "") });
+    });
     setBrief(b);
     setError(null);
     setRejection(null);
@@ -364,6 +370,7 @@ export const LaunchLabPanel: FC = () => {
     setLandscape(null);
     setPipelinePhase("landscape_scan");
     setCompletedPhases(new Set());
+    traceLog(traceId, "fetch started", { functionName: "bark-zero-launch-proposal", briefLen: b.length });
     try {
       const res = await fetch(ENDPOINT, {
         method: "POST",
@@ -374,6 +381,13 @@ export const LaunchLabPanel: FC = () => {
           Accept: "text/event-stream",
         },
         body: JSON.stringify({ brief: b }),
+        signal: abortController.signal,
+      });
+      traceLog(traceId, "response headers received", {
+        status: res.status,
+        statusText: res.statusText,
+        contentType: res.headers.get("content-type"),
+        cacheControl: res.headers.get("cache-control"),
       });
       if (!res.ok || !res.body) {
         setError(await fromResponse(res, { functionName: "bark-zero-launch-proposal", method: "POST", url: ENDPOINT }));
@@ -387,22 +401,48 @@ export const LaunchLabPanel: FC = () => {
       let buffer = "";
       let finalProposal: LaunchProposal | null = null;
       let finalLandscape: Landscape | null = null;
+      let chunkCount = 0;
+      let firstChunkSeen = false;
+      let eventCount = 0;
+      let heartbeatCount = 0;
 
       const markComplete = (p: string) =>
         setCompletedPhases((prev) => new Set(prev).add(p));
 
       while (true) {
         const { value, done } = await reader.read();
-        if (done) break;
+        traceLog(traceId, "reader.read() completed", { done, bytes: value?.byteLength ?? 0 });
+        if (done) {
+          traceLog(traceId, "stream completed", { chunkCount, eventCount, heartbeatCount });
+          break;
+        }
+        chunkCount += 1;
+        if (!firstChunkSeen) {
+          firstChunkSeen = true;
+          traceLog(traceId, "first SSE chunk received", { bytes: value?.byteLength ?? 0 });
+        }
         buffer += decoder.decode(value, { stream: true });
         const events = buffer.split("\n\n");
         buffer = events.pop() ?? "";
         for (const ev of events) {
+          if (ev.startsWith(":")) {
+            heartbeatCount += 1;
+            traceLog(traceId, "heartbeat received", { heartbeatCount, raw: ev.slice(0, 120) });
+            continue;
+          }
           const line = ev.split("\n").find((l) => l.startsWith("data: "));
           if (!line) continue;
           let msg: any;
-          try { msg = JSON.parse(line.slice(6)); } catch { continue; }
+          try { msg = JSON.parse(line.slice(6)); } catch (parseErr) {
+            traceLog(traceId, "streamed event JSON parse exception", {
+              message: (parseErr as Error).message,
+              raw: line.slice(0, 1000),
+            });
+            continue;
+          }
           const phase = msg.phase as string;
+          eventCount += 1;
+          traceLog(traceId, "streamed event received", { phase, eventCount });
 
           if (phase === "landscape_scan") {
             setPipelinePhase("landscape_scan");
@@ -480,6 +520,14 @@ export const LaunchLabPanel: FC = () => {
         if (!insErr && inserted?.id) setHistoryId(inserted.id);
       } catch { /* history is best-effort */ }
     } catch (e) {
+      traceLog(traceId, "fetch exception", {
+        name: (e as Error)?.name,
+        message: (e as Error)?.message ?? String(e),
+        stack: (e as Error)?.stack,
+      });
+      if (abortController.signal.aborted) {
+        traceLog(traceId, "stream aborted", { reason: String(abortController.signal.reason ?? "") });
+      }
       setError(fromException(e, { functionName: "bark-zero-launch-proposal", method: "POST", url: ENDPOINT }));
       setStatus("idle");
       setPipelinePhase(null);
