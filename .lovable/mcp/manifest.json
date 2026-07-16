@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "sdk_version": "0.22.2",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "waldoge-mcp",
+      "version": "0.1.0",
+      "title": "Waldoge / Bark Zero"
+    },
+    "tools": [
+      {
+        "name": "bark_zero_ask",
+        "title": "Ask Bark Zero",
+        "description": "Ask Bark Zero — a dry British crypto/culture AI personality powered by WALDOGE — a single question and get a punchy reply.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The question or prompt for Bark Zero."
+            }
+          },
+          "required": [
+            "question"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "launch_lab_concept",
+        "title": "Generate token concept",
+        "description": "Draft a meme-coin concept in Bark Zero's voice — name, ticker, narrative, lore, marketing angles, risk notes. This is IDEATION ONLY. No token is created, deployed, or funded. The Waldoge site owner must explicitly approve any real launch in-app.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "theme": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Theme, narrative or seed idea for the token."
+            },
+            "audience": {
+              "type": "string",
+              "description": "Target audience or community. Empty string if none."
+            }
+          },
+          "required": [
+            "theme"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "market_scan",
+        "title": "Bark Zero market scan",
+        "description": "Scan the current crypto/attention landscape for narratives (AI, memes, gaming, culture) and return AI-estimated rankings with a score 1-100. Scores are AI-generated estimates, not live market data.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "focus": {
+              "type": "string",
+              "description": "Optional focus area, e.g. 'AI agents', 'Solana memes', 'gaming'. Empty string for a general scan."
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "waldoge_info",
+        "title": "Waldoge project info",
+        "description": "Return public info about the Waldoge project: mascot, chain, token mint, tier thresholds, and feature list.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "topic": {
+              "type": "string",
+              "description": "Optional topic to focus on: 'tiers', 'features', 'mascot', 'token'. Empty string returns everything."
+            }
+          }
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
