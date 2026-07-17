@@ -531,7 +531,14 @@ export const BarkZero: FC = () => {
 
         <div className="relative container mx-auto px-4 py-8">
           {/* Hero — reactive AI avatar */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 relative">
+            <button
+              onClick={() => clearOwnerSecret("manual", "Owner secret cleared. Re-enter to unlock.")}
+              className="absolute top-0 right-0 px-3 py-1.5 rounded-md border border-neon/30 text-neon/80 hover:text-neon hover:border-neon/60 text-[10px] font-mono uppercase tracking-widest"
+              title="Clear the stored owner secret and show the unlock gate"
+            >
+              Reset secret
+            </button>
             <BarkZeroAvatarHero />
             <p className="text-xs font-mono uppercase tracking-[0.35em] text-neon mt-4">
               Powered by $WALDOGE
