@@ -22,7 +22,10 @@ import {
   Moon,
   Library,
   History,
+  Volume2,
 } from "lucide-react";
+import { barkVoice } from "@/lib/BarkVoiceManager";
+import { VoiceSettingsPanel } from "./bark-zero/VoiceSettingsPanel";
 import { cn } from "@/lib/utils";
 import { BarkZeroAvatar } from "./bark-zero/BarkZeroAvatar";
 import { barkAvatar, useBarkAvatar } from "./bark-zero/avatarStore";
@@ -77,6 +80,7 @@ type ToolId =
   | "wallet"
   | "xtrend"
   | "narrative"
+  | "voice"
   | "settings";
 
 const tools: { id: ToolId; label: string; icon: typeof MessageSquare; desc: string }[] = [
@@ -100,6 +104,7 @@ const tools: { id: ToolId; label: string; icon: typeof MessageSquare; desc: stri
   { id: "wallet", label: "Smart Wallet Scanner", icon: Wallet, desc: "Follow the smart money" },
   { id: "xtrend", label: "X Trend Scanner", icon: TrendingUp, desc: "What's spiking on X" },
   { id: "narrative", label: "Narrative Scanner", icon: BookOpen, desc: "Emerging crypto narratives" },
+  { id: "voice", label: "Voice", icon: Volume2, desc: "Bark Zero voice pack & playback" },
   { id: "settings", label: "Settings", icon: SettingsIcon, desc: "Terminal preferences" },
 ];
 
@@ -281,7 +286,9 @@ const ChatPanel: FC = () => {
               >
                 {m.content || (isStreamingThis ? "▍" : "")}
               </div>
-              {canSpeak && <VoiceControls text={m.content} autoPlay={isLast} />}
+              {/* Voice deliberately does NOT play after every chat response — the OS-style
+                  BarkVoiceManager only speaks on meaningful state changes. */}
+              {void canSpeak}
             </div>
           );
         })}
