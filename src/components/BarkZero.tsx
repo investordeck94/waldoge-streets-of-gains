@@ -514,9 +514,10 @@ export const BarkZero: FC = () => {
           )}
           <button
             onClick={unlock}
-            className="w-full px-4 py-3 rounded-lg bg-[hsl(145,100%,55%)] text-black font-mono uppercase text-xs tracking-widest hover:opacity-90"
+            disabled={verifying || !secretInput.trim()}
+            className="w-full px-4 py-3 rounded-lg bg-[hsl(145,100%,55%)] text-black font-mono uppercase text-xs tracking-widest hover:opacity-90 disabled:opacity-50"
           >
-            Unlock Bark Zero
+            {verifying ? "Verifying…" : "Unlock Bark Zero"}
           </button>
           <p className="text-white/40 text-xs">
             Wrong secret? Every request will return 401 until it matches the server value.
