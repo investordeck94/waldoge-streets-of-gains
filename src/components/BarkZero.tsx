@@ -50,6 +50,7 @@ import { DreamsPanel } from "./bark-zero/DreamsPanel";
 import { EvolutionPanel } from "./bark-zero/EvolutionPanel";
 import { LaunchHistoryPanel } from "./bark-zero/LaunchHistoryPanel";
 import { MarketIntelPanel } from "./bark-zero/MarketIntelPanel";
+import { VoiceControls } from "./bark-zero/VoiceControls";
 
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
