@@ -112,6 +112,10 @@ export default {
           "0%, 100%": { boxShadow: "0 0 20px hsl(45 95% 55% / 0.3)" },
           "50%": { boxShadow: "0 0 40px hsl(45 95% 55% / 0.6)" },
         },
+        "bark-wave": {
+          "0%, 100%": { height: "20%" },
+          "50%": { height: "100%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",

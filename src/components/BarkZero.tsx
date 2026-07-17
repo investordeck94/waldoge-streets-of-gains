@@ -50,6 +50,7 @@ import { DreamsPanel } from "./bark-zero/DreamsPanel";
 import { EvolutionPanel } from "./bark-zero/EvolutionPanel";
 import { LaunchHistoryPanel } from "./bark-zero/LaunchHistoryPanel";
 import { MarketIntelPanel } from "./bark-zero/MarketIntelPanel";
+import { VoiceControls } from "./bark-zero/VoiceControls";
 
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -263,20 +264,27 @@ const ChatPanel: FC = () => {
           </div>
         )}
 
-        {messages.map((m, i) => (
-          <div key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
-            <div
-              className={cn(
-                "max-w-[85%] px-4 py-3 rounded-xl text-sm whitespace-pre-wrap leading-relaxed",
-                m.role === "user"
-                  ? "bg-neon text-black font-medium"
-                  : "bg-white/[0.03] border border-neon/15 text-white/90"
-              )}
-            >
-              {m.content || (streaming && i === messages.length - 1 ? "▍" : "")}
+        {messages.map((m, i) => {
+          const isAssistant = m.role === "assistant";
+          const isLast = i === messages.length - 1;
+          const isStreamingThis = streaming && isLast && isAssistant;
+          const canSpeak = isAssistant && !!m.content && !m.content.startsWith("⚠") && !isStreamingThis;
+          return (
+            <div key={i} className={cn("flex flex-col", m.role === "user" ? "items-end" : "items-start")}>
+              <div
+                className={cn(
+                  "max-w-[85%] px-4 py-3 rounded-xl text-sm whitespace-pre-wrap leading-relaxed",
+                  m.role === "user"
+                    ? "bg-neon text-black font-medium"
+                    : "bg-white/[0.03] border border-neon/15 text-white/90"
+                )}
+              >
+                {m.content || (isStreamingThis ? "▍" : "")}
+              </div>
+              {canSpeak && <VoiceControls text={m.content} autoPlay={isLast} />}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="border-t border-neon/20 bg-black/70 p-3">
