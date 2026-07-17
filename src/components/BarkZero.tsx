@@ -548,6 +548,9 @@ export const BarkZero: FC = () => {
                     <LaunchHistoryPanel />
                   ) : active === "marketintel" ? (
                     <MarketIntelPanel />
+                  ) : active === "voice" ? (
+                    <VoiceSettingsPanel />
+
 
                   ) : (
                     <ComingSoonPanel
