@@ -1,6 +1,13 @@
 import { FC, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ownerSecretHeader } from "@/lib/ownerSecret";
+import {
+  OWNER_SECRET_CHANGED_EVENT,
+  OWNER_UNAUTHORIZED_EVENT,
+  clearOwnerSecret,
+  hasOwnerSecret,
+  ownerSecretHeader,
+  setOwnerSecret,
+} from "@/lib/ownerSecret";
 import {
   MessageSquare,
   Radar,
@@ -189,8 +196,9 @@ const ChatPanel: FC = () => {
       if (!res.ok || !res.body) {
         const errBody = await res.text().catch(() => "");
         if (res.status === 401) {
-          try { localStorage.removeItem("bark_zero_owner_secret"); } catch { /* ignore */ }
-          setError("Owner secret rejected by server. Reload and re-enter the correct BARK_ZERO_OWNER_SECRET.");
+          const message = "Owner secret rejected by server. Re-enter the correct BARK_ZERO_OWNER_SECRET.";
+          clearOwnerSecret("unauthorized", message);
+          setError(message);
         } else {
           setError(errBody || `Request failed (${res.status})`);
         }
@@ -362,18 +370,63 @@ const ComingSoonPanel: FC<{ label: string; desc: string; icon: typeof MessageSqu
 export const BarkZero: FC = () => {
   const [active, setActive] = useState<ToolId>("chat");
   const activeTool = tools.find((t) => t.id === active)!;
-  const [unlocked, setUnlocked] = useState<boolean>(() => {
-    try { return (localStorage.getItem("bark_zero_owner_secret") ?? "").length > 0; } catch { return false; }
-  });
+  const [unlocked, setUnlocked] = useState<boolean>(() => hasOwnerSecret());
   const [secretInput, setSecretInput] = useState("");
+  const [lockNotice, setLockNotice] = useState<string | null>(null);
+
+  const unlock = () => {
+    const nextSecret = secretInput.trim();
+    if (!nextSecret) return;
+    setOwnerSecret(nextSecret);
+    setLockNotice(null);
+    setUnlocked(true);
+  };
 
   useEffect(() => {
     const onNav = (e: Event) => {
       const detail = (e as CustomEvent<{ tool?: ToolId }>).detail;
       if (detail?.tool && tools.some((t) => t.id === detail.tool)) setActive(detail.tool);
     };
+    const lock = (message?: string) => {
+      setUnlocked(false);
+      setSecretInput("");
+      setLockNotice(message || "Owner secret rejected by server. Re-enter the correct BARK_ZERO_OWNER_SECRET.");
+      barkAvatar.setState("idle");
+    };
+    const onUnauthorized = (e: Event) => {
+      const detail = (e as CustomEvent<{ message?: string }>).detail;
+      lock(detail?.message);
+    };
+    const onSecretChanged = (e: Event) => {
+      const detail = (e as CustomEvent<{ hasSecret?: boolean; message?: string }>).detail;
+      if (detail?.hasSecret === false) lock(detail.message);
+    };
+    const onUnhandledRejection = (e: PromiseRejectionEvent) => {
+      const reason = e.reason instanceof Error ? e.reason.message : String(e.reason ?? "");
+      if (/401|Unauthorized: owner secret|owner secret required/i.test(reason)) {
+        e.preventDefault();
+        clearOwnerSecret("unauthorized", "Owner secret rejected by server. Re-enter the correct BARK_ZERO_OWNER_SECRET.");
+      }
+    };
+    const onWindowError = (e: ErrorEvent) => {
+      const message = e.error instanceof Error ? e.error.message : e.message;
+      if (/401|Unauthorized: owner secret|owner secret required/i.test(message)) {
+        e.preventDefault();
+        clearOwnerSecret("unauthorized", "Owner secret rejected by server. Re-enter the correct BARK_ZERO_OWNER_SECRET.");
+      }
+    };
     window.addEventListener("barkZero:navigate", onNav);
-    return () => window.removeEventListener("barkZero:navigate", onNav);
+    window.addEventListener(OWNER_UNAUTHORIZED_EVENT, onUnauthorized);
+    window.addEventListener(OWNER_SECRET_CHANGED_EVENT, onSecretChanged);
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+    window.addEventListener("error", onWindowError);
+    return () => {
+      window.removeEventListener("barkZero:navigate", onNav);
+      window.removeEventListener(OWNER_UNAUTHORIZED_EVENT, onUnauthorized);
+      window.removeEventListener(OWNER_SECRET_CHANGED_EVENT, onSecretChanged);
+      window.removeEventListener("unhandledrejection", onUnhandledRejection);
+      window.removeEventListener("error", onWindowError);
+    };
   }, []);
 
   // ————— Bark Voice: OS-style startup sequence —————
@@ -421,19 +474,19 @@ export const BarkZero: FC = () => {
             onChange={(e) => setSecretInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && secretInput.trim()) {
-                try { localStorage.setItem("bark_zero_owner_secret", secretInput.trim()); } catch {}
-                setUnlocked(true);
+                unlock();
               }
             }}
             placeholder="owner secret"
             className="w-full bg-black/60 border border-white/20 focus:border-[hsl(145,100%,55%)]/60 focus:outline-none rounded-lg px-4 py-3 text-sm text-white font-mono"
           />
+          {lockNotice && (
+            <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+              {lockNotice}
+            </div>
+          )}
           <button
-            onClick={() => {
-              if (!secretInput.trim()) return;
-              try { localStorage.setItem("bark_zero_owner_secret", secretInput.trim()); } catch {}
-              setUnlocked(true);
-            }}
+            onClick={unlock}
             className="w-full px-4 py-3 rounded-lg bg-[hsl(145,100%,55%)] text-black font-mono uppercase text-xs tracking-widest hover:opacity-90"
           >
             Unlock Bark Zero
