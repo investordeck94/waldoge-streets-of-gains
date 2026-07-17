@@ -373,13 +373,40 @@ export const BarkZero: FC = () => {
   const [unlocked, setUnlocked] = useState<boolean>(() => hasOwnerSecret());
   const [secretInput, setSecretInput] = useState("");
   const [lockNotice, setLockNotice] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
 
-  const unlock = () => {
+  const unlock = async () => {
     const nextSecret = secretInput.trim();
-    if (!nextSecret) return;
-    setOwnerSecret(nextSecret);
+    if (!nextSecret || verifying) return;
+    setVerifying(true);
     setLockNotice(null);
-    setUnlocked(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-owner-verify`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            "x-owner-secret": nextSecret,
+          },
+        },
+      );
+      if (res.status === 200) {
+        setOwnerSecret(nextSecret);
+        setSecretInput("");
+        setUnlocked(true);
+      } else if (res.status === 401) {
+        setLockNotice("Server rejected that owner secret (401). Value must match BARK_ZERO_OWNER_SECRET exactly — case-sensitive, no surrounding spaces.");
+      } else {
+        const body = await res.text().catch(() => "");
+        setLockNotice(`Verification failed (HTTP ${res.status}). ${body.slice(0, 200)}`);
+      }
+    } catch (err) {
+      setLockNotice(`Network error verifying owner secret: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setVerifying(false);
+    }
   };
 
   useEffect(() => {
