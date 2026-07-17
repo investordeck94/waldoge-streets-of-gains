@@ -188,7 +188,12 @@ const ChatPanel: FC = () => {
 
       if (!res.ok || !res.body) {
         const errBody = await res.text().catch(() => "");
-        setError(errBody || `Request failed (${res.status})`);
+        if (res.status === 401) {
+          try { localStorage.removeItem("bark_zero_owner_secret"); } catch { /* ignore */ }
+          setError("Owner secret rejected by server. Reload and re-enter the correct BARK_ZERO_OWNER_SECRET.");
+        } else {
+          setError(errBody || `Request failed (${res.status})`);
+        }
         setStreaming(false);
         barkAvatar.setState("idle");
         return;
