@@ -532,6 +532,7 @@ export const LaunchLabPanel: FC = () => {
       setStatus("reviewing");
       setPipelinePhase(null);
       if (activeStreamRef.current?.traceId === traceId) activeStreamRef.current = null;
+      import("@/lib/BarkVoiceManager").then((m) => m.barkVoice.play("concept-ready"));
 
       // Persist a new history record for this proposal
       try {
