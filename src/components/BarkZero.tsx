@@ -22,7 +22,10 @@ import {
   Moon,
   Library,
   History,
+  Volume2,
 } from "lucide-react";
+import { barkVoice } from "@/lib/BarkVoiceManager";
+import { VoiceSettingsPanel } from "./bark-zero/VoiceSettingsPanel";
 import { cn } from "@/lib/utils";
 import { BarkZeroAvatar } from "./bark-zero/BarkZeroAvatar";
 import { barkAvatar, useBarkAvatar } from "./bark-zero/avatarStore";
@@ -50,7 +53,7 @@ import { DreamsPanel } from "./bark-zero/DreamsPanel";
 import { EvolutionPanel } from "./bark-zero/EvolutionPanel";
 import { LaunchHistoryPanel } from "./bark-zero/LaunchHistoryPanel";
 import { MarketIntelPanel } from "./bark-zero/MarketIntelPanel";
-import { VoiceControls } from "./bark-zero/VoiceControls";
+// VoiceControls (ElevenLabs per-message TTS) intentionally not imported — replaced by BarkVoiceManager.
 
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -77,6 +80,7 @@ type ToolId =
   | "wallet"
   | "xtrend"
   | "narrative"
+  | "voice"
   | "settings";
 
 const tools: { id: ToolId; label: string; icon: typeof MessageSquare; desc: string }[] = [
@@ -100,6 +104,7 @@ const tools: { id: ToolId; label: string; icon: typeof MessageSquare; desc: stri
   { id: "wallet", label: "Smart Wallet Scanner", icon: Wallet, desc: "Follow the smart money" },
   { id: "xtrend", label: "X Trend Scanner", icon: TrendingUp, desc: "What's spiking on X" },
   { id: "narrative", label: "Narrative Scanner", icon: BookOpen, desc: "Emerging crypto narratives" },
+  { id: "voice", label: "Voice", icon: Volume2, desc: "Bark Zero voice pack & playback" },
   { id: "settings", label: "Settings", icon: SettingsIcon, desc: "Terminal preferences" },
 ];
 
@@ -281,7 +286,9 @@ const ChatPanel: FC = () => {
               >
                 {m.content || (isStreamingThis ? "▍" : "")}
               </div>
-              {canSpeak && <VoiceControls text={m.content} autoPlay={isLast} />}
+              {/* Voice deliberately does NOT play after every chat response — the OS-style
+                  BarkVoiceManager only speaks on meaningful state changes. */}
+              {void canSpeak}
             </div>
           );
         })}
@@ -363,6 +370,32 @@ export const BarkZero: FC = () => {
     window.addEventListener("barkZero:navigate", onNav);
     return () => window.removeEventListener("barkZero:navigate", onNav);
   }, []);
+
+  // ————— Bark Voice: OS-style startup sequence —————
+  useEffect(() => {
+    if (!unlocked) return;
+    barkVoice.preload();
+    // First visit → intro (once ever). Then boot. Then contextual greeting.
+    const introKey = "bark_voice_intro_played";
+    const isFirst = (() => { try { return localStorage.getItem("bark_voice_once:" + introKey) !== "1"; } catch { return false; } })();
+    const run = async () => {
+      if (isFirst) await barkVoice.play("bark-intro");
+      await barkVoice.play("boot-complete");
+      const hour = new Date().getHours();
+      if (hour >= 5 && hour < 12) await barkVoice.play("good-morning");
+      else await barkVoice.play("welcome-back");
+    };
+    // Autoplay policies require a user gesture. Try immediately; if blocked,
+    // arm a one-shot pointerdown listener that fires the sequence.
+    void run();
+    const armed = () => { void run(); window.removeEventListener("pointerdown", armed); };
+    window.addEventListener("pointerdown", armed, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", armed);
+      void barkVoice.play("signing-off");
+    };
+  }, [unlocked]);
+
 
   if (!unlocked) {
     return (
@@ -515,6 +548,9 @@ export const BarkZero: FC = () => {
                     <LaunchHistoryPanel />
                   ) : active === "marketintel" ? (
                     <MarketIntelPanel />
+                  ) : active === "voice" ? (
+                    <VoiceSettingsPanel />
+
 
                   ) : (
                     <ComingSoonPanel

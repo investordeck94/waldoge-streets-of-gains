@@ -532,6 +532,7 @@ export const LaunchLabPanel: FC = () => {
       setStatus("reviewing");
       setPipelinePhase(null);
       if (activeStreamRef.current?.traceId === traceId) activeStreamRef.current = null;
+      import("@/lib/BarkVoiceManager").then((m) => m.barkVoice.play("concept-ready"));
 
       // Persist a new history record for this proposal
       try {
@@ -1516,6 +1517,10 @@ export const LaunchLabPanel: FC = () => {
                 // Carry validation over so the launch screen's step indicator reflects it
                 setValidated(true);
                 setStatus("approved");
+                import("@/lib/BarkVoiceManager").then((m) => {
+                  m.barkVoice.play("proposal-approved");
+                  setTimeout(() => m.barkVoice.play("launch-armed"), 1400);
+                });
               }}
               disabled={!canApprove}
               title={canApprove ? undefined : `Blocked — needs: ${blockers.join(", ")}`}

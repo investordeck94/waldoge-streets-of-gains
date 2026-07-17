@@ -173,6 +173,7 @@ const ComposeTab: FC<{ onSaveDraft: (d: Draft) => void }> = ({ onSaveDraft }) =>
     if (!preview) return;
     onSaveDraft(preview);
     toast.success("Draft saved");
+    import("@/lib/BarkVoiceManager").then((m) => m.barkVoice.play("draft-prepared"));
     setPreview(null);
     setBrief("");
   };
