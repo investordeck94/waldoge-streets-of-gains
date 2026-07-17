@@ -83,6 +83,7 @@ export const MemoryPanel: FC = () => {
     setSavingId(null);
     if (error) return toast.error(error.message);
     toast.success("Memory saved");
+    import("@/lib/BarkVoiceManager").then((m) => m.barkVoice.play("memory-updated"));
   };
 
   const remove = async (id: string) => {
