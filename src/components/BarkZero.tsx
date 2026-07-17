@@ -53,7 +53,7 @@ import { DreamsPanel } from "./bark-zero/DreamsPanel";
 import { EvolutionPanel } from "./bark-zero/EvolutionPanel";
 import { LaunchHistoryPanel } from "./bark-zero/LaunchHistoryPanel";
 import { MarketIntelPanel } from "./bark-zero/MarketIntelPanel";
-import { VoiceControls } from "./bark-zero/VoiceControls";
+// VoiceControls (ElevenLabs per-message TTS) intentionally not imported — replaced by BarkVoiceManager.
 
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
