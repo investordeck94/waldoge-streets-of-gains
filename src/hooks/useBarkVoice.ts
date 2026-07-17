@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ownerSecretHeader } from "@/lib/ownerSecret";
+import { clearOwnerSecret, ownerSecretHeader } from "@/lib/ownerSecret";
 
 const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-tts`;
 
@@ -67,7 +67,7 @@ export function useBarkVoice(text: string, autoPlay: boolean) {
     };
   }, [status]);
 
-  const ensureAudioUrl = useCallback(async (): Promise<string> => {
+  const ensureAudioUrl = useCallback(async (): Promise<string | null> => {
     const cached = audioCache.get(key);
     if (cached) return cached;
     setStatus("loading");
@@ -92,10 +92,14 @@ export function useBarkVoice(text: string, autoPlay: boolean) {
       }
       if (res.status === 503) {
         setStatus("unavailable");
+      } else if (res.status === 401) {
+        setStatus("error");
+        clearOwnerSecret("unauthorized", "Owner secret rejected by server. Re-enter the correct BARK_ZERO_OWNER_SECRET.");
       } else {
         setStatus("error");
       }
-      throw new Error(detail);
+      setError(detail);
+      return null;
     }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -112,6 +116,7 @@ export function useBarkVoice(text: string, autoPlay: boolean) {
         currentAudio = null;
       }
       const url = await ensureAudioUrl();
+      if (!url) return;
       let audio = currentOwner === ownerRef.current ? currentAudio : null;
       if (!audio) {
         audio = new Audio(url);
