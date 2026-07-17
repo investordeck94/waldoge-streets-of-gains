@@ -1,6 +1,6 @@
 import { FC, useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ownerSecretHeader } from "@/lib/ownerSecret";
+import { clearOwnerSecret, ownerSecretHeader } from "@/lib/ownerSecret";
 import { Loader2, FlaskConical, CheckCircle2, PencilLine, XCircle, ShieldAlert, Sparkles, Rocket, Upload, Radar, Trophy, RefreshCw, ImageIcon, Download, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -419,7 +419,12 @@ export const LaunchLabPanel: FC = () => {
         cacheControl: res.headers.get("cache-control"),
       });
       if (!res.ok || !res.body) {
-        setError(await fromResponse(res, { functionName: "bark-zero-launch-proposal", method: "POST", url: ENDPOINT }));
+        const details = await fromResponse(res, { functionName: "bark-zero-launch-proposal", method: "POST", url: ENDPOINT });
+        if (res.status === 401 || /Unauthorized: owner secret|owner secret required/i.test(details.message)) {
+          clearOwnerSecret("unauthorized", "Owner secret rejected by server. Re-enter the correct BARK_ZERO_OWNER_SECRET.");
+        } else {
+          setError(details);
+        }
         setStatus("idle");
         setPipelinePhase(null);
         return;
