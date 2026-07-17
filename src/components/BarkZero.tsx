@@ -371,6 +371,32 @@ export const BarkZero: FC = () => {
     return () => window.removeEventListener("barkZero:navigate", onNav);
   }, []);
 
+  // ————— Bark Voice: OS-style startup sequence —————
+  useEffect(() => {
+    if (!unlocked) return;
+    barkVoice.preload();
+    // First visit → intro (once ever). Then boot. Then contextual greeting.
+    const introKey = "bark_voice_intro_played";
+    const isFirst = (() => { try { return localStorage.getItem("bark_voice_once:" + introKey) !== "1"; } catch { return false; } })();
+    const run = async () => {
+      if (isFirst) await barkVoice.play("bark-intro");
+      await barkVoice.play("boot-complete");
+      const hour = new Date().getHours();
+      if (hour >= 5 && hour < 12) await barkVoice.play("good-morning");
+      else await barkVoice.play("welcome-back");
+    };
+    // Autoplay policies require a user gesture. Try immediately; if blocked,
+    // arm a one-shot pointerdown listener that fires the sequence.
+    void run();
+    const armed = () => { void run(); window.removeEventListener("pointerdown", armed); };
+    window.addEventListener("pointerdown", armed, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", armed);
+      void barkVoice.play("signing-off");
+    };
+  }, [unlocked]);
+
+
   if (!unlocked) {
     return (
       <div className="min-h-[calc(100vh-8rem)] bg-black text-white flex items-center justify-center p-6">
