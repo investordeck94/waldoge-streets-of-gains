@@ -7,6 +7,7 @@ import {
   hasOwnerSecret,
   ownerSecretHeader,
   setOwnerSecret,
+  verifyOwnerSecret,
 } from "@/lib/ownerSecret";
 import {
   MessageSquare,
@@ -380,33 +381,19 @@ export const BarkZero: FC = () => {
     if (!nextSecret || verifying) return;
     setVerifying(true);
     setLockNotice(null);
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bark-zero-owner-verify`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            "x-owner-secret": nextSecret,
-          },
-        },
-      );
-      if (res.status === 200) {
-        setOwnerSecret(nextSecret);
-        setSecretInput("");
-        setUnlocked(true);
-      } else if (res.status === 401) {
-        setLockNotice("Server rejected that owner secret (401). Value must match BARK_ZERO_OWNER_SECRET exactly — case-sensitive, no surrounding spaces.");
-      } else {
-        const body = await res.text().catch(() => "");
-        setLockNotice(`Verification failed (HTTP ${res.status}). ${body.slice(0, 200)}`);
-      }
-    } catch (err) {
-      setLockNotice(`Network error verifying owner secret: ${err instanceof Error ? err.message : String(err)}`);
-    } finally {
-      setVerifying(false);
+    const result = await verifyOwnerSecret(nextSecret);
+    setVerifying(false);
+    if (result.ok) {
+      setOwnerSecret(nextSecret);
+      setSecretInput("");
+      setUnlocked(true);
+      return;
     }
+    setLockNotice(
+      result.status === 401 || /owner secret/i.test(result.message ?? "")
+        ? "Server rejected that owner secret. Value must match BARK_ZERO_OWNER_SECRET exactly — case-sensitive, no surrounding spaces."
+        : result.message || "Owner secret verification failed.",
+    );
   };
 
   useEffect(() => {
