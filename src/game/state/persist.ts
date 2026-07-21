@@ -186,8 +186,11 @@ export interface LoadDiagnostics {
   backupStatus?: string;
 }
 
-const reasonOf = (r: UnpackResult | undefined): string =>
-  !r ? "empty" : r.ok ? "ok" : r.reason;
+const reasonOf = (r: UnpackResult | undefined): string => {
+  if (!r) return "empty";
+  if (r.ok) return "ok";
+  return r.reason;
+};
 
 let lastLoadDiagnostics: LoadDiagnostics = { source: "none", primaryStatus: "empty" };
 export function getLoadDiagnostics(): LoadDiagnostics {
