@@ -8,8 +8,8 @@
  * StreetBrawler.tsx.
  *
  * This module was moved out of `src/game/Assets.ts` in Phase 5. The old
- * path (`@/game/Assets`) is preserved as a thin deprecated re-export shim
- * so no runtime behaviour or import-time timing changes.
+ * shim path (`@/game/Assets`) was deleted in Phase 7; all consumers now
+ * import from `@/game/assets` directly.
  *
  * BEHAVIOUR NOTE — byte-identical to the previous inline preloader
  *   • Guarded with `typeof window !== "undefined"` so SSR / Vite dep-graph

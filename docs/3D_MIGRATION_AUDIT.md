@@ -175,3 +175,11 @@ Verification (Phase 6):
 - Reversibility: entire migration is one commit; revert restores byte-identical source.
 
 Renderer-swap readiness delta: +0 architecture, +1 hygiene. The Presentation layer no longer reaches through deprecated aliases for Engine Core types; it now imports `Projectile`/`PowerUp` directly from `@/game/core/types`.
+
+## Phase 7 — Shim Deletion (landed)
+
+- Deleted `src/game/Constants.ts` (0 importers, pure re-export of `@/game/config`).
+- Deleted `src/game/Assets.ts` (0 importers, pure re-export of `@/game/assets`).
+- Updated stale comments in `src/components/StreetBrawler.tsx` (lines ~44 and ~123).
+- Refreshed `src/game/assets/README.md`, `src/game/assets/index.ts` header, and `docs/DEPRECATIONS.md`.
+- Post-delete audit: `rg "@/game/(Constants|Assets)\b" src/` returns zero code references.

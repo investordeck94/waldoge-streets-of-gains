@@ -10,9 +10,8 @@ cover art / character sprites.
 import { IMAGE_URLS, AUDIO_URLS, jeetHeadImg /* ... */ } from "@/game/assets";
 ```
 
-The legacy path `@/game/Assets` (capital A) is a deprecated re-export shim
-kept until Phase 6 migrates `StreetBrawler.tsx` off it. See
-`docs/DEPRECATIONS.md`.
+The legacy path `@/game/Assets` (capital A) was removed in Phase 7. All
+consumers import from `@/game/assets`.
 
 ## Preload semantics (do not change)
 
@@ -22,8 +21,8 @@ kept until Phase 6 migrates `StreetBrawler.tsx` off it. See
 3. Each boss-head allocates one `HTMLImageElement`, assigns `.src`
    synchronously, and does **not** await load. First paint may see
    `image.complete === false`; the renderer already handles that.
-4. Timing is identical whether callers import from `@/game/assets` or
-   from the deprecated `@/game/Assets` shim — the re-export is eager.
+4. Timing is unchanged from the pre-Phase-7 shim era — ES module
+   re-exports were eager, and the canonical module is imported directly.
 
 ## What lives elsewhere
 
