@@ -106,29 +106,14 @@ const tickerThiefHeadImg: HTMLImageElement | null =
   typeof window !== "undefined" ? (() => { const i = new Image(); i.src = tickerThiefBossHead; return i; })() : null;
 
 
-type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
-  | "uppercut" | "spinkick" | "groundpound" | "dashpunch"
-  | "boss_charge" | "boss_slam" | "boss_throw";
-
-interface Entity {
-  x: number;
-  y: number;
-  vy: number;
-  vx: number;
-  width: number;
-  height: number;
-  facing: 1 | -1;
-  hp: number;
-  maxHp: number;
-  state: AttackState;
-  stateTimer: number;
-  attackCooldown: number;
-  isPlayer?: boolean;
-  isBoss?: boolean;
-  bossPhase?: number;
-  aiTimer?: number;
-  bossName?: string;
-}
+// AttackState + Entity are now defined in src/game/player/Player.ts. The
+// aliases below preserve the original names so every existing call site —
+// including enemies and bosses, which share the exact same structural shape
+// as the player — continues to compile untouched with zero behavioural
+// change. See Player.ts for why the surrounding update loop, physics,
+// animation state machine and combat handling remain in this file.
+type AttackState = PlayerAttackState;
+type Entity = PlayerEntity;
 
 interface HitEffect {
   x: number;
