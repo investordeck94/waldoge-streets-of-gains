@@ -49,6 +49,12 @@ import {
   type PlayerEntity,
   type PlayerAttackState,
 } from "@/game/player/Player";
+// Enemy module — data model + spawn factories for grunts and bosses. The AI
+// update loop stays in this file; see src/game/enemy/Enemy.ts for why.
+import {
+  spawnEnemies as spawnEnemiesModule,
+  spawnBoss as spawnBossModule,
+} from "@/game/enemy/Enemy";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
