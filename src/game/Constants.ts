@@ -1,22 +1,13 @@
 /**
- * game/Constants.ts — Phase 1 barrel of gameplay constants.
+ * @deprecated Import from `@/game/config` instead. This module is a thin
+ * re-export shim kept for backwards compatibility during the Phase 5
+ * refactor. It will be removed once `StreetBrawler.tsx` migrates its
+ * import site (Phase 6+). See `docs/DEPRECATIONS.md`.
  *
- * PURPOSE
- * Provide a single, stable import path (`@/game/Constants`) for every
- * gameplay constant used by StreetBrawler and future 3D systems. All
- * *values* already live under `src/game/config/` (a prior refactor pass
- * moved them there). This module is a thin re-export barrel — no new
- * numbers, no new logic — so behaviour is guaranteed identical.
- *
- * WHY THIS EXISTS
- * The user's Phase 1 spec asks for a `game/Constants.ts`. Rather than
- * duplicate the config split, we surface a single alias so downstream
- * modules (Player.ts, Enemy.ts, and later Combat / Camera / Render
- * modules) can standardise on one import path. The `@/game/config`
- * barrel remains valid and continues to work for existing call sites.
- *
- * DO NOT edit values here. Edit the source of truth under
- * `src/game/config/` — this file only re-exports.
+ * All values live under `src/game/config/` — the single source of truth
+ * for gameplay tunables. Do not add new constants here; add them to the
+ * appropriate module in `src/game/config/` and, if needed, surface them
+ * via `src/game/config/index.ts`.
  */
 
 export {

@@ -118,3 +118,31 @@ Landed:
 Deliberately NOT landed: collision, pickup collection, spawning, gameplay timers, React state, rendering, audio (per approved scope).
 
 Renderer-swap readiness delta: +1. Power-ups and projectiles now share the "step\<Entity\>() → prevValue" convention for in-place engine helpers that expose pre-state to collision resolution — future extraction candidates (weapon pickups, rain drops, splashes) can follow it verbatim.
+
+
+## Phase 5 update (shim deprecation & type dedup)
+
+Landed:
+
+- `src/game/assets/index.ts` + `src/game/assets/README.md` — canonical home for asset URLs and the seven boss-head `new Image()` preloaders. Content moved verbatim from the previous `src/game/Assets.ts`; preload timing is byte-identical because ES module re-exports are evaluated eagerly on first import.
+- `src/game/Assets.ts` — reduced to `export * from "@/game/assets"` plus `@deprecated` JSDoc.
+- `src/game/Constants.ts` — `@deprecated` JSDoc added; body unchanged (already a pure re-export of `@/game/config`).
+- `src/game/Types.ts` — inline `Projectile` and `PowerUp` definitions removed; both now re-exported from `@/game/core/types` (the single authoritative source). `Entity` / `AttackState` continue to alias `PlayerEntity` / `PlayerAttackState` from `@/game/player/Player`. Marked `@deprecated`.
+- `docs/DEPRECATIONS.md` — new registry of every shim, its canonical replacement, and the planned removal phase.
+
+Intentionally NOT landed (per approved-plan modification):
+
+- Presentation-oriented types (`HitEffect`, `WeaponPickup`, `RainDrop`, `Splash`, `ComboState`) were **not** moved into `@/game/core/types`. The Engine Core stays free of rendering-oriented concepts. These types remain inline in the `@/game/Types` shim and are documented as such in `docs/DEPRECATIONS.md`. They will relocate to `src/game/presentation/types.ts` when the Presentation layer is formally split (Phase 10).
+- `PlayerEntity` and `Actor` remain distinct. Merging is deferred to post-Phase 8.
+- `StreetBrawler.tsx` import sites were not migrated. Phase 6 is a mechanical one-file diff that switches its three shim imports to canonical paths.
+
+Verification (Phase 5):
+
+- Typecheck clean.
+- Build clean.
+- Import audit: `@/game/{Constants,Types,Assets}` still consumed by exactly `StreetBrawler.tsx` (2 import statements — unchanged from pre-Phase-5).
+- Duplicate-type audit: `Projectile`, `PowerUp`, `HitEffect`, `WeaponPickup`, `RainDrop`, `Splash`, `ComboState`, `Actor`, `PlayerEntity` each defined exactly once across `src/`.
+- Zero per-frame allocations added; shims contain only file-scope re-exports evaluated once at module load.
+- Gameplay parity: renderer loop, physics, AI, camera, audio and rendering paths are untouched.
+
+Renderer-swap readiness delta: +1. The Engine Core is now free of presentation concepts, and the type surface has a single authoritative source per concern — a future 3D renderer can bind to `@/game/core/types` and `@/game/engine` without inheriting rendering-oriented particle/HUD types.

@@ -1,31 +1,38 @@
 /**
- * game/Types.ts — Phase 1 barrel of shared game types.
+ * @deprecated Import engine-agnostic types from `@/game/core/types`,
+ * entity/attack types from `@/game/player/Player`, and config types from
+ * `@/game/config`. This module is a partial re-export shim kept for
+ * backwards compatibility during the Phase 5 refactor. See
+ * `docs/DEPRECATIONS.md`.
  *
- * PURPOSE
- * A single import path (`@/game/Types`) for every non-entity type the
- * game loop passes around: hit effects, powerups, weapon pickups, weather
- * particles, combo state, and projectiles.
+ * PHASE 5 STATE
+ * ─────────────
+ * • `Projectile` and `PowerUp` are now re-exported from `@/game/core/types`
+ *   (the single authoritative source). Duplicate inline definitions were
+ *   removed. TypeScript structural typing keeps every existing call site
+ *   compiling unchanged.
  *
- * The player/enemy Entity shape lives in `src/game/player/Player.ts` and
- * is re-exported here for convenience so downstream systems only need one
- * import.
+ * • `Entity` and `AttackState` continue to alias `PlayerEntity` and
+ *   `PlayerAttackState` from `@/game/player/Player` (the canonical source).
  *
- * SCOPE — WHAT MOVED, WHAT STAYED
- * Moved (previously inline in StreetBrawler.tsx, byte-identical shapes):
- *   • HitEffect, PowerUp, WeaponPickup, RainDrop, Splash
- *   • ComboState, Projectile
- * Re-exported from existing modules (source of truth unchanged):
- *   • Entity, AttackState (from Player.ts)
- *   • WeaponType (from config)
+ * • The five presentation-side buffer types below (`HitEffect`,
+ *   `WeaponPickup`, `RainDrop`, `Splash`, `ComboState`) are intentionally
+ *   still defined inline here. They describe rendering-oriented state
+ *   (particle timers, combo HUD, weather visuals) that does not belong in
+ *   the engine-agnostic `core/types.ts`. They will move to a dedicated
+ *   `src/game/presentation/types.ts` when the Presentation layer is
+ *   formally split (Phase 10). Until then, this shim is the only home
+ *   that exposes them — do not treat that as an invitation to add more
+ *   presentation-only types to `@/game/core`.
  *
  * WHAT INTENTIONALLY STAYED IN StreetBrawler.tsx
- * The giant `gameRef` interface (lines ~3030-3095 of StreetBrawler.tsx)
+ * ──────────────────────────────────────────────
+ * The giant `gameRef` interface (~lines 3030-3095 of StreetBrawler.tsx)
  * that types the per-frame state closure. It references React refs,
  * private camera-debug internals, and audio handles that only the loop
  * touches. Extracting it now would either force us to expose engine
- * internals as a public API or split the interface across two files,
- * neither of which is cheap to keep in sync. That's a Phase-2+ concern
- * once the loop itself is decomposed.
+ * internals as a public API or split the interface across two files.
+ * That's a later-phase concern once the loop itself is decomposed.
  */
 
 import type { WeaponType } from "@/game/config";
@@ -44,7 +51,20 @@ export type {
 export type { WeaponType } from "@/game/config";
 
 // ---------------------------------------------------------------------------
-// Visual / particle types — pushed into per-frame buffers by the loop.
+// World-simulation types — canonical source is `@/game/core/types`.
+// Re-exported here so existing `@/game/Types` importers keep compiling
+// without the duplicate inline definitions that lived here before Phase 5.
+// ---------------------------------------------------------------------------
+
+export type { Projectile, PowerUp } from "@/game/core/types";
+
+// ---------------------------------------------------------------------------
+// Presentation-side buffer types — pushed into per-frame arrays by the
+// renderer. Intentionally NOT in `@/game/core/types`: these describe
+// rendering-oriented state (particle timers, weather visuals, combo HUD)
+// which the Engine Core must stay free of. They will move to
+// `src/game/presentation/types.ts` when the Presentation layer is
+// formally split (Phase 10).
 // ---------------------------------------------------------------------------
 
 export interface HitEffect {
@@ -54,14 +74,6 @@ export interface HitEffect {
   text: string;
   color: string;
   size: number;
-}
-
-export interface PowerUp {
-  x: number;
-  y: number;
-  vy: number;
-  type: "health" | "speed" | "energy" | "damage";
-  timer: number;
 }
 
 export interface WeaponPickup {
@@ -91,10 +103,6 @@ export interface Splash {
   inPuddle: boolean;
 }
 
-// ---------------------------------------------------------------------------
-// Combat state
-// ---------------------------------------------------------------------------
-
 export interface ComboState {
   inputs: string[];
   timer: number;
@@ -103,18 +111,4 @@ export interface ComboState {
   multiplier: number;
   specialCooldown: number;
   specialEnergy: number;
-}
-
-// ---------------------------------------------------------------------------
-// Projectile — used by shuriken throws + boss ranged attacks.
-// ---------------------------------------------------------------------------
-
-export interface Projectile {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  timer: number;
-  isPlayerProjectile?: boolean;
-  damage?: number;
 }
