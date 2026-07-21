@@ -2872,19 +2872,13 @@ function createPlayer(): Entity {
 
 // Difficulty tier + multipliers are imported from src/game/config/difficulty.ts
 
+// The grunt-wave factory now lives in src/game/enemy/Enemy.ts. This local
+// wrapper preserves the original signature so every call site continues to
+// work unchanged. The returned array is byte-identical to the previous
+// inline literal (same spacing, HP, aiTimer randomisation, difficulty
+// scaling, and Math.random() call cadence).
 function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, diff: Difficulty = "normal"): Entity[] {
-  const lvl = LEVELS[Math.min(levelIndex, LEVELS.length - 1)];
-  const w = lvl?.waves[waveIndex];
-  if (!w) return [];
-  const count = Math.max(1, Math.round(w.count * DIFFICULTY_ENEMY_MULT[diff]));
-  return Array.from({ length: count }, (_, i) => ({
-    x: playerX + 400 + i * 130 + Math.random() * 200,
-    y: GROUND_Y, vy: 0, vx: 0,
-    width: 30, height: 70, facing: -1 as const,
-    hp: w.hp, maxHp: w.hp,
-    state: "idle" as AttackState, stateTimer: 0, attackCooldown: 0,
-    aiTimer: Math.random() * 60,
-  }));
+  return spawnEnemiesModule(levelIndex, waveIndex, playerX, diff);
 }
 
 // SPECIAL_ATTACKS is imported from src/game/config/combat.ts
