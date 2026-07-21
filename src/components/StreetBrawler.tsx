@@ -679,6 +679,11 @@ function drawStickFigure(
 
   // Spin kick rotation — amount varies per style for recognizable silhouettes
   if (e.state === "spinkick") {
+    // NOTE (Phase 8): NOT migrated to progressOf. `p.stateTimer` is initialised
+    // from SPECIAL_ATTACKS.spinkick.frames = 20 but the divisor here is 18, so
+    // the first two frames produce values > 1 (~1.11, ~1.06). progressOf clamps
+    // to [0,1] and would silently alter the spin windup. Leave as inline math
+    // until the divisor/duration mismatch is intentionally reconciled.
     const spinProgress = e.stateTimer / 18;
     const spins =
       isPlayer && style === "rush" ? 2.2 :        // tornado kick — extra spins
