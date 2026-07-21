@@ -102,21 +102,10 @@ import {
   DIFFICULTY_ENEMY_MULT, DIFFICULTY_BOSS_CD, DIFFICULTY_BOSS_DMG, BOSS_WAVE_MINIONS,
 } from "@/game/config";
 
-// Preloaded boss head images
-const jeetHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = jeetBossHead; return i; })() : null;
-const badActorHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = badActorBossHead; return i; })() : null;
-const ruggerHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = ruggerBossHead; return i; })() : null;
-const fudderHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = fudderBossHead; return i; })() : null;
-const exitLiquidityHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = exitLiquidityBossHead; return i; })() : null;
-const mrMarketerHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = mrMarketerBossHead; return i; })() : null;
-const tickerThiefHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = tickerThiefBossHead; return i; })() : null;
+// Preloaded boss head images now live in src/game/Assets.ts (Phase 1) and
+// are imported at the top of this file. Behaviour is byte-identical: seven
+// `new Image()` handles created at module import, `.src` assigned
+// synchronously, lifetime scoped to the module.
 
 
 // AttackState + Entity are now defined in src/game/player/Player.ts. The
