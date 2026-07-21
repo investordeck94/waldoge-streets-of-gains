@@ -146,3 +146,32 @@ Verification (Phase 5):
 - Gameplay parity: renderer loop, physics, AI, camera, audio and rendering paths are untouched.
 
 Renderer-swap readiness delta: +1. The Engine Core is now free of presentation concepts, and the type surface has a single authoritative source per concern — a future 3D renderer can bind to `@/game/core/types` and `@/game/engine` without inheriting rendering-oriented particle/HUD types.
+
+
+## Phase 6 update (mechanical shim-free import migration)
+
+Landed:
+
+- `src/components/StreetBrawler.tsx` — two `import` statements' path strings updated to canonical modules:
+  - `from "@/game/Assets"` → `from "@/game/assets"` (all nine identifiers preserved, order preserved).
+  - `from "@/game/Types"` split into `from "@/game/core/types"` (Projectile, PowerUp) + `from "@/game/Types"` (HitEffect, WeaponPickup, RainDrop, Splash, ComboState). All seven identifiers preserved; `type`-only modifier retained on both statements.
+- `docs/DEPRECATIONS.md` — status table updated with current-importer counts (Constants: 0, Assets: 0, Types: 1).
+
+Explicitly NOT landed (per approved-plan constraints):
+
+- No symbol/type renames. No new helpers, abstractions, or architecture. No moves of code or functions between files. No runtime code changes. No gameplay/physics/AI/camera/rendering/animation/timing/execution-order/performance/allocation changes. Shims not deleted. Presentation types not relocated.
+
+Verification (Phase 6):
+
+- Typecheck (`bunx tsgo --noEmit`) clean.
+- Vitest engine suites 25/25 green with no test edits.
+- Import audit:
+  - `@/game/assets` in `StreetBrawler.tsx` — 1 hit (new canonical).
+  - `@/game/core/types` in `StreetBrawler.tsx` — 1 hit (new canonical).
+  - `@/game/Assets` across `src/` — 0 hits.
+  - `@/game/Constants` across `src/` — 0 hits.
+  - `@/game/Types` across `src/` — exactly 1 hit (StreetBrawler.tsx, presentation types only).
+- Diff scope: only `src/components/StreetBrawler.tsx`, `docs/DEPRECATIONS.md`, `docs/3D_MIGRATION_AUDIT.md`.
+- Reversibility: entire migration is one commit; revert restores byte-identical source.
+
+Renderer-swap readiness delta: +0 architecture, +1 hygiene. The Presentation layer no longer reaches through deprecated aliases for Engine Core types; it now imports `Projectile`/`PowerUp` directly from `@/game/core/types`.

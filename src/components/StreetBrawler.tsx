@@ -56,7 +56,7 @@ import {
   exitLiquidityHeadImg,
   mrMarketerHeadImg,
   tickerThiefHeadImg,
-} from "@/game/Assets";
+} from "@/game/assets";
 const waldogeMusic = AUDIO_URLS.waldogeMusic;
 const waldogeCombatTheme = { url: AUDIO_URLS.waldogeCombatTheme };
 const waldogeArcade = { url: AUDIO_URLS.waldogeArcade };
@@ -140,13 +140,15 @@ type Entity = PlayerEntity;
 // Byte-identical shapes; every existing call site continues to compile
 // unchanged via the imports below.
 import type {
-  HitEffect,
+  Projectile,
   PowerUp,
+} from "@/game/core/types";
+import type {
+  HitEffect,
   WeaponPickup,
   RainDrop,
   Splash,
   ComboState,
-  Projectile,
 } from "@/game/Types";
 
 // The boss factory now lives in src/game/enemy/Enemy.ts. This local wrapper
