@@ -1,0 +1,89 @@
+# 3D Compatibility Audit — StreetBrawler
+
+**Scope:** `src/components/StreetBrawler.tsx` (~5,300 lines) plus supporting modules under `src/game/*` and `src/lib/*`.
+
+**Goal:** identify what stops the gameplay engine from being reused behind a 3D renderer, and separate logic from rendering **without touching gameplay**.
+
+**Status:** audit + engine-agnostic core modules landed (`src/game/core/*`). The 2D pipeline is unchanged; a future 3D scene can now import shared math, types and camera rules instead of forking them.
+
+---
+
+## 1. Tightly coupled systems
+
+| Coupling | Location | Notes |
+|---|---|---|
+| Game loop ↔ canvas | `StreetBrawler.tsx` single `useEffect` around the RAF loop | State refs, input handlers, physics, AI, audio and `ctx.*` draw calls all live in the same closure. A 3D renderer would need to hoist the RAF driver out first. |
+| Entity model ↔ AABB pixels | `interface Entity` (`width`, `height` in px) | Values are dimensionless world units in practice; a 3D layer can map 1 unit → 1 metre and reuse. |
+| Camera ↔ world→screen bias | Every `drawXxx(ctx, e, camX)` signature | `camX` is passed into every draw function. Logic never subtracts `camX` — good; only renderers do. Migration is clean. |
+| Audio ↔ actor state | `SFX.punch()` etc. called inline in state transitions | Audio calls sit alongside gameplay side-effects. Should be routed through an event bus (future work — non-blocking for 3D). |
+| Input ↔ React state | `keys: Set<string>` ref inside the closure, `keyJustPressed` reset each frame | Already engine-agnostic in shape; a 3D pipeline can reuse the same set. |
+
+## 2. Duplicated logic
+
+| Duplication | Where | Fix |
+|---|---|---|
+| `Math.abs(a.x - b.x)` proximity checks | 4+ sites (`melee hit`, `powerup pickup`, `weapon pickup`, `projectile hit`) | ✅ Extracted → `horizontalDistance`, `withinHorizontalRange` in `@/game/core/aabb`. |
+| AABB overlap open-coded | Melee + projectile paths | ✅ Extracted → `aabbOverlap`. |
+| Gravity `vy += GRAVITY` | Player, enemies, powerups, projectiles | ✅ Extracted → `applyGravity` in `@/game/core/physics`. |
+| Ground clamp `if (y >= GROUND_Y)` | Player, enemies, boss | ✅ Extracted → `clampToGround`. |
+| Camera lerp with look-ahead | Snappy + buttery branches inline in the loop | ✅ Extracted → `computeCameraX` + `CAMERA_PRESETS` in `@/game/core/camera`. |
+| Animation progress `stateTimer / N` | 20+ draw sites (`prog = e.stateTimer / 18` etc.) | ✅ Extracted → `progressOf`, `phaseOf`, easing in `@/game/core/anim`. |
+
+## 3. Rendering dependencies
+
+- **1,521 canvas API calls** (`ctx.*`, `canvas.*`, `drawImage`, `fillRect`, `beginPath`, `save/restore`) — all confined to `StreetBrawler.tsx`. Nothing under `src/game/` or `src/lib/` touches a `CanvasRenderingContext2D`.
+- Draw functions (`drawBoss`, `drawCandleMinion`, `drawStickFigure`, `drawPlatform`, `drawCity`, `drawCityScene`, `drawSuburbsScene`, `drawAlleyObject`) all take `(ctx, entity, camX)` — a canonical "renderer" signature that a 3D layer can shadow with `(scene, entity)`.
+- Parallax layers use `camX * factor` (0.15, 0.4, 0.75, 0.95). In 3D this becomes distinct meshes at different Z depths — no logic change needed.
+
+**Recommendation:** when 3D lands, move each `drawXxx` into `src/game/render2d/` and add a mirror `src/game/render3d/` that consumes the same `Actor` / `PowerUp` / `Platform` types from `@/game/core`.
+
+## 4. Camera assumptions
+
+- Single scalar `camX`; y is fixed (side-scroller). 3D will need a `Vec3` position and a `lookAt`.
+- Two presets (snappy / buttery) with predictive look-ahead in the player's facing direction. ✅ Now in `CAMERA_PRESETS`.
+- Clamped to `[0, LEVEL_WIDTH - viewportWidth]`. Same clamp works in 3D with a bounded rail.
+- No zoom/pitch/roll — the 3D scene will need defaults for these; not blocking.
+
+## 5. Hard-coded 2D logic
+
+| Assumption | Impact | Mitigation |
+|---|---|---|
+| `y` grows downward (screen space) | Would invert in a right-handed 3D system | `@/game/core` documents `y = world-up` for 3D; 2D renderer keeps its inversion locally. |
+| Ground is a single horizontal line at `GROUND_Y` | Works for flat arenas; multi-level 3D terrain would need per-body ground queries | Not blocking — extend `clampToGround` with a heightfield callback later. |
+| Parallax = horizontal only | 3D uses depth; obsolete in the 3D branch | No fix needed. |
+| Sprite scale in pixels (`width`, `height`) | Direct-drop into 3D as metres if the art scale is 1:100 | Documented in `core/types.ts`. |
+
+## 6. Collision assumptions
+
+- Pure AABB, no rotation. No swept collisions; every check is per-frame instantaneous. Fine for the current design.
+- Projectiles use `horizontalDistance < threshold` — cheap and correct for the 2D lane.
+- **3D consideration:** replace `aabbOverlap` with capsule-vs-capsule when we ship 3D fighters, but keep `aabbOverlap` for pickups and hitboxes.
+
+## 7. Animation assumptions
+
+- **Procedural stick figures** driven by `stateTimer`. No skeleton, no keyframes, no glTF.
+- Every draw function reads `e.stateTimer / DURATION` inline (see section 2).
+- Attack windups/recoveries baked into duration frames (e.g. `spinkick = 18f`, `dashpunch = 24f`). ✅ Already centralised in `src/game/config/combat.ts` (`SPECIAL_ATTACKS`).
+- **3D consideration:** map each `ActorState` to a glTF clip; drive playback via `progressOf(stateTimer, durationFrames)`. No gameplay change.
+
+---
+
+## What shipped in this pass
+
+Engine-agnostic modules under `src/game/core/`:
+
+- `types.ts` — `Vec2`, `Vec3`, `AABB`, `Facing`, `Actor`, `Projectile`, `PowerUp`, `Platform`
+- `aabb.ts` — `aabbOverlap`, `pointInAabb`, `horizontalDistance`, `withinHorizontalRange`, `horizontalDelta`
+- `camera.ts` — `CAMERA_PRESETS`, `computeCameraX`, `worldToScreenX`
+- `physics.ts` — `applyGravity`, `integrate`, `clampToGround`, `isGrounded`
+- `anim.ts` — `progressOf`, `phaseOf`, `easeOutCubic`, `easeInOutSine`
+- `index.ts` — barrel
+
+**Zero calls into these from `StreetBrawler.tsx` in this pass** — the current game loop keeps its inlined equivalents so gameplay stays byte-identical. New systems (3D scene, headless AI, tests) should import from `@/game/core`. When the 3D branch begins, we swap the 2D loop's inlined math for `@/game/core` calls one function at a time behind a feature flag.
+
+## Recommended next steps (in order)
+
+1. **Extract the render loop driver** from `StreetBrawler.tsx` into a `useGameLoop(update, render)` hook. Enables swapping `render` for a 3D one.
+2. **Move each `drawXxx` into `src/game/render2d/`** with signature `(ctx, entity, camX) => void`. Then add `src/game/render3d/` shadow files.
+3. **Replace inline collision/gravity/camera math** in the loop with `@/game/core` calls, one function at a time, verifying gameplay parity after each swap.
+4. **Introduce an event bus** for SFX/particles so audio and effects are triggered by state changes, not hand-called at each transition site.
