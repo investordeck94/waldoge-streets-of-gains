@@ -61,6 +61,25 @@ export function initialGameState(): GameState {
       active: [],
       completed: [],
     },
+    unlocks: {
+      worlds: ["mall"],
+      styles: ["brawler"],
+      achievements: [],
+      cosmetics: [],
+    },
+    settings: {
+      sfxEnabled: true,
+      musicVolume: 0.35,
+      camPreset: "snappy",
+      preferredDifficulty: "normal",
+      preferredStyle: "brawler",
+    },
+    bestScores: {
+      overall: 0,
+      highestWave: 0,
+      longestRunSeconds: 0,
+      byLevel: {},
+    },
     save: {
       version: GAME_STATE_VERSION,
       updatedAt: now,
