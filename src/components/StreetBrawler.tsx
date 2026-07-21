@@ -2860,32 +2860,7 @@ function createPlayer(): Entity {
   };
 }
 
-type Difficulty = "easy" | "normal" | "blackMonday";
-
-// Difficulty multipliers — easy keeps original counts; normal & Black Monday
-// add waves of extra goons. HP stays the same so the fight just gets busier.
-const DIFFICULTY_ENEMY_MULT: Record<Difficulty, number> = {
-  easy: 1,
-  normal: 1.7,
-  blackMonday: 3.0,
-};
-// Boss aggression scaling — lower cooldown + higher damage on harder modes
-const DIFFICULTY_BOSS_CD: Record<Difficulty, number> = {
-  easy: 1.0,
-  normal: 0.85,
-  blackMonday: 0.6,
-};
-const DIFFICULTY_BOSS_DMG: Record<Difficulty, number> = {
-  easy: 1.0,
-  normal: 1.15,
-  blackMonday: 1.4,
-};
-// Extra minions that join the boss fight
-const BOSS_WAVE_MINIONS: Record<Difficulty, number> = {
-  easy: 0,
-  normal: 2,
-  blackMonday: 4,
-};
+// Difficulty tier + multipliers are imported from src/game/config/difficulty.ts
 
 function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, diff: Difficulty = "normal"): Entity[] {
   const lvl = LEVELS[Math.min(levelIndex, LEVELS.length - 1)];
@@ -2902,12 +2877,7 @@ function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, di
   }));
 }
 
-const SPECIAL_ATTACKS: Record<string, { frames: number; range: number; dmg: number; knockback: number; energyCost: number }> = {
-  uppercut: { frames: 18, range: 50, dmg: 30, knockback: 8, energyCost: 25 },
-  spinkick: { frames: 20, range: 65, dmg: 25, knockback: 6, energyCost: 20 },
-  dashpunch: { frames: 14, range: 70, dmg: 22, knockback: 12, energyCost: 20 },
-  groundpound: { frames: 22, range: 80, dmg: 40, knockback: 10, energyCost: 40 },
-};
+// SPECIAL_ATTACKS is imported from src/game/config/combat.ts
 
 export const StreetBrawler: FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
