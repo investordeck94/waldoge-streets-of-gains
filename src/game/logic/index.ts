@@ -23,10 +23,11 @@ export * from "../player/Player";
 export * from "../enemy/Enemy";
 
 // Combat rules — move/style tables. Pure data; safe for any renderer.
-// `StyleName` is exported by both modules; re-export the fightStyles copy
-// explicitly to avoid an ambiguous barrel re-export.
+// `StyleName` is declared in both modules with identical shape; re-export
+// the `fightMoves` copy and pull only the non-overlapping symbols from
+// `fightStyles` to keep the barrel unambiguous.
 export * from "@/lib/fightMoves";
-export { STYLES, type StyleName } from "@/lib/fightStyles";
+export { STYLES, STYLE_ORDER, nextStyle, type FightStyle } from "@/lib/fightStyles";
 
 // Progression, save/load, settings.
 export * from "../state";
