@@ -41,6 +41,11 @@ import tickerThiefBossHead from "@/assets/ticker-thief-head.png";
 import { SFX } from "@/lib/gameSfx";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
+// Central GameState — authoritative meta-state for progression, wallet, XP,
+// inventory, quests and save metadata. The game loop keeps its own refs for
+// per-frame data; this store mirrors user-facing values so future systems
+// (shops, quests, meta progression, 3D scene) can read from one place.
+import { updateGameState, getGameState } from "@/game/state";
 // Central game configuration — all gameplay tunables live under src/game/config/
 // (see src/game/config/README.md). Values are byte-identical to the original
 // inline definitions; this import replaces those definitions in-place.
@@ -2943,6 +2948,38 @@ export const StreetBrawler: FC = () => {
     if (!audio) return;
     audio.muted = !sfxEnabled;
   }, [sfxEnabled]);
+
+  // ---------------------------------------------------------------------------
+  // GameState mirror
+  // ---------------------------------------------------------------------------
+  // Non-invasive: the React useState hooks above remain the source of truth
+  // for rendering. This effect *mirrors* their values into the central
+  // GameState store so future systems (shops, quests, meta progression, save
+  // slots, 3D scene) can read a single canonical object via
+  // `getGameState()` / `useGameState(selector)`. Zero gameplay impact.
+  useEffect(() => {
+    const s = getGameState();
+    updateGameState({
+      mode: gameState,
+      player: {
+        ...s.player,
+        hp: playerHp,
+        energy,
+        comboCount,
+        comboName,
+        style: styleName,
+      },
+      progression: {
+        ...s.progression,
+        level,
+        wave,
+        difficulty,
+        highestLevel: Math.max(s.progression.highestLevel, level),
+      },
+      wallet: { ...s.wallet, score },
+    });
+  }, [gameState, playerHp, energy, comboCount, comboName, styleName, level, wave, difficulty, score]);
+
 
   const skipTrack = useCallback((dir: 1 | -1) => {
     setTrackIdx((i) => (i + dir + TRACKS.length) % TRACKS.length);
