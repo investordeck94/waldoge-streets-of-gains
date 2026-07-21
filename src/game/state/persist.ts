@@ -203,7 +203,7 @@ export function loadGameState(): GameState | null {
     primaryResult = { ok: false, reason: "parse" };
   }
   if (primaryResult.ok) {
-    lastLoadDiagnostics = { source: "primary", primaryStatus: "ok" as any };
+    lastLoadDiagnostics = { source: "primary", primaryStatus: "ok" };
     replaceGameState(primaryResult.state);
     return primaryResult.state;
   }
@@ -216,7 +216,7 @@ export function loadGameState(): GameState | null {
   if (backupResult?.ok) {
     lastLoadDiagnostics = {
       source: "backup",
-      primaryStatus: primaryResult.reason as any,
+      primaryStatus: reasonOf(primaryResult),
       backupStatus: "ok",
     };
     replaceGameState(backupResult.state);
@@ -232,14 +232,14 @@ export function loadGameState(): GameState | null {
     replaceGameState(fresh);
     lastLoadDiagnostics = {
       source: "settings-only",
-      primaryStatus: primaryResult.reason as any,
+      primaryStatus: reasonOf(primaryResult),
       backupStatus: backupResult?.reason,
     };
     return fresh;
   }
   lastLoadDiagnostics = {
     source: "none",
-    primaryStatus: primaryResult.reason as any,
+    primaryStatus: reasonOf(primaryResult),
     backupStatus: backupResult?.reason,
   };
   return null;
