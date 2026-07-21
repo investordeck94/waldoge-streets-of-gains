@@ -49,6 +49,12 @@ import {
   type PlayerEntity,
   type PlayerAttackState,
 } from "@/game/player/Player";
+// Enemy module — data model + spawn factories for grunts and bosses. The AI
+// update loop stays in this file; see src/game/enemy/Enemy.ts for why.
+import {
+  spawnEnemies as spawnEnemiesModule,
+  spawnBoss as spawnBossModule,
+} from "@/game/enemy/Enemy";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
@@ -182,19 +188,12 @@ interface Projectile {
   damage?: number;
 }
 
+// The boss factory now lives in src/game/enemy/Enemy.ts. This local wrapper
+// preserves the original signature so every call site continues to work
+// unchanged. The returned entity is byte-identical to the previous inline
+// literal (same clamp, same hitbox, same starting phase / cooldown).
 function spawnBoss(playerX: number, levelIndex: number): Entity {
-  const cfg = LEVELS[Math.min(levelIndex, LEVELS.length - 1)].boss;
-  // Clamp spawn x so the boss never appears past the level's right edge
-  // (which would leave them stuck off-world unable to reach the player).
-  const spawnX = Math.min(LEVEL_WIDTH - 80, Math.max(playerX + 350, playerX + 500));
-  return {
-    x: spawnX, y: GROUND_Y, vy: 0, vx: 0,
-    width: 50, height: 90, facing: -1,
-    hp: cfg.hp, maxHp: cfg.hp,
-    state: "idle", stateTimer: 0, attackCooldown: 60,
-    isBoss: true, bossPhase: 1, aiTimer: 90,
-    bossName: cfg.name,
-  };
+  return spawnBossModule(playerX, levelIndex);
 }
 
 function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
@@ -2873,19 +2872,13 @@ function createPlayer(): Entity {
 
 // Difficulty tier + multipliers are imported from src/game/config/difficulty.ts
 
+// The grunt-wave factory now lives in src/game/enemy/Enemy.ts. This local
+// wrapper preserves the original signature so every call site continues to
+// work unchanged. The returned array is byte-identical to the previous
+// inline literal (same spacing, HP, aiTimer randomisation, difficulty
+// scaling, and Math.random() call cadence).
 function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, diff: Difficulty = "normal"): Entity[] {
-  const lvl = LEVELS[Math.min(levelIndex, LEVELS.length - 1)];
-  const w = lvl?.waves[waveIndex];
-  if (!w) return [];
-  const count = Math.max(1, Math.round(w.count * DIFFICULTY_ENEMY_MULT[diff]));
-  return Array.from({ length: count }, (_, i) => ({
-    x: playerX + 400 + i * 130 + Math.random() * 200,
-    y: GROUND_Y, vy: 0, vx: 0,
-    width: 30, height: 70, facing: -1 as const,
-    hp: w.hp, maxHp: w.hp,
-    state: "idle" as AttackState, stateTimer: 0, attackCooldown: 0,
-    aiTimer: Math.random() * 60,
-  }));
+  return spawnEnemiesModule(levelIndex, waveIndex, playerX, diff);
 }
 
 // SPECIAL_ATTACKS is imported from src/game/config/combat.ts
