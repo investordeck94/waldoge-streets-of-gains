@@ -2949,6 +2949,38 @@ export const StreetBrawler: FC = () => {
     audio.muted = !sfxEnabled;
   }, [sfxEnabled]);
 
+  // ---------------------------------------------------------------------------
+  // GameState mirror
+  // ---------------------------------------------------------------------------
+  // Non-invasive: the React useState hooks above remain the source of truth
+  // for rendering. This effect *mirrors* their values into the central
+  // GameState store so future systems (shops, quests, meta progression, save
+  // slots, 3D scene) can read a single canonical object via
+  // `getGameState()` / `useGameState(selector)`. Zero gameplay impact.
+  useEffect(() => {
+    const s = getGameState();
+    updateGameState({
+      mode: gameState,
+      player: {
+        ...s.player,
+        hp: playerHp,
+        energy,
+        comboCount,
+        comboName,
+        style: styleName,
+      },
+      progression: {
+        ...s.progression,
+        level,
+        wave,
+        difficulty,
+        highestLevel: Math.max(s.progression.highestLevel, level),
+      },
+      wallet: { ...s.wallet, score },
+    });
+  }, [gameState, playerHp, energy, comboCount, comboName, styleName, level, wave, difficulty, score]);
+
+
   const skipTrack = useCallback((dir: 1 | -1) => {
     setTrackIdx((i) => (i + dir + TRACKS.length) % TRACKS.length);
   }, [TRACKS.length]);
