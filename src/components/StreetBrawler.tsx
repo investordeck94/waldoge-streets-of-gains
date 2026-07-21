@@ -45,7 +45,21 @@ import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMov
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
 // (shops, quests, meta progression, 3D scene) can read from one place.
-import { updateGameState, getGameState } from "@/game/state";
+import {
+  updateGameState,
+  getGameState,
+  loadGameState,
+  saveGameState,
+  startAutosave,
+  recordBestScore,
+} from "@/game/state";
+
+// Auto-load once at module import so the first render sees restored state.
+// Safe: `loadGameState()` swallows all errors and returns null on corruption,
+// falling back to defaults (which match the previous hard-coded values).
+if (typeof window !== "undefined") {
+  try { loadGameState(); } catch { /* corruption handled inside */ }
+}
 // Central game configuration — all gameplay tunables live under src/game/config/
 // (see src/game/config/README.md). Values are byte-identical to the original
 // inline definitions; this import replaces those definitions in-place.
