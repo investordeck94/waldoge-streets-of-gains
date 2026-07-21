@@ -45,7 +45,21 @@ import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMov
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
 // (shops, quests, meta progression, 3D scene) can read from one place.
-import { updateGameState, getGameState } from "@/game/state";
+import {
+  updateGameState,
+  getGameState,
+  loadGameState,
+  saveGameState,
+  startAutosave,
+  recordBestScore,
+} from "@/game/state";
+
+// Auto-load once at module import so the first render sees restored state.
+// Safe: `loadGameState()` swallows all errors and returns null on corruption,
+// falling back to defaults (which match the previous hard-coded values).
+if (typeof window !== "undefined") {
+  try { loadGameState(); } catch { /* corruption handled inside */ }
+}
 // Central game configuration — all gameplay tunables live under src/game/config/
 // (see src/game/config/README.md). Values are byte-identical to the original
 // inline definitions; this import replaces those definitions in-place.
@@ -2977,8 +2991,34 @@ export const StreetBrawler: FC = () => {
         highestLevel: Math.max(s.progression.highestLevel, level),
       },
       wallet: { ...s.wallet, score },
+      settings: {
+        ...s.settings,
+        sfxEnabled,
+        camPreset,
+        preferredDifficulty: difficulty,
+        preferredStyle: styleName,
+      },
     });
-  }, [gameState, playerHp, energy, comboCount, comboName, styleName, level, wave, difficulty, score]);
+  }, [gameState, playerHp, energy, comboCount, comboName, styleName, level, wave, difficulty, score, sfxEnabled, camPreset]);
+
+  // Autosave lifecycle: debounced writes to localStorage plus flush on tab
+  // hide / unload. Runs once on mount; disposer clears listeners on unmount.
+  useEffect(() => {
+    const stop = startAutosave({ debounceMs: 1500 });
+    return stop;
+  }, []);
+
+  // Record best scores on game-over and victory transitions (meta only,
+  // no gameplay effect). Uses the module-level recorder so it composes
+  // cleanly with the mirror above.
+  useEffect(() => {
+    if (gameState === "gameover" || gameState === "victory") {
+      recordBestScore({ score, wave, levelIndex: level });
+      // Force an immediate save so best-scores survive an instant reload.
+      saveGameState();
+    }
+  }, [gameState, score, wave, level]);
+
 
 
   const skipTrack = useCallback((dir: 1 | -1) => {

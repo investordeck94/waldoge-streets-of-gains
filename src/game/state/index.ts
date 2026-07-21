@@ -26,6 +26,10 @@ export {
   saveGameState,
   loadGameState,
   clearSavedGameState,
+  startAutosave,
+  recordBestScore,
+  getLoadDiagnostics,
+  loadSettingsOnly,
 } from "./persist";
 export { GAME_STATE_VERSION, initialGameState } from "./defaults";
 export { useGameState, useFullGameState } from "./hooks";
