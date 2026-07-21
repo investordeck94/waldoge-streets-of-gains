@@ -41,8 +41,8 @@
  * the migration map (2D systems -> planned 3D equivalents).
  * ============================================================================= */
 import { FC, useEffect, useRef, useState, useCallback } from "react";
-// Static asset URLs + preloaded boss-head Image objects moved to
-// src/game/Assets.ts (Phase 1). Individual named exports are aliased below
+// Static asset URLs + preloaded boss-head Image objects live in
+// src/game/assets/index.ts. Individual named exports are aliased below
 // so every existing draw-site keeps its short local name unchanged.
 import { motion, AnimatePresence } from "framer-motion";
 import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize, Pause, SkipForward, SkipBack } from "lucide-react";
@@ -120,7 +120,7 @@ import {
   DIFFICULTY_ENEMY_MULT, DIFFICULTY_BOSS_CD, DIFFICULTY_BOSS_DMG, BOSS_WAVE_MINIONS,
 } from "@/game/config";
 
-// Preloaded boss head images now live in src/game/Assets.ts (Phase 1) and
+// Preloaded boss head images now live in src/game/assets/index.ts and
 // are imported at the top of this file. Behaviour is byte-identical: seven
 // `new Image()` handles created at module import, `.src` assigned
 // synchronously, lifetime scoped to the module.
