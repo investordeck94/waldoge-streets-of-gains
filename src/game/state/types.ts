@@ -13,7 +13,8 @@
  *   that survives across levels, sessions and future features.
  */
 
-import type { Difficulty, StyleName } from "@/game/config";
+import type { Difficulty } from "@/game/config";
+import type { StyleName } from "@/lib/fightStyles";
 
 /** Runtime UI mode driven by the React shell around the game canvas. */
 export type GameMode = "menu" | "playing" | "gameover" | "victory";
