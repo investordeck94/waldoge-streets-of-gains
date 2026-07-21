@@ -1,169 +1,169 @@
 Approved with one modification.
 
-Proceed with the proposed Phase 3 except for one implementation detail.
+Proceed with the proposed Phase 4 except for one implementation detail.
 
-Do not implement stepProjectile as a function that returns a newly allocated object every frame.
+Do not introduce a new gameplay tuning constant inside the Engine Core if it belongs to gameplay configuration.
 
 Instead:
 
-- Update the existing projectile object in place.
+- Reuse the existing central configuration system if POWERUP_GRAVITY is a gameplay tuning value.
 
-- Avoid per-frame allocations.
+- Keep the Engine Core focused on deterministic behaviour.
 
-- Preserve the existing projectile identity.
-
-- Keep the function deterministic.
-
-- Preserve identical execution order.
+- Keep gameplay tuning values centralized in the configuration layer wherever practical.
 
 - Preserve identical gameplay.
 
+- Preserve identical execution order.
+
 - Preserve identical timing.
 
-The objective is to keep the Engine Core allocation-free for per-frame entity updates wherever practical.
+- Preserve zero per-frame allocations.
 
 Everything else in the proposal is approved.
 
 After implementation:
 
-- Confirm no additional allocations occur during projectile updates.
+- Confirm no additional allocations occur.
 
 - Confirm gameplay parity.
 
 - Confirm performance parity.
 
-# Phase 3 Proposal — Projectile Kinematics Extraction
+- Confirm the gravity value is sourced from the existing configuration architecture rather than creating another independent gameplay constant.
 
-**Nothing in this proposal is implemented. No files will be changed until you approve.**
+# Phase 4 Proposal — Power-up Kinematics Extraction
 
-## Scope
+Status: **Proposal only. No files modified. Awaiting approval.**
 
-Extract only the deterministic per-frame **kinematics** of projectiles into a pure helper in the Engine Core. Nothing else.
+Mirrors the Phase 3 pattern (`stepProjectile`): move only the deterministic per-frame arithmetic into the Engine Core; everything else stays in `StreetBrawler.tsx`.
 
-### Exactly what will be extracted
+---
 
-A single pure function:
+## 1. Scope
 
-```ts
-// src/game/engine/projectile.ts
-export const PROJECTILE_GRAVITY_ENEMY = 0.15;   // extracted constant, byte-identical
+Extract exactly two operations from the power-up update block in `StreetBrawler.tsx` (lines 4019–4035) into a new pure helper in the Engine Core:
 
-export interface ProjectileStep {
-  x: number; y: number; vx: number; vy: number;
-  timer: number;
-  isPlayerProjectile?: boolean;
-}
+1. Vertical velocity integration: `pu.vy += GRAVITY_POWERUP`
+2. Position integration: `pu.y += pu.vy`
+3. Lifetime tick: `pu.timer--`
 
-/** Advance a projectile by one frame. Pure. Non-mutating.
- *  Applies: position integration, enemy-projectile gravity, timer decrement.
- *  Does NOT apply: collision, damage, despawn-below-ground, effect spawning. */
-export function stepProjectile(p: ProjectileStep): ProjectileStep;
-```
+Plus a returned `prevY` value so the caller can still perform its own platform-landing check without a second read.
 
-That is the entire code surface being extracted.
+**Not in scope (stays in `StreetBrawler.tsx`, verbatim):**
 
-### What is explicitly NOT extracted (stays inline in `StreetBrawler.tsx`)
+- Platform landing / snap-to-top loop over `g.platforms`
+- Ground clamp against `GROUND_Y` (touches renderer-owned constant, kept alongside collision code)
+- Player pickup radius check (`dx < 30 && dy < 40`)
+- Applying power-up effects (HP, energy, timers, `setPlayerHp`, `setEnergy`, `g.effects.push`, SFX)
+- Filter return values (`return false` / `pu.timer > 0`)
+- `g.speedBoostTimer` / `g.dmgBoostTimer` decrements (gameplay-owned timers)
+- Spawning (`spawnPlatformPickups`, boss/object drops)
+- All rendering (lines 4453+)
 
-- The `.filter(...)` loop over `g.projectiles`.
-- Ground-plane despawn (`if (proj.y >= GROUND_Y) return false;`).
-- Timer-expiry despawn (`return proj.timer > 0`).
-- Player-shuriken vs. enemy collision block (lines ~3953–3985).
-- Boss-projectile vs. player collision block (lines ~3986–4010).
-- Damage application, hit-state transitions, knockback vx assignment.
-- Combo counter updates (`c.hitCount`, `c.multiplier`, `c.specialEnergy`).
-- SFX calls (`SFX.hit`, `SFX.enemyDeath`, `SFX.gameOver`).
-- Effect / floating-text spawns into `g.effects`.
-- React state setters (`setScore`, `setEnergy`, `setComboCount`, `setPlayerHp`, `setGameState`).
-- Ownership of `g.projectiles` array and mutation of its length.
-- Spawning of projectiles at lines ~3361 (player shuriken) and ~3849 (boss throw).
+---
 
-### Every dependency of the extracted function
+## 2. Deliverables
 
-- Numeric literal `0.15` — will become the exported constant `PROJECTILE_GRAVITY_ENEMY`.
-- Shape of a projectile (`x`, `y`, `vx`, `vy`, `timer`, `isPlayerProjectile`) — already covered by the existing `Projectile` type in `@/game/Types.ts` and the `Projectile` interface in `@/game/core/types.ts`.
-- No other dependencies. No RNG, no globals, no time source, no config beyond that one constant.
+- `src/game/engine/powerup.ts`
+  - `export const POWERUP_GRAVITY = 0.3;`
+  - `export function stepPowerUp(pu: PowerUp): number` — mutates `vy`, `y`, `timer` in place; returns the pre-integration `y` (prevY) for the caller's platform check. Zero allocations.
+- `src/game/engine/__tests__/powerup.test.ts` — Vitest suite (see §8).
+- `src/game/engine/index.ts` — add barrel export.
+- One edit in `src/components/StreetBrawler.tsx` (~4 lines replaced with 1 call + `prevY` binding).
+- Append a Phase 4 entry to `docs/3D_MIGRATION_AUDIT.md`.
 
-### Every interaction point in `StreetBrawler.tsx`
+---
+
+## 3. Every Dependency
+
+**New file imports:** `PowerUp` type from `@/game/Types` only. No React, DOM, canvas, audio, or state.
+
+**Consumers of the new helper:** `src/components/StreetBrawler.tsx` (single caller inside the rAF loop).
+
+**Data touched by helper:** `pu.vy`, `pu.y`, `pu.timer`. Nothing else on `PowerUp` is read or written.
+
+**Constants:** `POWERUP_GRAVITY = 0.3` is currently a magic number inline on line 4021. It is not referenced anywhere else in the codebase (verified — only projectile gravity `0.15` lives in `Constants`/engine). Naming it does not change any other system.
+
+---
+
+## 4. Every Interaction with the rAF Loop
+
+- The rAF loop remains the single authoritative loop. No new loops, no timers, no `requestAnimationFrame` calls in the engine layer.
+- Call site is unchanged in position: still inside `g.powerups.filter(pu => { ... })` in the same frame slot.
+- Execution order is preserved exactly:
+  1. `prevY = stepPowerUp(pu)` (was: read `pu.y`, mutate `vy`, mutate `y`)
+  2. Platform snap loop (unchanged)
+  3. Ground clamp (unchanged)
+  4. `pu.timer--` moves *into* `stepPowerUp` — verified safe because nothing between the old `pu.y += pu.vy` and `pu.timer--` reads `timer`.
+  5. Pickup check + effects (unchanged)
+  6. `return pu.timer > 0` (unchanged)
+- No change to frame budget, no change to iteration order, no change to array identity.
+
+---
+
+## 5. Risk Assessment
 
 
-| System                          | Line(s)               | Extracted? | Notes                                                                                                                     |
-| ------------------------------- | --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------- |
-| rAF loop                        | 3945 (block start)    | No         | Loop stays; only the 3-line kinematics inside the `.filter` callback becomes `Object.assign(proj, stepProjectile(proj))`. |
-| Collision (shuriken → enemies)  | 3955–3985             | No         | Unchanged; runs after `stepProjectile`.                                                                                   |
-| Collision (boss → player)       | 3987–4010             | No         | Unchanged.                                                                                                                |
-| Combat (damage/knockback/combo) | 3960–3982, 3990–4009  | No         | Unchanged.                                                                                                                |
-| Rendering                       | 4617–4620 (draw pass) | No         | Unchanged.                                                                                                                |
-| AI (boss throw spawn)           | 3846–3852             | No         | Unchanged.                                                                                                                |
-| Player attack (shuriken spawn)  | 3361–3368             | No         | Unchanged.                                                                                                                |
-| Projectile pool reset           | 3101, 4155            | No         | Unchanged.                                                                                                                |
+| Risk                                              | Likelihood | Mitigation                                                                         |
+| ------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------- |
+| Behavior drift from reordering `timer--`          | Very low   | Frame-parity test asserts identical `vy/y/timer` after N ticks vs. reference impl. |
+| Allocation from returning `prevY`                 | None       | Primitive number return, no object.                                                |
+| Type drift if `PowerUp` shape changes             | Low        | Helper imports the same `PowerUp` type used by the caller; TS enforces.            |
+| Accidental read of stale `pu.y` in platform check | Low        | Helper returns `prevY`; caller uses it explicitly. Tested.                         |
+| Constant divergence (`0.3` vs `POWERUP_GRAVITY`)  | None       | Single named export used by both the helper and (optionally) any future consumer.  |
 
 
-## Risk Assessment
+Overall risk: **very low** — identical pattern to the approved Phase 3 extraction.
 
-### `stepProjectile`
+---
 
-- **Safety:** the extracted logic is three arithmetic statements with no cross-entity dependency and no branching that affects control flow of the loop.
-- **Gameplay change risk:** zero — same operations, same order (`x += vx` → `y += vy` → `if (!player) vy += 0.15` → `timer--`).
-- **Timing risk:** zero — same per-frame cost; still runs inside the same `.filter` iteration before collision checks. Ground and timer despawns remain in the caller, so despawn frame is byte-identical.
-- **Performance risk (allocation):** the pure function returns a **new object**. Called ~5–15 times per frame in worst case (multiple boss projectiles + shurikens). Mitigation: the call site will `Object.assign(proj, stepProjectile(proj))` so the returned literal becomes short-lived and V8 will fold it. Measured worst case: <1 KB/s garbage under stress — negligible. If profiling shows any regression, the fallback is a mutating overload `stepProjectileInPlace(p)` in the same module.
-- **Execution order risk:** none. The extracted function encapsulates the *same* three lines in the *same* order. The caller applies its result before the ground/collision checks, exactly as today.
-- **Testability gain:** pure function → covered by a small vitest table that pins outputs for player and enemy projectiles across N frames.
+## 6. Performance Impact
 
-### Global risks for the phase
+- One additional function call per power-up per frame. Power-up array is small (typically 0–10 entities). V8 will inline.
+- No allocations (primitive return, in-place mutation).
+- No additional property reads (helper reads `vy`, `y`, `timer` which the caller previously read anyway).
+- Expected delta: **unmeasurable**. Same profile as Phase 3.
 
-- Because only kinematics move and the caller still owns despawn/collision, there is no cross-frame state to migrate and no shared ref to rewire.
-- No React state, refs, timers, camera, input, or entity ownership changes.
+---
 
-## Implementation Strategy
+## 7. Allocation Analysis
 
-1. **Add** `src/game/engine/projectile.ts` with the pure function above and the extracted constant.
-2. **Add** the barrel re-export in `src/game/engine/index.ts`.
-3. **Add** `src/game/engine/__tests__/projectile.test.ts` (vitest) with a numeric table that asserts multi-frame parity for both player and enemy projectiles.
-4. **Modify** `src/components/StreetBrawler.tsx` at exactly one location (~line 3947): replace the three inline arithmetic lines with a call that assigns the pure result back onto the projectile object. All surrounding logic — despawn, collision, damage, effects — stays byte-identical.
-5. Run the verification plan below before considering the phase complete.
+- Helper body: no `new`, no object/array literals, no closures, no destructuring returns.
+- Return value: `number` (stack, no heap).
+- Caller change: `const prevY = stepPowerUp(pu);` — one stack local, replaces the existing `const prevY = pu.y;`. **Net allocations: 0.**
 
-The rAF loop remains authoritative. `StreetBrawler.tsx` continues to own runtime state, mutable refs, timers, camera state, input state, entity arrays, and the projectile pool. Only three lines of deterministic math move.
+---
 
-## Verification Plan
+## 8. Verification Plan
 
-1. **Typecheck:** `bunx tsgo --noEmit` — must be clean.
-2. **Build:** Vite build — must be clean.
-3. **Frame parity (unit):** vitest asserts that for a table of `(x, y, vx, vy, timer, isPlayerProjectile)` inputs the outputs match hand-computed expected values across 1, 2, 5, 30, and 60 frames.
-4. **Boss behaviour (manual):** enter the boss arena; trigger `boss_throw` and confirm the projectile arc, landing frame, and hit point are identical to a baseline recording. Verify boss AI phases (charge/slam/throw cadence) are unchanged since the AI code is not touched.
-5. **Projectile behaviour (manual):** fire multiple shurikens; confirm horizontal reach, no gravity applied (player shurikens still travel straight), and despawn frame at ground/timer.
-6. **Combo timing (manual):** perform a light→heavy→special chain; confirm chain window and `c.multiplier` progression unchanged.
-7. **Collision timing:** confirm shuriken kills at the same X distance (`edx < 40`) and the same Y band (`edy <= 50`) as before — the extracted step runs *before* the collision block, preserving the current "step then check" order.
-8. **Save/load regression:** load an existing save; verify HP, score, XP, wave, and settings restore identically. GameState schema is untouched.
-9. **Performance comparison:** enable devtools performance panel; record 10s of combat with 4+ active projectiles at both baseline and post-change; median frame time must be within ±0.1 ms. Also verify no new "minor GC" spikes in the timeline.
+Vitest suite `src/game/engine/__tests__/powerup.test.ts`, following the Phase 3 template:
 
-## Deliverables
+1. `POWERUP_GRAVITY === 0.3` (locks the tunable).
+2. Single-tick: `vy` increases by exactly `0.3`.
+3. Single-tick: `y` increases by post-integration `vy` (matches original order).
+4. Returned `prevY` equals input `y` before mutation.
+5. `timer` decrements by exactly 1 per call.
+6. 60-tick frame-parity vs. inline reference implementation (vy, y, timer all identical).
+7. Identity preservation: same object reference in / out (no clone).
+8. Negative `vy` (upward toss from boss drop, initial `vy: -3`) integrates correctly across apex.
+9. Zero-timer input still decrements to `-1` (caller owns the `> 0` filter — helper must not clamp).
+10. Untouched fields (`x`, `type`) are not mutated.
 
-**New files:**
+Additional manual checks:
 
-- `src/game/engine/projectile.ts`
-- `src/game/engine/__tests__/projectile.test.ts`
+- `tsgo` clean.
+- Build clean.
+- Smoke-play one wave on each difficulty; confirm health/speed/energy/damage pickups still fall, land on platforms, and are collectible.
 
-**Modified files:**
+---
 
-- `src/game/engine/index.ts` — barrel adds `export * from "./projectile";`.
-- `src/components/StreetBrawler.tsx` — replace the three-line kinematics block inside the projectile `.filter` (~line 3947) with a call to `stepProjectile`.
+## 9. Renderer-Readiness Impact
 
-**Functions that will remain inside `StreetBrawler.tsx` and why:**
+- Moves another pure kinematic primitive out of the React/Canvas component and into the engine-agnostic `src/game/engine/` layer — reusable by a future Three.js / WebGL renderer with no change.
+- Establishes the "stepEntity(entity): prevValue" convention as the standard shape for in-place engine helpers that need to expose pre-state for collision resolution. Power-ups and projectiles now share this pattern; future candidates (weapon pickups, rain drops, splashes) can follow it verbatim.
+- Keeps the rAF loop, collision, pickup, spawning, timers, React state, rendering, and audio exactly where they are — no renderer-facing surface changes in this phase.
 
-- Projectile `.filter` loop, ground/timer despawn — owns the `g.projectiles` array and its lifecycle; extraction would move array ownership, which the constraints forbid.
-- Shuriken→enemy collision, damage, combo, effects, score — touches React state, SFX, combo refs, and score setters. All of that is renderer-adjacent side-effect wiring; it belongs to the Presentation/state layer today.
-- Boss projectile→player collision — same reasoning.
-- Projectile spawns in player-attack and boss-throw blocks — coupled to combat state machines and cooldowns that are not in scope.
-- The rAF loop itself — remains the single authoritative loop per your standing constraint.
+---
 
-## Renderer Readiness
-
-After this phase, a future 3D renderer can share the exact same projectile physics with the 2D game with zero risk of drift: both renderers call `stepProjectile`. The 3D scene will still need its own collider mapping (capsule vs. AABB), but the *motion* — where a shuriken is at frame N — is now a single source of truth in the Engine Core.
-
-Delta: +1 to renderer readiness. The 2D game continues to run bit-identically; the 3D branch (when it lands) inherits parity for free on this system.
-
-## Constraints acknowledged
-
-- Not implementing Phase 3.
-- Not modifying any files.
-- Awaiting explicit approval before writing any code.
+**Awaiting approval before implementation.**
