@@ -183,3 +183,26 @@ Renderer-swap readiness delta: +0 architecture, +1 hygiene. The Presentation lay
 - Updated stale comments in `src/components/StreetBrawler.tsx` (lines ~44 and ~123).
 - Refreshed `src/game/assets/README.md`, `src/game/assets/index.ts` header, and `docs/DEPRECATIONS.md`.
 - Post-delete audit: `rg "@/game/(Constants|Assets)\b" src/` returns zero code references.
+
+## Phase 8 update (animation helper adoption — partial)
+
+Landed:
+
+- `src/components/StreetBrawler.tsx` — added `progressOf` to the existing `@/game/engine` import. Replaced exactly one inline animation-clock calculation:
+  - Line 251 (`boss_throw` draw): `e.stateTimer / 20` → `progressOf(e.stateTimer, 20)`. Parity proven: `stateTimer` is set to 20 (line 3813) and the state exits at `<= 0` before the next draw, so its live range is `[1, 20]` and inline value ∈ `[0.05, 1.0]`. `progressOf` returns the identical value across that range.
+
+Deliberately NOT landed (per approved-plan strict-parity constraint):
+
+- Line 682 (`spinkick` draw, `stateTimer / 18`) — `p.stateTimer` is initialised from `SPECIAL_ATTACKS.spinkick.frames = 20`, so the first two frames produce `~1.11` and `~1.06`. `progressOf` would clamp to `1.0` and silently alter the spin windup silhouette. Left as inline math with an inline `NOTE (Phase 8)` comment.
+- Line 972 (`spinkick` Green Candle aura, `stateTimer / 18`) — same divisor/duration mismatch as above; `progressOf` would clamp the aura radius on frames 1–2. Left as inline math with an inline `NOTE (Phase 8)` comment.
+- `phaseOf`, `easeOutCubic`, `easeInOutSine` — no current inline call sites in `StreetBrawler.tsx`; nothing to migrate this phase.
+
+Verification (Phase 8):
+
+- Typecheck (`bunx tsgo --noEmit`) clean.
+- Vitest 26/26 green (engine + example suites).
+- Migrated call site is mathematically identical for every runtime state (`stateTimer ∈ [1, 20]` during draw → `progressOf` returns `stateTimer / 20`).
+- No animation behaviour changed. No rendering behaviour changed. No execution-order changes. Zero allocations added (`progressOf` returns a `number`).
+- Diff scope: `src/components/StreetBrawler.tsx` (1 import + 3 hunks, of which 2 are documentation-only NOTE comments) and this file.
+
+Renderer-swap readiness delta: +1 hygiene. One draw site now consumes the canonical animation-clock helper; the two blocked sites are explicitly documented so a future phase that reconciles the divisor/duration mismatch can finish the migration.

@@ -63,7 +63,7 @@ const waldogeArcade = { url: AUDIO_URLS.waldogeArcade };
 const waldogeHead = IMAGE_URLS.waldogeHead;
 const streetBrawlerCover = IMAGE_URLS.streetBrawlerCover;
 import { SFX } from "@/lib/gameSfx";
-import { stepProjectile, stepPowerUp } from "@/game/engine";
+import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
 // Player module — data model + pure helpers for player state, HP, stamina,
@@ -248,7 +248,7 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(e.facing * limbLen, shoulderY - limbLen * 0.8);
   } else if (e.state === "boss_throw") {
-    const prog = e.stateTimer / 20;
+    const prog = progressOf(e.stateTimer, 20);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(e.facing * limbLen * (1 + prog), shoulderY - limbLen * prog);
     ctx.moveTo(0, shoulderY);
@@ -679,6 +679,11 @@ function drawStickFigure(
 
   // Spin kick rotation — amount varies per style for recognizable silhouettes
   if (e.state === "spinkick") {
+    // NOTE (Phase 8): NOT migrated to progressOf. `p.stateTimer` is initialised
+    // from SPECIAL_ATTACKS.spinkick.frames = 20 but the divisor here is 18, so
+    // the first two frames produce values > 1 (~1.11, ~1.06). progressOf clamps
+    // to [0,1] and would silently alter the spin windup. Leave as inline math
+    // until the divisor/duration mismatch is intentionally reconciled.
     const spinProgress = e.stateTimer / 18;
     const spins =
       isPlayer && style === "rush" ? 2.2 :        // tornado kick — extra spins
@@ -964,6 +969,9 @@ function drawStickFigure(
 
   // Green Candle: large spinning green motion rings on the lariat
   if (isPlayer && style === "greenCandle" && e.state === "spinkick") {
+    // NOTE (Phase 8): NOT migrated to progressOf. Same divisor/duration
+    // mismatch as the spinkick draw above (stateTimer up to 20, divisor 18).
+    // progressOf would clamp the aura radius on the first two frames.
     const p = e.stateTimer / 18;
     // Outer expanding aura
     ctx.strokeStyle = "rgba(0,255,100,0.25)";
