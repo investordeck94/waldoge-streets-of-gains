@@ -41,6 +41,26 @@ import tickerThiefBossHead from "@/assets/ticker-thief-head.png";
 import { SFX } from "@/lib/gameSfx";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
+// Central game configuration — all gameplay tunables live under src/game/config/
+// (see src/game/config/README.md). Values are byte-identical to the original
+// inline definitions; this import replaces those definitions in-place.
+import {
+  // player / world / physics
+  CANVAS_W, CANVAS_H, GROUND_Y, GRAVITY, PLAYER_SPEED, JUMP_FORCE, LEVEL_WIDTH, MAX_ENERGY,
+  // combat
+  COMBO_WINDOW, COMBO_HIT_WINDOW, SPECIAL_ATTACKS,
+  // weapons
+  WEAPON_STATS, SHURIKEN_AMMO, WEAPON_DROP_CHANCE, type WeaponType,
+  // powerups
+  DROP_CHANCE, POWERUP_COLORS, POWERUP_ICONS,
+  // environment
+  RAIN_COUNT, PUDDLE_POSITIONS,
+  // levels
+  LEVELS, WAVES_PER_LEVEL, TOTAL_LEVELS, type LevelConfig, type SceneTheme,
+  // difficulty
+  type Difficulty,
+  DIFFICULTY_ENEMY_MULT, DIFFICULTY_BOSS_CD, DIFFICULTY_BOSS_DMG, BOSS_WAVE_MINIONS,
+} from "@/game/config";
 
 // Preloaded boss head images
 const jeetHeadImg: HTMLImageElement | null =
