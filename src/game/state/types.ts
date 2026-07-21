@@ -148,5 +148,37 @@ export interface GameState {
     active: Quest[];
     completed: Quest[];
   };
+  /** Persistent unlocks (worlds, styles, characters, cosmetics). */
+  unlocks: Unlocks;
+  /** Player-controlled settings. Persisted with the save. */
+  settings: Settings;
+  /** Meta best-scores keyed by scope (overall + per-level). */
+  bestScores: BestScores;
   save: SaveMeta;
 }
+
+/** Persistent unlocks. Sets are stored as string[] for JSON safety. */
+export interface Unlocks {
+  worlds: WorldId[];
+  styles: StyleName[];
+  achievements: string[];
+  cosmetics: string[];
+}
+
+/** User settings mirrored from the UI. Kept minimal; extend as needed. */
+export interface Settings {
+  sfxEnabled: boolean;
+  musicVolume: number;
+  camPreset: "snappy" | "buttery";
+  preferredDifficulty: Difficulty;
+  preferredStyle: StyleName;
+}
+
+/** Best scores keyed by scope: "overall" plus `level:<index>`. */
+export interface BestScores {
+  overall: number;
+  highestWave: number;
+  longestRunSeconds: number;
+  byLevel: Record<string, number>;
+}
+
