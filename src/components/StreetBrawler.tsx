@@ -117,72 +117,19 @@ import {
 type AttackState = PlayerAttackState;
 type Entity = PlayerEntity;
 
-interface HitEffect {
-  x: number;
-  y: number;
-  timer: number;
-  text: string;
-  color: string;
-  size: number;
-}
-
-interface PowerUp {
-  x: number;
-  y: number;
-  vy: number;
-  type: "health" | "speed" | "energy" | "damage";
-  timer: number;
-}
-
-interface WeaponPickup {
-  x: number;
-  y: number;
-  vy: number;
-  type: WeaponType;
-  collected: boolean;
-  timer: number;
-}
-
-interface RainDrop {
-  x: number;
-  y: number;
-  speed: number;
-  length: number;
-  opacity: number;
-  wind: number;
-}
-
-interface Splash {
-  x: number;
-  y: number;
-  timer: number;
-  maxTimer: number;
-  size: number;
-  inPuddle: boolean;
-}
-
-
-
-interface ComboState {
-  inputs: string[];
-  timer: number;
-  hitCount: number;
-  hitTimer: number;
-  multiplier: number;
-  specialCooldown: number;
-  specialEnergy: number;
-}
-
-
-// Level roster, difficulty tuning, and world dimensions now live in
-// src/game/config/ — see the barrel import at the top of this file.
-
-
-interface Projectile {
-  x: number; y: number; vx: number; vy: number; timer: number;
-  isPlayerProjectile?: boolean;
-  damage?: number;
-}
+// Non-entity gameplay types (HitEffect / PowerUp / WeaponPickup / RainDrop /
+// Splash / ComboState / Projectile) now live in src/game/Types.ts (Phase 1).
+// Byte-identical shapes; every existing call site continues to compile
+// unchanged via the imports below.
+import type {
+  HitEffect,
+  PowerUp,
+  WeaponPickup,
+  RainDrop,
+  Splash,
+  ComboState,
+  Projectile,
+} from "@/game/Types";
 
 // The boss factory now lives in src/game/enemy/Enemy.ts. This local wrapper
 // preserves the original signature so every call site continues to work
