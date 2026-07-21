@@ -63,7 +63,7 @@ const waldogeArcade = { url: AUDIO_URLS.waldogeArcade };
 const waldogeHead = IMAGE_URLS.waldogeHead;
 const streetBrawlerCover = IMAGE_URLS.streetBrawlerCover;
 import { SFX } from "@/lib/gameSfx";
-import { stepProjectile } from "@/game/engine";
+import { stepProjectile, stepPowerUp } from "@/game/engine";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
 // Player module — data model + pure helpers for player state, HP, stamina,
@@ -4017,9 +4017,7 @@ export const StreetBrawler: FC = () => {
       g.dmgBoostTimer = Math.max(0, g.dmgBoostTimer - 1);
 
       g.powerups = g.powerups.filter(pu => {
-        const prevY = pu.y;
-        pu.vy += 0.3;
-        pu.y += pu.vy;
+        const prevY = stepPowerUp(pu);
         // Platform landing — snap to top when crossing downward through a platform top
         if (pu.vy > 0) {
           for (const pl of g.platforms) {
@@ -4032,7 +4030,6 @@ export const StreetBrawler: FC = () => {
           }
         }
         if (pu.y >= GROUND_Y) { pu.y = GROUND_Y; pu.vy = 0; }
-        pu.timer--;
 
         // Check player pickup (30px radius)
         const dx = Math.abs(p.x - pu.x);

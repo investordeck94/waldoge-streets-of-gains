@@ -104,3 +104,17 @@ Deliberately NOT landed:
 
 Renderer-swap readiness delta: +1 (the boundary is now documented and enforceable in review). The loop itself is unchanged.
 
+
+## Phase 4 update (power-up kinematics)
+
+Landed:
+
+- `src/game/engine/powerup.ts` — `stepPowerUp(pu)` advances `vy → y → timer` in place and returns pre-integration `prevY` for the caller's platform-landing check. Zero allocations, no RNG, no DOM/React.
+- `src/game/config/powerups.ts` — new `POWERUP_GRAVITY = 0.3` constant. Kept in the gameplay config layer (not the Engine Core) because it is a tuning value; `stepPowerUp` imports it from config.
+- `src/game/engine/__tests__/powerup.test.ts` — 11 tests, all passing (value lock, single-tick math, order sensitivity, 60-tick frame parity vs. reference, apex crossing for boss drops, identity preservation, untouched fields).
+- `src/game/engine/index.ts` — barrel export.
+- `src/components/StreetBrawler.tsx` — 4 inline math lines replaced with `const prevY = stepPowerUp(pu);`. Platform snap, ground clamp, pickup radius check, effect application, timer filter, boost timers, spawning, rendering, and audio all remain in the component.
+
+Deliberately NOT landed: collision, pickup collection, spawning, gameplay timers, React state, rendering, audio (per approved scope).
+
+Renderer-swap readiness delta: +1. Power-ups and projectiles now share the "step\<Entity\>() → prevValue" convention for in-place engine helpers that expose pre-state to collision resolution — future extraction candidates (weapon pickups, rain drops, splashes) can follow it verbatim.
