@@ -41,6 +41,26 @@ import tickerThiefBossHead from "@/assets/ticker-thief-head.png";
 import { SFX } from "@/lib/gameSfx";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
+// Central game configuration — all gameplay tunables live under src/game/config/
+// (see src/game/config/README.md). Values are byte-identical to the original
+// inline definitions; this import replaces those definitions in-place.
+import {
+  // player / world / physics
+  CANVAS_W, CANVAS_H, GROUND_Y, GRAVITY, PLAYER_SPEED, JUMP_FORCE, LEVEL_WIDTH, MAX_ENERGY,
+  // combat
+  COMBO_WINDOW, COMBO_HIT_WINDOW, SPECIAL_ATTACKS,
+  // weapons
+  WEAPON_STATS, SHURIKEN_AMMO, WEAPON_DROP_CHANCE, type WeaponType,
+  // powerups
+  DROP_CHANCE, POWERUP_COLORS, POWERUP_ICONS,
+  // environment
+  RAIN_COUNT, PUDDLE_POSITIONS,
+  // levels
+  LEVELS, WAVES_PER_LEVEL, TOTAL_LEVELS, type LevelConfig, type SceneTheme,
+  // difficulty
+  type Difficulty,
+  DIFFICULTY_ENEMY_MULT, DIFFICULTY_BOSS_CD, DIFFICULTY_BOSS_DMG, BOSS_WAVE_MINIONS,
+} from "@/game/config";
 
 // Preloaded boss head images
 const jeetHeadImg: HTMLImageElement | null =
@@ -100,8 +120,6 @@ interface PowerUp {
   timer: number;
 }
 
-type WeaponType = "bat" | "sword" | "shuriken";
-
 interface WeaponPickup {
   x: number;
   y: number;
@@ -110,14 +128,6 @@ interface WeaponPickup {
   collected: boolean;
   timer: number;
 }
-
-const WEAPON_STATS: Record<WeaponType, { duration: number; rangeBonus: number; dmgMult: number; color: string; icon: string; name: string }> = {
-  bat:      { duration: 600, rangeBonus: 25, dmgMult: 1.8, color: "#ff8c00", icon: "🏏", name: "BAT" },
-  sword:    { duration: 480, rangeBonus: 35, dmgMult: 2.2, color: "#00ccff", icon: "⚔️", name: "SWORD" },
-  shuriken: { duration: 360, rangeBonus: 10, dmgMult: 1.3, color: "#cc44ff", icon: "✦", name: "SHURIKEN" },
-};
-const SHURIKEN_AMMO = 5;
-const WEAPON_DROP_CHANCE = 0.25;
 
 interface RainDrop {
   x: number;
@@ -137,22 +147,6 @@ interface Splash {
   inPuddle: boolean;
 }
 
-const RAIN_COUNT = 120;
-const PUDDLE_POSITIONS = [200, 700, 1200, 1700, 2200, 2700]; // approximate puddle X coords
-
-const POWERUP_COLORS: Record<string, string> = {
-  health: "#00ff00",
-  speed: "#00ccff",
-  energy: "#ffcc00",
-  damage: "#ff4444",
-};
-const POWERUP_ICONS: Record<string, string> = {
-  health: "❤️",
-  speed: "⚡",
-  energy: "🔋",
-  damage: "💥",
-};
-const DROP_CHANCE = 0.5;
 
 
 interface ComboState {
@@ -165,97 +159,10 @@ interface ComboState {
   specialEnergy: number;
 }
 
-const CANVAS_W = 800;
-const CANVAS_H = 400;
-const GROUND_Y = 320;
-const GRAVITY = 0.6;
-const PLAYER_SPEED = 3.5;
-const JUMP_FORCE = -12;
-const LEVEL_WIDTH = 3200;
-const COMBO_WINDOW = 40; // frames to chain inputs (generous window)
-const COMBO_HIT_WINDOW = 40; // frames before combo resets
-const MAX_ENERGY = 100;
 
-// Each level: 2 minion waves followed by a boss. Difficulty scales per level.
-interface LevelConfig {
-  waves: { count: number; hp: number; speed: number }[]; // minion waves before boss
-  boss: { hp: number; chargeSpeed: number; aiSpeed: number; dmgMult: number; name: string };
-  name: string;
-  theme: SceneTheme;
-}
+// Level roster, difficulty tuning, and world dimensions now live in
+// src/game/config/ — see the barrel import at the top of this file.
 
-type SceneTheme = "alley" | "city" | "suburbs" | "mall" | "park" | "office" | "chart";
-
-const LEVELS: LevelConfig[] = [
-  // Level 1 — easy intro boss
-  {
-    name: "ALLEY ROOKIE",
-    theme: "alley",
-    waves: [
-      { count: 2, hp: 20, speed: 1.0 },
-      { count: 3, hp: 25, speed: 1.2 },
-    ],
-    boss: { hp: 220, chargeSpeed: 4, aiSpeed: 1.2, dmgMult: 0.6, name: "JEET" },
-  },
-  {
-    name: "BACKSTREET BRAWLER",
-    theme: "city",
-    waves: [
-      { count: 3, hp: 30, speed: 1.3 },
-      { count: 3, hp: 35, speed: 1.5 },
-    ],
-    boss: { hp: 300, chargeSpeed: 4.5, aiSpeed: 1.5, dmgMult: 0.75, name: "RUGGER" },
-  },
-  {
-    name: "DOCKSIDE ENFORCER",
-    theme: "suburbs",
-    waves: [
-      { count: 3, hp: 40, speed: 1.5 },
-      { count: 4, hp: 45, speed: 1.7 },
-    ],
-    boss: { hp: 380, chargeSpeed: 5, aiSpeed: 1.8, dmgMult: 0.9, name: "BAD ACTOR" },
-  },
-  {
-    name: "NEON KINGPIN",
-    theme: "mall",
-    waves: [
-      { count: 4, hp: 50, speed: 1.7 },
-      { count: 4, hp: 55, speed: 1.9 },
-    ],
-    boss: { hp: 460, chargeSpeed: 5.5, aiSpeed: 2.0, dmgMult: 1.0, name: "FUDDER" },
-  },
-  {
-    name: "ROOFTOP REAPER",
-    theme: "park",
-    waves: [
-      { count: 4, hp: 60, speed: 1.9 },
-      { count: 5, hp: 65, speed: 2.1 },
-    ],
-    boss: { hp: 560, chargeSpeed: 6, aiSpeed: 2.2, dmgMult: 1.15, name: "EXIT LIQUIDITY" },
-  },
-  {
-    name: "UNDERGROUND WARLORD",
-    theme: "office",
-    waves: [
-      { count: 5, hp: 70, speed: 2.1 },
-      { count: 5, hp: 80, speed: 2.3 },
-    ],
-    boss: { hp: 680, chargeSpeed: 6.5, aiSpeed: 2.5, dmgMult: 1.3, name: "MR MARKETER" },
-  },
-  // Level 7 — final hardest boss
-  {
-    name: "DARK DOGE OVERLORD",
-    theme: "chart",
-    waves: [
-      { count: 5, hp: 90, speed: 2.3 },
-      { count: 6, hp: 100, speed: 2.5 },
-    ],
-    boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5, name: "TICKER THIEF" },
-  },
-];
-
-const WAVES_PER_LEVEL = 3; // 2 minion waves + 1 boss
-const TOTAL_LEVELS = LEVELS.length;
 
 interface Projectile {
   x: number; y: number; vx: number; vy: number; timer: number;
@@ -2953,32 +2860,7 @@ function createPlayer(): Entity {
   };
 }
 
-type Difficulty = "easy" | "normal" | "blackMonday";
-
-// Difficulty multipliers — easy keeps original counts; normal & Black Monday
-// add waves of extra goons. HP stays the same so the fight just gets busier.
-const DIFFICULTY_ENEMY_MULT: Record<Difficulty, number> = {
-  easy: 1,
-  normal: 1.7,
-  blackMonday: 3.0,
-};
-// Boss aggression scaling — lower cooldown + higher damage on harder modes
-const DIFFICULTY_BOSS_CD: Record<Difficulty, number> = {
-  easy: 1.0,
-  normal: 0.85,
-  blackMonday: 0.6,
-};
-const DIFFICULTY_BOSS_DMG: Record<Difficulty, number> = {
-  easy: 1.0,
-  normal: 1.15,
-  blackMonday: 1.4,
-};
-// Extra minions that join the boss fight
-const BOSS_WAVE_MINIONS: Record<Difficulty, number> = {
-  easy: 0,
-  normal: 2,
-  blackMonday: 4,
-};
+// Difficulty tier + multipliers are imported from src/game/config/difficulty.ts
 
 function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, diff: Difficulty = "normal"): Entity[] {
   const lvl = LEVELS[Math.min(levelIndex, LEVELS.length - 1)];
@@ -2995,12 +2877,7 @@ function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, di
   }));
 }
 
-const SPECIAL_ATTACKS: Record<string, { frames: number; range: number; dmg: number; knockback: number; energyCost: number }> = {
-  uppercut: { frames: 18, range: 50, dmg: 30, knockback: 8, energyCost: 25 },
-  spinkick: { frames: 20, range: 65, dmg: 25, knockback: 6, energyCost: 20 },
-  dashpunch: { frames: 14, range: 70, dmg: 22, knockback: 12, energyCost: 20 },
-  groundpound: { frames: 22, range: 80, dmg: 40, knockback: 10, energyCost: 40 },
-};
+// SPECIAL_ATTACKS is imported from src/game/config/combat.ts
 
 export const StreetBrawler: FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
