@@ -24,20 +24,27 @@
  * the migration map (2D systems -> planned 3D equivalents).
  * ============================================================================= */
 import { FC, useEffect, useRef, useState, useCallback } from "react";
-import waldogeMusic from "@/assets/waldoge-music.mp3";
-import waldogeCombatTheme from "@/assets/waldoge-combat-theme.mp3.asset.json";
-import waldogeArcade from "@/assets/waldoge-arcade.mp3.asset.json";
+// Static asset URLs + preloaded boss-head Image objects moved to
+// src/game/Assets.ts (Phase 1). Individual named exports are aliased below
+// so every existing draw-site keeps its short local name unchanged.
 import { motion, AnimatePresence } from "framer-motion";
 import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize, Pause, SkipForward, SkipBack } from "lucide-react";
-import waldogeHead from "@/assets/waldoge-head.png";
-import streetBrawlerCover from "@/assets/street-brawler-cover.png";
-import jeetBossHead from "@/assets/jeet-boss-head.png";
-import badActorBossHead from "@/assets/badactor-boss-head.png";
-import ruggerBossHead from "@/assets/rugger-boss-head.png";
-import fudderBossHead from "@/assets/boss-fudder-head.png";
-import exitLiquidityBossHead from "@/assets/boss-exit-liquidity-head.png";
-import mrMarketerBossHead from "@/assets/boss-mr-marketer-head.png";
-import tickerThiefBossHead from "@/assets/ticker-thief-head.png";
+import {
+  IMAGE_URLS,
+  AUDIO_URLS,
+  jeetHeadImg,
+  badActorHeadImg,
+  ruggerHeadImg,
+  fudderHeadImg,
+  exitLiquidityHeadImg,
+  mrMarketerHeadImg,
+  tickerThiefHeadImg,
+} from "@/game/Assets";
+const waldogeMusic = AUDIO_URLS.waldogeMusic;
+const waldogeCombatTheme = { url: AUDIO_URLS.waldogeCombatTheme };
+const waldogeArcade = { url: AUDIO_URLS.waldogeArcade };
+const waldogeHead = IMAGE_URLS.waldogeHead;
+const streetBrawlerCover = IMAGE_URLS.streetBrawlerCover;
 import { SFX } from "@/lib/gameSfx";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
