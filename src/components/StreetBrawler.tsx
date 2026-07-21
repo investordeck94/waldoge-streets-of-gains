@@ -188,19 +188,12 @@ interface Projectile {
   damage?: number;
 }
 
+// The boss factory now lives in src/game/enemy/Enemy.ts. This local wrapper
+// preserves the original signature so every call site continues to work
+// unchanged. The returned entity is byte-identical to the previous inline
+// literal (same clamp, same hitbox, same starting phase / cooldown).
 function spawnBoss(playerX: number, levelIndex: number): Entity {
-  const cfg = LEVELS[Math.min(levelIndex, LEVELS.length - 1)].boss;
-  // Clamp spawn x so the boss never appears past the level's right edge
-  // (which would leave them stuck off-world unable to reach the player).
-  const spawnX = Math.min(LEVEL_WIDTH - 80, Math.max(playerX + 350, playerX + 500));
-  return {
-    x: spawnX, y: GROUND_Y, vy: 0, vx: 0,
-    width: 50, height: 90, facing: -1,
-    hp: cfg.hp, maxHp: cfg.hp,
-    state: "idle", stateTimer: 0, attackCooldown: 60,
-    isBoss: true, bossPhase: 1, aiTimer: 90,
-    bossName: cfg.name,
-  };
+  return spawnBossModule(playerX, levelIndex);
 }
 
 function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
