@@ -41,6 +41,14 @@ import tickerThiefBossHead from "@/assets/ticker-thief-head.png";
 import { SFX } from "@/lib/gameSfx";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
+// Player module — data model + pure helpers for player state, HP, stamina,
+// movement and animation-state queries. See src/game/player/Player.ts for the
+// full explanation of what was (and was NOT) extracted, and why.
+import {
+  createPlayer as createPlayerModule,
+  type PlayerEntity,
+  type PlayerAttackState,
+} from "@/game/player/Player";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
