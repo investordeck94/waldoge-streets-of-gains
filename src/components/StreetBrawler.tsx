@@ -120,8 +120,6 @@ interface PowerUp {
   timer: number;
 }
 
-type WeaponType = "bat" | "sword" | "shuriken";
-
 interface WeaponPickup {
   x: number;
   y: number;
@@ -130,14 +128,6 @@ interface WeaponPickup {
   collected: boolean;
   timer: number;
 }
-
-const WEAPON_STATS: Record<WeaponType, { duration: number; rangeBonus: number; dmgMult: number; color: string; icon: string; name: string }> = {
-  bat:      { duration: 600, rangeBonus: 25, dmgMult: 1.8, color: "#ff8c00", icon: "🏏", name: "BAT" },
-  sword:    { duration: 480, rangeBonus: 35, dmgMult: 2.2, color: "#00ccff", icon: "⚔️", name: "SWORD" },
-  shuriken: { duration: 360, rangeBonus: 10, dmgMult: 1.3, color: "#cc44ff", icon: "✦", name: "SHURIKEN" },
-};
-const SHURIKEN_AMMO = 5;
-const WEAPON_DROP_CHANCE = 0.25;
 
 interface RainDrop {
   x: number;
@@ -157,22 +147,6 @@ interface Splash {
   inPuddle: boolean;
 }
 
-const RAIN_COUNT = 120;
-const PUDDLE_POSITIONS = [200, 700, 1200, 1700, 2200, 2700]; // approximate puddle X coords
-
-const POWERUP_COLORS: Record<string, string> = {
-  health: "#00ff00",
-  speed: "#00ccff",
-  energy: "#ffcc00",
-  damage: "#ff4444",
-};
-const POWERUP_ICONS: Record<string, string> = {
-  health: "❤️",
-  speed: "⚡",
-  energy: "🔋",
-  damage: "💥",
-};
-const DROP_CHANCE = 0.5;
 
 
 interface ComboState {
@@ -185,97 +159,10 @@ interface ComboState {
   specialEnergy: number;
 }
 
-const CANVAS_W = 800;
-const CANVAS_H = 400;
-const GROUND_Y = 320;
-const GRAVITY = 0.6;
-const PLAYER_SPEED = 3.5;
-const JUMP_FORCE = -12;
-const LEVEL_WIDTH = 3200;
-const COMBO_WINDOW = 40; // frames to chain inputs (generous window)
-const COMBO_HIT_WINDOW = 40; // frames before combo resets
-const MAX_ENERGY = 100;
 
-// Each level: 2 minion waves followed by a boss. Difficulty scales per level.
-interface LevelConfig {
-  waves: { count: number; hp: number; speed: number }[]; // minion waves before boss
-  boss: { hp: number; chargeSpeed: number; aiSpeed: number; dmgMult: number; name: string };
-  name: string;
-  theme: SceneTheme;
-}
+// Level roster, difficulty tuning, and world dimensions now live in
+// src/game/config/ — see the barrel import at the top of this file.
 
-type SceneTheme = "alley" | "city" | "suburbs" | "mall" | "park" | "office" | "chart";
-
-const LEVELS: LevelConfig[] = [
-  // Level 1 — easy intro boss
-  {
-    name: "ALLEY ROOKIE",
-    theme: "alley",
-    waves: [
-      { count: 2, hp: 20, speed: 1.0 },
-      { count: 3, hp: 25, speed: 1.2 },
-    ],
-    boss: { hp: 220, chargeSpeed: 4, aiSpeed: 1.2, dmgMult: 0.6, name: "JEET" },
-  },
-  {
-    name: "BACKSTREET BRAWLER",
-    theme: "city",
-    waves: [
-      { count: 3, hp: 30, speed: 1.3 },
-      { count: 3, hp: 35, speed: 1.5 },
-    ],
-    boss: { hp: 300, chargeSpeed: 4.5, aiSpeed: 1.5, dmgMult: 0.75, name: "RUGGER" },
-  },
-  {
-    name: "DOCKSIDE ENFORCER",
-    theme: "suburbs",
-    waves: [
-      { count: 3, hp: 40, speed: 1.5 },
-      { count: 4, hp: 45, speed: 1.7 },
-    ],
-    boss: { hp: 380, chargeSpeed: 5, aiSpeed: 1.8, dmgMult: 0.9, name: "BAD ACTOR" },
-  },
-  {
-    name: "NEON KINGPIN",
-    theme: "mall",
-    waves: [
-      { count: 4, hp: 50, speed: 1.7 },
-      { count: 4, hp: 55, speed: 1.9 },
-    ],
-    boss: { hp: 460, chargeSpeed: 5.5, aiSpeed: 2.0, dmgMult: 1.0, name: "FUDDER" },
-  },
-  {
-    name: "ROOFTOP REAPER",
-    theme: "park",
-    waves: [
-      { count: 4, hp: 60, speed: 1.9 },
-      { count: 5, hp: 65, speed: 2.1 },
-    ],
-    boss: { hp: 560, chargeSpeed: 6, aiSpeed: 2.2, dmgMult: 1.15, name: "EXIT LIQUIDITY" },
-  },
-  {
-    name: "UNDERGROUND WARLORD",
-    theme: "office",
-    waves: [
-      { count: 5, hp: 70, speed: 2.1 },
-      { count: 5, hp: 80, speed: 2.3 },
-    ],
-    boss: { hp: 680, chargeSpeed: 6.5, aiSpeed: 2.5, dmgMult: 1.3, name: "MR MARKETER" },
-  },
-  // Level 7 — final hardest boss
-  {
-    name: "DARK DOGE OVERLORD",
-    theme: "chart",
-    waves: [
-      { count: 5, hp: 90, speed: 2.3 },
-      { count: 6, hp: 100, speed: 2.5 },
-    ],
-    boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5, name: "TICKER THIEF" },
-  },
-];
-
-const WAVES_PER_LEVEL = 3; // 2 minion waves + 1 boss
-const TOTAL_LEVELS = LEVELS.length;
 
 interface Projectile {
   x: number; y: number; vx: number; vy: number; timer: number;
