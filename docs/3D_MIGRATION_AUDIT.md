@@ -84,6 +84,23 @@ Engine-agnostic modules under `src/game/core/`:
 ## Recommended next steps (in order)
 
 1. **Extract the render loop driver** from `StreetBrawler.tsx` into a `useGameLoop(update, render)` hook. Enables swapping `render` for a 3D one.
-2. **Move each `drawXxx` into `src/game/render2d/`** with signature `(ctx, entity, camX) => void`. Then add `src/game/render3d/` shadow files.
-3. **Replace inline collision/gravity/camera math** in the loop with `@/game/core` calls, one function at a time, verifying gameplay parity after each swap.
+2. **Move each `drawXxx` into `src/game/presentation/render2d/`** with signature `(ctx, entity, camX) => void`. Then add `src/game/presentation/render3d/` shadow files.
+3. **Replace inline collision/gravity/camera math** in the loop with `@/game/engine` calls, one function at a time, verifying gameplay parity after each swap.
 4. **Introduce an event bus** for SFX/particles so audio and effects are triggered by state changes, not hand-called at each transition site.
+
+## Phase 2 update (layer scaffolding)
+
+Landed:
+
+- `src/game/engine/` barrel + README codifying the "no React / no DOM / no canvas / deterministic" rule; re-exports `core/` and `config/` plus a new `vec.ts` for 2D+3D vector math.
+- `src/game/logic/` barrel + README codifying the "may import engine, may not import presentation" rule; re-exports player/enemy factories, state store, and combat data tables.
+- `src/game/presentation/README.md` describing the planned `render2d/` + `render3d/` split.
+- `StreetBrawler.tsx` gains a Presentation-layer banner marking it as the single renderer + rAF owner today.
+
+Deliberately NOT landed:
+
+- `src/game/logic/combat/rules.ts` was on the plan but skipped: extracting the damage/knockback formulas without swapping the loop's call sites would create a second source of truth. It will land in the same phase that consumes it, to keep exactly one authoritative implementation at all times.
+- No file moves and no behavioural code changes. Existing deep imports continue to work; new code should use the barrels.
+
+Renderer-swap readiness delta: +1 (the boundary is now documented and enforceable in review). The loop itself is unchanged.
+
