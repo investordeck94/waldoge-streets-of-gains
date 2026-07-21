@@ -1,169 +1,237 @@
+&nbsp;
+
 Approved with one modification.
 
-Proceed with the proposed Phase 4 except for one implementation detail.
+Proceed with the proposed Phase 5 except for one implementation detail.
 
-Do not introduce a new gameplay tuning constant inside the Engine Core if it belongs to gameplay configuration.
+Do not move presentation-oriented types into src/game/core/types.ts.
 
 Instead:
 
-- Reuse the existing central configuration system if POWERUP_GRAVITY is a gameplay tuning value.
+- Keep Engine Core types focused on engine-agnostic world simulation.
 
-- Keep the Engine Core focused on deterministic behaviour.
+- If the presentation-only types cannot yet move to a dedicated presentation/types module without increasing complexity, leave them in the existing compatibility shim for this phase and document the dependency.
 
-- Keep gameplay tuning values centralized in the configuration layer wherever practical.
+- Introduce presentation/types only when the Presentation layer is formally split in a later phase.
 
-- Preserve identical gameplay.
-
-- Preserve identical execution order.
-
-- Preserve identical timing.
-
-- Preserve zero per-frame allocations.
+The Engine Core should remain free of rendering-oriented or presentation-only concepts wherever practical.
 
 Everything else in the proposal is approved.
 
 After implementation:
 
-- Confirm no additional allocations occur.
-
 - Confirm gameplay parity.
 
-- Confirm performance parity.
+- Confirm zero allocation changes.
 
-- Confirm the gravity value is sourced from the existing configuration architecture rather than creating another independent gameplay constant.
+- Confirm backwards compatibility.
 
-# Phase 4 Proposal — Power-up Kinematics Extraction
+- Confirm there is still only one authoritative source of truth for engine types.
 
-Status: **Proposal only. No files modified. Awaiting approval.**
+# Phase 5 Proposal — Deprecate Legacy Shims & Unify Shared Types
 
-Mirrors the Phase 3 pattern (`stepProjectile`): move only the deterministic per-frame arithmetic into the Engine Core; everything else stays in `StreetBrawler.tsx`.
+## 0. Objective
 
----
-
-## 1. Scope
-
-Extract exactly two operations from the power-up update block in `StreetBrawler.tsx` (lines 4019–4035) into a new pure helper in the Engine Core:
-
-1. Vertical velocity integration: `pu.vy += GRAVITY_POWERUP`
-2. Position integration: `pu.y += pu.vy`
-3. Lifetime tick: `pu.timer--`
-
-Plus a returned `prevY` value so the caller can still perform its own platform-landing check without a second read.
-
-**Not in scope (stays in `StreetBrawler.tsx`, verbatim):**
-
-- Platform landing / snap-to-top loop over `g.platforms`
-- Ground clamp against `GROUND_Y` (touches renderer-owned constant, kept alongside collision code)
-- Player pickup radius check (`dx < 30 && dy < 40`)
-- Applying power-up effects (HP, energy, timers, `setPlayerHp`, `setEnergy`, `g.effects.push`, SFX)
-- Filter return values (`return false` / `pu.timer > 0`)
-- `g.speedBoostTimer` / `g.dmgBoostTimer` decrements (gameplay-owned timers)
-- Spawning (`spawnPlatformPickups`, boss/object drops)
-- All rendering (lines 4453+)
-
----
-
-## 2. Deliverables
-
-- `src/game/engine/powerup.ts`
-  - `export const POWERUP_GRAVITY = 0.3;`
-  - `export function stepPowerUp(pu: PowerUp): number` — mutates `vy`, `y`, `timer` in place; returns the pre-integration `y` (prevY) for the caller's platform check. Zero allocations.
-- `src/game/engine/__tests__/powerup.test.ts` — Vitest suite (see §8).
-- `src/game/engine/index.ts` — add barrel export.
-- One edit in `src/components/StreetBrawler.tsx` (~4 lines replaced with 1 call + `prevY` binding).
-- Append a Phase 4 entry to `docs/3D_MIGRATION_AUDIT.md`.
-
----
-
-## 3. Every Dependency
-
-**New file imports:** `PowerUp` type from `@/game/Types` only. No React, DOM, canvas, audio, or state.
-
-**Consumers of the new helper:** `src/components/StreetBrawler.tsx` (single caller inside the rAF loop).
-
-**Data touched by helper:** `pu.vy`, `pu.y`, `pu.timer`. Nothing else on `PowerUp` is read or written.
-
-**Constants:** `POWERUP_GRAVITY = 0.3` is currently a magic number inline on line 4021. It is not referenced anywhere else in the codebase (verified — only projectile gravity `0.15` lives in `Constants`/engine). Naming it does not change any other system.
-
----
-
-## 4. Every Interaction with the rAF Loop
-
-- The rAF loop remains the single authoritative loop. No new loops, no timers, no `requestAnimationFrame` calls in the engine layer.
-- Call site is unchanged in position: still inside `g.powerups.filter(pu => { ... })` in the same frame slot.
-- Execution order is preserved exactly:
-  1. `prevY = stepPowerUp(pu)` (was: read `pu.y`, mutate `vy`, mutate `y`)
-  2. Platform snap loop (unchanged)
-  3. Ground clamp (unchanged)
-  4. `pu.timer--` moves *into* `stepPowerUp` — verified safe because nothing between the old `pu.y += pu.vy` and `pu.timer--` reads `timer`.
-  5. Pickup check + effects (unchanged)
-  6. `return pu.timer > 0` (unchanged)
-- No change to frame budget, no change to iteration order, no change to array identity.
-
----
-
-## 5. Risk Assessment
+Turn `src/game/Constants.ts`, `src/game/Types.ts`, and `src/game/Assets.ts` into thin **deprecated re-export layers** whose only remaining consumer is `src/components/StreetBrawler.tsx`, and establish a single authoritative source of truth per concern:
 
 
-| Risk                                              | Likelihood | Mitigation                                                                         |
-| ------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------- |
-| Behavior drift from reordering `timer--`          | Very low   | Frame-parity test asserts identical `vy/y/timer` after N ticks vs. reference impl. |
-| Allocation from returning `prevY`                 | None       | Primitive number return, no object.                                                |
-| Type drift if `PowerUp` shape changes             | Low        | Helper imports the same `PowerUp` type used by the caller; TS enforces.            |
-| Accidental read of stale `pu.y` in platform check | Low        | Helper returns `prevY`; caller uses it explicitly. Tested.                         |
-| Constant divergence (`0.3` vs `POWERUP_GRAVITY`)  | None       | Single named export used by both the helper and (optionally) any future consumer.  |
+| Concern                                                                   | Authoritative source              |
+| ------------------------------------------------------------------------- | --------------------------------- |
+| Numeric tunables & config types                                           | `src/game/config/**`              |
+| Engine-agnostic gameplay types (Actor, Projectile, PowerUp, AABB, Vec2/3) | `src/game/core/types.ts`          |
+| Deterministic engine helpers                                              | `src/game/engine/**`              |
+| Gameplay rules / entities / state                                         | `src/game/logic/**`               |
+| Static asset URLs & preloaded images                                      | `src/game/assets/**` (new folder) |
 
 
-Overall risk: **very low** — identical pattern to the approved Phase 3 extraction.
+No runtime code moves. No values change. No gameplay, physics, timing, AI, camera, rendering, or per-frame allocations are altered.
 
----
+## 1. Current State (measured)
 
-## 6. Performance Impact
+- `Constants.ts` (63 lines): **already** a pure re-export of `@/game/config`. Nothing to unify — only needs the `@deprecated` JSDoc tag.
+- `Assets.ts` (102 lines): the **only** module that actually preloads boss-head `Image()` objects. Not a shim yet — it owns state.
+- `Types.ts` (120 lines): owns 7 interface definitions (`HitEffect`, `PowerUp`, `WeaponPickup`, `RainDrop`, `Splash`, `ComboState`, `Projectile`) and re-exports `Entity`/`AttackState` from `Player.ts`.
+- Only importer of any of the three shims: `src/components/StreetBrawler.tsx` (lines 49, 142).
+- Duplicate type surfaces detected:
+  - `PlayerEntity` in `game/player/Player.ts` (canonical) vs `Entity = PlayerEntity` alias in `StreetBrawler.tsx` and in `Types.ts`.
+  - `Actor` in `game/core/types.ts` (engine-agnostic, world-space) — **not** used by the loop yet; structurally overlaps with `PlayerEntity`.
+  - `Projectile` **defined twice**: `game/Types.ts` and `game/core/types.ts` (shapes are compatible but not identical — the Types.ts one has no doc comments; the core one has a `/** Frames remaining */` note).
+  - `PowerUp` **defined twice**: `game/Types.ts` and `game/core/types.ts` (compatible shapes).
 
-- One additional function call per power-up per frame. Power-up array is small (typically 0–10 entities). V8 will inline.
-- No allocations (primitive return, in-place mutation).
-- No additional property reads (helper reads `vy`, `y`, `timer` which the caller previously read anyway).
-- Expected delta: **unmeasurable**. Same profile as Phase 3.
+Duplicate `Projectile`/`PowerUp` is currently invisible because nothing imports them from `@/game/engine` (which re-exports `../core`). The moment a caller does, TypeScript will surface an ambiguity. This must be fixed *before* Phase 6 adopts more engine modules.
 
----
+## 2. Proposed End State
 
-## 7. Allocation Analysis
+```text
+src/game/
+├── config/                (SOURCE OF TRUTH: numbers + config types)
+├── core/types.ts          (SOURCE OF TRUTH: Actor, AABB, Vec2/3, Projectile, PowerUp, Platform)
+├── engine/                (SOURCE OF TRUTH: deterministic helpers)
+├── logic/                 (SOURCE OF TRUTH: player/enemy/state)
+├── assets/
+│   ├── index.ts           (SOURCE OF TRUTH: IMAGE_URLS, AUDIO_URLS, BOSS_HEAD_IMAGES, individual aliases)
+│   └── README.md
+├── Constants.ts           (DEPRECATED SHIM → re-exports @/game/config, @deprecated JSDoc)
+├── Types.ts               (DEPRECATED SHIM → re-exports @/game/core/types + presentation-only types)
+└── Assets.ts              (DEPRECATED SHIM → re-exports @/game/assets)
+```
 
-- Helper body: no `new`, no object/array literals, no closures, no destructuring returns.
-- Return value: `number` (stack, no heap).
-- Caller change: `const prevY = stepPowerUp(pu);` — one stack local, replaces the existing `const prevY = pu.y;`. **Net allocations: 0.**
+`StreetBrawler.tsx` continues to import from the shim paths in Phase 5. Migration of its import sites is deferred to a later phase to keep Phase 5 diff minimal.
 
----
+## 3. Files Modified / Created / Unchanged
 
-## 8. Verification Plan
+### 3.1 New files
 
-Vitest suite `src/game/engine/__tests__/powerup.test.ts`, following the Phase 3 template:
+- `src/game/assets/index.ts` — moved content of current `Assets.ts` verbatim (same imports, same `preload()` IIFE, same named exports). Byte-identical preload timing.
+- `src/game/assets/README.md` — 1-page note on preload semantics and SSR guard.
+- `src/game/core/types.ts` — **additions only**: three new presentation-only interfaces that today live in `Types.ts` (`HitEffect`, `WeaponPickup`, `RainDrop`, `Splash`, `ComboState`). *See §4 for the split rationale.*
+- `docs/DEPRECATIONS.md` — table of every shim, replacement import path, and target removal phase.
 
-1. `POWERUP_GRAVITY === 0.3` (locks the tunable).
-2. Single-tick: `vy` increases by exactly `0.3`.
-3. Single-tick: `y` increases by post-integration `vy` (matches original order).
-4. Returned `prevY` equals input `y` before mutation.
-5. `timer` decrements by exactly 1 per call.
-6. 60-tick frame-parity vs. inline reference implementation (vy, y, timer all identical).
-7. Identity preservation: same object reference in / out (no clone).
-8. Negative `vy` (upward toss from boss drop, initial `vy: -3`) integrates correctly across apex.
-9. Zero-timer input still decrements to `-1` (caller owns the `> 0` filter — helper must not clamp).
-10. Untouched fields (`x`, `type`) are not mutated.
+### 3.2 Modified files
 
-Additional manual checks:
+- `src/game/Constants.ts` — add `@deprecated` JSDoc pointing at `@/game/config`. Body unchanged (already a re-export).
+- `src/game/Types.ts` — becomes pure re-export:
+  - `export type { Projectile, PowerUp } from "@/game/core/types";`
+  - `export type { HitEffect, WeaponPickup, RainDrop, Splash, ComboState } from "@/game/core/types";`
+  - `export type { PlayerEntity as Entity, PlayerAttackState as AttackState } from "@/game/player/Player";`
+  - `export type { WeaponType } from "@/game/config";`
+  - Add `@deprecated` JSDoc.
+- `src/game/Assets.ts` — becomes `export * from "@/game/assets";` plus `@deprecated` JSDoc.
+- `src/game/core/types.ts` — **additive** interface definitions from §4. No changes to existing `Actor`, `AABB`, `Vec2/3`, `Projectile`, `PowerUp`, `Platform`.
+- `src/game/engine/index.ts` — no change (already re-exports `../core`). Explicit re-export list may be tightened *only if* Phase 5 verification detects a name collision; otherwise untouched.
+- `docs/3D_MIGRATION_AUDIT.md` — append Phase 5 completion row.
 
-- `tsgo` clean.
-- Build clean.
-- Smoke-play one wave on each difficulty; confirm health/speed/energy/damage pickups still fall, land on platforms, and are collectible.
+### 3.3 Files that MUST remain unchanged
 
----
+- `src/components/StreetBrawler.tsx` (imports keep hitting the shim paths).
+- `src/game/player/Player.ts` — `PlayerEntity` remains the canonical player shape.
+- `src/game/enemy/Enemy.ts`.
+- `src/game/engine/projectile.ts`, `src/game/engine/powerup.ts`, `src/game/engine/vec.ts` and their tests.
+- `src/game/config/**`.
+- `src/game/state/**`.
+- `src/game/logic/index.ts`.
+- Every draw/update code path inside the rAF loop.
 
-## 9. Renderer-Readiness Impact
+## 4. Handling Duplicate Types
 
-- Moves another pure kinematic primitive out of the React/Canvas component and into the engine-agnostic `src/game/engine/` layer — reusable by a future Three.js / WebGL renderer with no change.
-- Establishes the "stepEntity(entity): prevValue" convention as the standard shape for in-place engine helpers that need to expose pre-state for collision resolution. Power-ups and projectiles now share this pattern; future candidates (weapon pickups, rain drops, splashes) can follow it verbatim.
-- Keeps the rAF loop, collision, pickup, spawning, timers, React state, rendering, and audio exactly where they are — no renderer-facing surface changes in this phase.
+### 4.1 `Projectile` and `PowerUp` (duplicated in `Types.ts` and `core/types.ts`)
 
----
+Shapes are already structurally compatible. Chosen resolution:
 
-**Awaiting approval before implementation.**
+1. Treat `core/types.ts` as the canonical definition.
+2. Delete the inline definitions in `Types.ts` and re-export from `core/types.ts` instead.
+
+Because TypeScript uses structural typing, existing usages in `StreetBrawler.tsx` (which spread these into per-frame buffers) continue to type-check unchanged. The `stepProjectile`/`stepPowerUp` helpers already accept the `core/types.ts` shape, so their call sites become *more* precisely typed — with zero runtime effect.
+
+### 4.2 Presentation-only types (`HitEffect`, `WeaponPickup`, `RainDrop`, `Splash`, `ComboState`)
+
+These describe visual/particle/UI state, not world simulation. Two viable homes:
+
+- **Option A (recommended):** Move them into `core/types.ts` under a `// Presentation-side buffers` section. Pros: one file to read; matches how `Projectile`/`PowerUp` already live there. Cons: mixes rendering-oriented data with world-simulation data.
+- **Option B:** Create `src/game/presentation/types.ts` and export from there. Pros: cleaner boundary. Cons: introduces a Presentation import surface before Phase 10 is ready.
+
+Proposal chooses **Option A** for Phase 5 (minimum surface area, defers Presentation layer creation to Phase 10). If Phase 10 later prefers to relocate them, that becomes a single find-and-replace behind the same shim.
+
+### 4.3 `Entity` / `PlayerEntity` / `Actor`
+
+- Keep `PlayerEntity` as the runtime shape used by the loop (StreetBrawler, Player, Enemy).
+- Keep `Actor` in `core/types.ts` as the *engine-agnostic world-space* interface — do **not** merge with `PlayerEntity` yet. `Actor` uses world coordinates and no rendering fields; `PlayerEntity` currently carries loop/animation fields the renderer relies on. Merging them prematurely risks a rendering regression.
+- Add a JSDoc note in `core/types.ts` explicitly stating: *"`Actor` is the future 3D-safe superset; `PlayerEntity` will structurally satisfy `Actor` after Phase 8 (physics adoption). Do not import `Actor` into the rAF loop yet."*
+- No code touches `PlayerEntity` in Phase 5.
+
+## 5. Import Map (Before / After)
+
+
+| Import path         | Before             | After Phase 5                 | After eventual removal                                   |
+| ------------------- | ------------------ | ----------------------------- | -------------------------------------------------------- |
+| `@/game/Constants`  | ✔ (thin re-export) | ✔ deprecated                  | replaced by `@/game/config`                              |
+| `@/game/Types`      | ✔ (owns defs)      | ✔ deprecated (pure re-export) | replaced by `@/game/core/types` + `@/game/player/Player` |
+| `@/game/Assets`     | ✔ (owns preload)   | ✔ deprecated (pure re-export) | replaced by `@/game/assets`                              |
+| `@/game/assets`     | —                  | new canonical path            | canonical                                                |
+| `@/game/core/types` | ✔                  | ✔ (superset)                  | canonical                                                |
+| `@/game/config`     | ✔                  | ✔                             | canonical                                                |
+| `@/game/engine`     | ✔                  | ✔ (unchanged)                 | canonical                                                |
+| `@/game/logic`      | ✔                  | ✔ (unchanged)                 | canonical                                                |
+
+
+`StreetBrawler.tsx` imports at lines 49 and 142 stay as-is in Phase 5.
+
+## 6. Backwards Compatibility
+
+- Every public export name kept: `IMAGE_URLS`, `AUDIO_URLS`, `BOSS_HEAD_IMAGES`, `jeetHeadImg` … `tickerThiefHeadImg`, `HitEffect`, `PowerUp`, `WeaponPickup`, `RainDrop`, `Splash`, `ComboState`, `Projectile`, `Entity`, `AttackState`, `WeaponType`, and the 20+ constants surfaced by `Constants.ts`.
+- Boss-head preload IIFE stays at module-import time from `assets/index.ts`. The shim re-export path (`Assets.ts`) does not add a new module boundary that would delay the `new Image()` calls — ES module re-exports are evaluated eagerly on first import, and `StreetBrawler.tsx` still imports `@/game/Assets` at top level, so the `Image` handles are created at the same instant in the module graph as today.
+- `waldogeHead` lazy load path inside the component is left alone (Assets.ts already documents this).
+
+## 7. Risk Assessment
+
+
+| Change                                         | Gameplay                 | Performance | Timing                              | Type safety                                       | 3D-migration benefit                                        |
+| ---------------------------------------------- | ------------------------ | ----------- | ----------------------------------- | ------------------------------------------------- | ----------------------------------------------------------- |
+| `Constants.ts` → add `@deprecated` JSDoc       | none                     | none        | none                                | none                                              | signals canonical path                                      |
+| `Types.ts` → re-export from `core/types.ts`    | none (structural compat) | none        | none                                | tightens: single canonical `Projectile`/`PowerUp` | removes duplicate that would block Phase 8/10               |
+| `Assets.ts` → re-export from `assets/index.ts` | none                     | none        | preload fires at same tick (see §6) | none                                              | asset layer becomes independently swappable for a 3D loader |
+| Add presentation types to `core/types.ts`      | none                     | none        | none                                | tighter: fewer definitions                        | Presentation types visible to future renderers              |
+| Leave `PlayerEntity`/`Actor` distinct          | none                     | none        | none                                | none (unchanged)                                  | staged — merged only after Phase 8 physics adoption         |
+
+
+Zero per-frame allocation change: no new object literals are introduced anywhere on the hot path. All edits are file-level re-exports evaluated once at module load.
+
+## 8. Implementation Strategy
+
+- The rAF loop in `StreetBrawler.tsx` is untouched.
+- No gameplay ownership moves. No files under `engine/`, `logic/`, `player/`, `enemy/`, `state/`, or `config/` are modified (except additive types in `core/types.ts`).
+- No rendering code moves.
+- Ordering, so each step is independently verifiable:
+  1. Create `src/game/assets/index.ts` + README (copy content verbatim).
+  2. Add the 5 presentation types to `core/types.ts` (additive).
+  3. Rewrite `Assets.ts` and `Types.ts` as pure re-exports; add `@deprecated` JSDoc to all three shims.
+  4. Add `docs/DEPRECATIONS.md` and append the Phase 5 row to `docs/3D_MIGRATION_AUDIT.md`.
+
+Each step compiles cleanly on its own. No intermediate state breaks the build.
+
+## 9. Verification Plan
+
+- **Typecheck**: `tsgo` clean — special attention to `StreetBrawler.tsx` types for `Projectile[]`, `PowerUp[]`, and pickup arrays.
+- **Build**: production `bun run build` succeeds without new warnings.
+- **Import validation**: `rg -n "from ['\"]@/game/(Constants|Types|Assets)['\"]" src/` shows exactly the same 2 lines in `StreetBrawler.tsx` as today.
+- **Duplicate-type validation**: `rg -n "^export (interface|type) (Projectile|PowerUp|HitEffect|WeaponPickup|RainDrop|Splash|ComboState)\b" src/` returns exactly one hit per name (all in `core/types.ts`).
+- **Gameplay parity**: manual smoke test — start Level 1, land 2 hits, throw a shuriken, collect a power-up, take boss damage; frame times and behaviours unchanged.
+- **Zero-behavioural-change proof**: existing Vitest suites (`projectile.test.ts`, `powerup.test.ts`) — 25/25 must remain green with **no test file edits**.
+- **Zero-allocation proof**: shim rewrite adds no `new`, no object/array literals, no arrow functions on hot paths. `rg -n "\bnew \b|=>\s*\(" src/game/{Constants,Types,Assets}.ts src/game/assets/index.ts` audited before merge.
+
+## 10. Deliverables
+
+**New files**
+
+- `src/game/assets/index.ts`
+- `src/game/assets/README.md`
+- `docs/DEPRECATIONS.md`
+
+**Modified files**
+
+- `src/game/Constants.ts` (JSDoc only)
+- `src/game/Types.ts` (body → pure re-exports)
+- `src/game/Assets.ts` (body → pure re-export)
+- `src/game/core/types.ts` (additive: 5 presentation interfaces)
+- `docs/3D_MIGRATION_AUDIT.md` (append Phase 5 row)
+
+**Deprecated files (kept, do not delete this phase)**
+
+- `src/game/Constants.ts`
+- `src/game/Types.ts`
+- `src/game/Assets.ts`
+
+**Remaining technical debt after Phase 5**
+
+- `StreetBrawler.tsx` still imports from the three shim paths.
+- `PlayerEntity` and `Actor` remain distinct (intentional; merged post-Phase 8).
+- `gameRef` mega-interface still lives inside `StreetBrawler.tsx`.
+- `waldogeHead` still lazy-loaded inside the component.
+
+## 11. Recommended Phase 6
+
+**Adopt shim-free imports in `StreetBrawler.tsx`.** Mechanical, one-file diff: replace `@/game/Constants|Types|Assets` imports with `@/game/config`, `@/game/core/types`, `@/game/player/Player`, and `@/game/assets`. After Phase 6 succeeds, the three shim files can be deleted in Phase 7 with a single `rm`. This ordering keeps every phase reversible and each diff small.
+
+## 12. Awaiting Approval
+
+No files will be modified until you approve this proposal.
