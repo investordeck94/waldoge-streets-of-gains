@@ -1,4 +1,21 @@
 /* =============================================================================
+ * PRESENTATION LAYER — 2D canvas renderer for "Waldoge: Streets of Gains".
+ *
+ * Architecture role: this file is the single Presentation-layer module today.
+ * It owns the requestAnimationFrame loop, DPR handling, canvas draw calls,
+ * touch/keyboard input wiring, and the React lifecycle glue. It is
+ * INTENTIONALLY the only place in the game that touches
+ * `CanvasRenderingContext2D`.
+ *
+ * Layer rules (see src/game/presentation/README.md):
+ *   • May import from @/game/engine and @/game/logic.
+ *   • Must not add new gameplay rules here — those belong in @/game/logic.
+ *   • The rAF loop stays here until an extraction is proven safe end-to-end.
+ *
+ * Future 3D renderer will live at src/game/presentation/render3d/ and will
+ * consume the same Actor / Projectile / PowerUp / Platform types from
+ * @/game/engine without changes to Logic.
+ *
  * StreetBrawler — "Waldoge: Streets of Gains"
  * -----------------------------------------------------------------------------
  * Custom 2D side-scrolling brawler built on a single <canvas> element driven by
