@@ -63,7 +63,7 @@ const waldogeArcade = { url: AUDIO_URLS.waldogeArcade };
 const waldogeHead = IMAGE_URLS.waldogeHead;
 const streetBrawlerCover = IMAGE_URLS.streetBrawlerCover;
 import { SFX } from "@/lib/gameSfx";
-import { stepProjectile, stepPowerUp } from "@/game/engine";
+import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
 // Player module — data model + pure helpers for player state, HP, stamina,
