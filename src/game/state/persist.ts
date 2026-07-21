@@ -189,7 +189,7 @@ export interface LoadDiagnostics {
 const reasonOf = (r: UnpackResult | undefined): string => {
   if (!r) return "empty";
   if (r.ok) return "ok";
-  return r.reason;
+  return (r as { ok: false; reason: string }).reason;
 };
 
 let lastLoadDiagnostics: LoadDiagnostics = { source: "none", primaryStatus: "empty" };
@@ -236,14 +236,14 @@ export function loadGameState(): GameState | null {
     lastLoadDiagnostics = {
       source: "settings-only",
       primaryStatus: reasonOf(primaryResult),
-      backupStatus: backupResult?.reason,
+      backupStatus: reasonOf(backupResult),
     };
     return fresh;
   }
   lastLoadDiagnostics = {
     source: "none",
     primaryStatus: reasonOf(primaryResult),
-    backupStatus: backupResult?.reason,
+    backupStatus: reasonOf(backupResult),
   };
   return null;
 }
