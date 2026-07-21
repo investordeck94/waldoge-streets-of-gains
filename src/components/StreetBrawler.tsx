@@ -1,3 +1,28 @@
+/* =============================================================================
+ * StreetBrawler — "Waldoge: Streets of Gains"
+ * -----------------------------------------------------------------------------
+ * Custom 2D side-scrolling brawler built on a single <canvas> element driven by
+ * a requestAnimationFrame game loop. This file is intentionally monolithic to
+ * keep hot-path state (entities, particles, camera) inside one closure and
+ * avoid per-frame allocations across module boundaries.
+ *
+ * Major systems (search headers below to jump to them):
+ *   • Asset preloading         — boss head <Image> objects hoisted at module scope
+ *   • Type model               — Entity / HitEffect / PowerUp / WeaponPickup / RainDrop / Splash
+ *   • Tunables                 — WEAPON_STATS, RAIN_COUNT, POWERUP_COLORS, difficulty tables
+ *   • Level / environment      — parallax layers, platforms, weather, puddles
+ *   • Combat                   — MOVE_SETS (fightMoves.ts) + STYLES (fightStyles.ts) + input buffer
+ *   • AI                       — grunt + boss state machines with phase transitions
+ *   • Rendering                — drawStickFigure (Waldoge skin), HUD, effects, camera
+ *   • Audio                    — SFX bank (gameSfx.ts) + music tracks
+ *   • Input                    — keyboard + touch on-screen controls
+ *
+ * NOTE (2026-07 architecture pass): This file is being prepared for a future
+ * 3D evolution. Do NOT change gameplay, physics, animations, controls, or AI
+ * without an explicit request. Purely additive comments and type refinements
+ * are welcome; behavior-changing refactors are not. See ARCHITECTURE.md for
+ * the migration map (2D systems -> planned 3D equivalents).
+ * ============================================================================= */
 import { FC, useEffect, useRef, useState, useCallback } from "react";
 import waldogeMusic from "@/assets/waldoge-music.mp3";
 import waldogeCombatTheme from "@/assets/waldoge-combat-theme.mp3.asset.json";
