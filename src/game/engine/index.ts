@@ -23,3 +23,6 @@ export * from "../config";
 
 // Vector helpers.
 export * from "./vec";
+
+// Per-entity kinematic steppers (allocation-free, mutate in place).
+export * from "./projectile";

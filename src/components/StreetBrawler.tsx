@@ -63,6 +63,7 @@ const waldogeArcade = { url: AUDIO_URLS.waldogeArcade };
 const waldogeHead = IMAGE_URLS.waldogeHead;
 const streetBrawlerCover = IMAGE_URLS.streetBrawlerCover;
 import { SFX } from "@/lib/gameSfx";
+import { stepProjectile } from "@/game/engine";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
 // Player module — data model + pure helpers for player state, HP, stamina,
@@ -3944,10 +3945,10 @@ export const StreetBrawler: FC = () => {
 
       // Projectile physics
       g.projectiles = g.projectiles.filter(proj => {
-        proj.x += proj.vx;
-        proj.y += proj.vy;
-        if (!proj.isPlayerProjectile) proj.vy += 0.15;
-        proj.timer--;
+        // Kinematics extracted to @/game/engine (Phase 3). Mutates in place —
+        // no allocation, identical execution order and gameplay. See
+        // src/game/engine/projectile.ts.
+        stepProjectile(proj);
         if (proj.y >= GROUND_Y) return false;
 
         if (proj.isPlayerProjectile) {
