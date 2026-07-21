@@ -969,6 +969,9 @@ function drawStickFigure(
 
   // Green Candle: large spinning green motion rings on the lariat
   if (isPlayer && style === "greenCandle" && e.state === "spinkick") {
+    // NOTE (Phase 8): NOT migrated to progressOf. Same divisor/duration
+    // mismatch as the spinkick draw above (stateTimer up to 20, divisor 18).
+    // progressOf would clamp the aura radius on the first two frames.
     const p = e.stateTimer / 18;
     // Outer expanding aura
     ctx.strokeStyle = "rgba(0,255,100,0.25)";
