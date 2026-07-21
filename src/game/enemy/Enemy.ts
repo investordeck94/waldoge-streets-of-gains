@@ -58,10 +58,8 @@
 import type { PlayerEntity, PlayerAttackState } from "@/game/player/Player";
 import { GROUND_Y, LEVEL_WIDTH } from "@/game/config";
 import { LEVELS } from "@/game/config/levels";
-import {
-  DIFFICULTY_ENEMY_MULT,
-  type Difficulty,
-} from "@/game/config/difficulty";
+import { DIFFICULTY_ENEMY_MULT } from "@/game/config/difficulty";
+import type { Difficulty } from "@/game/config/types";
 
 // ---------------------------------------------------------------------------
 // Types
