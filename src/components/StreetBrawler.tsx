@@ -24,20 +24,27 @@
  * the migration map (2D systems -> planned 3D equivalents).
  * ============================================================================= */
 import { FC, useEffect, useRef, useState, useCallback } from "react";
-import waldogeMusic from "@/assets/waldoge-music.mp3";
-import waldogeCombatTheme from "@/assets/waldoge-combat-theme.mp3.asset.json";
-import waldogeArcade from "@/assets/waldoge-arcade.mp3.asset.json";
+// Static asset URLs + preloaded boss-head Image objects moved to
+// src/game/Assets.ts (Phase 1). Individual named exports are aliased below
+// so every existing draw-site keeps its short local name unchanged.
 import { motion, AnimatePresence } from "framer-motion";
 import { Swords, RotateCcw, Play, Trophy, Zap, Volume2, VolumeX, Maximize, Minimize, Pause, SkipForward, SkipBack } from "lucide-react";
-import waldogeHead from "@/assets/waldoge-head.png";
-import streetBrawlerCover from "@/assets/street-brawler-cover.png";
-import jeetBossHead from "@/assets/jeet-boss-head.png";
-import badActorBossHead from "@/assets/badactor-boss-head.png";
-import ruggerBossHead from "@/assets/rugger-boss-head.png";
-import fudderBossHead from "@/assets/boss-fudder-head.png";
-import exitLiquidityBossHead from "@/assets/boss-exit-liquidity-head.png";
-import mrMarketerBossHead from "@/assets/boss-mr-marketer-head.png";
-import tickerThiefBossHead from "@/assets/ticker-thief-head.png";
+import {
+  IMAGE_URLS,
+  AUDIO_URLS,
+  jeetHeadImg,
+  badActorHeadImg,
+  ruggerHeadImg,
+  fudderHeadImg,
+  exitLiquidityHeadImg,
+  mrMarketerHeadImg,
+  tickerThiefHeadImg,
+} from "@/game/Assets";
+const waldogeMusic = AUDIO_URLS.waldogeMusic;
+const waldogeCombatTheme = { url: AUDIO_URLS.waldogeCombatTheme };
+const waldogeArcade = { url: AUDIO_URLS.waldogeArcade };
+const waldogeHead = IMAGE_URLS.waldogeHead;
+const streetBrawlerCover = IMAGE_URLS.streetBrawlerCover;
 import { SFX } from "@/lib/gameSfx";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
@@ -95,21 +102,10 @@ import {
   DIFFICULTY_ENEMY_MULT, DIFFICULTY_BOSS_CD, DIFFICULTY_BOSS_DMG, BOSS_WAVE_MINIONS,
 } from "@/game/config";
 
-// Preloaded boss head images
-const jeetHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = jeetBossHead; return i; })() : null;
-const badActorHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = badActorBossHead; return i; })() : null;
-const ruggerHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = ruggerBossHead; return i; })() : null;
-const fudderHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = fudderBossHead; return i; })() : null;
-const exitLiquidityHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = exitLiquidityBossHead; return i; })() : null;
-const mrMarketerHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = mrMarketerBossHead; return i; })() : null;
-const tickerThiefHeadImg: HTMLImageElement | null =
-  typeof window !== "undefined" ? (() => { const i = new Image(); i.src = tickerThiefBossHead; return i; })() : null;
+// Preloaded boss head images now live in src/game/Assets.ts (Phase 1) and
+// are imported at the top of this file. Behaviour is byte-identical: seven
+// `new Image()` handles created at module import, `.src` assigned
+// synchronously, lifetime scoped to the module.
 
 
 // AttackState + Entity are now defined in src/game/player/Player.ts. The
@@ -121,72 +117,19 @@ const tickerThiefHeadImg: HTMLImageElement | null =
 type AttackState = PlayerAttackState;
 type Entity = PlayerEntity;
 
-interface HitEffect {
-  x: number;
-  y: number;
-  timer: number;
-  text: string;
-  color: string;
-  size: number;
-}
-
-interface PowerUp {
-  x: number;
-  y: number;
-  vy: number;
-  type: "health" | "speed" | "energy" | "damage";
-  timer: number;
-}
-
-interface WeaponPickup {
-  x: number;
-  y: number;
-  vy: number;
-  type: WeaponType;
-  collected: boolean;
-  timer: number;
-}
-
-interface RainDrop {
-  x: number;
-  y: number;
-  speed: number;
-  length: number;
-  opacity: number;
-  wind: number;
-}
-
-interface Splash {
-  x: number;
-  y: number;
-  timer: number;
-  maxTimer: number;
-  size: number;
-  inPuddle: boolean;
-}
-
-
-
-interface ComboState {
-  inputs: string[];
-  timer: number;
-  hitCount: number;
-  hitTimer: number;
-  multiplier: number;
-  specialCooldown: number;
-  specialEnergy: number;
-}
-
-
-// Level roster, difficulty tuning, and world dimensions now live in
-// src/game/config/ — see the barrel import at the top of this file.
-
-
-interface Projectile {
-  x: number; y: number; vx: number; vy: number; timer: number;
-  isPlayerProjectile?: boolean;
-  damage?: number;
-}
+// Non-entity gameplay types (HitEffect / PowerUp / WeaponPickup / RainDrop /
+// Splash / ComboState / Projectile) now live in src/game/Types.ts (Phase 1).
+// Byte-identical shapes; every existing call site continues to compile
+// unchanged via the imports below.
+import type {
+  HitEffect,
+  PowerUp,
+  WeaponPickup,
+  RainDrop,
+  Splash,
+  ComboState,
+  Projectile,
+} from "@/game/Types";
 
 // The boss factory now lives in src/game/enemy/Enemy.ts. This local wrapper
 // preserves the original signature so every call site continues to work
