@@ -182,9 +182,12 @@ export function saveGameState(state: GameState = getGameState()): boolean {
  *  after the call for details. */
 export interface LoadDiagnostics {
   source: "primary" | "backup" | "settings-only" | "none";
-  primaryStatus: UnpackResult["ok"] extends true ? "ok" : string;
+  primaryStatus: string;
   backupStatus?: string;
 }
+
+const reasonOf = (r: UnpackResult | undefined): string =>
+  !r ? "empty" : r.ok ? "ok" : r.reason;
 
 let lastLoadDiagnostics: LoadDiagnostics = { source: "none", primaryStatus: "empty" };
 export function getLoadDiagnostics(): LoadDiagnostics {
