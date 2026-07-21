@@ -206,3 +206,42 @@ Verification (Phase 8):
 - Diff scope: `src/components/StreetBrawler.tsx` (1 import + 3 hunks, of which 2 are documentation-only NOTE comments) and this file.
 
 Renderer-swap readiness delta: +1 hygiene. One draw site now consumes the canonical animation-clock helper; the two blocked sites are explicitly documented so a future phase that reconciles the divisor/duration mismatch can finish the migration.
+
+## Phase 9 update (camera helper adoption — documentation-only)
+
+**Outcome:** No code changes. Phase 9 closes as a formal deferral with a documented parity gap.
+
+### `computeCameraX` — deferred (parity cannot be proven)
+
+The Engine Core helper `computeCameraX` in `src/game/core/camera.ts` implements a single-preset camera model: constant `preset.lookAhead * facing`, centre anchor, symmetric `preset.deadZone`, single `preset.followLerp`, clamp to level bounds.
+
+The live camera update in `src/components/StreetBrawler.tsx` (L4230–4262) is materially richer. Concrete gap:
+
+| Behaviour | `computeCameraX` (core) | StreetBrawler live loop |
+|---|---|---|
+| Look-ahead | Constant `preset.lookAhead * facing` | Eased velocity look-ahead — `g.camLookAhead` lerped toward `lookAheadTarget` with asymmetric ease (0.25 forward / 0.08 back). |
+| Anchor | Implicit centre (`viewportWidth / 2`) | Configurable `g.camAnchor` fraction of `CANVAS_W`. |
+| Deadzone | Single symmetric `preset.deadZone` | Three-tier width (`movingForward` / `moving` / idle) × snappy/buttery split = six distinct widths. |
+| Follow lerp | Single `preset.followLerp` | Two branches: forced `0.35` push while `movingForward` (bypasses deadzone); otherwise `min(maxLerp, baseLerp + dist * 0.0008)` distance-scaled with snappy/buttery baselines. |
+| Forward commit | None | Forward motion bypasses the deadzone entirely. |
+| Clamp | `[0, levelWidth - viewportWidth]` | Identical. |
+
+A mechanical swap would silently alter framing, follow feel, and deadzone hysteresis. That violates the "mathematically identical migration path" bar established in Phase 8, so `computeCameraX` remains **deferred** until either (a) the helper is extended in a future phase to mirror the live math exactly (backed by a parity test suite) and then adopted, or (b) an explicit gameplay decision authorises a camera-feel change. Until one of those happens, the live camera code is the source of truth.
+
+### `worldToScreenX` — declined (insufficient architectural benefit)
+
+`worldToScreenX(worldX, camX)` is a one-line `worldX - camX` wrapper. Adopting it at the ~6 direct-scalar draw sites (`drawBoss`, `drawCandleMinion`, boss/enemy draw, `drawPlatform`, `drawAlleyObject`, and the `playerScreenX` computation) would replace direct subtraction with an equivalent helper call. Per the approved Phase 9 constraint, wrapping a single subtraction is not a worthwhile abstraction: it does not reduce duplicated logic and does not establish a genuinely reusable boundary. The direct `worldX - camX` expressions remain unchanged.
+
+Parallax draw sites (`camX * factor` before subtraction) are a separate concern and would require a `worldToScreenParallaxX(worldX, camX, factor)` helper that does not exist. That is a design addition, not a refactor, and is out of scope.
+
+### Verification (Phase 9)
+
+- Zero source-code changes in `src/**`.
+- Typecheck: unchanged (no diff).
+- Vitest: 26/26 green (no diff).
+- No gameplay changes. No rendering changes. No camera-feel changes. No execution-order changes. No allocation changes.
+
+### Recommended next phase (Phase 10 candidate)
+
+The highest-value deterministic extraction still on the table is **AABB helper adoption**. `aabbOverlap`, `horizontalDistance`, and `withinHorizontalRange` already exist in `@/game/core/aabb` (extracted during the initial audit) but are **not yet imported** by `src/components/StreetBrawler.tsx` — confirmed via `rg -n "aabbOverlap|horizontalDistance|withinHorizontalRange" src/components/StreetBrawler.tsx` → zero matches. Open-coded overlap and proximity checks still live at multiple hit-test and pickup sites. Unlike camera math, AABB helpers are one-liners with byte-identical semantics to their inline counterparts, so a strict-parity mechanical migration is feasible and would meaningfully reduce duplicated logic. A formal Phase 10 proposal (parity table + call-site inventory) will follow on request.
+
