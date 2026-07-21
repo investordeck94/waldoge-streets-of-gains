@@ -26,3 +26,4 @@ export * from "./vec";
 
 // Per-entity kinematic steppers (allocation-free, mutate in place).
 export * from "./projectile";
+export * from "./powerup";
