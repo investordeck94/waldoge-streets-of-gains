@@ -41,6 +41,14 @@ import tickerThiefBossHead from "@/assets/ticker-thief-head.png";
 import { SFX } from "@/lib/gameSfx";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
+// Player module — data model + pure helpers for player state, HP, stamina,
+// movement and animation-state queries. See src/game/player/Player.ts for the
+// full explanation of what was (and was NOT) extracted, and why.
+import {
+  createPlayer as createPlayerModule,
+  type PlayerEntity,
+  type PlayerAttackState,
+} from "@/game/player/Player";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
@@ -98,29 +106,14 @@ const tickerThiefHeadImg: HTMLImageElement | null =
   typeof window !== "undefined" ? (() => { const i = new Image(); i.src = tickerThiefBossHead; return i; })() : null;
 
 
-type AttackState = "idle" | "walk" | "jump" | "punch" | "kick" | "hit" | "dead"
-  | "uppercut" | "spinkick" | "groundpound" | "dashpunch"
-  | "boss_charge" | "boss_slam" | "boss_throw";
-
-interface Entity {
-  x: number;
-  y: number;
-  vy: number;
-  vx: number;
-  width: number;
-  height: number;
-  facing: 1 | -1;
-  hp: number;
-  maxHp: number;
-  state: AttackState;
-  stateTimer: number;
-  attackCooldown: number;
-  isPlayer?: boolean;
-  isBoss?: boolean;
-  bossPhase?: number;
-  aiTimer?: number;
-  bossName?: string;
-}
+// AttackState + Entity are now defined in src/game/player/Player.ts. The
+// aliases below preserve the original names so every existing call site —
+// including enemies and bosses, which share the exact same structural shape
+// as the player — continues to compile untouched with zero behavioural
+// change. See Player.ts for why the surrounding update loop, physics,
+// animation state machine and combat handling remain in this file.
+type AttackState = PlayerAttackState;
+type Entity = PlayerEntity;
 
 interface HitEffect {
   x: number;
@@ -2869,14 +2862,13 @@ function drawHitEffects(ctx: CanvasRenderingContext2D, effects: HitEffect[], cam
   }
 }
 
+// The player factory now lives in src/game/player/Player.ts. This local
+// wrapper preserves the original `createPlayer(): Entity` signature (no
+// arguments) so every call site in this file — and the game loop's
+// reset/respawn paths — continues to work unchanged. The returned entity
+// is byte-identical to the previous inline literal.
 function createPlayer(): Entity {
-  return {
-    x: 200, y: GROUND_Y, vy: 0, vx: 0,
-    width: 30, height: 70, facing: 1,
-    hp: 100, maxHp: 100,
-    state: "idle", stateTimer: 0, attackCooldown: 0,
-    isPlayer: true,
-  };
+  return createPlayerModule(GROUND_Y);
 }
 
 // Difficulty tier + multipliers are imported from src/game/config/difficulty.ts
