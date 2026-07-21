@@ -3944,10 +3944,10 @@ export const StreetBrawler: FC = () => {
 
       // Projectile physics
       g.projectiles = g.projectiles.filter(proj => {
-        proj.x += proj.vx;
-        proj.y += proj.vy;
-        if (!proj.isPlayerProjectile) proj.vy += 0.15;
-        proj.timer--;
+        // Kinematics extracted to @/game/engine (Phase 3). Mutates in place —
+        // no allocation, identical execution order and gameplay. See
+        // src/game/engine/projectile.ts.
+        stepProjectile(proj);
         if (proj.y >= GROUND_Y) return false;
 
         if (proj.isPlayerProjectile) {
