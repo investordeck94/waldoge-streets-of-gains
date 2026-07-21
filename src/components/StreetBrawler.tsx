@@ -248,7 +248,7 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(e.facing * limbLen, shoulderY - limbLen * 0.8);
   } else if (e.state === "boss_throw") {
-    const prog = e.stateTimer / 20;
+    const prog = progressOf(e.stateTimer, 20);
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(e.facing * limbLen * (1 + prog), shoulderY - limbLen * prog);
     ctx.moveTo(0, shoulderY);
