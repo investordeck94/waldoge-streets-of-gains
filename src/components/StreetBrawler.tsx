@@ -2862,14 +2862,13 @@ function drawHitEffects(ctx: CanvasRenderingContext2D, effects: HitEffect[], cam
   }
 }
 
+// The player factory now lives in src/game/player/Player.ts. This local
+// wrapper preserves the original `createPlayer(): Entity` signature (no
+// arguments) so every call site in this file — and the game loop's
+// reset/respawn paths — continues to work unchanged. The returned entity
+// is byte-identical to the previous inline literal.
 function createPlayer(): Entity {
-  return {
-    x: 200, y: GROUND_Y, vy: 0, vx: 0,
-    width: 30, height: 70, facing: 1,
-    hp: 100, maxHp: 100,
-    state: "idle", stateTimer: 0, attackCooldown: 0,
-    isPlayer: true,
-  };
+  return createPlayerModule(GROUND_Y);
 }
 
 // Difficulty tier + multipliers are imported from src/game/config/difficulty.ts
