@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
     maxRewardPoolEpochWei: limits.maxRewardPoolEpochWei,
   });
   if (reward.rewardWei <= 0n) {
-    return fail("run does not reach a reward milestone", 200 === 200 ? 422 : 422);
+    return fail("run does not reach a reward milestone", 422);
   }
 
   // 8. Fresh on-chain nonce — never a local counter, never a client value.
