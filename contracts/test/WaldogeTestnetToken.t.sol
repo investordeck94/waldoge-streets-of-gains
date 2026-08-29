@@ -60,22 +60,22 @@ contract WaldogeTestnetTokenTest is Test {
 
         vm.prank(admin);
         token.revokeRole(token.MINTER_ROLE(), alice);
-        vm.prank(alice);
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector, alice, token.MINTER_ROLE()
             )
         );
+        vm.prank(alice);
         token.mint(bob, 1e18);
     }
 
     function test_MinterCannotGrantRoles() public {
-        vm.prank(minter);
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector, minter, token.DEFAULT_ADMIN_ROLE()
             )
         );
+        vm.prank(minter);
         token.grantRole(token.MINTER_ROLE(), alice);
     }
 
@@ -94,7 +94,6 @@ contract WaldogeTestnetTokenTest is Test {
     function test_UnauthorizedMintReverts() public {
         address[3] memory strangers = [alice, admin, address(this)];
         for (uint256 i; i < strangers.length; ++i) {
-            vm.prank(strangers[i]);
             vm.expectRevert(
                 abi.encodeWithSelector(
                     IAccessControl.AccessControlUnauthorizedAccount.selector,
@@ -102,6 +101,7 @@ contract WaldogeTestnetTokenTest is Test {
                     token.MINTER_ROLE()
                 )
             );
+            vm.prank(strangers[i]);
             token.mint(alice, 1e18);
         }
         assertEq(token.totalSupply(), 0);
@@ -148,12 +148,12 @@ contract WaldogeTestnetTokenTest is Test {
         to[1] = bob;
         amounts[0] = 1e18;
 
-        vm.prank(minter);
         vm.expectRevert(WaldogeTestnetToken.InvalidBatch.selector);
+        vm.prank(minter);
         token.mintBatch(to, amounts);
 
-        vm.prank(minter);
         vm.expectRevert(WaldogeTestnetToken.InvalidBatch.selector);
+        vm.prank(minter);
         token.mintBatch(new address[](0), new uint256[](0));
     }
 
@@ -163,12 +163,12 @@ contract WaldogeTestnetTokenTest is Test {
         to[0] = alice;
         amounts[0] = 1e18;
 
-        vm.prank(alice);
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector, alice, token.MINTER_ROLE()
             )
         );
+        vm.prank(alice);
         token.mintBatch(to, amounts);
     }
 
@@ -189,10 +189,10 @@ contract WaldogeTestnetTokenTest is Test {
         vm.prank(minter);
         token.mint(alice, 1e18);
 
-        vm.prank(alice);
         vm.expectRevert(
             abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, alice, 1e18, 2e18)
         );
+        vm.prank(alice);
         token.transfer(bob, 2e18);
     }
 
@@ -209,8 +209,8 @@ contract WaldogeTestnetTokenTest is Test {
         assertEq(token.balanceOf(bob), 6e18);
         assertEq(token.allowance(alice, bob), 0);
 
-        vm.prank(bob);
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, bob, 0, 1));
+        vm.prank(bob);
         token.transferFrom(alice, bob, 1);
     }
 
@@ -242,12 +242,12 @@ contract WaldogeTestnetTokenTest is Test {
 
     function testFuzz_OnlyMinterRoleCanMint(address caller) public {
         vm.assume(caller != minter);
-        vm.prank(caller);
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector, caller, token.MINTER_ROLE()
             )
         );
+        vm.prank(caller);
         token.mint(alice, 1e18);
     }
 }
