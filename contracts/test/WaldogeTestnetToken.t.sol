@@ -210,9 +210,7 @@ contract WaldogeTestnetTokenTest is Test {
         assertEq(token.allowance(alice, bob), 0);
 
         vm.prank(bob);
-        vm.expectRevert(
-            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, bob, 0, 1)
-        );
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, bob, 0, 1));
         token.transferFrom(alice, bob, 1);
     }
 
