@@ -5122,6 +5122,7 @@ export const StreetBrawler: FC = () => {
             <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
             {/* DogeOS wallet — presentational only, outside the game loop. */}
             <DogeOSConnectButton />
+            <DogeOSPlayerBadge />
 
             <button
               onClick={() => { const v = !sfxEnabled; setSfxEnabled(v); sfxRef.current = v; }}
