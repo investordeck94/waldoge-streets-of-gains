@@ -14,10 +14,15 @@ contract WaldogeTestnetTokenTest is Test {
     address internal alice = address(0xA1);
     address internal bob = address(0xB0B);
 
+    bytes32 internal MINTER_ROLE;
+    bytes32 internal ADMIN_ROLE;
+
     event TestnetMint(address indexed minter, address indexed to, uint256 amount);
 
     function setUp() public {
         token = new WaldogeTestnetToken(admin, minter);
+        MINTER_ROLE = token.MINTER_ROLE();
+        ADMIN_ROLE = token.DEFAULT_ADMIN_ROLE();
     }
 
     // --------------------------------------------------------------- metadata
