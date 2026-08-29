@@ -330,7 +330,7 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
     // ---------------------------------------------------------------------
     // ADMIN POWERS (owner, two-step transferable)
     //  - rotate the attestation signer
-    //  - pause / unpause submissions and claims
+    //  - pause / unpause NEW submissions (never accrued claims)
     //  - tighten/loosen reward caps inside hard-coded ceilings
     //  - withdraw only tokens NOT already owed to players
     //  - rescue unrelated ERC-20s sent by mistake
