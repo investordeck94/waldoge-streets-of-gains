@@ -125,6 +125,8 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
     mapping(address => uint256) public bestScore;
     mapping(address => uint32) public bestWave;
     mapping(address => uint256) public nonces;
+    /// @notice One-shot processed-run flags, keyed by keccak256(player, runId).
+    /// @dev Bound to the player so a raw runId can never be griefed across wallets.
     mapping(bytes32 => bool) public runProcessed;
 
     /// @notice Reward accrued to a wallet within an epoch.
