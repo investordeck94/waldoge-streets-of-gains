@@ -14,7 +14,7 @@ export const DOGEOS_CHAIN = Object.freeze({
   name: "DogeOS Chikyū Testnet",
   shortName: "Chikyū",
   chainId: 6281971,
-  chainIdHex: "0x5FD9B3",
+  chainIdHex: "0x5FDAF3",
   rpcUrl: "https://rpc.testnet.dogeos.com",
   wsRpcUrl: "wss://ws.rpc.testnet.dogeos.com",
   nativeSymbol: "DOGE",
