@@ -47,10 +47,27 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  *    => wallet A's attestation is unusable by wallet B.
  *  - Strictly increasing per-player nonce => an old attestation can never be
  *    resubmitted, even if the runId mapping were somehow cleared.
- *  - One-shot `runProcessed[runId]` => the same authorized run cannot be
- *    processed twice even if the backend re-signs it with a fresh nonce.
- *  Both mechanisms are kept: the nonce gives cheap monotonic ordering, the runId
- *  gives idempotency for backend retries. Neither alone covers both cases.
+ *  - One-shot run key `keccak256(player, runId)` => the same authorized run
+ *    cannot be processed twice even if the backend re-signs it with a fresh
+ *    nonce. The key is bound to the player so one wallet can never burn (grief)
+ *    another wallet's runId, while two players may legitimately share a raw
+ *    runId value.
+ *  Both mechanisms are kept: the nonce gives cheap monotonic ordering, the run
+ *  key gives idempotency for backend retries. Neither alone covers both cases.
+ *
+ * NONCE LIVENESS (operational requirement)
+ * ----------------------------------------
+ * Nonces are strict-equality. The backend MUST read `nonces(player)` from this
+ * contract immediately before signing and must never keep its own counter. An
+ * unsubmitted attestation simply expires: it consumed nothing on-chain, so the
+ * next attestation signed at the current on-chain nonce succeeds. A wallet can
+ * therefore never be bricked by a lost or expired attestation.
+ *
+ * PAUSE SEMANTICS
+ * ---------------
+ * pause() stops NEW submissions only. Already-accrued entitlements remain
+ * claimable while paused: the admin must never be able to freeze funds that are
+ * already owed to players.
  *
  * NON-UPGRADEABLE. There is no proxy and no upgrade path by design.
  */
