@@ -40,29 +40,29 @@ contract WaldogeTestnetTokenTest is Test {
     // ----------------------------------------------------------------- roles
 
     function test_RoleSeparation() public view {
-        assertTrue(token.hasRole(token.DEFAULT_ADMIN_ROLE(), admin));
-        assertTrue(token.hasRole(token.MINTER_ROLE(), minter));
+        assertTrue(token.hasRole(ADMIN_ROLE, admin));
+        assertTrue(token.hasRole(MINTER_ROLE, minter));
         // Admin is explicitly NOT a minter.
-        assertFalse(token.hasRole(token.MINTER_ROLE(), admin));
+        assertFalse(token.hasRole(MINTER_ROLE, admin));
         // Minter cannot manage roles.
-        assertFalse(token.hasRole(token.DEFAULT_ADMIN_ROLE(), minter));
+        assertFalse(token.hasRole(ADMIN_ROLE, minter));
         // Deployer (this test contract) holds nothing.
-        assertFalse(token.hasRole(token.DEFAULT_ADMIN_ROLE(), address(this)));
-        assertFalse(token.hasRole(token.MINTER_ROLE(), address(this)));
+        assertFalse(token.hasRole(ADMIN_ROLE, address(this)));
+        assertFalse(token.hasRole(MINTER_ROLE, address(this)));
     }
 
     function test_AdminCanGrantAndRevokeMinter() public {
         vm.prank(admin);
-        token.grantRole(token.MINTER_ROLE(), alice);
+        token.grantRole(MINTER_ROLE, alice);
         vm.prank(alice);
         token.mint(bob, 1e18);
         assertEq(token.balanceOf(bob), 1e18);
 
         vm.prank(admin);
-        token.revokeRole(token.MINTER_ROLE(), alice);
+        token.revokeRole(MINTER_ROLE, alice);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, alice, token.MINTER_ROLE()
+                IAccessControl.AccessControlUnauthorizedAccount.selector, alice, MINTER_ROLE
             )
         );
         vm.prank(alice);
@@ -72,11 +72,11 @@ contract WaldogeTestnetTokenTest is Test {
     function test_MinterCannotGrantRoles() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, minter, token.DEFAULT_ADMIN_ROLE()
+                IAccessControl.AccessControlUnauthorizedAccount.selector, minter, ADMIN_ROLE
             )
         );
         vm.prank(minter);
-        token.grantRole(token.MINTER_ROLE(), alice);
+        token.grantRole(MINTER_ROLE, alice);
     }
 
     // ------------------------------------------------------------------ mint
@@ -96,9 +96,7 @@ contract WaldogeTestnetTokenTest is Test {
         for (uint256 i; i < strangers.length; ++i) {
             vm.expectRevert(
                 abi.encodeWithSelector(
-                    IAccessControl.AccessControlUnauthorizedAccount.selector,
-                    strangers[i],
-                    token.MINTER_ROLE()
+                    IAccessControl.AccessControlUnauthorizedAccount.selector, strangers[i], MINTER_ROLE
                 )
             );
             vm.prank(strangers[i]);
@@ -165,7 +163,7 @@ contract WaldogeTestnetTokenTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, alice, token.MINTER_ROLE()
+                IAccessControl.AccessControlUnauthorizedAccount.selector, alice, MINTER_ROLE
             )
         );
         vm.prank(alice);
@@ -244,7 +242,7 @@ contract WaldogeTestnetTokenTest is Test {
         vm.assume(caller != minter);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, caller, token.MINTER_ROLE()
+                IAccessControl.AccessControlUnauthorizedAccount.selector, caller, MINTER_ROLE
             )
         );
         vm.prank(caller);
