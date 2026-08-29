@@ -16,6 +16,27 @@ gas_reports = ["StreetsOfGainsRewards"]
 # the vitest suite). No write access is granted to any path.
 fs_permissions = [{ access = "read", path = "./test/fixtures" }]
 
+# The DogeOS fork rehearsal needs network egress and a cancun-era EVM (the live
+# WDOGE bytecode uses post-paris opcodes), so it is excluded from the default run.
+#   FOUNDRY_PROFILE=fork forge test --match-path test/StreetsOfGainsRewards.dogeosFork.t.sol
+no_match_path = "test/StreetsOfGainsRewards.dogeosFork.t.sol"
+
+[profile.fork]
+src = "src"
+test = "test"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.24"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 800
+bytecode_hash = "none"
+fs_permissions = [{ access = "read", path = "./test/fixtures" }]
+remappings = [
+  "forge-std/=lib/forge-std/src/",
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+]
+
 remappings = [
   "forge-std/=lib/forge-std/src/",
   "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
