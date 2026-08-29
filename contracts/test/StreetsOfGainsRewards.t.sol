@@ -19,6 +19,10 @@ contract StreetsOfGainsRewardsTest is Test {
     address internal alice = address(0xA1);
     address internal bob = address(0xB1);
 
+    bytes32 constant TYPEHASH = keccak256(
+        "RunAttestation(address player,uint256 score,uint32 wave,uint16 level,bytes32 runId,uint256 nonce,uint256 deadline,uint256 rewardAmount)"
+    );
+
     uint256 constant MAX_RUN = 100e18;
     uint256 constant MAX_WALLET_EPOCH = 300e18;
     uint256 constant MAX_POOL_EPOCH = 1000e18;
@@ -80,7 +84,7 @@ contract StreetsOfGainsRewardsTest is Test {
         );
         bytes32 structHash = keccak256(
             abi.encode(
-                rw.RUN_ATTESTATION_TYPEHASH(),
+                TYPEHASH,
                 a.player,
                 a.score,
                 a.wave,
@@ -404,8 +408,9 @@ contract StreetsOfGainsRewardsTest is Test {
         rw.setRewardLimits(5e18, 1e18, 2e18); // per-run > wallet epoch
         vm.expectRevert(StreetsOfGainsRewards.InvalidLimits.selector);
         rw.setRewardLimits(1e18, 5e18, 2e18); // wallet epoch > pool
+        uint256 hardRun = rw.HARD_MAX_REWARD_PER_RUN();
         vm.expectRevert(StreetsOfGainsRewards.InvalidLimits.selector);
-        rw.setRewardLimits(rw.HARD_MAX_REWARD_PER_RUN() + 1, 10_000e18, 1_000_000e18);
+        rw.setRewardLimits(hardRun + 1, 10_000e18, 1_000_000e18);
         rw.setRewardLimits(1e18, 2e18, 3e18);
         vm.stopPrank();
         assertEq(rw.maxRewardPerRun(), 1e18);
@@ -431,8 +436,8 @@ contract StreetsOfGainsRewardsTest is Test {
         uint256 free = rw.unentitledBalance();
         assertEq(free, 1_000_000e18 - 10e18);
 
-        vm.prank(owner);
         vm.expectRevert(StreetsOfGainsRewards.NothingRecoverable.selector);
+        vm.prank(owner);
         rw.recoverUnentitled(owner, free + 1);
 
         vm.prank(owner);
@@ -459,8 +464,9 @@ contract StreetsOfGainsRewardsTest is Test {
     function test_ClaimRevertsWhenContractUnderfunded() public {
         StreetsOfGainsRewards.RunAttestation memory a = _att(alice, 1, 1, 10e18, keccak256("r"));
         _submit(alice, a, _sign(a, signerPk));
+        uint256 freeBal = rw.unentitledBalance();
         vm.prank(owner);
-        rw.recoverUnentitled(owner, rw.unentitledBalance());
+        rw.recoverUnentitled(owner, freeBal);
         // drain the rest by simulating balance loss
         vm.prank(address(rw));
         token.transfer(owner, 10e18);
@@ -542,7 +548,7 @@ contract StreetsOfGainsRewardsTest is Test {
         );
         bytes32 structHash = keccak256(
             abi.encode(
-                rw.RUN_ATTESTATION_TYPEHASH(),
+                TYPEHASH,
                 a.player,
                 a.score,
                 a.wave,
