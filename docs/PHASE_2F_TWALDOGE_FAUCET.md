@@ -96,4 +96,4 @@ None of these are configured yet, so the faucet currently fails closed with a 50
 | `supabase/functions/_shared/faucet/store.ts` | Supabase-backed claim log (Deno only) |
 | `supabase/functions/_shared/faucet/minter.ts` | dedicated minter, viem write to `mint(address,uint256)` (Deno only) |
 | `supabase/functions/twaldoge-faucet-claim/index.ts` | HTTP endpoint |
-| `supabase/functions/_shared/faucet/__tests__/faucet.test.ts` | 22 vitest tests |
+| `supabase/functions/_shared/faucet/__tests__/faucet.test.ts` | 20 vitest tests |
