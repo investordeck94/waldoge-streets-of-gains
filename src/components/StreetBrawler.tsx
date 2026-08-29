@@ -63,6 +63,9 @@ const waldogeArcade = { url: AUDIO_URLS.waldogeArcade };
 const waldogeHead = IMAGE_URLS.waldogeHead;
 const streetBrawlerCover = IMAGE_URLS.streetBrawlerCover;
 import { SFX } from "@/lib/gameSfx";
+// DogeOS (EVM) wallet connect button — presentation-only, never touched by the
+// game loop, physics, camera or rendering.
+import { DogeOSConnectButton } from "@/components/dogeos/DogeOSConnectButton";
 import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
@@ -5117,6 +5120,9 @@ export const StreetBrawler: FC = () => {
               {`L${level + 1}/${TOTAL_LEVELS} · ${wave >= LEVELS[level].waves.length ? "⚠ BOSS" : `W${wave + 1}/${LEVELS[level].waves.length}`}`}
             </span>
             <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
+            {/* DogeOS wallet — presentational only, outside the game loop. */}
+            <DogeOSConnectButton />
+
             <button
               onClick={() => { const v = !sfxEnabled; setSfxEnabled(v); sfxRef.current = v; }}
               className="p-1 rounded hover:bg-muted/50 transition"
@@ -5266,6 +5272,11 @@ export const StreetBrawler: FC = () => {
               </>
             )}
             <p className="text-lg text-primary font-bold">Score: {score}</p>
+            {/* DogeOS wallet — presentational only, outside the game loop. */}
+            <div className="flex justify-center">
+              <DogeOSConnectButton size="md" />
+            </div>
+
             <button
               onClick={() => startGame(difficulty)}
               className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-bold flex items-center gap-2 mx-auto hover:opacity-90 transition"
