@@ -300,8 +300,12 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
         emit RunSubmitted(a.player, a.runId, a.score, a.wave, a.level, a.rewardAmount, epoch);
     }
 
-    /// @notice Claim the caller's full accrued entitlement.
-    function claimReward() external nonReentrant whenNotPaused returns (uint256 amount) {
+    /**
+     * @notice Claim the caller's full accrued entitlement.
+     * @dev Intentionally NOT `whenNotPaused`. Pausing halts new submissions only;
+     *      funds already owed to a player must never be freezable by the admin.
+     */
+    function claimReward() external nonReentrant returns (uint256 amount) {
         amount = pendingRewards[msg.sender];
         if (amount == 0) revert NothingToClaim();
         if (rewardToken.balanceOf(address(this)) < amount) revert InsufficientRewardBalance();
