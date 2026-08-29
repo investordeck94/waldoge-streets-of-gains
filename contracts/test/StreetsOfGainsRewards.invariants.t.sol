@@ -158,11 +158,14 @@ contract RewardsHandler is AttestationHelper {
     }
 
     function pauseToggle(uint256 seed) external {
-        vm.prank(ownerAddr);
         if (seed % 2 == 0) {
-            if (!rw.paused()) rw.pause();
+            if (rw.paused()) return;
+            vm.prank(ownerAddr);
+            rw.pause();
         } else {
-            if (rw.paused()) rw.unpause();
+            if (!rw.paused()) return;
+            vm.prank(ownerAddr);
+            rw.unpause();
         }
     }
 }
