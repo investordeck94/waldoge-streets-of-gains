@@ -47,10 +47,27 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  *    => wallet A's attestation is unusable by wallet B.
  *  - Strictly increasing per-player nonce => an old attestation can never be
  *    resubmitted, even if the runId mapping were somehow cleared.
- *  - One-shot `runProcessed[runId]` => the same authorized run cannot be
- *    processed twice even if the backend re-signs it with a fresh nonce.
- *  Both mechanisms are kept: the nonce gives cheap monotonic ordering, the runId
- *  gives idempotency for backend retries. Neither alone covers both cases.
+ *  - One-shot run key `keccak256(player, runId)` => the same authorized run
+ *    cannot be processed twice even if the backend re-signs it with a fresh
+ *    nonce. The key is bound to the player so one wallet can never burn (grief)
+ *    another wallet's runId, while two players may legitimately share a raw
+ *    runId value.
+ *  Both mechanisms are kept: the nonce gives cheap monotonic ordering, the run
+ *  key gives idempotency for backend retries. Neither alone covers both cases.
+ *
+ * NONCE LIVENESS (operational requirement)
+ * ----------------------------------------
+ * Nonces are strict-equality. The backend MUST read `nonces(player)` from this
+ * contract immediately before signing and must never keep its own counter. An
+ * unsubmitted attestation simply expires: it consumed nothing on-chain, so the
+ * next attestation signed at the current on-chain nonce succeeds. A wallet can
+ * therefore never be bricked by a lost or expired attestation.
+ *
+ * PAUSE SEMANTICS
+ * ---------------
+ * pause() stops NEW submissions only. Already-accrued entitlements remain
+ * claimable while paused: the admin must never be able to freeze funds that are
+ * already owed to players.
  *
  * NON-UPGRADEABLE. There is no proxy and no upgrade path by design.
  */
@@ -108,6 +125,8 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
     mapping(address => uint256) public bestScore;
     mapping(address => uint32) public bestWave;
     mapping(address => uint256) public nonces;
+    /// @notice One-shot processed-run flags, keyed by keccak256(player, runId).
+    /// @dev Bound to the player so a raw runId can never be griefed across wallets.
     mapping(bytes32 => bool) public runProcessed;
 
     /// @notice Reward accrued to a wallet within an epoch.
@@ -174,7 +193,9 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
         uint256 maxRewardPerWalletPerEpoch_,
         uint256 maxRewardPoolPerEpoch_
     ) Ownable(initialOwner) EIP712("StreetsOfGainsRewards", "1") {
-        if (rewardToken_ == address(0) || signer_ == address(0)) revert ZeroAddress();
+        if (rewardToken_ == address(0) || signer_ == address(0)) {
+            revert ZeroAddress();
+        }
         if (epochLength_ < 1 hours || epochLength_ > 30 days) revert InvalidEpochLength();
 
         rewardToken = IERC20(rewardToken_);
@@ -216,6 +237,16 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
         );
     }
 
+    /// @notice Replay key for a (player, runId) pair.
+    function runKeyOf(address player, bytes32 runId) public pure returns (bytes32) {
+        return keccak256(abi.encode(player, runId));
+    }
+
+    /// @notice Whether this exact (player, runId) run has already been processed.
+    function isRunProcessed(address player, bytes32 runId) external view returns (bool) {
+        return runProcessed[runKeyOf(player, runId)];
+    }
+
     /// @notice Reward tokens held by the contract that are not already owed to players.
     function unentitledBalance() public view returns (uint256) {
         uint256 bal = rewardToken.balanceOf(address(this));
@@ -235,14 +266,16 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
         if (a.player == address(0)) revert ZeroAddress();
         if (block.timestamp > a.deadline) revert AttestationExpired();
         if (a.nonce != nonces[a.player]) revert BadNonce();
-        if (runProcessed[a.runId]) revert RunAlreadyProcessed();
+
+        bytes32 runKey = keccak256(abi.encode(a.player, a.runId));
+        if (runProcessed[runKey]) revert RunAlreadyProcessed();
 
         address recovered = ECDSA.recover(hashAttestation(a), signature);
         if (recovered != signer) revert InvalidSignature();
 
         // Effects
         nonces[a.player] = a.nonce + 1;
-        runProcessed[a.runId] = true;
+        runProcessed[runKey] = true;
 
         uint256 epoch = currentEpoch();
 
@@ -279,8 +312,12 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
         emit RunSubmitted(a.player, a.runId, a.score, a.wave, a.level, a.rewardAmount, epoch);
     }
 
-    /// @notice Claim the caller's full accrued entitlement.
-    function claimReward() external nonReentrant whenNotPaused returns (uint256 amount) {
+    /**
+     * @notice Claim the caller's full accrued entitlement.
+     * @dev Intentionally NOT `whenNotPaused`. Pausing halts new submissions only;
+     *      funds already owed to a player must never be freezable by the admin.
+     */
+    function claimReward() external nonReentrant returns (uint256 amount) {
         amount = pendingRewards[msg.sender];
         if (amount == 0) revert NothingToClaim();
         if (rewardToken.balanceOf(address(this)) < amount) revert InsufficientRewardBalance();
@@ -295,7 +332,7 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
     // ---------------------------------------------------------------------
     // ADMIN POWERS (owner, two-step transferable)
     //  - rotate the attestation signer
-    //  - pause / unpause submissions and claims
+    //  - pause / unpause NEW submissions (never accrued claims)
     //  - tighten/loosen reward caps inside hard-coded ceilings
     //  - withdraw only tokens NOT already owed to players
     //  - rescue unrelated ERC-20s sent by mistake
@@ -346,7 +383,8 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
         if (
             maxPerRun == 0 || maxPerWalletEpoch == 0 || maxPoolEpoch == 0 || maxPerRun > maxPerWalletEpoch
                 || maxPerWalletEpoch > maxPoolEpoch || maxPerRun > HARD_MAX_REWARD_PER_RUN
-                || maxPerWalletEpoch > HARD_MAX_REWARD_PER_WALLET_EPOCH || maxPoolEpoch > HARD_MAX_REWARD_POOL_EPOCH
+                || maxPerWalletEpoch > HARD_MAX_REWARD_PER_WALLET_EPOCH
+                || maxPoolEpoch > HARD_MAX_REWARD_POOL_EPOCH
         ) revert InvalidLimits();
 
         maxRewardPerRun = maxPerRun;

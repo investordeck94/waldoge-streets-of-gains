@@ -19,3 +19,15 @@ remappings = [
 
 [fmt]
 line_length = 110
+
+# Phase 2C: fuzz depth raised well above the 256 default for the accounting invariants.
+[fuzz]
+runs = 1024
+
+[invariant]
+runs = 512
+depth = 100
+fail_on_revert = false
+call_override = false
+shrink_run_limit = 2000
+

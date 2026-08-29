@@ -75,7 +75,9 @@ contract StreetsOfGainsRewardsTest is Test {
     {
         bytes32 domain = keccak256(
             abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
                 keccak256(bytes("StreetsOfGainsRewards")),
                 keccak256(bytes("1")),
                 block.chainid,
@@ -84,21 +86,15 @@ contract StreetsOfGainsRewardsTest is Test {
         );
         bytes32 structHash = keccak256(
             abi.encode(
-                TYPEHASH,
-                a.player,
-                a.score,
-                a.wave,
-                a.level,
-                a.runId,
-                a.nonce,
-                a.deadline,
-                a.rewardAmount
+                TYPEHASH, a.player, a.score, a.wave, a.level, a.runId, a.nonce, a.deadline, a.rewardAmount
             )
         );
         return keccak256(abi.encodePacked("\x19\x01", domain, structHash));
     }
 
-    function _submit(address player, StreetsOfGainsRewards.RunAttestation memory a, bytes memory sig) internal {
+    function _submit(address player, StreetsOfGainsRewards.RunAttestation memory a, bytes memory sig)
+        internal
+    {
         vm.prank(player);
         rw.submitRun(a, sig);
     }
@@ -114,7 +110,9 @@ contract StreetsOfGainsRewardsTest is Test {
         assertEq(rw.bestScore(alice), 5000);
         assertEq(rw.bestWave(alice), 7);
         assertEq(rw.nonces(alice), 1);
-        assertTrue(rw.runProcessed(keccak256("run-1")));
+        assertTrue(rw.isRunProcessed(alice, keccak256("run-1")));
+        assertTrue(rw.runProcessed(rw.runKeyOf(alice, keccak256("run-1"))));
+        assertFalse(rw.isRunProcessed(bob, keccak256("run-1")), "run key is player-bound");
         assertEq(rw.pendingRewards(alice), 10e18);
         assertEq(rw.totalEntitled(), 10e18);
         assertEq(token.balanceOf(alice), 0, "no transfer on submit");
@@ -328,9 +326,10 @@ contract StreetsOfGainsRewardsTest is Test {
     // pause / admin
     // ------------------------------------------------------------------
 
-    function test_PauseBlocksSubmitAndClaim() public {
+    /// HIGH-3: pause halts submissions but never accrued claims.
+    function test_PauseBlocksSubmitButNotClaim() public {
         StreetsOfGainsRewards.RunAttestation memory a = _att(alice, 1, 1, 1e18, keccak256("r"));
-        _submit(alice, a, _sign(a, signerPk));
+        _submit(alice, a, _sign(a, signerPk)); // accrued BEFORE pause
 
         vm.prank(owner);
         rw.pause();
@@ -340,15 +339,176 @@ contract StreetsOfGainsRewardsTest is Test {
         vm.expectRevert(Pausable.EnforcedPause.selector);
         rw.submitRun(b, _sign(b, signerPk));
 
+        // pre-pause entitlement remains claimable WHILE paused
         vm.prank(alice);
-        vm.expectRevert(Pausable.EnforcedPause.selector);
-        rw.claimReward();
+        uint256 claimed = rw.claimReward();
+        assertEq(claimed, 1e18);
+        assertEq(token.balanceOf(alice), 1e18);
+        assertEq(rw.pendingRewards(alice), 0);
+        assertEq(rw.totalEntitled(), 0);
+        assertTrue(rw.paused(), "still paused after claim");
+    }
+
+    /// HIGH-3: unpausing restores normal submission behaviour; claim works after too.
+    function test_UnpauseRestoresSubmissionsAndClaimStillWorks() public {
+        StreetsOfGainsRewards.RunAttestation memory a = _att(alice, 1, 1, 1e18, keccak256("r"));
+        _submit(alice, a, _sign(a, signerPk));
 
         vm.prank(owner);
+        rw.pause();
+        vm.prank(owner);
         rw.unpause();
+        assertFalse(rw.paused());
+
+        StreetsOfGainsRewards.RunAttestation memory b = _att(alice, 1, 1, 2e18, keccak256("r2"));
+        _submit(alice, b, _sign(b, signerPk));
+
         vm.prank(alice);
         rw.claimReward();
-        assertEq(token.balanceOf(alice), 1e18);
+        assertEq(token.balanceOf(alice), 3e18);
+    }
+
+    /// HIGH-3: an admin that pauses and loses the key cannot freeze owed funds forever.
+    function test_ClaimWhilePausedForever() public {
+        StreetsOfGainsRewards.RunAttestation memory a = _att(alice, 1, 1, 5e18, keccak256("r"));
+        _submit(alice, a, _sign(a, signerPk));
+
+        vm.prank(owner);
+        rw.pause();
+        vm.warp(block.timestamp + 3650 days);
+
+        vm.prank(alice);
+        rw.claimReward();
+        assertEq(token.balanceOf(alice), 5e18);
+    }
+
+    // ------------------------------------------------------------------
+    // MEDIUM-1: player-bound run replay protection
+    // ------------------------------------------------------------------
+
+    function test_SamePlayerSameRunIdReverts() public {
+        bytes32 runId = keccak256("shared");
+        StreetsOfGainsRewards.RunAttestation memory a = _att(alice, 100, 1, 1e18, runId);
+        _submit(alice, a, _sign(a, signerPk));
+
+        StreetsOfGainsRewards.RunAttestation memory b = _att(alice, 200, 2, 1e18, runId);
+        vm.prank(alice);
+        vm.expectRevert(StreetsOfGainsRewards.RunAlreadyProcessed.selector);
+        rw.submitRun(b, _sign(b, signerPk));
+    }
+
+    function test_DifferentPlayerSameRunIdSucceeds() public {
+        bytes32 runId = keccak256("shared");
+        StreetsOfGainsRewards.RunAttestation memory a = _att(alice, 100, 1, 1e18, runId);
+        _submit(alice, a, _sign(a, signerPk));
+
+        StreetsOfGainsRewards.RunAttestation memory b = _att(bob, 300, 4, 2e18, runId);
+        _submit(bob, b, _sign(b, signerPk));
+
+        assertTrue(rw.isRunProcessed(alice, runId));
+        assertTrue(rw.isRunProcessed(bob, runId));
+        assertEq(rw.pendingRewards(bob), 2e18);
+    }
+
+    /// A third party cannot burn someone else's runId in advance.
+    function test_RunIdCannotBeGriefedByAnotherPlayer() public {
+        bytes32 runId = keccak256("alice-future-run");
+
+        // bob front-runs with the same raw runId
+        StreetsOfGainsRewards.RunAttestation memory griefer = _att(bob, 1, 1, 0, runId);
+        _submit(bob, griefer, _sign(griefer, signerPk));
+
+        // alice is unaffected
+        StreetsOfGainsRewards.RunAttestation memory a = _att(alice, 100, 1, 1e18, runId);
+        _submit(alice, a, _sign(a, signerPk));
+        assertEq(rw.pendingRewards(alice), 1e18);
+    }
+
+    function test_SameRunIdDifferentNonceStillBlocked() public {
+        bytes32 runId = keccak256("dup");
+        StreetsOfGainsRewards.RunAttestation memory a = _att(alice, 1, 1, 1e18, runId);
+        _submit(alice, a, _sign(a, signerPk));
+        assertEq(rw.nonces(alice), 1);
+
+        // fresh (current) nonce, same runId => still rejected
+        StreetsOfGainsRewards.RunAttestation memory b = _att(alice, 1, 1, 1e18, runId);
+        assertEq(b.nonce, 1);
+        vm.prank(alice);
+        vm.expectRevert(StreetsOfGainsRewards.RunAlreadyProcessed.selector);
+        rw.submitRun(b, _sign(b, signerPk));
+    }
+
+    function test_SameNonceDifferentRunIdBlockedAfterConsumption() public {
+        StreetsOfGainsRewards.RunAttestation memory a = _att(alice, 1, 1, 1e18, keccak256("r1"));
+        _submit(alice, a, _sign(a, signerPk));
+
+        // reuse nonce 0 with a brand new runId => nonce already consumed
+        StreetsOfGainsRewards.RunAttestation memory b = _att(alice, 1, 1, 1e18, keccak256("r2"));
+        b.nonce = 0;
+        vm.prank(alice);
+        vm.expectRevert(StreetsOfGainsRewards.BadNonce.selector);
+        rw.submitRun(b, _sign(b, signerPk));
+
+        // with the current nonce it succeeds
+        StreetsOfGainsRewards.RunAttestation memory c = _att(alice, 1, 1, 1e18, keccak256("r2"));
+        _submit(alice, c, _sign(c, signerPk));
+        assertEq(rw.pendingRewards(alice), 2e18);
+    }
+
+    // ------------------------------------------------------------------
+    // MEDIUM-2: nonce liveness
+    // ------------------------------------------------------------------
+
+    /// An attestation that is signed but never submitted cannot brick the wallet.
+    function test_UnsubmittedAttestationDoesNotBrickWallet() public {
+        // backend signs nonce 0 ... and the player never submits it
+        StreetsOfGainsRewards.RunAttestation memory lost = _att(alice, 999, 9, 1e18, keccak256("lost"));
+        bytes memory lostSig = _sign(lost, signerPk);
+        lostSig; // deliberately unused: the run is dropped
+
+        // nothing was consumed on chain
+        assertEq(rw.nonces(alice), 0);
+
+        // the attestation later expires
+        vm.warp(lost.deadline + 1);
+        vm.prank(alice);
+        vm.expectRevert(StreetsOfGainsRewards.AttestationExpired.selector);
+        rw.submitRun(lost, lostSig);
+
+        // operator resyncs to the on-chain nonce and re-signs => succeeds
+        uint256 onChainNonce = rw.nonces(alice);
+        assertEq(onChainNonce, 0, "on-chain nonce unchanged");
+        StreetsOfGainsRewards.RunAttestation memory fresh = _att(alice, 1234, 5, 2e18, keccak256("fresh"));
+        assertEq(fresh.nonce, onChainNonce);
+        _submit(alice, fresh, _sign(fresh, signerPk));
+        assertEq(rw.nonces(alice), 1);
+        assertEq(rw.pendingRewards(alice), 2e18);
+    }
+
+    /// A drifted backend counter self-heals by reading nonces(player) again.
+    function test_OperatorCanResyncAfterNonceDrift() public {
+        StreetsOfGainsRewards.RunAttestation memory a = _att(alice, 1, 1, 1e18, keccak256("r1"));
+        _submit(alice, a, _sign(a, signerPk));
+
+        // backend wrongly believes the nonce is still 0
+        StreetsOfGainsRewards.RunAttestation memory drifted = _att(alice, 2, 2, 1e18, keccak256("r2"));
+        drifted.nonce = 0;
+        vm.prank(alice);
+        vm.expectRevert(StreetsOfGainsRewards.BadNonce.selector);
+        rw.submitRun(drifted, _sign(drifted, signerPk));
+
+        // backend also over-shoots
+        StreetsOfGainsRewards.RunAttestation memory ahead = _att(alice, 2, 2, 1e18, keccak256("r3"));
+        ahead.nonce = 5;
+        vm.prank(alice);
+        vm.expectRevert(StreetsOfGainsRewards.BadNonce.selector);
+        rw.submitRun(ahead, _sign(ahead, signerPk));
+
+        // resync to on-chain value => works
+        StreetsOfGainsRewards.RunAttestation memory ok = _att(alice, 2, 2, 1e18, keccak256("r4"));
+        assertEq(ok.nonce, rw.nonces(alice));
+        _submit(alice, ok, _sign(ok, signerPk));
+        assertEq(rw.nonces(alice), 2);
     }
 
     function test_UnauthorizedAdminOpsRevert() public {
@@ -539,7 +699,9 @@ contract StreetsOfGainsRewardsTest is Test {
     {
         bytes32 domain = keccak256(
             abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
                 keccak256(bytes("StreetsOfGainsRewards")),
                 keccak256(bytes("1")),
                 block.chainid,
@@ -548,15 +710,7 @@ contract StreetsOfGainsRewardsTest is Test {
         );
         bytes32 structHash = keccak256(
             abi.encode(
-                TYPEHASH,
-                a.player,
-                a.score,
-                a.wave,
-                a.level,
-                a.runId,
-                a.nonce,
-                a.deadline,
-                a.rewardAmount
+                TYPEHASH, a.player, a.score, a.wave, a.level, a.runId, a.nonce, a.deadline, a.rewardAmount
             )
         );
         return keccak256(abi.encodePacked("\x19\x01", domain, structHash));
