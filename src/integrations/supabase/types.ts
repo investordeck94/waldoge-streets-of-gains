@@ -416,6 +416,141 @@ export type Database = {
         }
         Relationships: []
       }
+      sog_auth_challenges: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          issued_at: string
+          nonce: string
+          statement: string
+          wallet: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          issued_at?: string
+          nonce: string
+          statement: string
+          wallet: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          issued_at?: string
+          nonce?: string
+          statement?: string
+          wallet?: string
+        }
+        Relationships: []
+      }
+      sog_runs: {
+        Row: {
+          attestation_digest: string | null
+          chain_id: number
+          chain_nonce: number
+          client_run_key: string | null
+          contract_address: string
+          created_at: string
+          deadline: number
+          duration_ms: number
+          epoch_key: string
+          id: string
+          level: number
+          reward_amount_wei: number
+          run_id: string
+          score: number
+          status: string
+          tx_hash: string | null
+          updated_at: string
+          validation_error: string | null
+          wallet: string
+          wave: number
+        }
+        Insert: {
+          attestation_digest?: string | null
+          chain_id: number
+          chain_nonce: number
+          client_run_key?: string | null
+          contract_address: string
+          created_at?: string
+          deadline: number
+          duration_ms?: number
+          epoch_key?: string
+          id?: string
+          level: number
+          reward_amount_wei?: number
+          run_id: string
+          score: number
+          status?: string
+          tx_hash?: string | null
+          updated_at?: string
+          validation_error?: string | null
+          wallet: string
+          wave: number
+        }
+        Update: {
+          attestation_digest?: string | null
+          chain_id?: number
+          chain_nonce?: number
+          client_run_key?: string | null
+          contract_address?: string
+          created_at?: string
+          deadline?: number
+          duration_ms?: number
+          epoch_key?: string
+          id?: string
+          level?: number
+          reward_amount_wei?: number
+          run_id?: string
+          score?: number
+          status?: string
+          tx_hash?: string | null
+          updated_at?: string
+          validation_error?: string | null
+          wallet?: string
+          wave?: number
+        }
+        Relationships: []
+      }
+      sog_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          issued_at: string
+          last_used_at: string | null
+          revoked_at: string | null
+          token_hash: string
+          wallet: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          issued_at?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          token_hash: string
+          wallet: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          issued_at?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          token_hash?: string
+          wallet?: string
+        }
+        Relationships: []
+      }
       wallet_usage: {
         Row: {
           created_at: string
