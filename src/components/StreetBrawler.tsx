@@ -66,6 +66,7 @@ import { SFX } from "@/lib/gameSfx";
 // DogeOS (EVM) wallet connect button — presentation-only, never touched by the
 // game loop, physics, camera or rendering.
 import { DogeOSConnectButton } from "@/components/dogeos/DogeOSConnectButton";
+import { DogeOSPlayerBadge } from "@/components/dogeos/DogeOSPlayerBadge";
 import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
@@ -5122,6 +5123,7 @@ export const StreetBrawler: FC = () => {
             <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
             {/* DogeOS wallet — presentational only, outside the game loop. */}
             <DogeOSConnectButton />
+            <DogeOSPlayerBadge />
 
             <button
               onClick={() => { const v = !sfxEnabled; setSfxEnabled(v); sfxRef.current = v; }}
