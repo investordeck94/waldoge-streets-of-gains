@@ -145,3 +145,19 @@ forge test --match-contract Invariant   # stateful invariants
 - Leaderboard indexing
 - Independent production audit
 - Deployment itself (nothing has been deployed)
+
+## WaldogeTestnetToken (tWALDOGE) — testnet only
+
+`src/WaldogeTestnetToken.sol` — "Waldoge Testnet" / `tWALDOGE`, 18 decimals, OpenZeppelin `ERC20` + `AccessControl`.
+
+**This token has NO monetary value.** It exists solely for the DogeOS Chikyū testnet (chain id 6281971):
+no price, no backing, no redemption, not an investment. It must never be deployed to, bridged to, or
+listed on any production/mainnet environment. Balances may be wiped at any time.
+
+- Mint authority is separated from admin authority: `DEFAULT_ADMIN_ROLE` (role management only, cannot
+  mint) and `MINTER_ROLE` (the only role that can call `mint`/`mintBatch`, intended for a future faucet).
+- Both addresses are constructor arguments; the deployer receives no privileges and no supply is pre-minted.
+- `MAX_MINT_PER_CALL = 1,000,000e18` bounds a single mint; every mint emits `TestnetMint`.
+- `burn(uint256)` lets holders burn their own balance when resetting test wallets.
+- Fully independent of `StreetsOfGainsRewards.sol`. Tests: `test/WaldogeTestnetToken.t.sol` (17 tests).
+- Not deployed. No deployment script is provided.

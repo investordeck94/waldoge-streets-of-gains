@@ -1,1 +1,1 @@
-{"version":1,"failures":[{"contract":"test/StreetsOfGainsRewards.dogeosFork.t.sol:StreetsOfGainsRewardsDogeOSForkTest","test":"test_Fork_NegativeMatrix"}]}
+test_AdminCanGrantAndRevokeMinter|test_MinterCannotGrantRoles
