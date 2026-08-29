@@ -75,7 +75,9 @@ contract StreetsOfGainsRewardsTest is Test {
     {
         bytes32 domain = keccak256(
             abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
                 keccak256(bytes("StreetsOfGainsRewards")),
                 keccak256(bytes("1")),
                 block.chainid,
@@ -84,21 +86,15 @@ contract StreetsOfGainsRewardsTest is Test {
         );
         bytes32 structHash = keccak256(
             abi.encode(
-                TYPEHASH,
-                a.player,
-                a.score,
-                a.wave,
-                a.level,
-                a.runId,
-                a.nonce,
-                a.deadline,
-                a.rewardAmount
+                TYPEHASH, a.player, a.score, a.wave, a.level, a.runId, a.nonce, a.deadline, a.rewardAmount
             )
         );
         return keccak256(abi.encodePacked("\x19\x01", domain, structHash));
     }
 
-    function _submit(address player, StreetsOfGainsRewards.RunAttestation memory a, bytes memory sig) internal {
+    function _submit(address player, StreetsOfGainsRewards.RunAttestation memory a, bytes memory sig)
+        internal
+    {
         vm.prank(player);
         rw.submitRun(a, sig);
     }
@@ -515,7 +511,6 @@ contract StreetsOfGainsRewardsTest is Test {
         assertEq(rw.nonces(alice), 2);
     }
 
-
     function test_UnauthorizedAdminOpsRevert() public {
         vm.startPrank(alice);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
@@ -704,7 +699,9 @@ contract StreetsOfGainsRewardsTest is Test {
     {
         bytes32 domain = keccak256(
             abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
                 keccak256(bytes("StreetsOfGainsRewards")),
                 keccak256(bytes("1")),
                 block.chainid,
@@ -713,15 +710,7 @@ contract StreetsOfGainsRewardsTest is Test {
         );
         bytes32 structHash = keccak256(
             abi.encode(
-                TYPEHASH,
-                a.player,
-                a.score,
-                a.wave,
-                a.level,
-                a.runId,
-                a.nonce,
-                a.deadline,
-                a.rewardAmount
+                TYPEHASH, a.player, a.score, a.wave, a.level, a.runId, a.nonce, a.deadline, a.rewardAmount
             )
         );
         return keccak256(abi.encodePacked("\x19\x01", domain, structHash));

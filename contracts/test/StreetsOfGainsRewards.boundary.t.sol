@@ -230,7 +230,9 @@ contract StreetsOfGainsRewardsBoundaryTest is AttestationHelper {
         );
         bytes32 expected = keccak256(
             abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
                 keccak256(bytes("StreetsOfGainsRewards")),
                 keccak256(bytes("1")),
                 uint256(6281971),

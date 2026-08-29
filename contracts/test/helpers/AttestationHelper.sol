@@ -27,7 +27,9 @@ abstract contract AttestationHelper is Test {
 
     function _structHash(StreetsOfGainsRewards.RunAttestation memory a) internal pure returns (bytes32) {
         return keccak256(
-            abi.encode(TYPEHASH, a.player, a.score, a.wave, a.level, a.runId, a.nonce, a.deadline, a.rewardAmount)
+            abi.encode(
+                TYPEHASH, a.player, a.score, a.wave, a.level, a.runId, a.nonce, a.deadline, a.rewardAmount
+            )
         );
     }
 
@@ -36,11 +38,12 @@ abstract contract AttestationHelper is Test {
         view
         returns (bytes32)
     {
-        return keccak256(abi.encodePacked("\x19\x01", _domainSeparatorFor(verifying, block.chainid), _structHash(a)));
+        return keccak256(
+            abi.encodePacked("\x19\x01", _domainSeparatorFor(verifying, block.chainid), _structHash(a))
+        );
     }
 
     function _signAt(StreetsOfGainsRewards.RunAttestation memory a, address verifying, uint256 pk)
-
         internal
         view
         returns (bytes memory)
@@ -58,14 +61,14 @@ abstract contract AttestationHelper is Test {
         bytes32 runId
     ) internal view returns (StreetsOfGainsRewards.RunAttestation memory a) {
         a = StreetsOfGainsRewards.RunAttestation({
-            player: player,
-            score: score,
-            wave: wave,
-            level: 3,
-            runId: runId,
-            nonce: rw.nonces(player),
-            deadline: block.timestamp + 1 hours,
-            rewardAmount: reward
-        });
+                player: player,
+                score: score,
+                wave: wave,
+                level: 3,
+                runId: runId,
+                nonce: rw.nonces(player),
+                deadline: block.timestamp + 1 hours,
+                rewardAmount: reward
+            });
     }
 }

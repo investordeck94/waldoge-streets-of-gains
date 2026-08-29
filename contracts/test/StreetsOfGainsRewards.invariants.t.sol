@@ -147,10 +147,7 @@ contract RewardsHandler is AttestationHelper {
         try rw.recoverUnentitled(ownerAddr, amt) {
             ghostRecovered += amt;
             if (solventBefore) {
-                require(
-                    token.balanceOf(address(rw)) >= rw.totalEntitled(),
-                    "recovery broke solvency"
-                );
+                require(token.balanceOf(address(rw)) >= rw.totalEntitled(), "recovery broke solvency");
             } else {
                 sawInsolventRecovery = true;
             }
@@ -185,7 +182,9 @@ contract StreetsOfGainsRewardsInvariantTest is StdInvariant, Test {
     function setUp() public {
         token = new MockERC20();
         vm.warp(1_700_000_000);
-        rw = new StreetsOfGainsRewards(owner, address(token), vm.addr(signerPk), 1 days, 100e18, 300e18, 1000e18);
+        rw = new StreetsOfGainsRewards(
+            owner, address(token), vm.addr(signerPk), 1 days, 100e18, 300e18, 1000e18
+        );
         token.mint(address(rw), 100_000e18);
 
         handler = new RewardsHandler(rw, token, signerPk, owner);
@@ -236,7 +235,9 @@ contract StreetsOfGainsRewardsInvariantTest is StdInvariant, Test {
                     rw.HARD_MAX_REWARD_PER_WALLET_EPOCH(),
                     "wallet epoch over hard ceiling"
                 );
-                assertLe(rw.epochPaid(handler.players(p), e), rw.epochPoolUsed(e), "wallet total exceeds pool");
+                assertLe(
+                    rw.epochPaid(handler.players(p), e), rw.epochPoolUsed(e), "wallet total exceeds pool"
+                );
             }
         }
     }

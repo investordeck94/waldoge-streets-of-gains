@@ -80,14 +80,17 @@ contract Deploy is Script {
         require(r.epochLength() == EPOCH_LENGTH, "epochLength mismatch");
         require(r.maxRewardPerRun() == MAX_REWARD_PER_RUN, "maxRewardPerRun mismatch");
         require(
-            r.maxRewardPerWalletPerEpoch() == MAX_REWARD_PER_WALLET_EPOCH, "maxRewardPerWalletPerEpoch mismatch"
+            r.maxRewardPerWalletPerEpoch() == MAX_REWARD_PER_WALLET_EPOCH,
+            "maxRewardPerWalletPerEpoch mismatch"
         );
         require(r.maxRewardPoolPerEpoch() == MAX_REWARD_POOL_EPOCH, "maxRewardPoolPerEpoch mismatch");
         require(!r.paused(), "unexpectedly paused");
         require(r.totalEntitled() == 0, "unexpected entitlements");
         // Operational limits must stay well inside the immutable hard ceilings.
         require(r.maxRewardPerRun() <= r.HARD_MAX_REWARD_PER_RUN(), "run cap over ceiling");
-        require(r.maxRewardPerWalletPerEpoch() <= r.HARD_MAX_REWARD_PER_WALLET_EPOCH(), "wallet cap over ceiling");
+        require(
+            r.maxRewardPerWalletPerEpoch() <= r.HARD_MAX_REWARD_PER_WALLET_EPOCH(), "wallet cap over ceiling"
+        );
         require(r.maxRewardPoolPerEpoch() <= r.HARD_MAX_REWARD_POOL_EPOCH(), "pool cap over ceiling");
     }
 

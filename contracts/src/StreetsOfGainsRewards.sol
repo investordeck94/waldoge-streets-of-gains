@@ -193,7 +193,9 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
         uint256 maxRewardPerWalletPerEpoch_,
         uint256 maxRewardPoolPerEpoch_
     ) Ownable(initialOwner) EIP712("StreetsOfGainsRewards", "1") {
-        if (rewardToken_ == address(0) || signer_ == address(0)) revert ZeroAddress();
+        if (rewardToken_ == address(0) || signer_ == address(0)) {
+            revert ZeroAddress();
+        }
         if (epochLength_ < 1 hours || epochLength_ > 30 days) revert InvalidEpochLength();
 
         rewardToken = IERC20(rewardToken_);
@@ -381,7 +383,8 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
         if (
             maxPerRun == 0 || maxPerWalletEpoch == 0 || maxPoolEpoch == 0 || maxPerRun > maxPerWalletEpoch
                 || maxPerWalletEpoch > maxPoolEpoch || maxPerRun > HARD_MAX_REWARD_PER_RUN
-                || maxPerWalletEpoch > HARD_MAX_REWARD_PER_WALLET_EPOCH || maxPoolEpoch > HARD_MAX_REWARD_POOL_EPOCH
+                || maxPerWalletEpoch > HARD_MAX_REWARD_PER_WALLET_EPOCH
+                || maxPoolEpoch > HARD_MAX_REWARD_POOL_EPOCH
         ) revert InvalidLimits();
 
         maxRewardPerRun = maxPerRun;
