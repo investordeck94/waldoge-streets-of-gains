@@ -235,6 +235,16 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
         );
     }
 
+    /// @notice Replay key for a (player, runId) pair.
+    function runKeyOf(address player, bytes32 runId) public pure returns (bytes32) {
+        return keccak256(abi.encode(player, runId));
+    }
+
+    /// @notice Whether this exact (player, runId) run has already been processed.
+    function isRunProcessed(address player, bytes32 runId) external view returns (bool) {
+        return runProcessed[runKeyOf(player, runId)];
+    }
+
     /// @notice Reward tokens held by the contract that are not already owed to players.
     function unentitledBalance() public view returns (uint256) {
         uint256 bal = rewardToken.balanceOf(address(this));
