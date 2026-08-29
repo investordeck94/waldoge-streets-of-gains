@@ -551,6 +551,39 @@ export type Database = {
         }
         Relationships: []
       }
+      twaldoge_faucet_claims: {
+        Row: {
+          amount_wei: string
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          id: string
+          status: string
+          tx_hash: string | null
+          wallet: string
+        }
+        Insert: {
+          amount_wei: string
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          status?: string
+          tx_hash?: string | null
+          wallet: string
+        }
+        Update: {
+          amount_wei?: string
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          status?: string
+          tx_hash?: string | null
+          wallet?: string
+        }
+        Relationships: []
+      }
       wallet_usage: {
         Row: {
           created_at: string
