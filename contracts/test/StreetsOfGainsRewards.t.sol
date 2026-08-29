@@ -15,7 +15,7 @@ contract StreetsOfGainsRewardsTest is Test {
     address internal signerAddr;
     uint256 internal attackerPk = 0xB0B;
 
-    address internal owner = address(0xO0);
+    address internal owner = address(0xF0);
     address internal alice = address(0xA1);
     address internal bob = address(0xB1);
 
