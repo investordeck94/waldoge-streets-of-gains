@@ -97,7 +97,7 @@ describe("faucet config", () => {
 
   it("refuses a minter that collides with the SOG signer or owner", () => {
     expect(resolveFaucetConfig(baseEnv({ SOG_EXPECTED_SIGNER_ADDRESS: MINTER })).ok).toBe(false);
-    expect(resolveFaucetConfig(baseEnv({ SOG_OWNER_ADDRESS: MINTER.toUpperCase() })).ok).toBe(
+    expect(resolveFaucetConfig(baseEnv({ SOG_OWNER_ADDRESS: `0x${MINTER.slice(2).toUpperCase()}` })).ok).toBe(
       false,
     );
   });
