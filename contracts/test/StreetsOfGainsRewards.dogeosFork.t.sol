@@ -173,28 +173,28 @@ contract StreetsOfGainsRewardsDogeOSForkTest is AttestationHelper {
         rewards.submitRun(a, sig);
 
         // 2. modified reward amount
-        StreetsOfGainsRewards.RunAttestation memory tampered = a;
+        StreetsOfGainsRewards.RunAttestation memory tampered = _copy(a);
         tampered.rewardAmount = reward + 1;
         vm.prank(playerA);
         vm.expectRevert(StreetsOfGainsRewards.InvalidSignature.selector);
         rewards.submitRun(tampered, sig);
 
         // 3. modified score
-        tampered = a;
+        tampered = _copy(a);
         tampered.score = 5_000_000;
         vm.prank(playerA);
         vm.expectRevert(StreetsOfGainsRewards.InvalidSignature.selector);
         rewards.submitRun(tampered, sig);
 
         // 5. modified nonce
-        tampered = a;
+        tampered = _copy(a);
         tampered.nonce = a.nonce + 1;
         vm.prank(playerA);
         vm.expectRevert(StreetsOfGainsRewards.BadNonce.selector);
         rewards.submitRun(tampered, sig);
 
         // 6. modified runId
-        tampered = a;
+        tampered = _copy(a);
         tampered.runId = keccak256("other");
         vm.prank(playerA);
         vm.expectRevert(StreetsOfGainsRewards.InvalidSignature.selector);
@@ -208,7 +208,7 @@ contract StreetsOfGainsRewardsDogeOSForkTest is AttestationHelper {
         rewards.submitRun(a, sig);
 
         // 1b. replay with a refreshed nonce still blocked by the player-bound run key
-        StreetsOfGainsRewards.RunAttestation memory replay = a;
+        StreetsOfGainsRewards.RunAttestation memory replay = _copy(a);
         replay.nonce = rewards.nonces(playerA);
         bytes memory replaySig = _signAt(replay, address(rewards), signerPk);
         vm.prank(playerA);
@@ -312,6 +312,24 @@ contract StreetsOfGainsRewardsDogeOSForkTest is AttestationHelper {
         vm.prank(playerA);
         rewards.claimReward();
         assertEq(wdoge.balanceOf(playerA), 4e18, "entitlement not honoured after recovery");
+    }
+
+    /// @dev Structs in memory assign by reference; this returns an independent copy.
+    function _copy(StreetsOfGainsRewards.RunAttestation memory a)
+        internal
+        pure
+        returns (StreetsOfGainsRewards.RunAttestation memory)
+    {
+        return StreetsOfGainsRewards.RunAttestation({
+            player: a.player,
+            score: a.score,
+            wave: a.wave,
+            level: a.level,
+            runId: a.runId,
+            nonce: a.nonce,
+            deadline: a.deadline,
+            rewardAmount: a.rewardAmount
+        });
     }
 
     receive() external payable {}
