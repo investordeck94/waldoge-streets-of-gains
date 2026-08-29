@@ -59,3 +59,4 @@ remappings = [
   "forge-std/=lib/forge-std/src/",
   "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
 ]
+no_match_path = "test/__none__.t.sol"
