@@ -73,7 +73,7 @@ contract StreetsOfGainsRewardsBackendCompatTest is Test {
         // must present the same chain id or the domain separator differs.
         vm.chainId(f.chainId);
 
-        token = new MockERC20("Wrapped DOGE", "WDOGE", 18);
+        token = new MockERC20();
 
         // Deploy the rewards contract at the fixture's verifyingContract by
         // using the deployer/nonce pair the fixture address was derived from.
