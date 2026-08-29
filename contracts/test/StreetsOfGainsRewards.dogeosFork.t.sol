@@ -133,8 +133,7 @@ contract StreetsOfGainsRewardsDogeOSForkTest is AttestationHelper {
 
         uint256 reward = 34e17; // 3.4 WDOGE
         bytes32 runId = keccak256("fork-run-1");
-        StreetsOfGainsRewards.RunAttestation memory a =
-            _attFor(rewards, playerA, 88_000, 14, reward, runId);
+        StreetsOfGainsRewards.RunAttestation memory a = _attFor(rewards, playerA, 88_000, 14, reward, runId);
         bytes memory sig = _signAt(a, address(rewards), signerPk);
 
         vm.prank(playerA);
