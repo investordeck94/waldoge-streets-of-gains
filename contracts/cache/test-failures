@@ -1,1 +1,1 @@
-{"version":1,"failures":[{"contract":"test/StreetsOfGainsRewards.dogeosFork.t.sol:StreetsOfGainsRewardsDogeOSForkTest","test":"test_Fork_WDOGEBehavesAsDocumented"}]}
+{"version":1,"failures":[{"contract":"test/StreetsOfGainsRewards.dogeosFork.t.sol:StreetsOfGainsRewardsDogeOSForkTest","test":"test_Fork_NegativeMatrix"}]}
