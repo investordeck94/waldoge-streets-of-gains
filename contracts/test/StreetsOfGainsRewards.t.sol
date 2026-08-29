@@ -114,7 +114,9 @@ contract StreetsOfGainsRewardsTest is Test {
         assertEq(rw.bestScore(alice), 5000);
         assertEq(rw.bestWave(alice), 7);
         assertEq(rw.nonces(alice), 1);
-        assertTrue(rw.runProcessed(keccak256("run-1")));
+        assertTrue(rw.isRunProcessed(alice, keccak256("run-1")));
+        assertTrue(rw.runProcessed(rw.runKeyOf(alice, keccak256("run-1"))));
+        assertFalse(rw.isRunProcessed(bob, keccak256("run-1")), "run key is player-bound");
         assertEq(rw.pendingRewards(alice), 10e18);
         assertEq(rw.totalEntitled(), 10e18);
         assertEq(token.balanceOf(alice), 0, "no transfer on submit");
