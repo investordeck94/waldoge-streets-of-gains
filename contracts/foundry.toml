@@ -40,3 +40,22 @@ fail_on_revert = false
 call_override = false
 shrink_run_limit = 2000
 
+
+# Phase 2E fork rehearsal profile: needs network egress and a cancun-era EVM,
+# because the live DogeOS WDOGE bytecode uses post-paris opcodes.
+[profile.fork]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.24"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 800
+bytecode_hash = "none"
+fs_permissions = [{ access = "read", path = "./test/fixtures" }]
+remappings = [
+  "forge-std/=lib/forge-std/src/",
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+]
