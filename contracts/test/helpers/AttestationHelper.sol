@@ -39,16 +39,8 @@ abstract contract AttestationHelper is Test {
         return keccak256(abi.encodePacked("\x19\x01", _domainSeparatorFor(verifying, block.chainid), _structHash(a)));
     }
 
-    function _sign(StreetsOfGainsRewards.RunAttestation memory a, address verifying, uint256 pk)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        // pure-safe: digest recomputed with the chainid captured by the caller via _digest
-        revert("use _signAt");
-    }
-
     function _signAt(StreetsOfGainsRewards.RunAttestation memory a, address verifying, uint256 pk)
+
         internal
         view
         returns (bytes memory)
