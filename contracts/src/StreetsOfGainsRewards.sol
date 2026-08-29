@@ -254,14 +254,16 @@ contract StreetsOfGainsRewards is Ownable2Step, Pausable, ReentrancyGuard, EIP71
         if (a.player == address(0)) revert ZeroAddress();
         if (block.timestamp > a.deadline) revert AttestationExpired();
         if (a.nonce != nonces[a.player]) revert BadNonce();
-        if (runProcessed[a.runId]) revert RunAlreadyProcessed();
+
+        bytes32 runKey = keccak256(abi.encode(a.player, a.runId));
+        if (runProcessed[runKey]) revert RunAlreadyProcessed();
 
         address recovered = ECDSA.recover(hashAttestation(a), signature);
         if (recovered != signer) revert InvalidSignature();
 
         // Effects
         nonces[a.player] = a.nonce + 1;
-        runProcessed[a.runId] = true;
+        runProcessed[runKey] = true;
 
         uint256 epoch = currentEpoch();
 
