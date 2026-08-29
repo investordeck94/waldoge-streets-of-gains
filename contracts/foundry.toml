@@ -1,0 +1,21 @@
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.24"
+evm_version = "paris"
+optimizer = true
+optimizer_runs = 800
+via_ir = false
+bytecode_hash = "none"
+gas_reports = ["StreetsOfGainsRewards"]
+
+remappings = [
+  "forge-std/=lib/forge-std/src/",
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+]
+
+[fmt]
+line_length = 110
