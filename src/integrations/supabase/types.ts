@@ -551,6 +551,54 @@ export type Database = {
         }
         Relationships: []
       }
+      sog_weekly_runs: {
+        Row: {
+          client_run_key: string
+          created_at: string
+          difficulty: number
+          duration_ms: number
+          id: string
+          level: number
+          run_id: string
+          score: number
+          status: string
+          verified_at: string
+          wallet: string
+          wave: number
+          week_start: string
+        }
+        Insert: {
+          client_run_key: string
+          created_at?: string
+          difficulty: number
+          duration_ms?: number
+          id?: string
+          level: number
+          run_id: string
+          score: number
+          status?: string
+          verified_at?: string
+          wallet: string
+          wave: number
+          week_start: string
+        }
+        Update: {
+          client_run_key?: string
+          created_at?: string
+          difficulty?: number
+          duration_ms?: number
+          id?: string
+          level?: number
+          run_id?: string
+          score?: number
+          status?: string
+          verified_at?: string
+          wallet?: string
+          wave?: number
+          week_start?: string
+        }
+        Relationships: []
+      }
       twaldoge_faucet_claims: {
         Row: {
           amount_wei: string
