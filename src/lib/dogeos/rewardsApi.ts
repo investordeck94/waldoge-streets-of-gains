@@ -30,6 +30,11 @@ export interface RunResult {
   level: number;
   durationMs: number;
   difficulty?: number;
+  /**
+   * Run start time (epoch ms). Intrinsic to the completed run and used by the
+   * backend to derive a submission-time-independent duplicate key.
+   */
+  startedAt: number;
 }
 
 interface StoredSession {
@@ -136,6 +141,7 @@ export async function requestRewardAuthorization(
       level: run.level,
       durationMs: run.durationMs,
       difficulty: run.difficulty ?? 0,
+      startedAt: run.startedAt,
     },
     token,
   );

@@ -31,7 +31,7 @@ describe("backend <-> contract compatibility fixture", () => {
   it("writes a fixture the Solidity test can replay", async () => {
     const account = privateKeyToAccount(TEST_KEY);
 
-    const validation = validateRun({ score: 88_000, wave: 14, level: 4, durationMs: 420_000 });
+    const validation = validateRun({ startedAt: 1_756_000_000_000, score: 88_000, wave: 14, level: 4, durationMs: 420_000 });
     expect(validation.ok).toBe(true);
     if (!validation.ok) return;
 

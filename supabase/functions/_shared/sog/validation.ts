@@ -28,6 +28,8 @@ export interface ValidationOk {
   ok: true;
   run: Required<Pick<RunSubmission, "score" | "wave" | "level" | "durationMs">> & {
     difficulty: number;
+    /** Client-reported run start (epoch ms) — the run's intrinsic identity. */
+    startedAt: number;
   };
 }
 export interface ValidationFail {
@@ -47,6 +49,10 @@ export const LIMITS = {
   /** Score cannot plausibly exceed this per wave. */
   maxScorePerWave: 25_000,
   maxDifficulty: 2,
+  /** Earliest plausible run start (epoch ms) — sanity bound only. */
+  minStartedAt: 1_600_000_000_000,
+  /** Tolerated clock skew for a run start in the future. */
+  maxStartedAtSkewMs: 10 * 60 * 1000,
 } as const;
 
 function intOrNull(value: unknown): number | null {
@@ -65,6 +71,7 @@ export function validateRun(input: unknown): ValidationResult {
   const level = intOrNull(raw.level);
   const durationMs = intOrNull(raw.durationMs);
   const difficulty = intOrNull(raw.difficulty) ?? 0;
+  const startedAt = intOrNull(raw.startedAt);
 
   if (score === null || wave === null || level === null || durationMs === null) {
     return { ok: false, error: "invalid run" };
@@ -80,6 +87,14 @@ export function validateRun(input: unknown): ValidationResult {
     return { ok: false, error: "invalid game result" };
   }
 
+  // The run start timestamp is required: it is what makes the duplicate key
+  // intrinsic to the completed run instead of the server submission time.
+  if (startedAt === null) return { ok: false, error: "invalid run" };
+  if (startedAt < LIMITS.minStartedAt) return { ok: false, error: "invalid game result" };
+  if (startedAt > Date.now() + LIMITS.maxStartedAtSkewMs) {
+    return { ok: false, error: "invalid game result" };
+  }
+
   // Plausibility rules (heuristics, not proof).
   if (wave > 0 && durationMs < wave * LIMITS.minMsPerWave) {
     return { ok: false, error: "invalid game result" };
@@ -88,5 +103,5 @@ export function validateRun(input: unknown): ValidationResult {
     return { ok: false, error: "invalid game result" };
   }
 
-  return { ok: true, run: { score, wave, level, durationMs, difficulty } };
+  return { ok: true, run: { score, wave, level, durationMs, difficulty, startedAt } };
 }

@@ -64,22 +64,41 @@ export function generateRunId(): string {
 }
 
 /**
- * Collision-resistant key for one *logical* run, derived server-side from the
- * run fingerprint. Used only for backend duplicate detection — the on-chain
- * replay key remains keccak256(player, runId).
+ * Collision-resistant identity of one *logical* completed run.
+ *
+ * SECURITY (H-2 remediation): this key is derived ONLY from data intrinsic to
+ * the finished run — the authenticated wallet plus the run fingerprint,
+ * including the client-reported run start timestamp, which is a property of
+ * the run itself and never the server's submission clock. The same completed
+ * run therefore yields the same key hours or days later, so the
+ * (wallet, client_run_key) unique index rejects every replay. The wallet is
+ * mixed in first, so wallet A's key can never collide with wallet B's.
+ *
+ * Do NOT reintroduce Date.now(), minute buckets or any submission-time value.
  */
+export interface RunFingerprint {
+  score: number;
+  wave: number;
+  level: number;
+  durationMs: number;
+  difficulty: number;
+  /** Run start time reported by the client; intrinsic to the run. */
+  startedAt: number;
+}
+
 export async function deriveLogicalRunKey(
   wallet: string,
-  run: { score: number; wave: number; level: number; durationMs: number },
-  startedAtBucket: number,
+  run: RunFingerprint,
 ): Promise<string> {
   const material = [
+    "sog-run-v2",
     wallet.toLowerCase(),
+    run.startedAt,
+    run.durationMs,
     run.score,
     run.wave,
     run.level,
-    run.durationMs,
-    startedAtBucket,
+    run.difficulty,
   ].join("|");
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(material));
   return toHex(new Uint8Array(digest));
