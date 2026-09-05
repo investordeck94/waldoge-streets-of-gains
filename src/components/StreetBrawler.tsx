@@ -3886,19 +3886,26 @@ export const StreetBrawler: FC = () => {
       }
 
       // Enemy AI
-      for (const e of g.enemies) {
+      for (const e of g.enemies as MovingEnemy[]) {
         if (e.state === "dead") { e.stateTimer--; continue; }
+
+        // Shared safety layer (all enemies, all bosses, all 7 levels):
+        // repair impossible numbers and release action states that overran
+        // their exit frame, so movement can never be locked out.
+        sanitizeEnemyMotion(e, GROUND_Y);
 
         e.vy += GRAVITY;
         e.y += e.vy;
         e.x += e.vx || 0;
         e.vx = (e.vx || 0) * 0.85;
         if (e.y >= GROUND_Y) { e.y = GROUND_Y; e.vy = 0; }
+        clampEnemyToWorld(e, LEVEL_WIDTH);
         e.stateTimer = Math.max(-1, e.stateTimer - 1);
         e.attackCooldown = Math.max(-1, e.attackCooldown - 1);
         if (e.state === "hit" && e.stateTimer <= 0) e.state = "idle";
         if ((e.state === "punch" || e.state === "kick") && e.stateTimer <= 0) e.state = "idle";
         if ((e.state === "boss_charge" || e.state === "boss_slam" || e.state === "boss_throw") && e.stateTimer <= 0) e.state = "idle";
+
 
         // Boss AI
         if (e.isBoss) {
