@@ -3176,6 +3176,8 @@ export const StreetBrawler: FC = () => {
     setEnergy(50);
     pausedRef.current = false;
     setIsPaused(false);
+    runStartTimeRef.current = Date.now();
+    rewardSubmittedRef.current = false;
     setGameState("playing");
   }, []);
 
