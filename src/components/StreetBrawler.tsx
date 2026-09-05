@@ -3199,6 +3199,9 @@ export const StreetBrawler: FC = () => {
     setComboCount(0);
     setComboName("");
     setEnergy(50);
+    // Never carry held-key state from a previous run into a new one.
+    g.keys.clear();
+    g.keyJustPressed.clear();
     pausedRef.current = false;
     setIsPaused(false);
     runStartTimeRef.current = Date.now();
