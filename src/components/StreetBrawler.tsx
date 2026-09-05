@@ -95,7 +95,7 @@ import {
   updateStuckWatchdog,
   type MovingEnemy,
 } from "@/game/enemy/movement";
-import { selectBossMove, getMoveById } from "@/game/enemy/bossMoves";
+import { selectBossMove, getMoveById, rollChain, type MartialForm } from "@/game/enemy/bossMoves";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
