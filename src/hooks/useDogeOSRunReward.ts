@@ -1,5 +1,5 @@
 /**
- * Reward-claim flow hook — Phase 2D.
+ * Weekly prize claim flow hook — Phase 2D.
  *
  * Deliberately NOT wired into the game loop. A caller passes an already
  * finished run result; nothing here runs per frame and nothing in src/game/**
@@ -10,10 +10,9 @@ import {
   authenticateWallet,
   clearRewardSession,
   reportSubmittedTx,
-  requestRewardAuthorization,
+  claimWeeklyPrize,
   submitRunTransaction,
   type RewardAuthorization,
-  type RunResult,
 } from "@/lib/dogeos/rewardsApi";
 
 export type RewardPhase =
@@ -51,19 +50,21 @@ export function useDogeOSRunReward(address: string | null) {
     }
   }, [address]);
 
-  const authorizeRun = useCallback(
-    async (run: RunResult) => {
-      if (!address) return;
-      setState({ ...INITIAL, phase: "authorizing" });
-      try {
-        const authorization = await requestRewardAuthorization(address, run);
-        setState({ phase: "authorized", authorization, txHash: null, error: null });
-      } catch (e) {
-        setState({ ...INITIAL, phase: "error", error: (e as Error).message });
-      }
-    },
-    [address],
-  );
+  /**
+   * Claim the weekly prize. Takes no run data on purpose: the backend decides
+   * the winner from its own settlement record, so there is nothing the client
+   * could usefully send.
+   */
+  const claimPrize = useCallback(async () => {
+    if (!address) return;
+    setState({ ...INITIAL, phase: "authorizing" });
+    try {
+      const authorization = await claimWeeklyPrize(address);
+      setState({ phase: "authorized", authorization, txHash: null, error: null });
+    } catch (e) {
+      setState({ ...INITIAL, phase: "error", error: (e as Error).message });
+    }
+  }, [address]);
 
   const submit = useCallback(async () => {
     if (!address || !state.authorization) return;
@@ -80,5 +81,5 @@ export function useDogeOSRunReward(address: string | null) {
     }
   }, [address, state.authorization]);
 
-  return { ...state, signIn, authorizeRun, submit, reset };
+  return { ...state, signIn, claimPrize, submit, reset };
 }

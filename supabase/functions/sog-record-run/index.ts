@@ -1,21 +1,24 @@
 /**
  * POST /sog-record-run   header: x-sog-session
- * body: { score, wave, level, durationMs, difficulty }
+ * body: { runId, score, wave, level, durationMs, difficulty, startedAt }
  *
  * Records a completed HARD MODE run as a qualifying entry for the current
  * weekly competition. This endpoint NEVER signs an attestation and NEVER
- * authorizes a WDOGE payout — settlement stays with sog-submit-run, which is
- * only used for the verified weekly winner.
+ * authorizes a WDOGE payout — settlement stays with sog-settle-week +
+ * sog-submit-run, used only for the verified weekly winner.
  *
- * Server-controlled at all times: the wallet (from the session), the week
- * window, the verification timestamp and the qualifying difficulty.
+ * SERVER-CONTROLLED AT ALL TIMES: the wallet (from the session), the run
+ * identity (issued by sog-run-start), the week window, the verification
+ * timestamp, the qualifying difficulty and the verified status.
  */
 import { fail, json, preflight, readJson } from "../_shared/sog/http.ts";
 import { validateRun } from "../_shared/sog/validation.ts";
 import { authenticateSession, serviceClient } from "../_shared/sog/session.ts";
-import { deriveLogicalRunKey, generateRunId } from "../_shared/sog/attestation.ts";
+import { deriveLogicalRunKey } from "../_shared/sog/attestation.ts";
+import { isRunId, validateRunAgainstStart, type RunStartRecord } from "../_shared/sog/runStart.ts";
 import { HARD_MODE_DIFFICULTY, rankRuns, weekWindow } from "../_shared/sog/weekly.ts";
 import { RATE_LIMIT_RUNS_PER_HOUR } from "../_shared/sog/config.ts";
+import { consumeRateLimit, RATE_BUCKETS } from "../_shared/sog/rateLimit.ts";
 
 Deno.serve(async (req) => {
   const early = preflight(req);
@@ -36,33 +39,53 @@ Deno.serve(async (req) => {
   if (!validation.ok) return fail(validation.error, 400);
   const run = validation.run;
 
+  if (!isRunId(run.runId)) return fail("run was not started on the server", 422);
+
   if (run.difficulty !== HARD_MODE_DIFFICULTY) {
     return fail("only hard mode runs qualify for the weekly competition", 422);
   }
 
-  // Rate limiting mirrors the reward endpoint.
-  const sinceHour = new Date(Date.now() - 3_600_000).toISOString();
-  const { count: recentCount } = await supabase
-    .from("sog_weekly_runs")
-    .select("id", { count: "exact", head: true })
-    .eq("wallet", wallet)
-    .gte("created_at", sinceHour);
-  if ((recentCount ?? 0) >= RATE_LIMIT_RUNS_PER_HOUR) return fail("rate limited", 429);
+  // Atomic rate limiting — no count-then-insert race (audit M-2).
+  const allowed = await consumeRateLimit(
+    supabase,
+    RATE_BUCKETS.weekly,
+    wallet,
+    RATE_LIMIT_RUNS_PER_HOUR,
+    3600,
+  );
+  if (!allowed) return fail("rate limited", 429);
 
-  // Duplicate protection keyed on the run itself (never the submission time).
-  const clientRunKey = await deriveLogicalRunKey(wallet, run);
-  const { data: duplicate } = await supabase
-    .from("sog_weekly_runs")
-    .select("id")
-    .eq("wallet", wallet)
-    .eq("client_run_key", clientRunKey)
+  // The run must have been opened by the backend for THIS wallet (audit H-1).
+  const { data: startRow } = await supabase
+    .from("sog_run_starts")
+    .select("run_id, wallet, difficulty, started_at, expires_at, consumed_at")
+    .eq("run_id", run.runId)
     .maybeSingle();
-  if (duplicate) return fail("duplicate run", 409);
 
+  const check = validateRunAgainstStart(
+    (startRow as RunStartRecord | null) ?? null,
+    { ...run, difficulty: run.difficulty },
+    wallet,
+  );
+  if (!check.ok) return fail(check.error, check.status);
+
+  // Consume the start record atomically: only the first completion wins.
+  const { data: consumed } = await supabase
+    .from("sog_run_starts")
+    .update({ consumed_at: new Date().toISOString(), status: "recorded" })
+    .eq("run_id", run.runId)
+    .eq("wallet", wallet)
+    .is("consumed_at", null)
+    .select("run_id")
+    .maybeSingle();
+  if (!consumed) return fail("duplicate run", 409);
+
+  // Second, independent duplicate gate keyed on the run's intrinsic identity.
+  const clientRunKey = await deriveLogicalRunKey(wallet, run);
   const window = weekWindow();
   const { error: insertError } = await supabase.from("sog_weekly_runs").insert({
     wallet,
-    run_id: generateRunId(),
+    run_id: run.runId,
     client_run_key: clientRunKey,
     score: run.score,
     wave: run.wave,

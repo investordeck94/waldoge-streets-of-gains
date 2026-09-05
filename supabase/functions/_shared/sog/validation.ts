@@ -15,6 +15,8 @@
  */
 
 export interface RunSubmission {
+  /** Server-issued run id (sog-run-start). Required for verified recording. */
+  runId?: string;
   score: number;
   wave: number;
   level: number;
@@ -28,8 +30,11 @@ export interface ValidationOk {
   ok: true;
   run: Required<Pick<RunSubmission, "score" | "wave" | "level" | "durationMs">> & {
     difficulty: number;
-    /** Client-reported run start (epoch ms) — the run's intrinsic identity. */
+    /** Client-reported run start (epoch ms) — cross-checked against the
+     *  server-issued run-start record. */
     startedAt: number;
+    /** Server-issued run id echoed by the client, format-checked here. */
+    runId: string | null;
   };
 }
 export interface ValidationFail {
@@ -72,6 +77,9 @@ export function validateRun(input: unknown): ValidationResult {
   const durationMs = intOrNull(raw.durationMs);
   const difficulty = intOrNull(raw.difficulty) ?? 0;
   const startedAt = intOrNull(raw.startedAt);
+  const runIdRaw = typeof raw.runId === "string" ? raw.runId.trim().toLowerCase() : null;
+  const runId = runIdRaw && /^0x[0-9a-f]{64}$/.test(runIdRaw) ? runIdRaw : null;
+  if (runIdRaw !== null && runId === null) return { ok: false, error: "invalid run" };
 
   if (score === null || wave === null || level === null || durationMs === null) {
     return { ok: false, error: "invalid run" };
@@ -103,5 +111,5 @@ export function validateRun(input: unknown): ValidationResult {
     return { ok: false, error: "invalid game result" };
   }
 
-  return { ok: true, run: { score, wave, level, durationMs, difficulty, startedAt } };
+  return { ok: true, run: { score, wave, level, durationMs, difficulty, startedAt, runId } };
 }

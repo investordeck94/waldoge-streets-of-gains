@@ -17,6 +17,8 @@ import { encodeSubmitRun, type SerializedAttestation } from "@/lib/dogeos/reward
 const SESSION_STORAGE_KEY = "waldoge.streetsOfGains.dogeosSession.v1";
 
 export interface RewardAuthorization {
+  /** Week the prize belongs to, as decided by the backend. */
+  weekStart?: string;
   attestation: SerializedAttestation;
   signature: string;
   contractAddress: string;
@@ -25,6 +27,8 @@ export interface RewardAuthorization {
 }
 
 export interface RunResult {
+  /** Server-issued run id from `startServerRun`. Required for verified runs. */
+  runId?: string;
   score: number;
   wave: number;
   level: number;
@@ -48,8 +52,13 @@ function readSession(wallet: string): string | null {
     const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredSession;
-    if (parsed.wallet !== wallet) return null;
-    if (parsed.expiresAt <= Date.now()) return null;
+    // A stored session belongs to exactly one wallet. If the connected wallet
+    // changed, or the session lapsed, drop it instead of keeping it around
+    // (audit L-1/L-2 — no cross-wallet session reuse, no stale tokens).
+    if (parsed.wallet !== wallet || parsed.expiresAt <= Date.now()) {
+      clearRewardSession();
+      return null;
+    }
     return parsed.token;
   } catch {
     return null;
@@ -123,26 +132,22 @@ export async function authenticateWallet(address: string): Promise<string> {
   return verified.session;
 }
 
-/** Ask the backend to validate a finished run and authorize a reward. */
-export async function requestRewardAuthorization(
-  address: string,
-  run: RunResult,
-): Promise<RewardAuthorization> {
+/**
+ * Claim the weekly prize.
+ *
+ * The browser sends NOTHING about the run: the backend looks up the
+ * settlement it created for the closed week and refuses unless this wallet is
+ * the winner it selected. Amount, nonce, deadline, run id and contract are all
+ * server-chosen (audit M-1 / H-1).
+ */
+export async function claimWeeklyPrize(address: string): Promise<RewardAuthorization> {
   const wallet = normalizeAddress(address);
   if (!wallet) throw new Error("invalid wallet address");
   const token = await authenticateWallet(wallet);
 
   const result = await callFunction<RewardAuthorization & { ok: boolean }>(
     "sog-submit-run",
-    {
-      wallet,
-      score: run.score,
-      wave: run.wave,
-      level: run.level,
-      durationMs: run.durationMs,
-      difficulty: run.difficulty ?? 0,
-      startedAt: run.startedAt,
-    },
+    {},
     token,
   );
 
