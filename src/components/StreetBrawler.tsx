@@ -4158,7 +4158,8 @@ export const StreetBrawler: FC = () => {
               sfx(() => SFX.victory());
               setGameState("victory");
 
-              // Submit exactly one DogeOS reward attestation for this run.
+              // Record exactly one qualifying weekly entry for this run.
+              // HARD MODE ONLY, and never a WDOGE payout.
               const rewardWallet = addressRef.current;
               if (!rewardSubmittedRef.current && rewardWallet) {
                 rewardSubmittedRef.current = true;
@@ -4175,7 +4176,9 @@ export const StreetBrawler: FC = () => {
                   durationMs,
                   difficulty: difficultyMap[g.difficulty],
                 };
-                void authorizeRunRef.current(run).catch(() => {});
+                if (run.difficulty === HARD_MODE_DIFFICULTY) {
+                  void recordWeeklyRunRef.current(run).catch(() => {});
+                }
               }
 
               return;
