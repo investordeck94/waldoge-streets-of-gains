@@ -535,10 +535,10 @@ export function drawWaldogeFighter(
   const { hip, chest, head } = pose;
 
   // --- back limbs -------------------------------------------------------
-  limb(ctx, pose.legBack[0], pose.legBack[1], pose.legBack[2], 9, TRACK_RED_DARK);
+  limb(ctx, pose.legBack[0], pose.legBack[1], pose.legBack[2], 10, TRACK_RED_DARK);
   sneaker(ctx, pose.legBack[2], -1);
-  limb(ctx, pose.armBack[0], pose.armBack[1], pose.armBack[2], 7.5, TRACK_RED_DARK);
-  glove(ctx, pose.armBack[2], 7);
+  armLimb(ctx, pose.armBack[0], pose.armBack[1], pose.armBack[2], 8, TRACK_RED_DARK, FUR_DARK);
+  glove(ctx, pose.armBack[2], 8.5);
 
   // --- tail -------------------------------------------------------------
   const wag = Math.sin(clock / 220) * 6;
@@ -555,20 +555,48 @@ export function drawWaldogeFighter(
   torso(ctx, hip, chest, pose.squash);
 
   // --- front limbs ------------------------------------------------------
-  limb(ctx, pose.legFront[0], pose.legFront[1], pose.legFront[2], 10, TRACK_RED);
+  limb(ctx, pose.legFront[0], pose.legFront[1], pose.legFront[2], 11, TRACK_RED);
   sneaker(ctx, pose.legFront[2], 1);
 
   // --- head -------------------------------------------------------------
   if (headImg && headImg.complete && headImg.naturalWidth > 0) {
-    const s = 42;
+    const s = 46;
     ctx.drawImage(headImg, head[0] - s / 2, head[1] - s / 2, s, s);
   } else {
-    shibaHead(ctx, head, 15);
+    shibaHead(ctx, head, 17);
   }
 
   // front arm draws over the head for punches so the strike reads clearly
-  limb(ctx, pose.armFront[0], pose.armFront[1], pose.armFront[2], 8, TRACK_RED);
-  glove(ctx, pose.armFront[2], 8);
+  armLimb(ctx, pose.armFront[0], pose.armFront[1], pose.armFront[2], 8.5, TRACK_RED, FUR);
+  glove(ctx, pose.armFront[2], 9.5);
+
+  // Stun stars over the head while in the HIT state (reference sheet).
+  if (e.state === "hit") {
+    ctx.save();
+    ctx.globalAlpha = 1;
+    const spin = clock / 300;
+    for (let i = 0; i < 3; i++) {
+      const a = spin + (i * Math.PI * 2) / 3;
+      const stx = head[0] + Math.cos(a) * 15;
+      const sty = head[1] - 26 + Math.sin(a) * 5;
+      ctx.beginPath();
+      for (let k = 0; k < 10; k++) {
+        const rr = k % 2 === 0 ? 5 : 2.2;
+        const ang = (k * Math.PI) / 5 - Math.PI / 2;
+        const px = stx + Math.cos(ang) * rr;
+        const py = sty + Math.sin(ang) * rr;
+        k === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = "#f5b731";
+      ctx.fill();
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   weaponInHand(ctx, pose.armFront[2], weaponType, e.state === "punch" ? -0.3 : 0.4);
 
   // Motion accents (visual only) -----------------------------------------
