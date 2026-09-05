@@ -5333,6 +5333,18 @@ export const StreetBrawler: FC = () => {
               <DogeOSConnectButton size="md" />
             </div>
 
+            {/* Weekly Hard Mode competition — presentational, real data only. */}
+            <div className="max-w-md mx-auto">
+              <WeeklyHardModePanel
+                leaderboard={weeklyLeaderboard}
+                loading={weeklyLoading}
+                error={weeklyError}
+                onRefresh={refreshWeekly}
+                connected={!!address}
+              />
+            </div>
+
+
             <button
               onClick={() => startGame(difficulty)}
               className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-bold flex items-center gap-2 mx-auto hover:opacity-90 transition"
