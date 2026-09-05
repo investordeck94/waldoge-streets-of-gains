@@ -183,12 +183,44 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
   const bodyLen = 40;
   const limbLen = 28;
 
+  // Martial-arts pose driver: the active move decides the karate form and how
+  // far through the strike we are. Purely visual — no gameplay values read.
+  const activeMove = getMoveById(e.bossName, e.bossMoveId);
+  const poseMove = activeMove && e.state === activeMove.anim ? activeMove : null;
+  const prog = poseMove
+    ? Math.min(1, Math.max(0, 1 - Math.max(0, e.stateTimer) / poseMove.duration))
+    : 0;
+  const form: MartialForm | null = poseMove ? poseMove.martial : null;
+  const telegraphing = !!poseMove?.telegraph && prog < (poseMove.telegraph ?? 0);
+
   ctx.save();
   ctx.translate(sx, sy);
   if (e.state === "hit") ctx.globalAlpha = 0.6;
   if (e.state === "dead") { ctx.rotate(e.facing * Math.PI / 3); ctx.globalAlpha = 0.4; }
+  // Spinning attacks twist the whole fighter around its vertical axis.
+  if (form === "spin" && e.state !== "dead") {
+    const twist = Math.cos(prog * Math.PI * 4);
+    ctx.scale(Math.max(0.25, Math.abs(twist)) * (twist < 0 ? -1 : 1), 1);
+  }
+  // Dodges lean the body away; lunges lean into the strike.
+  if (form === "dodge" && e.state !== "dead") ctx.rotate(-e.facing * 0.28 * Math.sin(prog * Math.PI));
+  if ((form === "lunge" || form === "flying_kick") && e.state !== "dead") {
+    ctx.rotate(e.facing * 0.22 * Math.sin(prog * Math.PI));
+  }
 
   const headCY = -bodyLen - limbLen - headR;
+
+  // Telegraph: pulsing warning ring before heavy/committed moves so the
+  // player can read the attack and counter during its recovery window.
+  if (telegraphing && e.state !== "dead") {
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 45);
+    ctx.beginPath();
+    ctx.arc(0, headCY + headR + bodyLen / 2, 56 + pulse * 12, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255, 210, 60, ${0.25 + pulse * 0.5})`;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
 
   // Boss aura
   if (e.state !== "dead") {
