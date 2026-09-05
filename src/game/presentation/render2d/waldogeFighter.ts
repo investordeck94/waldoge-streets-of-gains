@@ -77,9 +77,9 @@ interface Pose {
   squash: number;
 }
 
-const HIP_Y = -34;
-const CHEST_Y = -58;
-const HEAD_Y = -82;
+const HIP_Y = -31;
+const CHEST_Y = -54;
+const HEAD_Y = -76;
 
 function basePose(): Pose {
   return {
@@ -356,7 +356,7 @@ function sneaker(ctx: CanvasRenderingContext2D, at: P, dir: number) {
 }
 
 function torso(ctx: CanvasRenderingContext2D, hip: P, chest: P, squash: number) {
-  const w = 15 * squash;
+  const w = 17 * squash;
   ctx.save();
   ctx.beginPath();
   ctx.moveTo(chest[0] - w, chest[1] + 2);
@@ -570,7 +570,7 @@ export function drawWaldogeFighter(
 
   // --- head -------------------------------------------------------------
   if (headImg && headImg.complete && headImg.naturalWidth > 0) {
-    const s = 46;
+    const s = 48;
     ctx.drawImage(headImg, head[0] - s / 2, head[1] - s / 2, s, s);
   } else {
     shibaHead(ctx, head, 18);
