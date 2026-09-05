@@ -431,7 +431,7 @@ function shibaHead(ctx: CanvasRenderingContext2D, at: P, r: number) {
   // striped beanie (red/white bands) + pom-pom, as in the reference sheet
   ctx.save();
   ctx.beginPath();
-  ctx.arc(0, -r * 0.25, r * 1.05, Math.PI, 0);
+  ctx.arc(0, -r * 0.55, r * 0.98, Math.PI, 0);
   ctx.closePath();
   ctx.fillStyle = TRACK_RED;
   ctx.fill();
@@ -439,7 +439,7 @@ function shibaHead(ctx: CanvasRenderingContext2D, at: P, r: number) {
   ctx.clip();
   ctx.fillStyle = TRACK_WHITE;
   for (let i = 0; i < 4; i++) {
-    ctx.fillRect(-r * 1.1, -r * 0.42 - i * r * 0.36, r * 2.2, r * 0.18);
+    ctx.fillRect(-r * 1.1, -r * 0.72 - i * r * 0.32, r * 2.2, r * 0.16);
   }
   ctx.restore();
   ctx.strokeStyle = INK;
@@ -447,13 +447,13 @@ function shibaHead(ctx: CanvasRenderingContext2D, at: P, r: number) {
   ctx.stroke();
   // brim
   ctx.fillStyle = TRACK_WHITE;
-  ctx.fillRect(-r * 1.08, -r * 0.34, r * 2.16, r * 0.24);
+  ctx.fillRect(-r * 1.02, -r * 0.66, r * 2.04, r * 0.24);
   ctx.strokeStyle = INK;
   ctx.lineWidth = 1.8;
-  ctx.strokeRect(-r * 1.08, -r * 0.34, r * 2.16, r * 0.24);
+  ctx.strokeRect(-r * 1.02, -r * 0.66, r * 2.04, r * 0.24);
   // pom-pom
   ctx.beginPath();
-  ctx.arc(-r * 0.15, -r * 1.42, r * 0.28, 0, Math.PI * 2);
+  ctx.arc(-r * 0.15, -r * 1.68, r * 0.3, 0, Math.PI * 2);
   ctx.fillStyle = TRACK_WHITE;
   ctx.fill();
   ctx.strokeStyle = INK;
@@ -573,7 +573,7 @@ export function drawWaldogeFighter(
     const s = 46;
     ctx.drawImage(headImg, head[0] - s / 2, head[1] - s / 2, s, s);
   } else {
-    shibaHead(ctx, head, 17);
+    shibaHead(ctx, head, 18);
   }
 
   // front arm draws over the head for punches so the strike reads clearly
