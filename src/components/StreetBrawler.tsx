@@ -5068,6 +5068,10 @@ export const StreetBrawler: FC = () => {
               const next = !pausedRef.current;
               pausedRef.current = next;
               setIsPaused(next);
+              // Clicking pause steals focus, so any key held at that moment
+              // would never deliver its key-up. Drop held input.
+              gameRef.current.keys.clear();
+              gameRef.current.keyJustPressed.clear();
             }}
             className="p-1.5 rounded glass-card hover:bg-muted/50 transition"
             title={isPaused ? "Resume" : "Pause"}
