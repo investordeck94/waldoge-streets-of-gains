@@ -79,7 +79,7 @@ interface Pose {
 
 const HIP_Y = -34;
 const CHEST_Y = -58;
-const HEAD_Y = -76;
+const HEAD_Y = -82;
 
 function basePose(): Pose {
   return {
@@ -91,8 +91,8 @@ function basePose(): Pose {
     chest: [0, CHEST_Y],
     head: [2, HEAD_Y],
     // Boxing guard: gloves up near the chin.
-    armFront: [[4, CHEST_Y + 2], [13, CHEST_Y + 10], [16, CHEST_Y - 1]],
-    armBack: [[-4, CHEST_Y + 2], [-13, CHEST_Y + 10], [-9, CHEST_Y - 4]],
+    armFront: [[4, CHEST_Y + 2], [13, CHEST_Y + 12], [17, CHEST_Y + 4]],
+    armBack: [[-4, CHEST_Y + 2], [-13, CHEST_Y + 12], [-11, CHEST_Y + 3]],
     // Low, wide stance: feet apart, knees bent.
     legFront: [[3, HIP_Y], [14, HIP_Y + 20], [17, 0]],
     legBack: [[-3, HIP_Y], [-14, HIP_Y + 19], [-16, 0]],
@@ -122,9 +122,9 @@ function poseFor(e: FighterView, style: StyleName, clock: number): Pose {
       p.legBack[1] = [-8 - s, HIP_Y + 18];
       p.legBack[2] = [-12 - s * 1.7, -Math.max(0, -s) * (running ? 1.5 : 0.8)];
       p.armFront[1] = [12, CHEST_Y + 10 - s * 0.5];
-      p.armFront[2] = [14 + s * 0.5, CHEST_Y - 4 - s * 0.4];
+      p.armFront[2] = [16 + s * 0.5, CHEST_Y + 2 - s * 0.4];
       p.armBack[1] = [-12, CHEST_Y + 10 + s * 0.5];
-      p.armBack[2] = [-10 - s * 0.5, CHEST_Y - 2 + s * 0.4];
+      p.armBack[2] = [-12 - s * 0.5, CHEST_Y + 3 + s * 0.4];
       break;
     }
     case "jump": {
@@ -234,8 +234,8 @@ function poseFor(e: FighterView, style: StyleName, clock: number): Pose {
       // idle — breathing bounce + light guard sway
       const b = Math.sin(clock / 320) * 1.6;
       p.bob = b;
-      p.armFront[2] = [16, CHEST_Y - 1 + b];
-      p.armBack[2] = [-9, CHEST_Y - 4 - b];
+      p.armFront[2] = [17, CHEST_Y + 4 + b];
+      p.armBack[2] = [-11, CHEST_Y + 3 - b];
       if (moving) p.lean = 0.05;
       break;
     }
