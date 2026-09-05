@@ -3199,6 +3199,9 @@ export const StreetBrawler: FC = () => {
     setComboCount(0);
     setComboName("");
     setEnergy(50);
+    // Never carry held-key state from a previous run into a new one.
+    g.keys.clear();
+    g.keyJustPressed.clear();
     pausedRef.current = false;
     setIsPaused(false);
     runStartTimeRef.current = Date.now();
@@ -3222,23 +3225,67 @@ export const StreetBrawler: FC = () => {
 
 
   // Input handling
+  //
+  // Held keys live in a Set. The only way a direction can get "stuck" (player
+  // keeps running right while you press left) is if a key-up is never
+  // delivered — which happens whenever the window/tab loses focus mid-press,
+  // when a modifier changes the reported `key` between down and up, or when a
+  // touch is cancelled. We therefore (a) key off the *physical* code where we
+  // can, (b) release everything on blur / tab hide / pointer cancel.
   useEffect(() => {
     if (gameState !== "playing") return;
     const g = gameRef.current;
+
+    // Physical-key fallback: `e.key` can differ between keydown and keyup
+    // (modifiers, layout, IME). `e.code` never does, so we register both and
+    // clear both on release.
+    const codeToKey = (code: string): string | null => {
+      if (code.startsWith("Key")) return code.slice(3).toLowerCase();
+      if (code === "ArrowLeft") return "arrowleft";
+      if (code === "ArrowRight") return "arrowright";
+      if (code === "ArrowUp") return "arrowup";
+      if (code === "ArrowDown") return "arrowdown";
+      if (code === "Space") return " ";
+      return null;
+    };
+
     const onDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       if (!g.keys.has(key)) g.keyJustPressed.add(key);
       g.keys.add(key);
+      const alt = codeToKey(e.code);
+      if (alt && alt !== key) g.keys.add(alt);
       if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) e.preventDefault();
     };
-    const onUp = (e: KeyboardEvent) => g.keys.delete(e.key.toLowerCase());
+
+    const onUp = (e: KeyboardEvent) => {
+      g.keys.delete(e.key.toLowerCase());
+      const alt = codeToKey(e.code);
+      if (alt) g.keys.delete(alt);
+    };
+
+    // Any focus loss invalidates our knowledge of what is held down.
+    const releaseAll = () => {
+      g.keys.clear();
+      g.keyJustPressed.clear();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") releaseAll();
+    };
+
     window.addEventListener("keydown", onDown);
     window.addEventListener("keyup", onUp);
+    window.addEventListener("blur", releaseAll);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("keydown", onDown);
       window.removeEventListener("keyup", onUp);
+      window.removeEventListener("blur", releaseAll);
+      document.removeEventListener("visibilitychange", onVisibility);
+      releaseAll();
     };
   }, [gameState]);
+
 
   // Game loop
   useEffect(() => {
@@ -3492,8 +3539,12 @@ export const StreetBrawler: FC = () => {
       if (p.state !== "hit" && p.state !== "dead" && !isAttacking && !didSpecial) {
         const speed = PLAYER_SPEED * (g.speedBoostTimer > 0 ? 1.6 : 1) * fightStyle.speed;
         let moving = false;
-        if (g.keys.has("a") || g.keys.has("arrowleft")) { p.x -= speed; p.facing = -1; moving = true; }
-        if (g.keys.has("d") || g.keys.has("arrowright")) { p.x += speed; p.facing = 1; moving = true; }
+        // Resolve horizontal input as a single axis so that holding both
+        // directions cancels out instead of letting "right" silently win.
+        const leftHeld = g.keys.has("a") || g.keys.has("arrowleft");
+        const rightHeld = g.keys.has("d") || g.keys.has("arrowright");
+        const dir = (rightHeld ? 1 : 0) - (leftHeld ? 1 : 0);
+        if (dir !== 0) { p.x += dir * speed; p.facing = dir as 1 | -1; moving = true; }
         if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && (p.y >= GROUND_Y || (p as Entity & { onPlatform?: Platform | null }).onPlatform)) { p.vy = JUMP_FORCE; (p as Entity & { onPlatform?: Platform | null }).onPlatform = null; }
 
         // Reset light-chain index after CHAIN_RESET_MS of inactivity
@@ -3552,9 +3603,11 @@ export const StreetBrawler: FC = () => {
       } else if (p.state !== "hit" && p.state !== "dead" && !isAttacking && didSpecial) {
         // Special move was triggered, movement already handled by the special
       } else if (p.state !== "hit" && p.state !== "dead" && isAttacking) {
-        // Allow movement during attacks (for dash punch etc)
-        if (g.keys.has("a") || g.keys.has("arrowleft")) p.facing = -1;
-        if (g.keys.has("d") || g.keys.has("arrowright")) p.facing = 1;
+        // Allow facing changes during attacks (for dash punch etc).
+        // Same single-axis resolution as the walk branch.
+        const aLeft = g.keys.has("a") || g.keys.has("arrowleft");
+        const aRight = g.keys.has("d") || g.keys.has("arrowright");
+        if (aLeft !== aRight) p.facing = aRight ? 1 : -1;
       }
 
       // (Shuriken throw consolidated into the L-key block above)
@@ -5015,6 +5068,10 @@ export const StreetBrawler: FC = () => {
               const next = !pausedRef.current;
               pausedRef.current = next;
               setIsPaused(next);
+              // Clicking pause steals focus, so any key held at that moment
+              // would never deliver its key-up. Drop held input.
+              gameRef.current.keys.clear();
+              gameRef.current.keyJustPressed.clear();
             }}
             className="p-1.5 rounded glass-card hover:bg-muted/50 transition"
             title={isPaused ? "Resume" : "Pause"}
@@ -5223,15 +5280,24 @@ export const StreetBrawler: FC = () => {
               <button
                 onTouchStart={() => touchMove("left")}
                 onTouchEnd={() => touchMove("stop")}
+                onTouchCancel={() => touchMove("stop")}
+                onPointerUp={() => touchMove("stop")}
+                onPointerCancel={() => touchMove("stop")}
+                onPointerLeave={() => touchMove("stop")}
                 onContextMenu={(e) => e.preventDefault()}
                 className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
               >◀</button>
               <button
                 onTouchStart={() => touchMove("right")}
                 onTouchEnd={() => touchMove("stop")}
+                onTouchCancel={() => touchMove("stop")}
+                onPointerUp={() => touchMove("stop")}
+                onPointerCancel={() => touchMove("stop")}
+                onPointerLeave={() => touchMove("stop")}
                 onContextMenu={(e) => e.preventDefault()}
                 className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
               >▶</button>
+
             </div>
             {/* Right: Action cluster — jump/punch/kick aligned, special under punch */}
             <div className="flex gap-2 items-start">
