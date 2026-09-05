@@ -2881,6 +2881,12 @@ export const StreetBrawler: FC = () => {
   const { authorizeRun } = useDogeOSRunReward(address);
   const runStartTimeRef = useRef<number>(0);
   const rewardSubmittedRef = useRef(false);
+  // Kept current so the victory handler (captured once per run) always sees
+  // the live wallet, e.g. when the player connects mid-run.
+  const addressRef = useRef<string | null>(address);
+  addressRef.current = address;
+  const authorizeRunRef = useRef(authorizeRun);
+  authorizeRunRef.current = authorizeRun;
 
   const pausedRef = useRef(false);
   const [showCamDebug, setShowCamDebug] = useState(false);
@@ -4140,7 +4146,8 @@ export const StreetBrawler: FC = () => {
               setGameState("victory");
 
               // Submit exactly one DogeOS reward attestation for this run.
-              if (!rewardSubmittedRef.current && address) {
+              const rewardWallet = addressRef.current;
+              if (!rewardSubmittedRef.current && rewardWallet) {
                 rewardSubmittedRef.current = true;
                 const durationMs = Math.max(0, Math.floor(Date.now() - runStartTimeRef.current));
                 const difficultyMap: Record<Difficulty, number> = {
@@ -4155,7 +4162,7 @@ export const StreetBrawler: FC = () => {
                   durationMs,
                   difficulty: difficultyMap[g.difficulty],
                 };
-                void authorizeRun(run).catch(() => {});
+                void authorizeRunRef.current(run).catch(() => {});
               }
 
               return;
