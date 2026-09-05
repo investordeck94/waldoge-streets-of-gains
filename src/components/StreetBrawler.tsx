@@ -4600,6 +4600,7 @@ export const StreetBrawler: FC = () => {
       for (const pu of g.powerups) {
         const px = pu.x - g.camX;
         const py = pu.y;
+        if (px < -40 || px > CANVAS_W + 40) continue;
         const bob = Math.sin(Date.now() / 200) * 3;
         const flashing = pu.timer < 120 && Math.floor(pu.timer / 10) % 2 === 0;
         ctx.save();
