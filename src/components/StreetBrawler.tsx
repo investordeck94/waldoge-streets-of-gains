@@ -68,7 +68,6 @@ import { SFX } from "@/lib/gameSfx";
 import { DogeOSConnectButton } from "@/components/dogeos/DogeOSConnectButton";
 import { DogeOSPlayerBadge } from "@/components/dogeos/DogeOSPlayerBadge";
 import { useDogeOSWallet } from "@/contexts/DogeOSWalletProvider";
-import { useDogeOSRunReward } from "@/hooks/useDogeOSRunReward";
 import { useWeeklyHardMode } from "@/hooks/useWeeklyHardMode";
 import { WeeklyHardModePanel } from "@/components/dogeos/WeeklyHardModePanel";
 import { HARD_MODE_DIFFICULTY } from "@/lib/dogeos/weeklyCompetition";
