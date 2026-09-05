@@ -2875,6 +2875,13 @@ export const StreetBrawler: FC = () => {
   const [sfxEnabled, setSfxEnabled] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+
+  // DogeOS reward flow — isolated from gameplay; wired only at final victory.
+  const { address } = useDogeOSWallet();
+  const { authorizeRun } = useDogeOSRunReward(address);
+  const runStartTimeRef = useRef<number>(0);
+  const rewardSubmittedRef = useRef(false);
+
   const pausedRef = useRef(false);
   const [showCamDebug, setShowCamDebug] = useState(false);
   const camDebugRef = useRef(false);
