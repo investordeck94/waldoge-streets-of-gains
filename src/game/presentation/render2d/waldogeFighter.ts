@@ -91,7 +91,7 @@ function basePose(): Pose {
     chest: [0, CHEST_Y],
     head: [2, HEAD_Y],
     // Boxing guard: gloves up near the chin.
-    armFront: [[4, CHEST_Y + 2], [13, CHEST_Y + 10], [15, CHEST_Y - 6]],
+    armFront: [[4, CHEST_Y + 2], [13, CHEST_Y + 10], [16, CHEST_Y - 1]],
     armBack: [[-4, CHEST_Y + 2], [-13, CHEST_Y + 10], [-9, CHEST_Y - 4]],
     // Low, wide stance: feet apart, knees bent.
     legFront: [[3, HIP_Y], [14, HIP_Y + 20], [17, 0]],
@@ -234,7 +234,7 @@ function poseFor(e: FighterView, style: StyleName, clock: number): Pose {
       // idle — breathing bounce + light guard sway
       const b = Math.sin(clock / 320) * 1.6;
       p.bob = b;
-      p.armFront[2] = [15, CHEST_Y - 6 + b];
+      p.armFront[2] = [16, CHEST_Y - 1 + b];
       p.armBack[2] = [-9, CHEST_Y - 4 - b];
       if (moving) p.lean = 0.05;
       break;
