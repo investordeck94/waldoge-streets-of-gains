@@ -1,30 +1,28 @@
 /**
  * Presentational DogeOS connect UI. Pure React/UI — lives entirely outside
- * the Streets of Gains canvas and game loop.
+ * the Streets of Gains canvas and game loop, and never touches the reward,
+ * weekly competition, or attestation logic.
  *
- * Providers:
+ * Providers come from the shared registry in `@/lib/dogeos/walletProviders`:
  *  - MetaMask (or any injected EIP-1193 wallet) — supported today.
- *  - MyDoge / official DogeOS wallet — not yet available in the SDK, shown as
- *    a disabled "coming soon" slot so it can be wired in later without
- *    touching the reward system.
+ *  - MyDoge / official DogeOS wallet — no official integration yet, rendered
+ *    as a disabled "Coming Soon" slot. It is never presented as connected.
+ *
+ * Both are providers for the *same* DogeOS Chikyū network and resolve to the
+ * same wallet address consumed by the existing reward architecture.
  */
 import { type FC } from "react";
 import { Wallet, Link2Off, Loader2, AlertTriangle, LogOut, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDogeOSWallet } from "@/contexts/DogeOSWalletProvider";
 import { DOGEOS_CHAIN, truncateAddress } from "@/lib/chains/dogeos";
-import { getEvmProvider } from "@/lib/dogeos/provider";
+import { injectedWalletLabel } from "@/lib/dogeos/walletProviders";
 
 interface Props {
   className?: string;
   size?: "sm" | "md";
-  /** Hide the "MyDoge — coming soon" slot (e.g. in very tight HUD corners). */
+  /** Hide the future-provider slots (e.g. in very tight HUD corners). */
   showFutureProviders?: boolean;
-}
-
-function injectedWalletName(): string {
-  const p = getEvmProvider() as (ReturnType<typeof getEvmProvider> & { isMetaMask?: boolean }) | null;
-  return p?.isMetaMask ? "MetaMask" : "EVM wallet";
 }
 
 export const DogeOSConnectButton: FC<Props> = ({
@@ -32,7 +30,8 @@ export const DogeOSConnectButton: FC<Props> = ({
   size = "sm",
   showFutureProviders = true,
 }) => {
-  const { status, address, error, connect, disconnect, switchToDogeOS } = useDogeOSWallet();
+  const { status, address, error, providers, connect, disconnect, switchToDogeOS } =
+    useDogeOSWallet();
 
   const icon = size === "sm" ? "w-3.5 h-3.5" : "w-4 h-4";
   const base = cn(
@@ -40,15 +39,29 @@ export const DogeOSConnectButton: FC<Props> = ({
     size === "sm" ? "px-2 py-1 text-xs" : "px-4 py-2 text-sm",
   );
 
-  const futureSlot = showFutureProviders ? (
-    <span
-      className={cn(base, "border-border/60 bg-muted/30 text-muted-foreground/70 cursor-default")}
-      title="Official MyDoge / DogeOS wallet support is not available yet"
-    >
-      <Clock className={icon} />
-      MyDoge — coming soon
-    </span>
-  ) : null;
+  const walletName = injectedWalletLabel();
+
+  // Providers with no official integration yet → disabled "Coming Soon" slots.
+  const futureSlots = showFutureProviders
+    ? providers
+        .filter((p) => !p.supported)
+        .map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            disabled
+            aria-disabled="true"
+            className={cn(
+              base,
+              "border-border/60 bg-muted/30 text-muted-foreground/70 cursor-not-allowed opacity-80",
+            )}
+            title={p.unavailableReason}
+          >
+            <Clock className={icon} />
+            {p.label} — Coming Soon
+          </button>
+        ))
+    : null;
 
   let main: JSX.Element;
 
@@ -56,7 +69,7 @@ export const DogeOSConnectButton: FC<Props> = ({
     main = (
       <span
         className={cn(base, "border-border/60 bg-muted/40 text-muted-foreground cursor-default")}
-        title="Install MetaMask (or another EVM wallet) to connect to DogeOS Chikyū Testnet"
+        title={`Install MetaMask (or another EVM wallet) to connect to ${DOGEOS_CHAIN.name}`}
       >
         <Link2Off className={icon} />
         Install MetaMask
@@ -97,10 +110,10 @@ export const DogeOSConnectButton: FC<Props> = ({
       <>
         <span
           className={cn(base, "border-primary/50 bg-primary/10 text-primary cursor-default")}
-          title={`${address} · ${injectedWalletName()} · ${DOGEOS_CHAIN.name}`}
+          title={`${address} · ${walletName} · ${DOGEOS_CHAIN.name}`}
         >
           <Wallet className={icon} />
-          {injectedWalletName()} · {truncateAddress(address)}
+          {walletName} · {truncateAddress(address)}
         </span>
         <button
           type="button"
@@ -117,12 +130,12 @@ export const DogeOSConnectButton: FC<Props> = ({
     main = (
       <button
         type="button"
-        onClick={() => void connect()}
+        onClick={() => void connect("injected")}
         className={cn(base, "border-primary/50 bg-primary/10 text-primary hover:bg-primary/20")}
-        title={error ?? `Connect ${injectedWalletName()} to ${DOGEOS_CHAIN.name}`}
+        title={error ?? `Connect ${walletName} to ${DOGEOS_CHAIN.name}`}
       >
         <Wallet className={icon} />
-        Connect {injectedWalletName()}
+        Connect {walletName}
       </button>
     );
   }
@@ -130,7 +143,7 @@ export const DogeOSConnectButton: FC<Props> = ({
   return (
     <span className={cn("inline-flex flex-wrap items-center gap-1.5", className)}>
       {main}
-      {futureSlot}
+      {futureSlots}
     </span>
   );
 };

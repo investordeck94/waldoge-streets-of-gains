@@ -29,6 +29,13 @@ import {
   request,
   requestAccounts,
 } from "@/lib/dogeos/provider";
+import {
+  DEFAULT_WALLET_PROVIDER_ID,
+  getWalletProvider,
+  listWalletProviders,
+  type DogeOSWalletProviderDescriptor,
+  type DogeOSWalletProviderId,
+} from "@/lib/dogeos/walletProviders";
 
 export type DogeOSStatus =
   | "unsupported"
@@ -43,7 +50,11 @@ interface DogeOSWalletContextValue {
   chainId: string | null;
   isCorrectChain: boolean;
   error: string | null;
-  connect: () => Promise<void>;
+  /** Provider currently used for the connection (today always "injected"). */
+  providerId: DogeOSWalletProviderId | null;
+  /** All known DogeOS Chikyū wallet providers, including unsupported ones. */
+  providers: DogeOSWalletProviderDescriptor[];
+  connect: (providerId?: DogeOSWalletProviderId) => Promise<void>;
   disconnect: () => void;
   switchToDogeOS: () => Promise<void>;
 }
@@ -63,7 +74,9 @@ function errMessage(e: unknown): string {
 
 export const DogeOSWalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [supported] = useState<boolean>(() => hasEvmProvider());
+  const [providers] = useState<DogeOSWalletProviderDescriptor[]>(() => listWalletProviders());
   const [address, setAddress] = useState<string | null>(null);
+  const [activeProviderId, setActiveProviderId] = useState<DogeOSWalletProviderId | null>(null);
   const [chainId, setChainId] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,36 +154,47 @@ export const DogeOSWalletProvider: FC<{ children: ReactNode }> = ({ children }) 
     };
   }, [supported]);
 
-  const connect = useCallback(async () => {
-    if (!supported) {
-      setError("No EVM wallet found");
-      return;
-    }
-    setConnecting(true);
-    setError(null);
-    try {
-      const accounts = await requestAccounts();
-      const cid = await getChainId();
-      if (!mounted.current) return;
-      setAddress(accounts && accounts.length > 0 ? accounts[0] : null);
-      setChainId(cid ?? null);
+  const connect = useCallback(
+    async (providerId: DogeOSWalletProviderId = DEFAULT_WALLET_PROVIDER_ID) => {
+      const descriptor = getWalletProvider(providerId);
+      if (!descriptor?.supported) {
+        setError(descriptor?.unavailableReason ?? "Wallet provider not supported yet");
+        return;
+      }
+      if (!descriptor.available || !supported) {
+        setError(descriptor.unavailableReason ?? "No EVM wallet found");
+        return;
+      }
+      setConnecting(true);
+      setError(null);
       try {
-        localStorage.setItem(AUTO_CONNECT_KEY, "1");
-      } catch { /* ignore */ }
-    } catch (e) {
-      if (mounted.current) setError(errMessage(e));
-    } finally {
-      if (mounted.current) setConnecting(false);
-    }
-  }, [supported]);
+        const accounts = await requestAccounts();
+        const cid = await getChainId();
+        if (!mounted.current) return;
+        setAddress(accounts && accounts.length > 0 ? accounts[0] : null);
+        setChainId(cid ?? null);
+        setActiveProviderId(providerId);
+        try {
+          localStorage.setItem(AUTO_CONNECT_KEY, "1");
+        } catch { /* ignore */ }
+      } catch (e) {
+        if (mounted.current) setError(errMessage(e));
+      } finally {
+        if (mounted.current) setConnecting(false);
+      }
+    },
+    [supported],
+  );
 
   const disconnect = useCallback(() => {
     setAddress(null);
     setError(null);
+    setActiveProviderId(null);
     try {
       localStorage.removeItem(AUTO_CONNECT_KEY);
     } catch { /* ignore */ }
   }, []);
+
 
   const switchToDogeOS = useCallback(async () => {
     if (!supported) return;
@@ -207,11 +231,13 @@ export const DogeOSWalletProvider: FC<{ children: ReactNode }> = ({ children }) 
       chainId,
       isCorrectChain,
       error,
+      providerId: address ? (activeProviderId ?? DEFAULT_WALLET_PROVIDER_ID) : null,
+      providers,
       connect,
       disconnect,
       switchToDogeOS,
     }),
-    [status, address, chainId, isCorrectChain, error, connect, disconnect, switchToDogeOS],
+    [status, address, chainId, isCorrectChain, error, activeProviderId, providers, connect, disconnect, switchToDogeOS],
   );
 
   return (
