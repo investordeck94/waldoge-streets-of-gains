@@ -89,6 +89,7 @@ export async function recordQualifyingRun(
       level: run.level,
       durationMs: run.durationMs,
       difficulty: run.difficulty,
+      startedAt: run.startedAt,
     },
     token,
   );

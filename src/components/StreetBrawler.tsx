@@ -4174,6 +4174,7 @@ export const StreetBrawler: FC = () => {
                   level: g.level,
                   durationMs,
                   difficulty: difficultyMap[g.difficulty],
+                  startedAt: Math.floor(runStartTimeRef.current),
                 };
                 if (run.difficulty === HARD_MODE_DIFFICULTY) {
                   void recordWeeklyRunRef.current(run).catch(() => {});
