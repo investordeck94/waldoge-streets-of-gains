@@ -4661,6 +4661,14 @@ export const StreetBrawler: FC = () => {
           ctx.bezierCurveTo(cx - 1.5, fY, cx - 2, fY - 2, cx, fY - 5 - flick * 0.5);
           ctx.fillStyle = "#ffe14a";
           ctx.fill();
+          // Soft warm halo centred on the flame (world-anchored, no smear)
+          const halo = ctx.createRadialGradient(cx, fY - 4, 0, cx, fY - 4, 14);
+          halo.addColorStop(0, "rgba(255,170,60,0.30)");
+          halo.addColorStop(1, "rgba(255,170,60,0)");
+          ctx.fillStyle = halo;
+          ctx.beginPath();
+          ctx.arc(cx, fY - 4, 14, 0, Math.PI * 2);
+          ctx.fill();
         } else {
           // Other power-ups keep emoji icon
           ctx.font = "16px serif";
