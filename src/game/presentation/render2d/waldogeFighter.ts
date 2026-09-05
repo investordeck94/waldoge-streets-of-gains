@@ -595,7 +595,7 @@ export function drawWaldogeFighter(
         const ang = (k * Math.PI) / 5 - Math.PI / 2;
         const px = stx + Math.cos(ang) * rr;
         const py = sty + Math.sin(ang) * rr;
-        k === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
       }
       ctx.closePath();
       ctx.fillStyle = "#f5b731";
