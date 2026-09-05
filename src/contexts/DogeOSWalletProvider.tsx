@@ -29,6 +29,13 @@ import {
   request,
   requestAccounts,
 } from "@/lib/dogeos/provider";
+import {
+  DEFAULT_WALLET_PROVIDER_ID,
+  getWalletProvider,
+  listWalletProviders,
+  type DogeOSWalletProviderDescriptor,
+  type DogeOSWalletProviderId,
+} from "@/lib/dogeos/walletProviders";
 
 export type DogeOSStatus =
   | "unsupported"
