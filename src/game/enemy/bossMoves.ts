@@ -115,7 +115,8 @@ const RUGGER: BossMove[] = [
   { id: "rug_sweep", name: "Carpet Sweep", anim: "kick", duration: 20, hitFrames: [14, 7], damage: 3, range: 70, vertRange: 45, knockback: 5, cooldown: 32, minDist: 0, maxDist: 120, minPhase: 1, weight: 8, shake: 8, hitPause: 2 },
   { id: "rug_slam", name: "Liquidity Slam", anim: "boss_slam", duration: 25, hitFrames: [12], damage: 6, range: 105, vertRange: 75, knockback: 6, launch: -8, omni: true, cooldown: 44, minDist: 0, maxDist: 130, minPhase: 1, weight: 7, shake: 13, hitPause: 4, sfx: "slam", shout: "💀 RUG SLAM!" },
   { id: "rug_dash", name: "Rug Pull Dash", anim: "boss_charge", duration: 30, hitFrames: [16, 8], damage: 4, range: 60, vertRange: 60, knockback: 9, cooldown: 48, minDist: 160, maxDist: 900, minPhase: 1, weight: 9, advance: 1, advanceUntil: 5, shake: 10, hitPause: 2, sfx: "charge" },
-  { id: "rug_spray", name: "Token Spray", anim: "boss_throw", duration: 26, hitFrames: [], damage: 0, range: 0, vertRange: 0, knockback: 0, cooldown: 46, minDist: 130, maxDist: 900, minPhase: 2, weight: 8, shake: 0, hitPause: 0, sfx: "throw", projectiles: [{ frame: 16, count: 3, speed: 6.5, vy: -2, spread: 2.2 }] },
+  { id: "rug_spray", name: "Token Spray", anim: "boss_throw", duration: 26, hitFrames: [], damage: 0, range: 0, vertRange: 0, knockback: 0, cooldown: 46, minDist: 130, maxDist: 900, minPhase: 1, weight: 8, shake: 0, hitPause: 0, sfx: "throw", projectiles: [{ frame: 16, count: 3, speed: 6.5, vy: -2, spread: 2.2 }] },
+  { id: "rug_finale", name: "Total Rug", anim: "boss_slam", duration: 36, hitFrames: [26, 12], damage: 6, range: 140, vertRange: 100, knockback: 8, launch: -8, omni: true, cooldown: 60, minDist: 0, maxDist: 160, minPhase: 3, weight: 7, shake: 15, hitPause: 5, sfx: "slam", shout: "\u2620 TOTAL RUG!" },
 ];
 
 const BAD_ACTOR: BossMove[] = [
