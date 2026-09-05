@@ -231,11 +231,13 @@ export const DogeOSWalletProvider: FC<{ children: ReactNode }> = ({ children }) 
       chainId,
       isCorrectChain,
       error,
+      providerId: address ? (activeProviderId ?? DEFAULT_WALLET_PROVIDER_ID) : null,
+      providers,
       connect,
       disconnect,
       switchToDogeOS,
     }),
-    [status, address, chainId, isCorrectChain, error, connect, disconnect, switchToDogeOS],
+    [status, address, chainId, isCorrectChain, error, activeProviderId, providers, connect, disconnect, switchToDogeOS],
   );
 
   return (
