@@ -2879,17 +2879,27 @@ export const StreetBrawler: FC = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
 
-  // DogeOS reward flow — isolated from gameplay; wired only at final victory.
+  // DogeOS weekly competition — isolated from gameplay; wired only at final
+  // victory. A completed run is RECORDED as a qualifying weekly entry; no
+  // WDOGE is authorized or transferred here. The 10 WDOGE prize is settled
+  // later, for the verified weekly winner only, through the existing DogeOS
+  // reward attestation flow (useDogeOSRunReward / rewardsApi, unchanged).
   const { address } = useDogeOSWallet();
-  const { authorizeRun } = useDogeOSRunReward(address);
+  const {
+    leaderboard: weeklyLeaderboard,
+    loading: weeklyLoading,
+    error: weeklyError,
+    refresh: refreshWeekly,
+    recordRun: recordWeeklyRun,
+  } = useWeeklyHardMode(address);
   const runStartTimeRef = useRef<number>(0);
   const rewardSubmittedRef = useRef(false);
   // Kept current so the victory handler (captured once per run) always sees
   // the live wallet, e.g. when the player connects mid-run.
   const addressRef = useRef<string | null>(address);
   addressRef.current = address;
-  const authorizeRunRef = useRef(authorizeRun);
-  authorizeRunRef.current = authorizeRun;
+  const recordWeeklyRunRef = useRef(recordWeeklyRun);
+  recordWeeklyRunRef.current = recordWeeklyRun;
 
   const pausedRef = useRef(false);
   const [showCamDebug, setShowCamDebug] = useState(false);
