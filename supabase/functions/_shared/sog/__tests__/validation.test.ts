@@ -51,7 +51,7 @@ describe("run validation", () => {
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(Object.keys(r.run).sort()).toEqual(
-        ["difficulty", "durationMs", "level", "score", "startedAt", "wave"],
+        ["difficulty", "durationMs", "level", "runId", "score", "startedAt", "wave"],
       );
     }
   });
