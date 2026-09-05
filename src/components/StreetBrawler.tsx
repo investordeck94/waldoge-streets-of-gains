@@ -4055,15 +4055,29 @@ export const StreetBrawler: FC = () => {
 
           // A move that has finished (or whose state was released by the
           // shared safety layer) is always cleared — no attack can latch.
-          if (!busy && e.bossMoveId) e.bossMoveId = undefined;
+          // When it finishes cleanly we roll an optional combo follow-up; a
+          // chain is never required for the boss to keep acting.
+          if (!busy && e.bossMoveId) {
+            const finished = getMoveById(e.bossName, e.bossMoveId);
+            if (!stunned && dist < 170) {
+              const next = rollChain(e.bossName, finished);
+              if (next) e.bossChainId = next.id;
+            }
+            e.bossMoveId = undefined;
+          }
 
           if (!busy && !stunned) {
             e.facing = dx > 0 ? 1 : -1;
             const phase = e.bossPhase || 1;
             const phaseSpeed = bossCfg.aiSpeed + phase * 0.4;
 
-            if (e.attackCooldown <= 0) {
-              const move = selectBossMove(e.bossName, {
+            // A queued combo link fires immediately, ignoring the cooldown
+            // once; everything else waits for the normal cooldown.
+            const chained = e.bossChainId ? getMoveById(e.bossName, e.bossChainId) : null;
+            e.bossChainId = undefined;
+
+            if (chained || e.attackCooldown <= 0) {
+              const move = chained ?? selectBossMove(e.bossName, {
                 dist, vertGap, phase,
                 lastMoveId: e.bossLastMoveId,
                 repeatCount: e.bossRepeat,
@@ -4077,12 +4091,20 @@ export const StreetBrawler: FC = () => {
                 e.stateTimer = move.duration;
                 const cdScale = Math.max(0.45, 1.25 - g.level * 0.1) * (DIFFICULTY_BOSS_CD[g.difficulty] || 1);
                 e.attackCooldown = Math.max(6, Math.round((move.cooldown + move.duration) * cdScale));
+                // Jumping/aerial attacks leave the ground; gravity + the
+                // ground snap above always bring the boss back down.
+                if (move.hop && e.y >= GROUND_Y) e.vy = -move.hop;
                 if (move.sfx === "charge") sfx(() => SFX.bossCharge());
                 else if (move.sfx === "slam") sfx(() => SFX.bossSlam());
                 if (move.shout) {
                   g.effects.push({ x: e.x, y: e.y - 110, timer: 30, text: move.shout, color: "#ffcc33", size: 18 });
+                } else if (move.telegraph) {
+                  // Audible + visible warning for committed moves that have
+                  // no shout of their own.
+                  g.effects.push({ x: e.x, y: e.y - 110, timer: 22, text: move.name, color: "#ffd23c", size: 14 });
                 }
               } else {
+
                 // Nothing fits this range — close the gap instead of idling.
                 e.x += e.facing * phaseSpeed;
                 e.state = "walk";
