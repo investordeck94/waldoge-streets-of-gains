@@ -18,8 +18,13 @@ export const DEFAULT_ALLOWED_ORIGINS: readonly string[] = [
 /** Local development hosts (only honoured when explicitly enabled). */
 const LOCAL_HOST_RE = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
 
-/** Lovable preview/sandbox hosts share this suffix. */
-const LOVABLE_HOST_RE = /^[a-z0-9-]+(--[a-z0-9-]+)?\.lovable\.app$/;
+/**
+ * Lovable preview/sandbox/published hosts. Preview iframes are served from
+ * several Lovable domains (lovable.app, lovableproject.com, lovable.dev) with
+ * arbitrary subdomain nesting, so allow any subdomain of those apex domains.
+ */
+const LOVABLE_HOST_RE =
+  /^([a-z0-9-]+\.)*[a-z0-9-]+\.(lovable\.app|lovableproject\.com|lovable\.dev)$/;
 
 export interface OriginPolicy {
   allowed: readonly string[];
