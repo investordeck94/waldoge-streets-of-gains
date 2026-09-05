@@ -3222,23 +3222,67 @@ export const StreetBrawler: FC = () => {
 
 
   // Input handling
+  //
+  // Held keys live in a Set. The only way a direction can get "stuck" (player
+  // keeps running right while you press left) is if a key-up is never
+  // delivered — which happens whenever the window/tab loses focus mid-press,
+  // when a modifier changes the reported `key` between down and up, or when a
+  // touch is cancelled. We therefore (a) key off the *physical* code where we
+  // can, (b) release everything on blur / tab hide / pointer cancel.
   useEffect(() => {
     if (gameState !== "playing") return;
     const g = gameRef.current;
+
+    // Physical-key fallback: `e.key` can differ between keydown and keyup
+    // (modifiers, layout, IME). `e.code` never does, so we register both and
+    // clear both on release.
+    const codeToKey = (code: string): string | null => {
+      if (code.startsWith("Key")) return code.slice(3).toLowerCase();
+      if (code === "ArrowLeft") return "arrowleft";
+      if (code === "ArrowRight") return "arrowright";
+      if (code === "ArrowUp") return "arrowup";
+      if (code === "ArrowDown") return "arrowdown";
+      if (code === "Space") return " ";
+      return null;
+    };
+
     const onDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       if (!g.keys.has(key)) g.keyJustPressed.add(key);
       g.keys.add(key);
+      const alt = codeToKey(e.code);
+      if (alt && alt !== key) g.keys.add(alt);
       if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) e.preventDefault();
     };
-    const onUp = (e: KeyboardEvent) => g.keys.delete(e.key.toLowerCase());
+
+    const onUp = (e: KeyboardEvent) => {
+      g.keys.delete(e.key.toLowerCase());
+      const alt = codeToKey(e.code);
+      if (alt) g.keys.delete(alt);
+    };
+
+    // Any focus loss invalidates our knowledge of what is held down.
+    const releaseAll = () => {
+      g.keys.clear();
+      g.keyJustPressed.clear();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") releaseAll();
+    };
+
     window.addEventListener("keydown", onDown);
     window.addEventListener("keyup", onUp);
+    window.addEventListener("blur", releaseAll);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("keydown", onDown);
       window.removeEventListener("keyup", onUp);
+      window.removeEventListener("blur", releaseAll);
+      document.removeEventListener("visibilitychange", onVisibility);
+      releaseAll();
     };
   }, [gameState]);
+
 
   // Game loop
   useEffect(() => {
