@@ -390,17 +390,38 @@ function shibaHead(ctx: CanvasRenderingContext2D, at: P, r: number) {
   // pixel shades
   ctx.fillStyle = INK;
   ctx.fillRect(-r * 0.65, -r * 0.25, r * 1.45, r * 0.32);
-  // beanie
+  // striped beanie (red/white bands) + pom-pom, as in the reference sheet
+  ctx.save();
   ctx.beginPath();
-  ctx.arc(0, -r * 0.25, r * 1.02, Math.PI, 0);
+  ctx.arc(0, -r * 0.25, r * 1.05, Math.PI, 0);
+  ctx.closePath();
   ctx.fillStyle = TRACK_RED;
   ctx.fill();
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = TRACK_WHITE;
+  for (let i = 0; i < 4; i++) {
+    ctx.fillRect(-r * 1.1, -r * 0.42 - i * r * 0.36, r * 2.2, r * 0.18);
+  }
+  ctx.restore();
   ctx.strokeStyle = INK;
   ctx.lineWidth = 2.2;
   ctx.stroke();
+  // brim
   ctx.fillStyle = TRACK_WHITE;
-  ctx.fillRect(-r * 1.02, -r * 0.42, r * 2.04, r * 0.26);
-  ctx.strokeRect(-r * 1.02, -r * 0.42, r * 2.04, r * 0.26);
+  ctx.fillRect(-r * 1.08, -r * 0.34, r * 2.16, r * 0.24);
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.8;
+  ctx.strokeRect(-r * 1.08, -r * 0.34, r * 2.16, r * 0.24);
+  // pom-pom
+  ctx.beginPath();
+  ctx.arc(-r * 0.15, -r * 1.42, r * 0.28, 0, Math.PI * 2);
+  ctx.fillStyle = TRACK_WHITE;
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.8;
+  ctx.stroke();
+  ctx.restore();
   ctx.restore();
 }
 
