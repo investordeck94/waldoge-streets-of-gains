@@ -318,29 +318,39 @@ function glove(ctx: CanvasRenderingContext2D, at: P, r = 7.5) {
 function sneaker(ctx: CanvasRenderingContext2D, at: P, dir: number) {
   ctx.save();
   ctx.translate(at[0], at[1]);
+  // chunky high-top silhouette
   ctx.beginPath();
-  ctx.moveTo(-5 * dir, -5);
-  ctx.quadraticCurveTo(9 * dir, -6, 11 * dir, 0);
-  ctx.quadraticCurveTo(11 * dir, 3, 6 * dir, 3);
-  ctx.lineTo(-5 * dir, 3);
+  ctx.moveTo(-6 * dir, -8);
+  ctx.quadraticCurveTo(11 * dir, -8, 13 * dir, -1);
+  ctx.quadraticCurveTo(14 * dir, 4, 8 * dir, 4);
+  ctx.lineTo(-6 * dir, 4);
   ctx.closePath();
   ctx.fillStyle = SHOE_WHITE;
   ctx.fill();
   ctx.strokeStyle = INK;
-  ctx.lineWidth = 2.2;
+  ctx.lineWidth = 2.4;
   ctx.stroke();
-  // red swoosh + sole
+  // red laces
+  ctx.strokeStyle = TRACK_RED;
+  ctx.lineWidth = 1.8;
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    ctx.moveTo((-2 + i * 3.2) * dir, -6);
+    ctx.lineTo((1 + i * 3.2) * dir, -2);
+    ctx.stroke();
+  }
+  // toe cap + sole
   ctx.beginPath();
-  ctx.moveTo(-3 * dir, -1);
-  ctx.quadraticCurveTo(3 * dir, -4, 8 * dir, -1);
+  ctx.moveTo(8 * dir, -4);
+  ctx.quadraticCurveTo(13 * dir, -2, 11 * dir, 2);
   ctx.strokeStyle = TRACK_RED;
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(-5 * dir, 3);
-  ctx.lineTo(9 * dir, 3);
+  ctx.moveTo(-6 * dir, 4);
+  ctx.lineTo(11 * dir, 4);
   ctx.strokeStyle = TRACK_RED_DARK;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.4;
   ctx.stroke();
   ctx.restore();
 }
