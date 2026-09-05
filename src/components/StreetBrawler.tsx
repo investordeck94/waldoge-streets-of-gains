@@ -4650,7 +4650,7 @@ export const StreetBrawler: FC = () => {
           const fY = baseY - candleH - wickLen;
           ctx.beginPath();
           ctx.moveTo(cx, fY - 8 - flick);
-          ctx.bezierCurveTo(4, fY - 4, 3, fY + 1, cx, fY + 1);
+          ctx.bezierCurveTo(cx + 4, fY - 4, cx + 3, fY + 1, cx, fY + 1);
           ctx.bezierCurveTo(cx - 3, fY + 1, cx - 4, fY - 4, cx, fY - 8 - flick);
           ctx.fillStyle = "#ff8a1a";
           ctx.fill();
