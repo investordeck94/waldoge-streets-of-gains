@@ -3536,8 +3536,12 @@ export const StreetBrawler: FC = () => {
       if (p.state !== "hit" && p.state !== "dead" && !isAttacking && !didSpecial) {
         const speed = PLAYER_SPEED * (g.speedBoostTimer > 0 ? 1.6 : 1) * fightStyle.speed;
         let moving = false;
-        if (g.keys.has("a") || g.keys.has("arrowleft")) { p.x -= speed; p.facing = -1; moving = true; }
-        if (g.keys.has("d") || g.keys.has("arrowright")) { p.x += speed; p.facing = 1; moving = true; }
+        // Resolve horizontal input as a single axis so that holding both
+        // directions cancels out instead of letting "right" silently win.
+        const leftHeld = g.keys.has("a") || g.keys.has("arrowleft");
+        const rightHeld = g.keys.has("d") || g.keys.has("arrowright");
+        const dir = (rightHeld ? 1 : 0) - (leftHeld ? 1 : 0);
+        if (dir !== 0) { p.x += dir * speed; p.facing = dir as 1 | -1; moving = true; }
         if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && (p.y >= GROUND_Y || (p as Entity & { onPlatform?: Platform | null }).onPlatform)) { p.vy = JUMP_FORCE; (p as Entity & { onPlatform?: Platform | null }).onPlatform = null; }
 
         // Reset light-chain index after CHAIN_RESET_MS of inactivity
