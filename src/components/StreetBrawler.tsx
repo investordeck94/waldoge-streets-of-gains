@@ -89,6 +89,12 @@ import {
   spawnEnemies as spawnEnemiesModule,
   spawnBoss as spawnBossModule,
 } from "@/game/enemy/Enemy";
+import {
+  sanitizeEnemyMotion,
+  clampEnemyToWorld,
+  updateStuckWatchdog,
+  type MovingEnemy,
+} from "@/game/enemy/movement";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
