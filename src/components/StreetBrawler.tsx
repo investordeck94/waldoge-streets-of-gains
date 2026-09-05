@@ -68,7 +68,9 @@ import { SFX } from "@/lib/gameSfx";
 import { DogeOSConnectButton } from "@/components/dogeos/DogeOSConnectButton";
 import { DogeOSPlayerBadge } from "@/components/dogeos/DogeOSPlayerBadge";
 import { useDogeOSWallet } from "@/contexts/DogeOSWalletProvider";
-import { useDogeOSRunReward } from "@/hooks/useDogeOSRunReward";
+import { useWeeklyHardMode } from "@/hooks/useWeeklyHardMode";
+import { WeeklyHardModePanel } from "@/components/dogeos/WeeklyHardModePanel";
+import { HARD_MODE_DIFFICULTY } from "@/lib/dogeos/weeklyCompetition";
 import type { RunResult } from "@/lib/dogeos/rewardsApi";
 import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
@@ -2876,17 +2878,27 @@ export const StreetBrawler: FC = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
 
-  // DogeOS reward flow — isolated from gameplay; wired only at final victory.
+  // DogeOS weekly competition — isolated from gameplay; wired only at final
+  // victory. A completed run is RECORDED as a qualifying weekly entry; no
+  // WDOGE is authorized or transferred here. The 10 WDOGE prize is settled
+  // later, for the verified weekly winner only, through the existing DogeOS
+  // reward attestation flow (useDogeOSRunReward / rewardsApi, unchanged).
   const { address } = useDogeOSWallet();
-  const { authorizeRun } = useDogeOSRunReward(address);
+  const {
+    leaderboard: weeklyLeaderboard,
+    loading: weeklyLoading,
+    error: weeklyError,
+    refresh: refreshWeekly,
+    recordRun: recordWeeklyRun,
+  } = useWeeklyHardMode(address);
   const runStartTimeRef = useRef<number>(0);
   const rewardSubmittedRef = useRef(false);
   // Kept current so the victory handler (captured once per run) always sees
   // the live wallet, e.g. when the player connects mid-run.
   const addressRef = useRef<string | null>(address);
   addressRef.current = address;
-  const authorizeRunRef = useRef(authorizeRun);
-  authorizeRunRef.current = authorizeRun;
+  const recordWeeklyRunRef = useRef(recordWeeklyRun);
+  recordWeeklyRunRef.current = recordWeeklyRun;
 
   const pausedRef = useRef(false);
   const [showCamDebug, setShowCamDebug] = useState(false);
@@ -4145,7 +4157,8 @@ export const StreetBrawler: FC = () => {
               sfx(() => SFX.victory());
               setGameState("victory");
 
-              // Submit exactly one DogeOS reward attestation for this run.
+              // Record exactly one qualifying weekly entry for this run.
+              // HARD MODE ONLY, and never a WDOGE payout.
               const rewardWallet = addressRef.current;
               if (!rewardSubmittedRef.current && rewardWallet) {
                 rewardSubmittedRef.current = true;
@@ -4162,7 +4175,9 @@ export const StreetBrawler: FC = () => {
                   durationMs,
                   difficulty: difficultyMap[g.difficulty],
                 };
-                void authorizeRunRef.current(run).catch(() => {});
+                if (run.difficulty === HARD_MODE_DIFFICULTY) {
+                  void recordWeeklyRunRef.current(run).catch(() => {});
+                }
               }
 
               return;
@@ -5288,6 +5303,15 @@ export const StreetBrawler: FC = () => {
               <p className="text-[10px] text-muted-foreground">
                 Easy: standard goons, solo boss, full pickups · Normal: more goons, boss + 2 minions, faster boss · Black Monday: max goons, boss + 4 minions, brutal boss damage & speed
               </p>
+              <div className="max-w-md mx-auto w-full">
+                <WeeklyHardModePanel
+                  leaderboard={weeklyLeaderboard}
+                  loading={weeklyLoading}
+                  error={weeklyError}
+                  onRefresh={refreshWeekly}
+                  connected={!!address}
+                />
+              </div>
             </div>
           </motion.div>
         )}
@@ -5317,6 +5341,18 @@ export const StreetBrawler: FC = () => {
             <div className="flex justify-center">
               <DogeOSConnectButton size="md" />
             </div>
+
+            {/* Weekly Hard Mode competition — presentational, real data only. */}
+            <div className="max-w-md mx-auto">
+              <WeeklyHardModePanel
+                leaderboard={weeklyLeaderboard}
+                loading={weeklyLoading}
+                error={weeklyError}
+                onRefresh={refreshWeekly}
+                connected={!!address}
+              />
+            </div>
+
 
             <button
               onClick={() => startGame(difficulty)}
