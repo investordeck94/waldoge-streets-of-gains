@@ -5303,6 +5303,15 @@ export const StreetBrawler: FC = () => {
               <p className="text-[10px] text-muted-foreground">
                 Easy: standard goons, solo boss, full pickups · Normal: more goons, boss + 2 minions, faster boss · Black Monday: max goons, boss + 4 minions, brutal boss damage & speed
               </p>
+              <div className="max-w-md mx-auto w-full">
+                <WeeklyHardModePanel
+                  leaderboard={weeklyLeaderboard}
+                  loading={weeklyLoading}
+                  error={weeklyError}
+                  onRefresh={refreshWeekly}
+                  connected={!!address}
+                />
+              </div>
             </div>
           </motion.div>
         )}
