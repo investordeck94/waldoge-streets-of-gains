@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { validateRun } from "../validation.ts";
 import { normalizeAddress, resolveContractConfig } from "../config.ts";
 
-const good = { score: 50_000, wave: 10, level: 2, durationMs: 300_000, difficulty: 1 };
+const good = { score: 50_000, wave: 10, level: 2, durationMs: 300_000, difficulty: 1, startedAt: 1_756_000_000_000 };
 
 describe("run validation", () => {
   it("accepts a plausible run", () => {

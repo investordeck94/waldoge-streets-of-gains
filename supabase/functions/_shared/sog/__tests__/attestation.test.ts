@@ -140,11 +140,14 @@ describe("run identifiers and deadline", () => {
     for (const id of ids) expect(id).toMatch(/^0x[0-9a-f]{64}$/);
   });
 
-  it("derives a stable logical run key for the same run fingerprint", async () => {
-    const run = { score: 1000, wave: 5, level: 1, durationMs: 60_000 };
-    const a = await deriveLogicalRunKey("0xAbC0000000000000000000000000000000000001", run, 100);
-    const b = await deriveLogicalRunKey("0xabc0000000000000000000000000000000000001", run, 100);
-    const c = await deriveLogicalRunKey("0xabc0000000000000000000000000000000000001", run, 101);
+  it("derives a stable logical run key from the run itself", async () => {
+    const run = { score: 1000, wave: 5, level: 1, durationMs: 60_000, difficulty: 2, startedAt: 1_756_000_000_000 };
+    const a = await deriveLogicalRunKey("0xAbC0000000000000000000000000000000000001", run);
+    const b = await deriveLogicalRunKey("0xabc0000000000000000000000000000000000001", run);
+    const c = await deriveLogicalRunKey("0xabc0000000000000000000000000000000000001", {
+      ...run,
+      startedAt: run.startedAt + 1,
+    });
     expect(a).toBe(b);
     expect(a).not.toBe(c);
   });
