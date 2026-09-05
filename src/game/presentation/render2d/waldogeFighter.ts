@@ -267,6 +267,34 @@ function limb(ctx: CanvasRenderingContext2D, a: P, b: P, c: P, w: number, color:
   ctx.stroke();
 }
 
+/**
+ * Arm as drawn on the reference sheet: red tracksuit sleeve from the
+ * shoulder to the elbow, tan Shiba fur forearm, big boxing glove.
+ */
+function armLimb(
+  ctx: CanvasRenderingContext2D,
+  a: P,
+  b: P,
+  c: P,
+  w: number,
+  sleeve: string,
+  fur: string,
+) {
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  // fur forearm (elbow -> glove)
+  limb(ctx, b, [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2], c, w - 1, fur);
+  // sleeve (shoulder -> elbow)
+  limb(ctx, a, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], b, w, sleeve);
+  // white sleeve stripe
+  ctx.beginPath();
+  ctx.moveTo(a[0], a[1] + 1);
+  ctx.lineTo(b[0], b[1] + 1);
+  ctx.strokeStyle = TRACK_WHITE;
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+}
+
 function glove(ctx: CanvasRenderingContext2D, at: P, r = 7.5) {
   ctx.beginPath();
   ctx.ellipse(at[0], at[1], r, r * 0.92, 0, 0, Math.PI * 2);
