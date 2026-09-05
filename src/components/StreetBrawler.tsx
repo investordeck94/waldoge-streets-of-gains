@@ -5114,7 +5114,7 @@ export const StreetBrawler: FC = () => {
 
       // Presentation only — combat state (p.state / p.stateTimer / p.facing)
       // is produced by the gameplay loop above and merely read here.
-      drawWaldogeFighter(ctx, p, g.camX, g.headImg, g.weaponType, g.style);
+      drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.weaponType, g.style, !!g.specialFx);
 
       // Heal flash: expanding green ring + glow around player when fully healed at level start
       if (g.healFlash > 0) {
