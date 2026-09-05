@@ -67,6 +67,9 @@ import { SFX } from "@/lib/gameSfx";
 // game loop, physics, camera or rendering.
 import { DogeOSConnectButton } from "@/components/dogeos/DogeOSConnectButton";
 import { DogeOSPlayerBadge } from "@/components/dogeos/DogeOSPlayerBadge";
+import { useDogeOSWallet } from "@/contexts/DogeOSWalletProvider";
+import { useDogeOSRunReward } from "@/hooks/useDogeOSRunReward";
+import type { RunResult } from "@/lib/dogeos/rewardsApi";
 import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
@@ -2872,6 +2875,13 @@ export const StreetBrawler: FC = () => {
   const [sfxEnabled, setSfxEnabled] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+
+  // DogeOS reward flow — isolated from gameplay; wired only at final victory.
+  const { address } = useDogeOSWallet();
+  const { authorizeRun } = useDogeOSRunReward(address);
+  const runStartTimeRef = useRef<number>(0);
+  const rewardSubmittedRef = useRef(false);
+
   const pausedRef = useRef(false);
   const [showCamDebug, setShowCamDebug] = useState(false);
   const camDebugRef = useRef(false);
@@ -3166,6 +3176,8 @@ export const StreetBrawler: FC = () => {
     setEnergy(50);
     pausedRef.current = false;
     setIsPaused(false);
+    runStartTimeRef.current = Date.now();
+    rewardSubmittedRef.current = false;
     setGameState("playing");
   }, []);
 
@@ -4126,6 +4138,26 @@ export const StreetBrawler: FC = () => {
               g.running = false;
               sfx(() => SFX.victory());
               setGameState("victory");
+
+              // Submit exactly one DogeOS reward attestation for this run.
+              if (!rewardSubmittedRef.current && address) {
+                rewardSubmittedRef.current = true;
+                const durationMs = Math.max(0, Math.floor(Date.now() - runStartTimeRef.current));
+                const difficultyMap: Record<Difficulty, number> = {
+                  easy: 0,
+                  normal: 1,
+                  blackMonday: 2,
+                };
+                const run: RunResult = {
+                  score: g.score,
+                  wave: g.wave,
+                  level: g.level,
+                  durationMs,
+                  difficulty: difficultyMap[g.difficulty],
+                };
+                void authorizeRun(run).catch(() => {});
+              }
+
               return;
             }
             // Fully heal player between levels (reward)
