@@ -85,6 +85,12 @@ export interface PlayerEntity {
   bossPhase?: number;
   aiTimer?: number;
   bossName?: string;
+  /** Id of the boss move currently executing (see @/game/enemy/bossMoves). */
+  bossMoveId?: string;
+  /** Id of the last boss move used, for anti-repeat selection. */
+  bossLastMoveId?: string;
+  /** How many times in a row bossLastMoveId has been picked. */
+  bossRepeat?: number;
 }
 
 // ---------------------------------------------------------------------------
