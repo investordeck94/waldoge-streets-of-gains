@@ -43,7 +43,11 @@ interface DogeOSWalletContextValue {
   chainId: string | null;
   isCorrectChain: boolean;
   error: string | null;
-  connect: () => Promise<void>;
+  /** Provider currently used for the connection (today always "injected"). */
+  providerId: DogeOSWalletProviderId | null;
+  /** All known DogeOS Chikyū wallet providers, including unsupported ones. */
+  providers: DogeOSWalletProviderDescriptor[];
+  connect: (providerId?: DogeOSWalletProviderId) => Promise<void>;
   disconnect: () => void;
   switchToDogeOS: () => Promise<void>;
 }
