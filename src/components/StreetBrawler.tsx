@@ -3259,6 +3259,7 @@ export const StreetBrawler: FC = () => {
   });
 
   useEffect(() => {
+    preloadWaldogeSprites();
     const img = new Image();
     img.src = waldogeHead;
     img.onload = () => { gameRef.current.headImg = img; };
