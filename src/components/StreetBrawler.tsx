@@ -3947,7 +3947,11 @@ export const StreetBrawler: FC = () => {
                 e.attackCooldown = Math.round((25 - phase * 3) * cdScale);
               }
             } else {
-              if (dist > 60) {
+              // Reposition when out of reach horizontally OR when the player
+              // is out of reach vertically (e.g. standing on a platform),
+              // so the boss never idles forever next to an unreachable target.
+              const verticalGap = Math.abs(p.y - e.y);
+              if (dist > 60 || (verticalGap > 60 && dist > 16)) {
                 e.x += e.facing * phaseSpeed;
                 e.state = "walk";
               } else {
@@ -3960,6 +3964,16 @@ export const StreetBrawler: FC = () => {
           if (e.state === "boss_charge" && e.stateTimer > 5) {
             e.x += e.facing * bossCfg.chargeSpeed;
           }
+
+          // Keep the boss inside the level and recover it if its position
+          // stops changing while it should be closing in on the player.
+          clampEnemyToWorld(e, LEVEL_WIDTH);
+          updateStuckWatchdog(
+            e,
+            p.x,
+            p.state !== "dead" && Math.abs(p.x - e.x) > 60,
+          );
+
 
           // Boss attack hit detection
           const bossHitFrame = (
