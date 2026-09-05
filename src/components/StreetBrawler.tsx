@@ -67,6 +67,9 @@ import { SFX } from "@/lib/gameSfx";
 // game loop, physics, camera or rendering.
 import { DogeOSConnectButton } from "@/components/dogeos/DogeOSConnectButton";
 import { DogeOSPlayerBadge } from "@/components/dogeos/DogeOSPlayerBadge";
+import { useDogeOSWallet } from "@/contexts/DogeOSWalletProvider";
+import { useDogeOSRunReward } from "@/hooks/useDogeOSRunReward";
+import type { RunResult } from "@/lib/dogeos/rewardsApi";
 import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
