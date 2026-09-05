@@ -4056,6 +4056,15 @@ export const StreetBrawler: FC = () => {
           }
         }
 
+        // Same shared recovery for grunts.
+        clampEnemyToWorld(e, LEVEL_WIDTH);
+        updateStuckWatchdog(
+          e,
+          p.x,
+          p.state !== "dead" && Math.abs(p.x - e.x) > 50,
+        );
+
+
         // Enemy attack hit
         if ((e.state === "punch" && e.stateTimer === 8) || (e.state === "kick" && e.stateTimer === 10)) {
           const range = e.state === "punch" ? 40 : 50;
