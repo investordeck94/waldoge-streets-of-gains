@@ -4146,7 +4146,8 @@ export const StreetBrawler: FC = () => {
               setGameState("victory");
 
               // Submit exactly one DogeOS reward attestation for this run.
-              if (!rewardSubmittedRef.current && address) {
+              const rewardWallet = addressRef.current;
+              if (!rewardSubmittedRef.current && rewardWallet) {
                 rewardSubmittedRef.current = true;
                 const durationMs = Math.max(0, Math.floor(Date.now() - runStartTimeRef.current));
                 const difficultyMap: Record<Difficulty, number> = {
@@ -4161,7 +4162,7 @@ export const StreetBrawler: FC = () => {
                   durationMs,
                   difficulty: difficultyMap[g.difficulty],
                 };
-                void authorizeRun(run).catch(() => {});
+                void authorizeRunRef.current(run).catch(() => {});
               }
 
               return;
