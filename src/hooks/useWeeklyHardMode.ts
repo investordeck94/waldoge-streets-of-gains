@@ -7,6 +7,8 @@ import type { RunResult } from "@/lib/dogeos/rewardsApi";
 import {
   fetchWeeklyLeaderboard,
   recordQualifyingRun,
+  startServerRun,
+  type ServerRunStart,
   type RecordedRun,
   type WeeklyLeaderboard,
 } from "@/lib/dogeos/weeklyCompetition";
@@ -33,6 +35,23 @@ export function useWeeklyHardMode(address: string | null) {
     void refresh();
   }, [refresh]);
 
+  /**
+   * Open a server-authoritative run. Best-effort: a failure never blocks play,
+   * it only means this run cannot be recorded as a weekly entry.
+   */
+  const startRun = useCallback(
+    async (difficulty: number): Promise<ServerRunStart | null> => {
+      if (!address) return null;
+      try {
+        return await startServerRun(address, difficulty);
+      } catch (e) {
+        setError((e as Error).message);
+        return null;
+      }
+    },
+    [address],
+  );
+
   const recordRun = useCallback(
     async (run: RunResult) => {
       if (!address) return;
@@ -46,5 +65,5 @@ export function useWeeklyHardMode(address: string | null) {
     [address, refresh],
   );
 
-  return { leaderboard, loading, error, lastRecorded, refresh, recordRun };
+  return { leaderboard, loading, error, lastRecorded, refresh, startRun, recordRun };
 }

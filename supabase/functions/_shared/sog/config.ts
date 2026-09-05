@@ -126,3 +126,15 @@ export function resolveContractConfig(
     expectedSigner: expectedSignerRaw ? normalizeAddress(expectedSignerRaw) : null,
   };
 }
+
+/** Max server-authorized run starts per wallet per hour (audit H-1). */
+export const RATE_LIMIT_RUN_STARTS_PER_HOUR = 20;
+
+/** Max SIWE challenges a single wallet may request per hour (audit M-5). */
+export const RATE_LIMIT_CHALLENGES_PER_HOUR = 20;
+
+/** Max SIWE challenges a single client IP may request per hour (audit M-5). */
+export const RATE_LIMIT_CHALLENGES_PER_IP_HOUR = 60;
+
+/** Hard ceiling on leaderboard rows returned to any caller. */
+export const LEADERBOARD_MAX_ENTRIES = 25;

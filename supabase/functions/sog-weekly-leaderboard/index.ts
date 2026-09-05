@@ -11,6 +11,7 @@
  */
 import { json, preflight, readJson } from "../_shared/sog/http.ts";
 import { serviceClient } from "../_shared/sog/session.ts";
+import { LEADERBOARD_MAX_ENTRIES } from "../_shared/sog/config.ts";
 import {
   rankRuns,
   weekHasEnded,
@@ -24,6 +25,11 @@ interface Row {
   verified_at: string;
   wave: number;
   level: number;
+}
+
+/** Public rows show a masked wallet; only the caller sees their own in full. */
+function maskWallet(wallet: string): string {
+  return `${wallet.slice(0, 6)}…${wallet.slice(-4)}`;
 }
 
 Deno.serve(async (req) => {
@@ -67,9 +73,10 @@ Deno.serve(async (req) => {
     week: window,
     ended,
     prizeWdoge: WEEKLY_PRIZE_WDOGE,
-    entries: best.slice(0, 10).map((r, i) => ({
+    entries: best.slice(0, LEADERBOARD_MAX_ENTRIES).map((r, i) => ({
       rank: i + 1,
-      wallet: r.wallet,
+      wallet: r.wallet === wallet ? r.wallet : maskWallet(r.wallet),
+      isYou: r.wallet === wallet,
       score: r.score,
       wave: r.wave,
       level: r.level,
@@ -87,7 +94,11 @@ Deno.serve(async (req) => {
       : null,
     // Only meaningful once the window has closed; still not a payout.
     winner: ended && best[0]
-      ? { wallet: best[0].wallet, score: best[0].score, verifiedAt: best[0].verified_at }
+      ? {
+        wallet: best[0].wallet === wallet ? best[0].wallet : maskWallet(best[0].wallet),
+        score: best[0].score,
+        verifiedAt: best[0].verified_at,
+      }
       : null,
   });
 });

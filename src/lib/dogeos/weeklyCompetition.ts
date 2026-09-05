@@ -25,7 +25,9 @@ export interface WeekWindow {
 
 export interface LeaderboardEntry {
   rank: number;
+  /** Masked for everyone except the requesting wallet. */
   wallet: string;
+  isYou?: boolean;
   score: number;
   wave: number;
   level: number;
@@ -41,6 +43,13 @@ export interface WeeklyLeaderboard {
   topScore: number | null;
   player: { wallet: string; bestScore: number; rank: number; isLeading: boolean } | null;
   winner: { wallet: string; score: number; verifiedAt: string } | null;
+}
+
+export interface ServerRunStart {
+  runId: string;
+  difficulty: number;
+  startedAtMs: number;
+  expiresAt: string;
 }
 
 export interface RecordedRun {
@@ -69,6 +78,23 @@ async function call<T>(
   return payload as T;
 }
 
+/**
+ * Open a server-authoritative run before play begins (audit H-1).
+ *
+ * The backend issues the run id, records the wallet and difficulty and stamps
+ * the start time with its own clock. Without this, a completed run can no
+ * longer be recorded at all.
+ */
+export async function startServerRun(
+  address: string,
+  difficulty: number,
+): Promise<ServerRunStart> {
+  const wallet = normalizeAddress(address);
+  if (!wallet) throw new Error("invalid wallet address");
+  const token = await authenticateWallet(wallet);
+  return await call<ServerRunStart>("sog-run-start", { difficulty }, token);
+}
+
 /** Record a completed Hard Mode run as a qualifying weekly result. */
 export async function recordQualifyingRun(
   address: string,
@@ -79,11 +105,13 @@ export async function recordQualifyingRun(
   if (run.difficulty !== HARD_MODE_DIFFICULTY) {
     throw new Error("only hard mode runs qualify");
   }
+  if (!run.runId) throw new Error("run was not started on the server");
   const token = await authenticateWallet(wallet);
   return await call<RecordedRun>(
     "sog-record-run",
     {
       wallet,
+      runId: run.runId,
       score: run.score,
       wave: run.wave,
       level: run.level,

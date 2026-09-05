@@ -449,6 +449,66 @@ export type Database = {
         }
         Relationships: []
       }
+      sog_rate_events: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: number
+          subject: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: number
+          subject: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: number
+          subject?: string
+        }
+        Relationships: []
+      }
+      sog_run_starts: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          difficulty: number
+          expires_at: string
+          id: string
+          run_id: string
+          session_id: string | null
+          started_at: string
+          status: string
+          wallet: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          difficulty: number
+          expires_at: string
+          id?: string
+          run_id: string
+          session_id?: string | null
+          started_at?: string
+          status?: string
+          wallet: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          difficulty?: number
+          expires_at?: string
+          id?: string
+          run_id?: string
+          session_id?: string | null
+          started_at?: string
+          status?: string
+          wallet?: string
+        }
+        Relationships: []
+      }
       sog_runs: {
         Row: {
           attestation_digest: string | null
@@ -599,6 +659,51 @@ export type Database = {
         }
         Relationships: []
       }
+      sog_weekly_settlements: {
+        Row: {
+          created_at: string
+          id: string
+          prize_wei: number
+          settled_at: string | null
+          status: string
+          tx_hash: string | null
+          tx_verified_at: string | null
+          updated_at: string
+          week_start: string
+          winner_run_id: string | null
+          winner_score: number
+          winner_wallet: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prize_wei: number
+          settled_at?: string | null
+          status?: string
+          tx_hash?: string | null
+          tx_verified_at?: string | null
+          updated_at?: string
+          week_start: string
+          winner_run_id?: string | null
+          winner_score: number
+          winner_wallet: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prize_wei?: number
+          settled_at?: string | null
+          status?: string
+          tx_hash?: string | null
+          tx_verified_at?: string | null
+          updated_at?: string
+          week_start?: string
+          winner_run_id?: string | null
+          winner_score?: number
+          winner_wallet?: string
+        }
+        Relationships: []
+      }
       twaldoge_faucet_claims: {
         Row: {
           amount_wei: string
@@ -713,6 +818,16 @@ export type Database = {
         Args: { p_difficulty: number; p_moves: number }
         Returns: boolean
       }
+      sog_consume_rate_limit: {
+        Args: {
+          p_bucket: string
+          p_limit: number
+          p_subject: string
+          p_window_seconds: number
+        }
+        Returns: boolean
+      }
+      sog_purge_expired: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

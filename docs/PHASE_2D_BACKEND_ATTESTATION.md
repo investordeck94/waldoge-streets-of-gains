@@ -141,3 +141,27 @@ replay headlessly. That is a separate, opt-in decision — not part of Phase 2D.
 
 DogeOS Chikyū testnet, chain id 6281971. Reward token is testnet WDOGE. The
 contract remains unaudited, non-upgradeable and **undeployed**.
+
+---
+
+## Security remediation (post-audit hardening)
+
+| Finding | Remediation |
+| --- | --- |
+| **H-1 Fabricated run surface** | A run must be opened by the backend (`sog-run-start`) before it can be recorded. The server issues the run id, binds it to the authenticated wallet, freezes the difficulty and stamps the start with its own clock. `validateRunAgainstStart` then checks wallet binding, single use, expiry, difficulty equality, start-time agreement, duration against real elapsed server time, a minimum victory duration and full level completion. The start row is consumed atomically, so one start yields at most one recorded run. This makes fabricated runs costly and bounded; it still does not prove the game was played (no verifiable transcript exists). |
+| **H-2 Duplicate key** | Duplicate key material is `sog-run-v3 | wallet | runId | startedAt | durationMs | score | wave | level | difficulty` — entirely intrinsic to the completed run, never the submission clock. |
+| **M-1 Weekly prize settlement** | `sog_weekly_settlements` records exactly one winner per week (unique on `week_start`), created only by the operator-only `sog-settle-week` after the week has fully ended. `sog-submit-run` now signs **only** against a pending settlement naming the caller; it no longer authorizes ad-hoc runs. The client sends nothing at all in the claim body. |
+| **M-2 Rate-limit race** | `public.sog_consume_rate_limit` counts and inserts inside one call behind a transaction-scoped advisory lock on `(bucket, subject)`. Callers serialize; the limit holds. Fails closed on any database error. |
+| **M-3 Epoch alignment** | Reward capacity is accounted against the contract's `epochGenesis`/`epochLength`, read on-chain and cached per contract address, with keys prefixed `e<index>` so they cannot collide with the old UTC-day keys. |
+| **M-4 SIWE domain binding** | The domain inside the signed message comes from a server allow-list (`SOG_ALLOWED_ORIGINS`, plus the app's own hosts); unknown origins are refused with 403. |
+| **M-5 Challenge growth** | Challenge issuance is rate limited per wallet and per client IP, and `sog_purge_expired` removes stale challenges, sessions, run starts and rate-limit rows. |
+| **L-1/L-2 Frontend sessions** | The stored session is dropped as soon as the connected wallet changes or the token lapses — no cross-wallet reuse, no stale tokens. |
+| **Leaderboard** | Public rows show masked wallets (only the requesting wallet sees itself in full) and the response is capped at 25 entries. |
+
+### Operator runbook — weekly settlement
+
+1. After the week closes, call `sog-settle-week` with header `x-sog-admin: $SOG_ADMIN_SECRET`
+   (optional body `{ "weekStart": "YYYY-MM-DD" }`; defaults to the week that just ended).
+2. The winner connects their wallet and claims; `sog-submit-run` signs the 10 WDOGE
+   attestation for that wallet only, once.
+3. The winner broadcasts `submitRun()` themselves — the backend never moves tokens.

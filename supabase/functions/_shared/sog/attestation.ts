@@ -77,6 +77,8 @@ export function generateRunId(): string {
  * Do NOT reintroduce Date.now(), minute buckets or any submission-time value.
  */
 export interface RunFingerprint {
+  /** Server-issued run id from sog-run-start — the run's canonical identity. */
+  runId?: string;
   score: number;
   wave: number;
   level: number;
@@ -91,8 +93,10 @@ export async function deriveLogicalRunKey(
   run: RunFingerprint,
 ): Promise<string> {
   const material = [
-    "sog-run-v2",
+    "sog-run-v3",
     wallet.toLowerCase(),
+    // The server-issued run id makes the key intrinsic to one authorized run.
+    run.runId ?? "",
     run.startedAt,
     run.durationMs,
     run.score,

@@ -22,6 +22,7 @@ import {
   RUN_ATTESTATION_TYPES,
   type RunAttestation,
 } from "./attestation.ts";
+import type { EpochConfig } from "./epoch.ts";
 
 const PRIVATE_KEY_RE = /^0x[0-9a-fA-F]{64}$/;
 
@@ -124,4 +125,52 @@ export async function verifyWalletSignature(
   } catch {
     return false;
   }
+}
+
+const EPOCH_ABI = [
+  {
+    type: "function",
+    name: "epochGenesis",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "epochLength",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+] as const;
+
+let epochCache: { address: string; config: EpochConfig } | null = null;
+
+/**
+ * Read the contract's immutable epoch configuration (audit M-3).
+ * Immutable on-chain, so it is safe to cache per contract address.
+ */
+export async function readEpochConfig(contractAddress: string): Promise<EpochConfig> {
+  const key = contractAddress.toLowerCase();
+  if (epochCache && epochCache.address === key) return epochCache.config;
+
+  const [genesis, length] = (await Promise.all([
+    publicClient.readContract({
+      address: contractAddress as `0x${string}`,
+      abi: EPOCH_ABI,
+      functionName: "epochGenesis",
+    }),
+    publicClient.readContract({
+      address: contractAddress as `0x${string}`,
+      abi: EPOCH_ABI,
+      functionName: "epochLength",
+    }),
+  ])) as [bigint, bigint];
+
+  const config: EpochConfig = {
+    genesisSeconds: Number(genesis),
+    lengthSeconds: Number(length),
+  };
+  epochCache = { address: key, config };
+  return config;
 }

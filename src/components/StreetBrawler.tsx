@@ -2889,15 +2889,22 @@ export const StreetBrawler: FC = () => {
     loading: weeklyLoading,
     error: weeklyError,
     refresh: refreshWeekly,
+    startRun: startWeeklyRun,
     recordRun: recordWeeklyRun,
   } = useWeeklyHardMode(address);
   const runStartTimeRef = useRef<number>(0);
+  // Server-issued run identity (sog-run-start). Null when the run was not
+  // opened on the backend — such a run simply cannot be recorded.
+  const serverRunRef = useRef<{ runId: string; startedAtMs: number } | null>(null);
   const rewardSubmittedRef = useRef(false);
   // Kept current so the victory handler (captured once per run) always sees
   // the live wallet, e.g. when the player connects mid-run.
   const addressRef = useRef<string | null>(address);
   addressRef.current = address;
   const recordWeeklyRunRef = useRef(recordWeeklyRun);
+  recordWeeklyRunRef.current = recordWeeklyRun;
+  const startWeeklyRunRef = useRef(startWeeklyRun);
+  startWeeklyRunRef.current = startWeeklyRun;
   recordWeeklyRunRef.current = recordWeeklyRun;
 
   const pausedRef = useRef(false);
@@ -3196,6 +3203,20 @@ export const StreetBrawler: FC = () => {
     setIsPaused(false);
     runStartTimeRef.current = Date.now();
     rewardSubmittedRef.current = false;
+    serverRunRef.current = null;
+    // Hard mode only: open a server-authoritative run in the background. This
+    // never blocks or delays gameplay; if it fails the run just will not count
+    // towards the weekly competition.
+    const diffIndex = diff === "blackMonday" ? 2 : diff === "normal" ? 1 : 0;
+    if (diffIndex === HARD_MODE_DIFFICULTY && addressRef.current) {
+      void startWeeklyRunRef.current(diffIndex)
+        .then((started) => {
+          if (started) {
+            serverRunRef.current = { runId: started.runId, startedAtMs: started.startedAtMs };
+          }
+        })
+        .catch(() => {});
+    }
     setGameState("playing");
   }, []);
 
@@ -4168,15 +4189,21 @@ export const StreetBrawler: FC = () => {
                   normal: 1,
                   blackMonday: 2,
                 };
+                const serverRun = serverRunRef.current;
                 const run: RunResult = {
+                  runId: serverRun?.runId,
                   score: g.score,
                   wave: g.wave,
                   level: g.level,
-                  durationMs,
+                  // Duration and start are anchored to the SERVER-issued start
+                  // whenever there is one, so the backend can cross-check them.
+                  durationMs: serverRun
+                    ? Math.max(0, Math.floor(Date.now() - serverRun.startedAtMs))
+                    : durationMs,
                   difficulty: difficultyMap[g.difficulty],
-                  startedAt: Math.floor(runStartTimeRef.current),
+                  startedAt: Math.floor(serverRun?.startedAtMs ?? runStartTimeRef.current),
                 };
-                if (run.difficulty === HARD_MODE_DIFFICULTY) {
+                if (run.difficulty === HARD_MODE_DIFFICULTY && run.runId) {
                   void recordWeeklyRunRef.current(run).catch(() => {});
                 }
               }
