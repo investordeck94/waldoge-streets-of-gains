@@ -4138,6 +4138,26 @@ export const StreetBrawler: FC = () => {
               g.running = false;
               sfx(() => SFX.victory());
               setGameState("victory");
+
+              // Submit exactly one DogeOS reward attestation for this run.
+              if (!rewardSubmittedRef.current && address) {
+                rewardSubmittedRef.current = true;
+                const durationMs = Math.max(0, Math.floor(Date.now() - runStartTimeRef.current));
+                const difficultyMap: Record<Difficulty, number> = {
+                  easy: 0,
+                  normal: 1,
+                  blackMonday: 2,
+                };
+                const run: RunResult = {
+                  score: g.score,
+                  wave: g.wave,
+                  level: g.level,
+                  durationMs,
+                  difficulty: difficultyMap[g.difficulty],
+                };
+                void authorizeRun(run).catch(() => {});
+              }
+
               return;
             }
             // Fully heal player between levels (reward)
