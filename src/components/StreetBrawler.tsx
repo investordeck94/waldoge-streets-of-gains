@@ -89,6 +89,12 @@ import {
   spawnEnemies as spawnEnemiesModule,
   spawnBoss as spawnBossModule,
 } from "@/game/enemy/Enemy";
+import {
+  sanitizeEnemyMotion,
+  clampEnemyToWorld,
+  updateStuckWatchdog,
+  type MovingEnemy,
+} from "@/game/enemy/movement";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
@@ -3886,19 +3892,26 @@ export const StreetBrawler: FC = () => {
       }
 
       // Enemy AI
-      for (const e of g.enemies) {
+      for (const e of g.enemies as MovingEnemy[]) {
         if (e.state === "dead") { e.stateTimer--; continue; }
+
+        // Shared safety layer (all enemies, all bosses, all 7 levels):
+        // repair impossible numbers and release action states that overran
+        // their exit frame, so movement can never be locked out.
+        sanitizeEnemyMotion(e, GROUND_Y);
 
         e.vy += GRAVITY;
         e.y += e.vy;
         e.x += e.vx || 0;
         e.vx = (e.vx || 0) * 0.85;
         if (e.y >= GROUND_Y) { e.y = GROUND_Y; e.vy = 0; }
+        clampEnemyToWorld(e, LEVEL_WIDTH);
         e.stateTimer = Math.max(-1, e.stateTimer - 1);
         e.attackCooldown = Math.max(-1, e.attackCooldown - 1);
         if (e.state === "hit" && e.stateTimer <= 0) e.state = "idle";
         if ((e.state === "punch" || e.state === "kick") && e.stateTimer <= 0) e.state = "idle";
         if ((e.state === "boss_charge" || e.state === "boss_slam" || e.state === "boss_throw") && e.stateTimer <= 0) e.state = "idle";
+
 
         // Boss AI
         if (e.isBoss) {
@@ -3940,7 +3953,11 @@ export const StreetBrawler: FC = () => {
                 e.attackCooldown = Math.round((25 - phase * 3) * cdScale);
               }
             } else {
-              if (dist > 60) {
+              // Reposition when out of reach horizontally OR when the player
+              // is out of reach vertically (e.g. standing on a platform),
+              // so the boss never idles forever next to an unreachable target.
+              const verticalGap = Math.abs(p.y - e.y);
+              if (dist > 60 || (verticalGap > 60 && dist > 16)) {
                 e.x += e.facing * phaseSpeed;
                 e.state = "walk";
               } else {
@@ -3953,6 +3970,16 @@ export const StreetBrawler: FC = () => {
           if (e.state === "boss_charge" && e.stateTimer > 5) {
             e.x += e.facing * bossCfg.chargeSpeed;
           }
+
+          // Keep the boss inside the level and recover it if its position
+          // stops changing while it should be closing in on the player.
+          clampEnemyToWorld(e, LEVEL_WIDTH);
+          updateStuckWatchdog(
+            e,
+            p.x,
+            p.state !== "dead" && Math.abs(p.x - e.x) > 60,
+          );
+
 
           // Boss attack hit detection
           const bossHitFrame = (
@@ -4034,6 +4061,15 @@ export const StreetBrawler: FC = () => {
             e.attackCooldown = 30 + Math.random() * 20;
           }
         }
+
+        // Same shared recovery for grunts.
+        clampEnemyToWorld(e, LEVEL_WIDTH);
+        updateStuckWatchdog(
+          e,
+          p.x,
+          p.state !== "dead" && Math.abs(p.x - e.x) > 50,
+        );
+
 
         // Enemy attack hit
         if ((e.state === "punch" && e.stateTimer === 8) || (e.state === "kick" && e.stateTimer === 10)) {
