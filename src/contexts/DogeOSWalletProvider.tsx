@@ -152,36 +152,47 @@ export const DogeOSWalletProvider: FC<{ children: ReactNode }> = ({ children }) 
     };
   }, [supported]);
 
-  const connect = useCallback(async () => {
-    if (!supported) {
-      setError("No EVM wallet found");
-      return;
-    }
-    setConnecting(true);
-    setError(null);
-    try {
-      const accounts = await requestAccounts();
-      const cid = await getChainId();
-      if (!mounted.current) return;
-      setAddress(accounts && accounts.length > 0 ? accounts[0] : null);
-      setChainId(cid ?? null);
+  const connect = useCallback(
+    async (providerId: DogeOSWalletProviderId = DEFAULT_WALLET_PROVIDER_ID) => {
+      const descriptor = getWalletProvider(providerId);
+      if (!descriptor?.supported) {
+        setError(descriptor?.unavailableReason ?? "Wallet provider not supported yet");
+        return;
+      }
+      if (!descriptor.available || !supported) {
+        setError(descriptor.unavailableReason ?? "No EVM wallet found");
+        return;
+      }
+      setConnecting(true);
+      setError(null);
       try {
-        localStorage.setItem(AUTO_CONNECT_KEY, "1");
-      } catch { /* ignore */ }
-    } catch (e) {
-      if (mounted.current) setError(errMessage(e));
-    } finally {
-      if (mounted.current) setConnecting(false);
-    }
-  }, [supported]);
+        const accounts = await requestAccounts();
+        const cid = await getChainId();
+        if (!mounted.current) return;
+        setAddress(accounts && accounts.length > 0 ? accounts[0] : null);
+        setChainId(cid ?? null);
+        setActiveProviderId(providerId);
+        try {
+          localStorage.setItem(AUTO_CONNECT_KEY, "1");
+        } catch { /* ignore */ }
+      } catch (e) {
+        if (mounted.current) setError(errMessage(e));
+      } finally {
+        if (mounted.current) setConnecting(false);
+      }
+    },
+    [supported],
+  );
 
   const disconnect = useCallback(() => {
     setAddress(null);
     setError(null);
+    setActiveProviderId(null);
     try {
       localStorage.removeItem(AUTO_CONNECT_KEY);
     } catch { /* ignore */ }
   }, []);
+
 
   const switchToDogeOS = useCallback(async () => {
     if (!supported) return;
