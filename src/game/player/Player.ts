@@ -91,6 +91,8 @@ export interface PlayerEntity {
   bossLastMoveId?: string;
   /** How many times in a row bossLastMoveId has been picked. */
   bossRepeat?: number;
+  /** Queued combo follow-up move id (fires once, ignoring cooldown). */
+  bossChainId?: string;
 }
 
 // ---------------------------------------------------------------------------

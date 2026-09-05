@@ -95,7 +95,7 @@ import {
   updateStuckWatchdog,
   type MovingEnemy,
 } from "@/game/enemy/movement";
-import { selectBossMove, getMoveById } from "@/game/enemy/bossMoves";
+import { selectBossMove, getMoveById, rollChain, type MartialForm } from "@/game/enemy/bossMoves";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
@@ -183,12 +183,44 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
   const bodyLen = 40;
   const limbLen = 28;
 
+  // Martial-arts pose driver: the active move decides the karate form and how
+  // far through the strike we are. Purely visual — no gameplay values read.
+  const activeMove = getMoveById(e.bossName, e.bossMoveId);
+  const poseMove = activeMove && e.state === activeMove.anim ? activeMove : null;
+  const prog = poseMove
+    ? Math.min(1, Math.max(0, 1 - Math.max(0, e.stateTimer) / poseMove.duration))
+    : 0;
+  const form: MartialForm | null = poseMove ? poseMove.martial : null;
+  const telegraphing = !!poseMove?.telegraph && prog < (poseMove.telegraph ?? 0);
+
   ctx.save();
   ctx.translate(sx, sy);
   if (e.state === "hit") ctx.globalAlpha = 0.6;
   if (e.state === "dead") { ctx.rotate(e.facing * Math.PI / 3); ctx.globalAlpha = 0.4; }
+  // Spinning attacks twist the whole fighter around its vertical axis.
+  if (form === "spin" && e.state !== "dead") {
+    const twist = Math.cos(prog * Math.PI * 4);
+    ctx.scale(Math.max(0.25, Math.abs(twist)) * (twist < 0 ? -1 : 1), 1);
+  }
+  // Dodges lean the body away; lunges lean into the strike.
+  if (form === "dodge" && e.state !== "dead") ctx.rotate(-e.facing * 0.28 * Math.sin(prog * Math.PI));
+  if ((form === "lunge" || form === "flying_kick") && e.state !== "dead") {
+    ctx.rotate(e.facing * 0.22 * Math.sin(prog * Math.PI));
+  }
 
   const headCY = -bodyLen - limbLen - headR;
+
+  // Telegraph: pulsing warning ring before heavy/committed moves so the
+  // player can read the attack and counter during its recovery window.
+  if (telegraphing && e.state !== "dead") {
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 45);
+    ctx.beginPath();
+    ctx.arc(0, headCY + headR + bodyLen / 2, 56 + pulse * 12, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255, 210, 60, ${0.25 + pulse * 0.5})`;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
 
   // Boss aura
   if (e.state !== "dead") {
@@ -250,51 +282,144 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
   ctx.lineWidth = 5;
   ctx.stroke();
 
-  // Arms
+  // Arms + legs — karate pose table. Each martial form places the lead/rear
+  // arm and lead/rear leg; anything without an active move falls back to the
+  // original idle / walk stance, so non-move states look exactly as before.
   const shoulderY = neckY + 10;
-  ctx.beginPath();
-  if (e.state === "boss_slam") {
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen * 1.8, shoulderY - limbLen);
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(-e.facing * limbLen, shoulderY - limbLen * 0.5);
-  } else if (e.state === "boss_charge") {
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen * 1.5, shoulderY);
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen, shoulderY - limbLen * 0.8);
-  } else if (e.state === "boss_throw") {
-    const prog = progressOf(e.stateTimer, 20);
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen * (1 + prog), shoulderY - limbLen * prog);
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(-e.facing * limbLen * 0.5, shoulderY + limbLen * 0.5);
-  } else if (e.state === "punch") {
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(e.facing * limbLen * 1.5, shoulderY - 5);
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(-e.facing * limbLen * 0.5, shoulderY + 10);
-  } else {
-    const swing = e.state === "walk" ? Math.sin(Date.now() / 200) * 12 : 0;
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(-limbLen * 0.8, shoulderY + limbLen * 0.8 + swing);
-    ctx.moveTo(0, shoulderY);
-    ctx.lineTo(limbLen * 0.8, shoulderY + limbLen * 0.8 - swing);
+  const F = e.facing;
+  const L = limbLen;
+  // 0 → 1 → 0 across the move: windup, extension, retraction.
+  const strike = Math.sin(Math.min(1, Math.max(0, prog)) * Math.PI);
+  const walkPhase = Math.sin(Date.now() / 200) * 12;
+  const legPhase = Math.sin(Date.now() / 120) * 15;
+
+  type Pt = [number, number];
+  let leadArm: Pt = [F * L * 0.9, shoulderY + L * 0.45];
+  let rearArm: Pt = [-F * L * 0.85, shoulderY + L * 0.5];
+  let leadLeg: Pt = [F * L * 0.6, hipY + L];
+  let rearLeg: Pt = [-F * L * 0.6, hipY + L];
+
+  switch (form) {
+    case "jab":
+      leadArm = [F * L * (0.55 + 1.35 * strike), shoulderY - 6];
+      rearArm = [-F * L * 0.5, shoulderY + 6];
+      break;
+    case "straight":
+      leadArm = [F * L * (0.4 + 1.6 * strike), shoulderY - 2];
+      rearArm = [-F * L * 0.6, shoulderY + 4];
+      leadLeg = [F * L * (0.7 + 0.3 * strike), hipY + L];
+      break;
+    case "combo": {
+      const beat = Math.abs(Math.sin(prog * Math.PI * 3));
+      leadArm = [F * L * (0.4 + 1.5 * beat), shoulderY - 6];
+      rearArm = [F * L * (0.3 + 1.2 * (1 - beat)), shoulderY + 6];
+      leadLeg = [F * L * 0.75, hipY + L];
+      break;
+    }
+    case "roundhouse":
+      leadLeg = [F * L * (0.7 + 1.7 * strike), hipY + L * (1 - 0.85 * strike)];
+      rearLeg = [-F * L * 0.45, hipY + L];
+      leadArm = [-F * L * 1.1, shoulderY - L * 0.3];
+      rearArm = [F * L * 0.5, shoulderY + L * 0.4];
+      break;
+    case "flying_kick":
+      leadLeg = [F * L * (1.1 + 1.3 * strike), hipY + L * 0.25];
+      rearLeg = [-F * L * 0.7, hipY + L * 0.75];
+      leadArm = [-F * L * 1.0, shoulderY + L * 0.2];
+      rearArm = [F * L * 0.7, shoulderY - L * 0.35];
+      break;
+    case "sweep":
+      leadLeg = [F * L * (0.9 + 1.8 * strike), hipY + L * 1.05];
+      rearLeg = [-F * L * 0.55, hipY + L * 0.95];
+      leadArm = [-F * L * 0.9, shoulderY + L * 0.2];
+      rearArm = [F * L * 0.6, shoulderY + L * 0.6];
+      break;
+    case "spin":
+      leadArm = [F * L * 1.5, shoulderY - 4];
+      rearArm = [-F * L * 1.5, shoulderY + 4];
+      leadLeg = [F * L * (0.8 + 1.2 * strike), hipY + L * 0.55];
+      rearLeg = [-F * L * 0.5, hipY + L];
+      break;
+    case "slam": {
+      const raise = prog < 0.45 ? prog / 0.45 : 0;
+      const drop = prog < 0.45 ? 0 : (prog - 0.45) / 0.55;
+      leadArm = [F * L * (1.4 - 0.6 * drop), shoulderY - L * (0.4 + raise * 0.9) + L * 1.3 * drop];
+      rearArm = [-F * L * (0.9 - 0.3 * drop), shoulderY - L * (0.2 + raise * 0.7) + L * 1.1 * drop];
+      leadLeg = [F * L * 0.7, hipY + L];
+      rearLeg = [-F * L * 0.7, hipY + L];
+      break;
+    }
+    case "lunge":
+      leadArm = [F * L * 1.6, shoulderY - 2];
+      rearArm = [F * L * 0.8, shoulderY - L * 0.7];
+      leadLeg = [F * L * (0.9 + 0.4 * strike) + legPhase * 0.3, hipY + L];
+      rearLeg = [-F * L * 0.9, hipY + L * 0.95];
+      break;
+    case "throw":
+      leadArm = [F * L * (1 + prog), shoulderY - L * prog];
+      rearArm = [-F * L * 0.5, shoulderY + L * 0.5];
+      break;
+    case "dodge":
+      leadArm = [F * L * 0.5, shoulderY - L * 0.4];
+      rearArm = [-F * L * 0.8, shoulderY - L * 0.1];
+      leadLeg = [F * L * 0.4, hipY + L];
+      rearLeg = [-F * L * 1.0, hipY + L * 0.95];
+      break;
+    case "counter": {
+      // Guard up, then explode into a hook once the telegraph ends.
+      const guard = prog < 0.5;
+      leadArm = guard
+        ? [F * L * 0.45, shoulderY - L * 0.5]
+        : [F * L * (0.5 + 1.5 * strike), shoulderY - L * 0.15];
+      rearArm = guard ? [-F * L * 0.4, shoulderY - L * 0.4] : [-F * L * 0.7, shoulderY + L * 0.3];
+      break;
+    }
+    default:
+      if (e.state === "walk") {
+        leadArm = [L * 0.8, shoulderY + L * 0.8 - walkPhase];
+        rearArm = [-L * 0.8, shoulderY + L * 0.8 + walkPhase];
+        leadLeg = [L * 0.6 - legPhase, hipY + L];
+        rearLeg = [-L * 0.6 + legPhase, hipY + L];
+      } else {
+        // Neutral karate guard instead of dangling arms.
+        leadArm = [F * L * 0.55, shoulderY - L * 0.25];
+        rearArm = [-F * L * 0.45, shoulderY - L * 0.05];
+      }
+      break;
   }
+
+  ctx.beginPath();
+  ctx.moveTo(0, shoulderY);
+  ctx.lineTo(leadArm[0], leadArm[1]);
+  ctx.moveTo(0, shoulderY);
+  ctx.lineTo(rearArm[0], rearArm[1]);
   ctx.strokeStyle = "#8b0000";
   ctx.lineWidth = 4;
   ctx.stroke();
 
   // Legs
   ctx.beginPath();
-  const legSwing = e.state === "walk" || e.state === "boss_charge" ? Math.sin(Date.now() / 120) * 15 : 0;
   ctx.moveTo(0, hipY);
-  ctx.lineTo(-limbLen * 0.6 + legSwing, hipY + limbLen);
+  ctx.lineTo(leadLeg[0], leadLeg[1]);
   ctx.moveTo(0, hipY);
-  ctx.lineTo(limbLen * 0.6 - legSwing, hipY + limbLen);
+  ctx.lineTo(rearLeg[0], rearLeg[1]);
   ctx.strokeStyle = "#8b0000";
   ctx.lineWidth = 4;
   ctx.stroke();
+
+  // Impact wind streak on the striking limb at full extension.
+  if (form && strike > 0.75 && e.state !== "dead") {
+    const tip: Pt =
+      form === "roundhouse" || form === "flying_kick" || form === "sweep" || form === "spin"
+        ? leadLeg
+        : leadArm;
+    ctx.beginPath();
+    ctx.arc(tip[0], tip[1], 10, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255,180,60,0.55)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
 
   ctx.restore();
 
@@ -3930,15 +4055,29 @@ export const StreetBrawler: FC = () => {
 
           // A move that has finished (or whose state was released by the
           // shared safety layer) is always cleared — no attack can latch.
-          if (!busy && e.bossMoveId) e.bossMoveId = undefined;
+          // When it finishes cleanly we roll an optional combo follow-up; a
+          // chain is never required for the boss to keep acting.
+          if (!busy && e.bossMoveId) {
+            const finished = getMoveById(e.bossName, e.bossMoveId);
+            if (!stunned && dist < 170) {
+              const next = rollChain(e.bossName, finished);
+              if (next) e.bossChainId = next.id;
+            }
+            e.bossMoveId = undefined;
+          }
 
           if (!busy && !stunned) {
             e.facing = dx > 0 ? 1 : -1;
             const phase = e.bossPhase || 1;
             const phaseSpeed = bossCfg.aiSpeed + phase * 0.4;
 
-            if (e.attackCooldown <= 0) {
-              const move = selectBossMove(e.bossName, {
+            // A queued combo link fires immediately, ignoring the cooldown
+            // once; everything else waits for the normal cooldown.
+            const chained = e.bossChainId ? getMoveById(e.bossName, e.bossChainId) : null;
+            e.bossChainId = undefined;
+
+            if (chained || e.attackCooldown <= 0) {
+              const move = chained ?? selectBossMove(e.bossName, {
                 dist, vertGap, phase,
                 lastMoveId: e.bossLastMoveId,
                 repeatCount: e.bossRepeat,
@@ -3952,12 +4091,20 @@ export const StreetBrawler: FC = () => {
                 e.stateTimer = move.duration;
                 const cdScale = Math.max(0.45, 1.25 - g.level * 0.1) * (DIFFICULTY_BOSS_CD[g.difficulty] || 1);
                 e.attackCooldown = Math.max(6, Math.round((move.cooldown + move.duration) * cdScale));
+                // Jumping/aerial attacks leave the ground; gravity + the
+                // ground snap above always bring the boss back down.
+                if (move.hop && e.y >= GROUND_Y) e.vy = -move.hop;
                 if (move.sfx === "charge") sfx(() => SFX.bossCharge());
                 else if (move.sfx === "slam") sfx(() => SFX.bossSlam());
                 if (move.shout) {
                   g.effects.push({ x: e.x, y: e.y - 110, timer: 30, text: move.shout, color: "#ffcc33", size: 18 });
+                } else if (move.telegraph) {
+                  // Audible + visible warning for committed moves that have
+                  // no shout of their own.
+                  g.effects.push({ x: e.x, y: e.y - 110, timer: 22, text: move.name, color: "#ffd23c", size: 14 });
                 }
               } else {
+
                 // Nothing fits this range — close the gap instead of idling.
                 e.x += e.facing * phaseSpeed;
                 e.state = "walk";
@@ -3988,7 +4135,7 @@ export const StreetBrawler: FC = () => {
             p.x,
             p.state !== "dead" && !busy && !stunned && Math.abs(p.x - e.x) > 60,
           );
-          if (recovered) e.bossMoveId = undefined;
+          if (recovered) { e.bossMoveId = undefined; e.bossChainId = undefined; }
 
           // Projectile volleys declared by the active move.
           if (activeMove?.projectiles) {
