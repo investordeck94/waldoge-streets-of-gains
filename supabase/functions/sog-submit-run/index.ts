@@ -81,9 +81,8 @@ Deno.serve(async (req) => {
     return fail("rate limited", 429);
   }
 
-  // 6. Backend duplicate protection for one *logical* run.
-  const startedAtBucket = Math.floor(Date.now() / 60_000);
-  const logicalKey = await deriveLogicalRunKey(wallet, run, startedAtBucket);
+  // 6. Backend duplicate protection keyed on the run itself (never the clock).
+  const logicalKey = await deriveLogicalRunKey(wallet, run);
   const { data: duplicate } = await supabase
     .from("sog_runs")
     .select("id")

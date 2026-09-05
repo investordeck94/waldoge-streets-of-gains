@@ -49,9 +49,8 @@ Deno.serve(async (req) => {
     .gte("created_at", sinceHour);
   if ((recentCount ?? 0) >= RATE_LIMIT_RUNS_PER_HOUR) return fail("rate limited", 429);
 
-  // Duplicate protection for one logical completed run (re-renders, retries).
-  const startedAtBucket = Math.floor(Date.now() / 60_000);
-  const clientRunKey = await deriveLogicalRunKey(wallet, run, startedAtBucket);
+  // Duplicate protection keyed on the run itself (never the submission time).
+  const clientRunKey = await deriveLogicalRunKey(wallet, run);
   const { data: duplicate } = await supabase
     .from("sog_weekly_runs")
     .select("id")
