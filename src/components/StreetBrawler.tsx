@@ -5284,10 +5284,20 @@ export const StreetBrawler: FC = () => {
                 onPointerUp={() => touchMove("stop")}
                 onPointerCancel={() => touchMove("stop")}
                 onPointerLeave={() => touchMove("stop")}
-
+                onContextMenu={(e) => e.preventDefault()}
+                className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
+              >◀</button>
+              <button
+                onTouchStart={() => touchMove("right")}
+                onTouchEnd={() => touchMove("stop")}
+                onTouchCancel={() => touchMove("stop")}
+                onPointerUp={() => touchMove("stop")}
+                onPointerCancel={() => touchMove("stop")}
+                onPointerLeave={() => touchMove("stop")}
                 onContextMenu={(e) => e.preventDefault()}
                 className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
               >▶</button>
+
             </div>
             {/* Right: Action cluster — jump/punch/kick aligned, special under punch */}
             <div className="flex gap-2 items-start">
