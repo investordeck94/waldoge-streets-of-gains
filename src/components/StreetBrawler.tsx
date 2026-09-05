@@ -4600,6 +4600,7 @@ export const StreetBrawler: FC = () => {
       for (const pu of g.powerups) {
         const px = pu.x - g.camX;
         const py = pu.y;
+        if (px < -40 || px > CANVAS_W + 40) continue;
         const bob = Math.sin(Date.now() / 200) * 3;
         const flashing = pu.timer < 120 && Math.floor(pu.timer / 10) % 2 === 0;
         ctx.save();
@@ -4650,7 +4651,7 @@ export const StreetBrawler: FC = () => {
           const fY = baseY - candleH - wickLen;
           ctx.beginPath();
           ctx.moveTo(cx, fY - 8 - flick);
-          ctx.bezierCurveTo(4, fY - 4, 3, fY + 1, cx, fY + 1);
+          ctx.bezierCurveTo(cx + 4, fY - 4, cx + 3, fY + 1, cx, fY + 1);
           ctx.bezierCurveTo(cx - 3, fY + 1, cx - 4, fY - 4, cx, fY - 8 - flick);
           ctx.fillStyle = "#ff8a1a";
           ctx.fill();
@@ -4659,6 +4660,14 @@ export const StreetBrawler: FC = () => {
           ctx.bezierCurveTo(cx + 2, fY - 2, cx + 1.5, fY, cx, fY);
           ctx.bezierCurveTo(cx - 1.5, fY, cx - 2, fY - 2, cx, fY - 5 - flick * 0.5);
           ctx.fillStyle = "#ffe14a";
+          ctx.fill();
+          // Soft warm halo centred on the flame (world-anchored, no smear)
+          const halo = ctx.createRadialGradient(cx, fY - 4, 0, cx, fY - 4, 14);
+          halo.addColorStop(0, "rgba(255,170,60,0.30)");
+          halo.addColorStop(1, "rgba(255,170,60,0)");
+          ctx.fillStyle = halo;
+          ctx.beginPath();
+          ctx.arc(cx, fY - 4, 14, 0, Math.PI * 2);
           ctx.fill();
         } else {
           // Other power-ups keep emoji icon
