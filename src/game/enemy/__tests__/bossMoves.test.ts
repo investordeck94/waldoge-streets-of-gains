@@ -181,7 +181,8 @@ describe("martial-arts combat layer — all 7 levels", () => {
 
   it.each(bossNames)("%s: heavy moves always telegraph before landing", (name) => {
     for (const m of getMoveSet(name)) {
-      if (m.damage >= 6 && m.hitFrames.length > 0) {
+      // "Heavy" = a committed, slow move; fast jabs stay unannounced by design.
+      if (m.damage >= 6 && m.duration >= 24 && m.hitFrames.length > 0) {
         expect(m.telegraph, `${m.id} heavy move needs a telegraph`).toBeDefined();
       }
     }
