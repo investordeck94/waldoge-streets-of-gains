@@ -2881,6 +2881,12 @@ export const StreetBrawler: FC = () => {
   const { authorizeRun } = useDogeOSRunReward(address);
   const runStartTimeRef = useRef<number>(0);
   const rewardSubmittedRef = useRef(false);
+  // Kept current so the victory handler (captured once per run) always sees
+  // the live wallet, e.g. when the player connects mid-run.
+  const addressRef = useRef<string | null>(address);
+  addressRef.current = address;
+  const authorizeRunRef = useRef(authorizeRun);
+  authorizeRunRef.current = authorizeRun;
 
   const pausedRef = useRef(false);
   const [showCamDebug, setShowCamDebug] = useState(false);
