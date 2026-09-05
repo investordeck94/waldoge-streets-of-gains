@@ -77,8 +77,8 @@ interface Pose {
   squash: number;
 }
 
-const HIP_Y = -34;
-const CHEST_Y = -58;
+const HIP_Y = -31;
+const CHEST_Y = -54;
 const HEAD_Y = -76;
 
 function basePose(): Pose {
@@ -91,8 +91,8 @@ function basePose(): Pose {
     chest: [0, CHEST_Y],
     head: [2, HEAD_Y],
     // Boxing guard: gloves up near the chin.
-    armFront: [[4, CHEST_Y + 2], [13, CHEST_Y + 10], [16, CHEST_Y - 1]],
-    armBack: [[-4, CHEST_Y + 2], [-13, CHEST_Y + 10], [-9, CHEST_Y - 4]],
+    armFront: [[4, CHEST_Y + 2], [13, CHEST_Y + 12], [17, CHEST_Y + 4]],
+    armBack: [[-4, CHEST_Y + 2], [-13, CHEST_Y + 12], [-11, CHEST_Y + 3]],
     // Low, wide stance: feet apart, knees bent.
     legFront: [[3, HIP_Y], [14, HIP_Y + 20], [17, 0]],
     legBack: [[-3, HIP_Y], [-14, HIP_Y + 19], [-16, 0]],
@@ -122,9 +122,9 @@ function poseFor(e: FighterView, style: StyleName, clock: number): Pose {
       p.legBack[1] = [-8 - s, HIP_Y + 18];
       p.legBack[2] = [-12 - s * 1.7, -Math.max(0, -s) * (running ? 1.5 : 0.8)];
       p.armFront[1] = [12, CHEST_Y + 10 - s * 0.5];
-      p.armFront[2] = [14 + s * 0.5, CHEST_Y - 4 - s * 0.4];
+      p.armFront[2] = [16 + s * 0.5, CHEST_Y + 2 - s * 0.4];
       p.armBack[1] = [-12, CHEST_Y + 10 + s * 0.5];
-      p.armBack[2] = [-10 - s * 0.5, CHEST_Y - 2 + s * 0.4];
+      p.armBack[2] = [-12 - s * 0.5, CHEST_Y + 3 + s * 0.4];
       break;
     }
     case "jump": {
@@ -234,8 +234,8 @@ function poseFor(e: FighterView, style: StyleName, clock: number): Pose {
       // idle — breathing bounce + light guard sway
       const b = Math.sin(clock / 320) * 1.6;
       p.bob = b;
-      p.armFront[2] = [16, CHEST_Y - 1 + b];
-      p.armBack[2] = [-9, CHEST_Y - 4 - b];
+      p.armFront[2] = [17, CHEST_Y + 4 + b];
+      p.armBack[2] = [-11, CHEST_Y + 3 - b];
       if (moving) p.lean = 0.05;
       break;
     }
@@ -267,6 +267,34 @@ function limb(ctx: CanvasRenderingContext2D, a: P, b: P, c: P, w: number, color:
   ctx.stroke();
 }
 
+/**
+ * Arm as drawn on the reference sheet: red tracksuit sleeve from the
+ * shoulder to the elbow, tan Shiba fur forearm, big boxing glove.
+ */
+function armLimb(
+  ctx: CanvasRenderingContext2D,
+  a: P,
+  b: P,
+  c: P,
+  w: number,
+  sleeve: string,
+  fur: string,
+) {
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  // fur forearm (elbow -> glove)
+  limb(ctx, b, [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2], c, w - 1, fur);
+  // sleeve (shoulder -> elbow)
+  limb(ctx, a, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], b, w, sleeve);
+  // white sleeve stripe
+  ctx.beginPath();
+  ctx.moveTo(a[0], a[1] + 1);
+  ctx.lineTo(b[0], b[1] + 1);
+  ctx.strokeStyle = TRACK_WHITE;
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+}
+
 function glove(ctx: CanvasRenderingContext2D, at: P, r = 7.5) {
   ctx.beginPath();
   ctx.ellipse(at[0], at[1], r, r * 0.92, 0, 0, Math.PI * 2);
@@ -290,35 +318,45 @@ function glove(ctx: CanvasRenderingContext2D, at: P, r = 7.5) {
 function sneaker(ctx: CanvasRenderingContext2D, at: P, dir: number) {
   ctx.save();
   ctx.translate(at[0], at[1]);
+  // chunky high-top silhouette
   ctx.beginPath();
-  ctx.moveTo(-5 * dir, -5);
-  ctx.quadraticCurveTo(9 * dir, -6, 11 * dir, 0);
-  ctx.quadraticCurveTo(11 * dir, 3, 6 * dir, 3);
-  ctx.lineTo(-5 * dir, 3);
+  ctx.moveTo(-6 * dir, -8);
+  ctx.quadraticCurveTo(11 * dir, -8, 13 * dir, -1);
+  ctx.quadraticCurveTo(14 * dir, 4, 8 * dir, 4);
+  ctx.lineTo(-6 * dir, 4);
   ctx.closePath();
   ctx.fillStyle = SHOE_WHITE;
   ctx.fill();
   ctx.strokeStyle = INK;
-  ctx.lineWidth = 2.2;
+  ctx.lineWidth = 2.4;
   ctx.stroke();
-  // red swoosh + sole
+  // red laces
+  ctx.strokeStyle = TRACK_RED;
+  ctx.lineWidth = 1.8;
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    ctx.moveTo((-2 + i * 3.2) * dir, -6);
+    ctx.lineTo((1 + i * 3.2) * dir, -2);
+    ctx.stroke();
+  }
+  // toe cap + sole
   ctx.beginPath();
-  ctx.moveTo(-3 * dir, -1);
-  ctx.quadraticCurveTo(3 * dir, -4, 8 * dir, -1);
+  ctx.moveTo(8 * dir, -4);
+  ctx.quadraticCurveTo(13 * dir, -2, 11 * dir, 2);
   ctx.strokeStyle = TRACK_RED;
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(-5 * dir, 3);
-  ctx.lineTo(9 * dir, 3);
+  ctx.moveTo(-6 * dir, 4);
+  ctx.lineTo(11 * dir, 4);
   ctx.strokeStyle = TRACK_RED_DARK;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.4;
   ctx.stroke();
   ctx.restore();
 }
 
 function torso(ctx: CanvasRenderingContext2D, hip: P, chest: P, squash: number) {
-  const w = 15 * squash;
+  const w = 17 * squash;
   ctx.save();
   ctx.beginPath();
   ctx.moveTo(chest[0] - w, chest[1] + 2);
@@ -390,17 +428,38 @@ function shibaHead(ctx: CanvasRenderingContext2D, at: P, r: number) {
   // pixel shades
   ctx.fillStyle = INK;
   ctx.fillRect(-r * 0.65, -r * 0.25, r * 1.45, r * 0.32);
-  // beanie
+  // striped beanie (red/white bands) + pom-pom, as in the reference sheet
+  ctx.save();
   ctx.beginPath();
-  ctx.arc(0, -r * 0.25, r * 1.02, Math.PI, 0);
+  ctx.arc(0, -r * 0.55, r * 0.98, Math.PI, 0);
+  ctx.closePath();
   ctx.fillStyle = TRACK_RED;
   ctx.fill();
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = TRACK_WHITE;
+  for (let i = 0; i < 4; i++) {
+    ctx.fillRect(-r * 1.1, -r * 0.72 - i * r * 0.32, r * 2.2, r * 0.16);
+  }
+  ctx.restore();
   ctx.strokeStyle = INK;
   ctx.lineWidth = 2.2;
   ctx.stroke();
+  // brim
   ctx.fillStyle = TRACK_WHITE;
-  ctx.fillRect(-r * 1.02, -r * 0.42, r * 2.04, r * 0.26);
-  ctx.strokeRect(-r * 1.02, -r * 0.42, r * 2.04, r * 0.26);
+  ctx.fillRect(-r * 1.02, -r * 0.66, r * 2.04, r * 0.24);
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.8;
+  ctx.strokeRect(-r * 1.02, -r * 0.66, r * 2.04, r * 0.24);
+  // pom-pom
+  ctx.beginPath();
+  ctx.arc(-r * 0.15, -r * 1.68, r * 0.3, 0, Math.PI * 2);
+  ctx.fillStyle = TRACK_WHITE;
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.8;
+  ctx.stroke();
+  ctx.restore();
   ctx.restore();
 }
 
@@ -486,10 +545,10 @@ export function drawWaldogeFighter(
   const { hip, chest, head } = pose;
 
   // --- back limbs -------------------------------------------------------
-  limb(ctx, pose.legBack[0], pose.legBack[1], pose.legBack[2], 9, TRACK_RED_DARK);
+  limb(ctx, pose.legBack[0], pose.legBack[1], pose.legBack[2], 10, TRACK_RED_DARK);
   sneaker(ctx, pose.legBack[2], -1);
-  limb(ctx, pose.armBack[0], pose.armBack[1], pose.armBack[2], 7.5, TRACK_RED_DARK);
-  glove(ctx, pose.armBack[2], 7);
+  armLimb(ctx, pose.armBack[0], pose.armBack[1], pose.armBack[2], 8, TRACK_RED_DARK, FUR_DARK);
+  glove(ctx, pose.armBack[2], 8.5);
 
   // --- tail -------------------------------------------------------------
   const wag = Math.sin(clock / 220) * 6;
@@ -506,20 +565,48 @@ export function drawWaldogeFighter(
   torso(ctx, hip, chest, pose.squash);
 
   // --- front limbs ------------------------------------------------------
-  limb(ctx, pose.legFront[0], pose.legFront[1], pose.legFront[2], 10, TRACK_RED);
+  limb(ctx, pose.legFront[0], pose.legFront[1], pose.legFront[2], 11, TRACK_RED);
   sneaker(ctx, pose.legFront[2], 1);
 
   // --- head -------------------------------------------------------------
   if (headImg && headImg.complete && headImg.naturalWidth > 0) {
-    const s = 42;
+    const s = 48;
     ctx.drawImage(headImg, head[0] - s / 2, head[1] - s / 2, s, s);
   } else {
-    shibaHead(ctx, head, 15);
+    shibaHead(ctx, head, 18);
   }
 
   // front arm draws over the head for punches so the strike reads clearly
-  limb(ctx, pose.armFront[0], pose.armFront[1], pose.armFront[2], 8, TRACK_RED);
-  glove(ctx, pose.armFront[2], 8);
+  armLimb(ctx, pose.armFront[0], pose.armFront[1], pose.armFront[2], 8.5, TRACK_RED, FUR);
+  glove(ctx, pose.armFront[2], 9.5);
+
+  // Stun stars over the head while in the HIT state (reference sheet).
+  if (e.state === "hit") {
+    ctx.save();
+    ctx.globalAlpha = 1;
+    const spin = clock / 300;
+    for (let i = 0; i < 3; i++) {
+      const a = spin + (i * Math.PI * 2) / 3;
+      const stx = head[0] + Math.cos(a) * 15;
+      const sty = head[1] - 26 + Math.sin(a) * 5;
+      ctx.beginPath();
+      for (let k = 0; k < 10; k++) {
+        const rr = k % 2 === 0 ? 5 : 2.2;
+        const ang = (k * Math.PI) / 5 - Math.PI / 2;
+        const px = stx + Math.cos(ang) * rr;
+        const py = sty + Math.sin(ang) * rr;
+        if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = "#f5b731";
+      ctx.fill();
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   weaponInHand(ctx, pose.armFront[2], weaponType, e.state === "punch" ? -0.3 : 0.4);
 
   // Motion accents (visual only) -----------------------------------------
