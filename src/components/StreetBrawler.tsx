@@ -3920,44 +3920,52 @@ export const StreetBrawler: FC = () => {
           if (e.hp <= e.maxHp * 0.3) e.bossPhase = 3;
           else if (e.hp <= e.maxHp * 0.6) e.bossPhase = 2;
 
-          const bossStates: AttackState[] = ["boss_charge", "boss_slam", "boss_throw", "punch", "kick"];
-          const isBossAttacking = bossStates.includes(e.state) || e.state === "hit";
+          const dx = p.x - e.x;
+          const dist = Math.abs(dx);
+          const vertGap = Math.abs(p.y - e.y);
+          const activeMove = getMoveById(e.bossName, e.bossMoveId);
+          const busy = activeMove !== null && e.state === activeMove.anim && e.stateTimer > 0;
+          const stunned = e.state === "hit" && e.stateTimer > 0;
 
-          if (!isBossAttacking) {
-            const dx = p.x - e.x;
-            const dist = Math.abs(dx);
+          // A move that has finished (or whose state was released by the
+          // shared safety layer) is always cleared — no attack can latch.
+          if (!busy && e.bossMoveId) e.bossMoveId = undefined;
+
+          if (!busy && !stunned) {
             e.facing = dx > 0 ? 1 : -1;
-            const phaseSpeed = bossCfg.aiSpeed + (e.bossPhase || 1) * 0.4;
+            const phase = e.bossPhase || 1;
+            const phaseSpeed = bossCfg.aiSpeed + phase * 0.4;
 
             if (e.attackCooldown <= 0) {
-              const phase = e.bossPhase || 1;
-              const cdScale = Math.max(0.45, 1.25 - g.level * 0.1) * (DIFFICULTY_BOSS_CD[g.difficulty] || 1);
-              if (dist > 250 && phase >= 2) {
-                e.state = "boss_charge";
-                e.stateTimer = 30;
-                sfx(() => SFX.bossCharge());
-                e.attackCooldown = Math.round((50 - phase * 8) * cdScale);
-              } else if (dist > 150) {
-                e.state = "boss_throw";
-                e.stateTimer = 20;
-                e.attackCooldown = Math.round((40 - phase * 5) * cdScale);
-              } else if (dist < 80) {
-                e.state = "boss_slam";
-                e.stateTimer = 25;
-                sfx(() => SFX.bossSlam());
-                e.attackCooldown = Math.round((45 - phase * 8) * cdScale);
+              const move = selectBossMove(e.bossName, {
+                dist, vertGap, phase,
+                lastMoveId: e.bossLastMoveId,
+                repeatCount: e.bossRepeat,
+              });
+
+              if (move) {
+                e.bossRepeat = move.id === e.bossLastMoveId ? (e.bossRepeat || 1) + 1 : 1;
+                e.bossLastMoveId = move.id;
+                e.bossMoveId = move.id;
+                e.state = move.anim;
+                e.stateTimer = move.duration;
+                const cdScale = Math.max(0.45, 1.25 - g.level * 0.1) * (DIFFICULTY_BOSS_CD[g.difficulty] || 1);
+                e.attackCooldown = Math.max(6, Math.round((move.cooldown + move.duration) * cdScale));
+                if (move.sfx === "charge") sfx(() => SFX.bossCharge());
+                else if (move.sfx === "slam") sfx(() => SFX.bossSlam());
+                if (move.shout) {
+                  g.effects.push({ x: e.x, y: e.y - 110, timer: 30, text: move.shout, color: "#ffcc33", size: 18 });
+                }
               } else {
-                const atk = Math.random() > 0.5 ? "punch" : "kick";
-                e.state = atk;
-                e.stateTimer = atk === "punch" ? 14 : 17;
-                e.attackCooldown = Math.round((25 - phase * 3) * cdScale);
+                // Nothing fits this range — close the gap instead of idling.
+                e.x += e.facing * phaseSpeed;
+                e.state = "walk";
               }
             } else {
               // Reposition when out of reach horizontally OR when the player
               // is out of reach vertically (e.g. standing on a platform),
               // so the boss never idles forever next to an unreachable target.
-              const verticalGap = Math.abs(p.y - e.y);
-              if (dist > 60 || (verticalGap > 60 && dist > 16)) {
+              if (dist > 60 || (vertGap > 60 && dist > 16)) {
                 e.x += e.facing * phaseSpeed;
                 e.state = "walk";
               } else {
@@ -3966,63 +3974,60 @@ export const StreetBrawler: FC = () => {
             }
           }
 
-          // Boss charge movement
-          if (e.state === "boss_charge" && e.stateTimer > 5) {
-            e.x += e.facing * bossCfg.chargeSpeed;
+          // Movement carried by the active move (dashes, retreats).
+          if (activeMove?.advance && e.stateTimer > (activeMove.advanceUntil ?? 0)) {
+            e.x += e.facing * activeMove.advance * bossCfg.chargeSpeed;
           }
 
           // Keep the boss inside the level and recover it if its position
           // stops changing while it should be closing in on the player.
           clampEnemyToWorld(e, LEVEL_WIDTH);
-          updateStuckWatchdog(
+          const recovered = updateStuckWatchdog(
             e,
             p.x,
-            p.state !== "dead" && Math.abs(p.x - e.x) > 60,
+            p.state !== "dead" && !busy && !stunned && Math.abs(p.x - e.x) > 60,
           );
+          if (recovered) e.bossMoveId = undefined;
 
-
-          // Boss attack hit detection
-          const bossHitFrame = (
-            (e.state === "punch" && e.stateTimer === 9) ||
-            (e.state === "kick" && e.stateTimer === 11) ||
-            (e.state === "boss_charge" && e.stateTimer === 10) ||
-            (e.state === "boss_slam" && e.stateTimer === 12)
-          );
-
-          // Boss throw spawns projectile
-          if (e.state === "boss_throw" && e.stateTimer === 10) {
-            sfx(() => SFX.bossThrow());
-            g.projectiles.push({
-              x: e.x + e.facing * 30, y: e.y - 30,
-              vx: e.facing * 7, vy: -2,
-              timer: 120,
-            });
+          // Projectile volleys declared by the active move.
+          if (activeMove?.projectiles) {
+            for (const vol of activeMove.projectiles) {
+              if (e.stateTimer !== vol.frame) continue;
+              sfx(() => SFX.bossThrow());
+              const count = vol.count ?? 1;
+              const spread = vol.spread ?? 0;
+              for (let i = 0; i < count; i++) {
+                const off = count > 1 ? (i - (count - 1) / 2) * spread : 0;
+                g.projectiles.push({
+                  x: e.x + e.facing * 30, y: e.y - 30,
+                  vx: e.facing * vol.speed, vy: (vol.vy ?? -2) + off,
+                  timer: vol.timer ?? 120,
+                });
+              }
+            }
           }
 
-          if (bossHitFrame) {
-            const range = e.state === "boss_slam" ? 100 : e.state === "boss_charge" ? 60 : 55;
-            const baseDmg = e.state === "boss_slam" ? 6 : e.state === "boss_charge" ? 5 : e.state === "punch" ? 3 : 4;
-            const dmg = Math.max(2, Math.round(baseDmg * bossCfg.dmgMult * (DIFFICULTY_BOSS_DMG[g.difficulty] || 1)));
+          // Melee hit frames declared by the active move.
+          if (activeMove && activeMove.hitFrames.includes(e.stateTimer)) {
+            const dmg = Math.max(2, Math.round(activeMove.damage * bossCfg.dmgMult * (DIFFICULTY_BOSS_DMG[g.difficulty] || 1)));
             const edx = p.x - e.x;
-            const inRange = e.state === "boss_slam"
-              ? Math.abs(edx) < range && Math.abs(p.y - e.y) < 70
-              : edx * e.facing > 0 && Math.abs(edx) < range && Math.abs(p.y - e.y) < 60;
+            const inRange = activeMove.omni
+              ? Math.abs(edx) < activeMove.range && Math.abs(p.y - e.y) < activeMove.vertRange
+              : edx * e.facing > 0 && Math.abs(edx) < activeMove.range && Math.abs(p.y - e.y) < activeMove.vertRange;
 
             if (inRange && p.state !== "dead") {
               sfx(() => SFX.hit());
               p.hp -= dmg;
               p.state = "hit";
-              p.stateTimer = e.state === "boss_slam" ? 15 : 10;
-              p.vx = e.facing * (e.state === "boss_charge" ? 10 : e.state === "boss_slam" ? 6 : 4);
-              if (e.state === "boss_slam") p.vy = -8;
+              p.stateTimer = activeMove.launch ? 15 : 10;
+              p.vx = e.facing * activeMove.knockback;
+              if (activeMove.launch) p.vy = activeMove.launch;
               c.hitCount = 0;
               c.multiplier = 1;
               setComboCount(0);
               setPlayerHp(Math.max(0, p.hp));
-              // Boss hit screen shake — slam is the heaviest
-              const bossShakeMag = e.state === "boss_slam" ? 13 : e.state === "boss_charge" ? 10 : 7;
-              triggerShake(bossShakeMag, 20);
-              g.hitPause = e.state === "boss_slam" ? 4 : 2;
+              triggerShake(activeMove.shake, 20);
+              g.hitPause = activeMove.hitPause;
               g.effects.push({
                 x: p.x, y: p.y - 50, timer: 25,
                 text: `${dmg}`, color: "#ff0000", size: 18,
@@ -4036,14 +4041,15 @@ export const StreetBrawler: FC = () => {
               }
             }
 
-            // Boss slam shockwave effect
-            if (e.state === "boss_slam" && e.stateTimer === 12) {
-              g.effects.push({ x: e.x, y: GROUND_Y, timer: 20, text: "💀 SLAM!", color: "#ff0000", size: 22 });
+            // Ground shockwave marker for heavy area attacks.
+            if (activeMove.omni && activeMove.anim === "boss_slam") {
+              g.effects.push({ x: e.x, y: GROUND_Y, timer: 20, text: "💥", color: "#ff0000", size: 22 });
             }
           }
 
           continue; // skip normal enemy AI
         }
+
 
         // Normal enemy AI
         if (e.state !== "hit" && e.state !== "punch" && e.state !== "kick") {
