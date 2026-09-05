@@ -3600,9 +3600,11 @@ export const StreetBrawler: FC = () => {
       } else if (p.state !== "hit" && p.state !== "dead" && !isAttacking && didSpecial) {
         // Special move was triggered, movement already handled by the special
       } else if (p.state !== "hit" && p.state !== "dead" && isAttacking) {
-        // Allow movement during attacks (for dash punch etc)
-        if (g.keys.has("a") || g.keys.has("arrowleft")) p.facing = -1;
-        if (g.keys.has("d") || g.keys.has("arrowright")) p.facing = 1;
+        // Allow facing changes during attacks (for dash punch etc).
+        // Same single-axis resolution as the walk branch.
+        const aLeft = g.keys.has("a") || g.keys.has("arrowleft");
+        const aRight = g.keys.has("d") || g.keys.has("arrowright");
+        if (aLeft !== aRight) p.facing = aRight ? 1 : -1;
       }
 
       // (Shuriken throw consolidated into the L-key block above)
