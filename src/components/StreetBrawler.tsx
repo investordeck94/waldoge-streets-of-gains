@@ -4135,7 +4135,7 @@ export const StreetBrawler: FC = () => {
             p.x,
             p.state !== "dead" && !busy && !stunned && Math.abs(p.x - e.x) > 60,
           );
-          if (recovered) e.bossMoveId = undefined;
+          if (recovered) { e.bossMoveId = undefined; e.bossChainId = undefined; }
 
           // Projectile volleys declared by the active move.
           if (activeMove?.projectiles) {
