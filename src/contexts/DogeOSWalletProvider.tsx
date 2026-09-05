@@ -74,7 +74,9 @@ function errMessage(e: unknown): string {
 
 export const DogeOSWalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [supported] = useState<boolean>(() => hasEvmProvider());
+  const [providers] = useState<DogeOSWalletProviderDescriptor[]>(() => listWalletProviders());
   const [address, setAddress] = useState<string | null>(null);
+  const [activeProviderId, setActiveProviderId] = useState<DogeOSWalletProviderId | null>(null);
   const [chainId, setChainId] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
