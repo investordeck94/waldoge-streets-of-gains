@@ -4,6 +4,7 @@ import {
   getMoveSet,
   getMoveById,
   selectBossMove,
+  rollChain,
   type BossMove,
 } from "@/game/enemy/bossMoves";
 import { LEVELS } from "@/game/config/levels";
@@ -141,5 +142,57 @@ describe("boss move sets — all 7 levels", () => {
   it("an unknown boss name still gets a working move set", () => {
     expect(getMoveSet("SOMEBODY").length).toBeGreaterThan(0);
     expect(selectBossMove("SOMEBODY", { dist: 50, vertGap: 0, phase: 1, rng: seeded(3) })).not.toBeNull();
+  });
+});
+
+describe("martial-arts combat layer — all 7 levels", () => {
+  const FORMS = new Set([
+    "jab", "straight", "combo", "roundhouse", "flying_kick", "sweep",
+    "spin", "slam", "lunge", "throw", "dodge", "counter",
+  ]);
+
+  it.each(bossNames)("%s: every move declares a valid karate form", (name) => {
+    for (const m of getMoveSet(name)) {
+      expect(FORMS.has(m.martial), `${m.id} -> ${m.martial}`).toBe(true);
+    }
+  });
+
+  it.each(bossNames)("%s uses at least four distinct martial forms", (name) => {
+    const forms = new Set(getMoveSet(name).map((m) => m.martial));
+    expect(forms.size, name).toBeGreaterThanOrEqual(4);
+  });
+
+  it.each(bossNames)("%s: telegraphs, hops and chains are well formed", (name) => {
+    for (const m of getMoveSet(name)) {
+      if (m.telegraph !== undefined) {
+        expect(m.telegraph, m.id).toBeGreaterThan(0);
+        expect(m.telegraph).toBeLessThan(1);
+      }
+      if (m.hop !== undefined) expect(m.hop, m.id).toBeGreaterThan(0);
+      for (const id of m.chainTo ?? []) {
+        expect(getMoveById(name, id), `${m.id} chains to ${id}`).not.toBeNull();
+      }
+      if (m.chainChance !== undefined) {
+        expect(m.chainChance).toBeGreaterThan(0);
+        expect(m.chainChance).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
+  it.each(bossNames)("%s: heavy moves always telegraph before landing", (name) => {
+    for (const m of getMoveSet(name)) {
+      if (m.damage >= 6 && m.hitFrames.length > 0) {
+        expect(m.telegraph, `${m.id} heavy move needs a telegraph`).toBeDefined();
+      }
+    }
+  });
+
+  it("rollChain only returns declared follow-ups and can decline", () => {
+    const jab = getMoveById("TICKER THIEF", "tt_jab")!;
+    const always = rollChain("TICKER THIEF", jab, () => 0);
+    expect(jab.chainTo).toContain(always!.id);
+    expect(rollChain("TICKER THIEF", jab, () => 0.99)).toBeNull();
+    const noChain = getMoveById("TICKER THIEF", "tt_crash")!;
+    expect(rollChain("TICKER THIEF", noChain, () => 0)).toBeNull();
   });
 });
