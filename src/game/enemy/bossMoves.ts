@@ -179,15 +179,20 @@ const FUDDER: BossMove[] = [
 ];
 
 
+// EXIT LIQUIDITY — grim-reaper scythe boss. Long melee reach, heavy sweeping
+// reaps, a supernatural dash, a dark-energy crescent projectile and the
+// LIQUIDATION area attack. Every heavy move telegraphs so it stays dodgeable.
 const EXIT_LIQUIDITY: BossMove[] = [
-  { id: "el_drain", name: "Drain Punch", anim: "punch", martial: "straight", duration: 14, hitFrames: [9], damage: 5, range: 56, vertRange: 60, knockback: 4, cooldown: 22, minDist: 0, maxDist: 95, minPhase: 1, weight: 10, shake: 7, hitPause: 2, chainTo: ["el_sweep"], chainChance: 0.45 },
-  { id: "el_sweep", name: "Bagholder Sweep", anim: "kick", martial: "sweep", duration: 20, hitFrames: [14, 7], damage: 4, range: 72, vertRange: 50, knockback: 6, cooldown: 30, minDist: 0, maxDist: 120, minPhase: 1, weight: 8, shake: 8, hitPause: 2 },
-  { id: "el_slam", name: "Liquidity Crush", anim: "boss_slam", martial: "slam", duration: 26, hitFrames: [12], damage: 7, range: 115, vertRange: 85, knockback: 7, launch: -9, omni: true, cooldown: 44, minDist: 0, maxDist: 140, minPhase: 1, weight: 8, telegraph: 0.45, hop: 8, shake: 14, hitPause: 4, sfx: "slam", shout: "💀 CRUSH!" },
-  { id: "el_bags", name: "Bag Toss", anim: "boss_throw", martial: "throw", duration: 24, hitFrames: [], damage: 0, range: 0, vertRange: 0, knockback: 0, cooldown: 40, minDist: 120, maxDist: 900, minPhase: 1, weight: 9, shake: 0, hitPause: 0, sfx: "throw", projectiles: [{ frame: 16, count: 2, speed: 7.5, vy: -3, spread: 2.5 }] },
-  { id: "el_dash", name: "Exit Dash", anim: "boss_charge", martial: "lunge", duration: 30, hitFrames: [10], damage: 6, range: 62, vertRange: 60, knockback: 11, cooldown: 48, minDist: 170, maxDist: 900, minPhase: 1, weight: 9, advance: 1, advanceUntil: 5, telegraph: 0.3, shake: 11, hitPause: 3, sfx: "charge" },
-  { id: "el_double", name: "Double Dip", anim: "boss_slam", martial: "combo", duration: 40, hitFrames: [28, 12], damage: 5, range: 120, vertRange: 90, knockback: 6, launch: -7, omni: true, cooldown: 60, minDist: 0, maxDist: 150, minPhase: 3, weight: 7, telegraph: 0.35, shake: 14, hitPause: 4, sfx: "slam", shout: "☠ DOUBLE DIP!" },
-  { id: "el_flush", name: "Bagholder Flush", anim: "kick", martial: "flying_kick", duration: 26, hitFrames: [12], damage: 6, range: 74, vertRange: 92, knockback: 10, launch: -5, cooldown: 48, minDist: 70, maxDist: 230, minPhase: 2, weight: 7, advance: 1.4, advanceUntil: 8, hop: 10, telegraph: 0.35, shake: 12, hitPause: 3, sfx: "charge", shout: "FLUSH!" },
+  { id: "el_slash", name: "Reaping Slash", anim: "punch", martial: "straight", duration: 16, hitFrames: [10], damage: 5, range: 84, vertRange: 62, knockback: 5, cooldown: 22, minDist: 0, maxDist: 120, minPhase: 1, weight: 10, shake: 8, hitPause: 2, chainTo: ["el_hook", "el_reap"], chainChance: 0.45 },
+  { id: "el_hook", name: "Scythe Hook", anim: "kick", martial: "roundhouse", duration: 20, hitFrames: [13, 6], damage: 4, range: 66, vertRange: 66, knockback: 7, omni: true, cooldown: 28, minDist: 0, maxDist: 80, minPhase: 1, weight: 9, shake: 8, hitPause: 2 },
+  { id: "el_reap", name: "Heavy Reap", anim: "kick", martial: "sweep", duration: 30, hitFrames: [16], damage: 7, range: 128, vertRange: 72, knockback: 11, cooldown: 44, minDist: 0, maxDist: 150, minPhase: 1, weight: 9, telegraph: 0.45, shake: 13, hitPause: 4, shout: "☠ HEAVY REAP!" },
+  { id: "el_overhead", name: "Reaper Strike", anim: "boss_slam", martial: "slam", duration: 28, hitFrames: [12], damage: 8, range: 110, vertRange: 90, knockback: 8, launch: -9, omni: true, cooldown: 46, minDist: 0, maxDist: 130, minPhase: 1, weight: 8, telegraph: 0.5, hop: 6, shake: 15, hitPause: 5, sfx: "slam", shout: "💀 REAPER STRIKE!" },
+  { id: "el_spin", name: "Spinning Reap", anim: "boss_slam", martial: "spin", duration: 34, hitFrames: [24, 14], damage: 5, range: 120, vertRange: 84, knockback: 9, omni: true, cooldown: 52, minDist: 0, maxDist: 130, minPhase: 2, weight: 8, telegraph: 0.3, shake: 13, hitPause: 3, sfx: "slam", shout: "SPINNING REAP!" },
+  { id: "el_dash", name: "Reaper Dash", anim: "boss_charge", martial: "lunge", duration: 32, hitFrames: [14], damage: 6, range: 90, vertRange: 66, knockback: 12, cooldown: 50, minDist: 150, maxDist: 900, minPhase: 1, weight: 9, advance: 1.1, advanceUntil: 6, telegraph: 0.3, shake: 12, hitPause: 3, sfx: "charge", shout: "REAPER DASH!" },
+  { id: "el_crescent", name: "Death Crescent", anim: "boss_throw", martial: "throw", duration: 30, hitFrames: [], damage: 0, range: 0, vertRange: 0, knockback: 0, cooldown: 46, minDist: 110, maxDist: 900, minPhase: 1, weight: 9, telegraph: 0.4, shake: 0, hitPause: 0, sfx: "throw", projectiles: [{ frame: 16, count: 2, speed: 8, vy: -2, spread: 2.2 }], shout: "DEATH CRESCENT!" },
+  { id: "el_liquidation", name: "LIQUIDATION", anim: "boss_slam", martial: "counter", duration: 46, hitFrames: [20], damage: 9, range: 170, vertRange: 120, knockback: 14, launch: -8, omni: true, cooldown: 78, minDist: 0, maxDist: 190, minPhase: 3, weight: 7, telegraph: 0.55, shake: 18, hitPause: 6, sfx: "slam", shout: "☠ LIQUIDATION!" },
 ];
+
 
 const MR_MARKETER: BossMove[] = [
   { id: "mm_mic", name: "Mic Drop", anim: "punch", martial: "jab", duration: 14, hitFrames: [9], damage: 5, range: 56, vertRange: 60, knockback: 4, cooldown: 20, minDist: 0, maxDist: 95, minPhase: 1, weight: 10, shake: 7, hitPause: 2, chainTo: ["mm_hype"], chainChance: 0.45 },
