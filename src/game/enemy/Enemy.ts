@@ -115,7 +115,8 @@ export function spawnEnemies(
 // Preserves:
 //   • LEVEL_WIDTH clamp so the boss never spawns past the right edge (which
 //     would leave them stuck off-world, unable to reach the player).
-//   • Larger hitbox (50x90) and stronger starting cooldown (60) than grunts.
+//   • Slightly larger hitbox than grunts (42x78 vs 30x70) and a stronger
+//     starting cooldown (60). Deliberately close to Waldoge's 30x70.
 //   • bossPhase starts at 1, aiTimer at 90 — used by phase-transition AI.
 //   • bossName pulled straight from the level config so rendering picks the
 //     right custom head sprite.
@@ -131,8 +132,11 @@ export function spawnBoss(playerX: number, levelIndex: number): Enemy {
     y: GROUND_Y,
     vy: 0,
     vx: 0,
-    width: 50,
-    height: 90,
+    // Combat scale is authored against Waldoge (30 x 70). Bosses stay close
+    // to him so melee range, hitboxes, spacing and ground footprint all work
+    // in one coordinate system — presence comes from moves/VFX, not size.
+    width: 42,
+    height: 78,
     facing: -1,
     hp: cfg.hp,
     maxHp: cfg.hp,
