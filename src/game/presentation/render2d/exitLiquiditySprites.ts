@@ -59,7 +59,11 @@ const F: Record<string, Frame> = {
 /** Reference height of the idle pose — every frame scales against this. */
 const REF_H = 267;
 /** Visual size relative to the collision box: a tall reaper reads bigger. */
-const SIZE = 2.6;
+// Draw scale is pinned to Waldoge's combat scale (he renders at
+// hitboxHeight * 1.95). This keeps the boss's on-screen height within a few
+// percent of Waldoge's so attacks, spacing and foot placement read naturally.
+// The blueprint artwork is a design reference, never an in-game scale.
+const SIZE = 2.1;
 
 let atlas: HTMLImageElement | null = null;
 let ready = false;

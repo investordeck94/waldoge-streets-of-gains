@@ -43,7 +43,11 @@ const F: Record<string, Frame> = {
 /** Reference height of the idle pose — every frame scales against this. */
 const REF_H = 216;
 /** Visual size relative to the collision box (art is deliberately larger). */
-const SIZE = 2.05;
+// Draw scale is pinned to Waldoge's combat scale (he renders at
+// hitboxHeight * 1.95). This keeps the boss's on-screen height within a few
+// percent of Waldoge's so attacks, spacing and foot placement read naturally.
+// The blueprint artwork is a design reference, never an in-game scale.
+const SIZE = 1.83;
 
 let atlas: HTMLImageElement | null = null;
 let ready = false;
