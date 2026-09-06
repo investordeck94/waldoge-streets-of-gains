@@ -76,6 +76,7 @@ import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter";
 import { drawWaldogeSprite, preloadWaldogeSprites } from "@/game/presentation/render2d/waldogeSprites";
 import { drawRuggerSprite, preloadRuggerSprites, type RuggerView, type RuggerForm } from "@/game/presentation/render2d/ruggerSprites";
+import { drawJeetSprite, preloadJeetSprites, type JeetView, type JeetForm } from "@/game/presentation/render2d/jeetSprites";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
 // Player module — data model + pure helpers for player state, HP, stamina,
@@ -3275,6 +3276,7 @@ export const StreetBrawler: FC = () => {
   useEffect(() => {
     preloadWaldogeSprites();
     preloadRuggerSprites();
+    preloadJeetSprites();
     const img = new Image();
     img.src = waldogeHead;
     img.onload = () => { gameRef.current.headImg = img; };
