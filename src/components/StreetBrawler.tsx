@@ -80,6 +80,8 @@ import { drawJeetSprite, preloadJeetSprites, type JeetView, type JeetForm } from
 import { drawBadActorSprite, preloadBadActorSprites, type BadActorView, type BadActorForm } from "@/game/presentation/render2d/badActorSprites";
 import { drawFudderSprite, preloadFudderSprites, type FudderView, type FudderForm } from "@/game/presentation/render2d/fudderSprites";
 import { drawExitLiquiditySprite, preloadExitLiquiditySprites, type ExitLiquidityView, type ExitLiquidityForm } from "@/game/presentation/render2d/exitLiquiditySprites";
+import { drawMrMarketerSprite, drawMarketerLeaflet, preloadMrMarketerSprites, type MrMarketerView, type MrMarketerForm } from "@/game/presentation/render2d/mrMarketerSprites";
+
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
 // Player module — data model + pure helpers for player state, HP, stamina,
@@ -212,7 +214,10 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
     (e.bossName === "FUDDER" &&
       drawFudderSprite(ctx, e as FudderView, camX, form as FudderForm, prog, telegraphing, e.bossPhase || 1)) ||
     (e.bossName === "EXIT LIQUIDITY" &&
-      drawExitLiquiditySprite(ctx, e as ExitLiquidityView, camX, form as ExitLiquidityForm, prog, telegraphing, e.bossPhase || 1));
+      drawExitLiquiditySprite(ctx, e as ExitLiquidityView, camX, form as ExitLiquidityForm, prog, telegraphing, e.bossPhase || 1)) ||
+    (e.bossName === "MR MARKETER" &&
+      drawMrMarketerSprite(ctx, e as MrMarketerView, camX, form as MrMarketerForm, prog, telegraphing, e.bossPhase || 1));
+
 
 
   if (!drewSprite) {
@@ -3289,6 +3294,8 @@ export const StreetBrawler: FC = () => {
     preloadBadActorSprites();
     preloadFudderSprites();
     preloadExitLiquiditySprites();
+    preloadMrMarketerSprites();
+
     const img = new Image();
     img.src = waldogeHead;
     img.onload = () => { gameRef.current.headImg = img; };
@@ -4182,8 +4189,32 @@ export const StreetBrawler: FC = () => {
                   x: e.x + e.facing * 30, y: e.y - 30,
                   vx: e.facing * vol.speed, vy: (vol.vy ?? -2) + off,
                   timer: vol.timer ?? 120,
+                  leaflet: e.bossName === "MR MARKETER",
                 });
               }
+            }
+          }
+
+          // Walkie-talkie support call (MR MARKETER). Reuses the existing
+          // grunt entities + enemy AI — no separate summon system. The move's
+          // own cooldown plus the live-minion cap stop unlimited stacking.
+          if (activeMove?.summon && e.stateTimer === activeMove.summon.frame) {
+            const alive = g.enemies.filter((o) => !o.isBoss && o.state !== "dead").length;
+            if (alive <= activeMove.summon.cap) {
+              sfx(() => SFX.bossThrow());
+              const s = activeMove.summon;
+              for (let i = 0; i < s.count; i++) {
+                const side = i % 2 === 0 ? 1 : -1;
+                const sx = Math.max(40, Math.min(LEVEL_WIDTH - 40, p.x + side * (360 + i * 90)));
+                g.enemies.push({
+                  x: sx, y: GROUND_Y, vy: 0, vx: 0, width: 30, height: 70,
+                  facing: (side > 0 ? -1 : 1) as 1 | -1,
+                  hp: s.hp, maxHp: s.hp, state: "idle", stateTimer: 0,
+                  attackCooldown: 20 + i * 10, aiTimer: Math.random() * 60,
+                });
+                g.effects.push({ x: sx, y: GROUND_Y - 90, timer: 30, text: "RAID!", color: "#ff2b3c", size: 18 });
+              }
+              triggerShake(8, 16);
             }
           }
 
@@ -4195,7 +4226,21 @@ export const StreetBrawler: FC = () => {
               ? Math.abs(edx) < activeMove.range && Math.abs(p.y - e.y) < activeMove.vertRange
               : edx * e.facing > 0 && Math.abs(edx) < activeMove.range && Math.abs(p.y - e.y) < activeMove.vertRange;
 
-            if (inRange && p.state !== "dead") {
+            // MR MARKETER's megaphone drains the player's existing ENERGY
+            // meter instead of HP — only while the player is actually inside
+            // the cone, resolved by this same hit-frame check.
+            if (inRange && p.state !== "dead" && activeMove.drainEnergy) {
+              sfx(() => SFX.hit());
+              const before = c.specialEnergy;
+              c.specialEnergy = Math.max(0, c.specialEnergy - activeMove.drainEnergy);
+              setEnergy(c.specialEnergy);
+              const lost = Math.round(before - c.specialEnergy);
+              p.vx = e.facing * activeMove.knockback;
+              triggerShake(activeMove.shake, 18);
+              g.hitPause = activeMove.hitPause;
+              g.effects.push({ x: p.x, y: p.y - 70, timer: 28, text: "BOOST!", color: "#ff2b3c", size: 24 });
+              g.effects.push({ x: p.x, y: p.y - 46, timer: 30, text: lost > 0 ? `-${lost} ENERGY` : "TRENDING!", color: "#ffd23c", size: 16 });
+            } else if (inRange && p.state !== "dead") {
               sfx(() => SFX.hit());
               p.hp -= dmg;
               p.state = "hit";
@@ -4212,6 +4257,7 @@ export const StreetBrawler: FC = () => {
                 x: p.x, y: p.y - 50, timer: 25,
                 text: `${dmg}`, color: "#ff0000", size: 18,
               });
+
               // FUDDER's palm strikes spawn his signature "FUD" impact letters
               // at the point of contact — only on a confirmed hit, driven by
               // the same hit-frame resolution as the damage above.
@@ -4228,6 +4274,13 @@ export const StreetBrawler: FC = () => {
                 g.effects.push({ x: impactX, y: p.y - 62, timer: 26, text: "FUD", color: "#ff2b57", size: 40 });
                 g.effects.push({ x: impactX, y: p.y - 62, timer: 14, text: "✸", color: "#ffe14d", size: 46 });
               }
+              // MR MARKETER's melee lands with a marketing-style impact burst.
+              if (e.bossName === "MR MARKETER" && activeMove.anim !== "boss_throw") {
+                const impactX = p.x - e.facing * 12;
+                g.effects.push({ x: impactX, y: p.y - 62, timer: 22, text: "HYPE!", color: "#ff2b3c", size: 30 });
+                g.effects.push({ x: impactX, y: p.y - 62, timer: 12, text: "✦", color: "#ffffff", size: 40 });
+              }
+
               if (p.hp <= 0) {
                 p.state = "dead";
                 g.running = false;
@@ -5031,6 +5084,8 @@ export const StreetBrawler: FC = () => {
             ctx.restore();
           }
           ctx.restore();
+        } else if (proj.leaflet && drawMarketerLeaflet(ctx, px, py, proj.vx)) {
+          // BOOST / TRENDING marketing leaflet — drawn from the boss atlas.
         } else {
           ctx.beginPath();
           ctx.arc(px, py, 8, 0, Math.PI * 2);

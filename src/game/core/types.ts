@@ -61,6 +61,8 @@ export interface Projectile {
   timer: number;
   isPlayerProjectile?: boolean;
   damage?: number;
+  /** Renders as a BOOST/TRENDING marketing leaflet (MR MARKETER). */
+  leaflet?: boolean;
 }
 
 export interface PowerUp {
