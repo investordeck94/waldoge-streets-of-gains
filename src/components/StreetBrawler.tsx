@@ -75,6 +75,7 @@ import type { RunResult } from "@/lib/dogeos/rewardsApi";
 import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter";
 import { drawWaldogeSprite, preloadWaldogeSprites } from "@/game/presentation/render2d/waldogeSprites";
+import { drawRuggerSprite, preloadRuggerSprites, type RuggerView, type RuggerForm } from "@/game/presentation/render2d/ruggerSprites";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
 // Player module — data model + pure helpers for player state, HP, stamina,
@@ -195,7 +196,15 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
   const form: MartialForm | null = poseMove ? poseMove.martial : null;
   const telegraphing = !!poseMove?.telegraph && prog < (poseMove.telegraph ?? 0);
 
+  // RUGGER uses the blueprint sprite artwork. Falls back to the shared
+  // procedural boss renderer until the atlas has downloaded.
+  const drewSprite =
+    e.bossName === "RUGGER" &&
+    drawRuggerSprite(ctx, e as RuggerView, camX, form as RuggerForm, prog, telegraphing, e.bossPhase || 1);
+
+  if (!drewSprite) {
   ctx.save();
+
   ctx.translate(sx, sy);
   if (e.state === "hit") ctx.globalAlpha = 0.6;
   if (e.state === "dead") { ctx.rotate(e.facing * Math.PI / 3); ctx.globalAlpha = 0.4; }
@@ -424,6 +433,8 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
 
 
   ctx.restore();
+  }
+
 
   // Above-head HP bar (floats with boss)
   if (e.state !== "dead") {
@@ -3260,6 +3271,7 @@ export const StreetBrawler: FC = () => {
 
   useEffect(() => {
     preloadWaldogeSprites();
+    preloadRuggerSprites();
     const img = new Image();
     img.src = waldogeHead;
     img.onload = () => { gameRef.current.headImg = img; };
