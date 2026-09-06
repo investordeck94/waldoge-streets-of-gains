@@ -79,6 +79,7 @@ import { drawRuggerSprite, preloadRuggerSprites, type RuggerView, type RuggerFor
 import { drawJeetSprite, preloadJeetSprites, type JeetView, type JeetForm } from "@/game/presentation/render2d/jeetSprites";
 import { drawBadActorSprite, preloadBadActorSprites, type BadActorView, type BadActorForm } from "@/game/presentation/render2d/badActorSprites";
 import { drawFudderSprite, preloadFudderSprites, type FudderView, type FudderForm } from "@/game/presentation/render2d/fudderSprites";
+import { drawExitLiquiditySprite, preloadExitLiquiditySprites, type ExitLiquidityView, type ExitLiquidityForm } from "@/game/presentation/render2d/exitLiquiditySprites";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
 // Player module — data model + pure helpers for player state, HP, stamina,
@@ -209,7 +210,9 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
     (e.bossName === "BAD ACTOR" &&
       drawBadActorSprite(ctx, e as BadActorView, camX, form as BadActorForm, prog, telegraphing, e.bossPhase || 1)) ||
     (e.bossName === "FUDDER" &&
-      drawFudderSprite(ctx, e as FudderView, camX, form as FudderForm, prog, telegraphing, e.bossPhase || 1));
+      drawFudderSprite(ctx, e as FudderView, camX, form as FudderForm, prog, telegraphing, e.bossPhase || 1)) ||
+    (e.bossName === "EXIT LIQUIDITY" &&
+      drawExitLiquiditySprite(ctx, e as ExitLiquidityView, camX, form as ExitLiquidityForm, prog, telegraphing, e.bossPhase || 1));
 
 
   if (!drewSprite) {
@@ -3285,6 +3288,7 @@ export const StreetBrawler: FC = () => {
     preloadJeetSprites();
     preloadBadActorSprites();
     preloadFudderSprites();
+    preloadExitLiquiditySprites();
     const img = new Image();
     img.src = waldogeHead;
     img.onload = () => { gameRef.current.headImg = img; };
@@ -4211,6 +4215,14 @@ export const StreetBrawler: FC = () => {
               // FUDDER's palm strikes spawn his signature "FUD" impact letters
               // at the point of contact — only on a confirmed hit, driven by
               // the same hit-frame resolution as the damage above.
+              // EXIT LIQUIDITY's scythe connects with a spectral reaping
+              // burst at the point of contact — same hit-frame resolution as
+              // the damage above, no separate combat path.
+              if (e.bossName === "EXIT LIQUIDITY" && activeMove.anim !== "boss_throw") {
+                const impactX = p.x - e.facing * 10;
+                g.effects.push({ x: impactX, y: p.y - 60, timer: 22, text: "☠", color: "#5ff0d0", size: 40 });
+                g.effects.push({ x: impactX, y: p.y - 60, timer: 12, text: "✷", color: "#eafff8", size: 46 });
+              }
               if (e.bossName === "FUDDER" && activeMove.anim !== "boss_throw") {
                 const impactX = p.x - e.facing * 12;
                 g.effects.push({ x: impactX, y: p.y - 62, timer: 26, text: "FUD", color: "#ff2b57", size: 40 });
