@@ -4262,7 +4262,8 @@ export const StreetBrawler: FC = () => {
               p.vx = e.facing * activeMove.knockback;
               triggerShake(activeMove.shake, 18);
               g.hitPause = activeMove.hitPause;
-              g.effects.push({ x: p.x, y: p.y - 70, timer: 28, text: "BOOST!", color: "#ff2b3c", size: 24 });
+              const drainLabel = e.bossName === "TICKER TAKER" ? "STOLEN!" : "BOOST!";
+              g.effects.push({ x: p.x, y: p.y - 70, timer: 28, text: drainLabel, color: "#ff2b3c", size: 24 });
               g.effects.push({ x: p.x, y: p.y - 46, timer: 30, text: lost > 0 ? `-${lost} ENERGY` : "TRENDING!", color: "#ffd23c", size: 16 });
             } else if (inRange && p.state !== "dead") {
               sfx(() => SFX.hit());
