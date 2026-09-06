@@ -63,6 +63,8 @@ export interface Projectile {
   damage?: number;
   /** Renders as a BOOST/TRENDING marketing leaflet (MR MARKETER). */
   leaflet?: boolean;
+  /** Renders as a tommy-gun tracer round (TICKER TAKER). */
+  tracer?: boolean;
 }
 
 export interface PowerUp {
