@@ -4273,6 +4273,13 @@ export const StreetBrawler: FC = () => {
                 g.effects.push({ x: impactX, y: p.y - 62, timer: 26, text: "FUD", color: "#ff2b57", size: 40 });
                 g.effects.push({ x: impactX, y: p.y - 62, timer: 14, text: "✸", color: "#ffe14d", size: 46 });
               }
+              // MR MARKETER's melee lands with a marketing-style impact burst.
+              if (e.bossName === "MR MARKETER" && activeMove.anim !== "boss_throw") {
+                const impactX = p.x - e.facing * 12;
+                g.effects.push({ x: impactX, y: p.y - 62, timer: 22, text: "HYPE!", color: "#ff2b3c", size: 30 });
+                g.effects.push({ x: impactX, y: p.y - 62, timer: 12, text: "✦", color: "#ffffff", size: 40 });
+              }
+
               if (p.hp <= 0) {
                 p.state = "dead";
                 g.running = false;
