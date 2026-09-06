@@ -81,6 +81,7 @@ import { drawBadActorSprite, preloadBadActorSprites, type BadActorView, type Bad
 import { drawFudderSprite, preloadFudderSprites, type FudderView, type FudderForm } from "@/game/presentation/render2d/fudderSprites";
 import { drawExitLiquiditySprite, preloadExitLiquiditySprites, type ExitLiquidityView, type ExitLiquidityForm } from "@/game/presentation/render2d/exitLiquiditySprites";
 import { drawMrMarketerSprite, drawMarketerLeaflet, preloadMrMarketerSprites, type MrMarketerView, type MrMarketerForm } from "@/game/presentation/render2d/mrMarketerSprites";
+import { drawTickerTakerSprite, drawTickerTakerShot, preloadTickerTakerSprites, type TickerTakerView, type TickerTakerForm } from "@/game/presentation/render2d/tickerTakerSprites";
 
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
@@ -216,7 +217,9 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
     (e.bossName === "EXIT LIQUIDITY" &&
       drawExitLiquiditySprite(ctx, e as ExitLiquidityView, camX, form as ExitLiquidityForm, prog, telegraphing, e.bossPhase || 1)) ||
     (e.bossName === "MR MARKETER" &&
-      drawMrMarketerSprite(ctx, e as MrMarketerView, camX, form as MrMarketerForm, prog, telegraphing, e.bossPhase || 1));
+      drawMrMarketerSprite(ctx, e as MrMarketerView, camX, form as MrMarketerForm, prog, telegraphing, e.bossPhase || 1)) ||
+    (e.bossName === "TICKER TAKER" &&
+      drawTickerTakerSprite(ctx, e as TickerTakerView, camX, form as TickerTakerForm, prog, telegraphing, e.bossPhase || 1));
 
 
 
@@ -272,7 +275,7 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
     : e.bossName === "FUDDER" ? fudderHeadImg
     : e.bossName === "EXIT LIQUIDITY" ? exitLiquidityHeadImg
     : e.bossName === "MR MARKETER" ? mrMarketerHeadImg
-    : e.bossName === "TICKER THIEF" ? tickerThiefHeadImg
+    : e.bossName === "TICKER TAKER" ? tickerThiefHeadImg
     : null;
   if (customHead && customHead.complete && customHead.naturalWidth > 0) {
     const imgSize = headR * 3.2;
@@ -3295,6 +3298,7 @@ export const StreetBrawler: FC = () => {
     preloadFudderSprites();
     preloadExitLiquiditySprites();
     preloadMrMarketerSprites();
+    preloadTickerTakerSprites();
 
     const img = new Image();
     img.src = waldogeHead;
@@ -4190,6 +4194,7 @@ export const StreetBrawler: FC = () => {
                   vx: e.facing * vol.speed, vy: (vol.vy ?? -2) + off,
                   timer: vol.timer ?? 120,
                   leaflet: e.bossName === "MR MARKETER",
+                  tracer: e.bossName === "TICKER TAKER",
                 });
               }
             }
@@ -5084,6 +5089,8 @@ export const StreetBrawler: FC = () => {
             ctx.restore();
           }
           ctx.restore();
+        } else if (proj.tracer && drawTickerTakerShot(ctx, px, py, proj.vx)) {
+          // Tommy-gun tracer round — same projectile physics as every boss.
         } else if (proj.leaflet && drawMarketerLeaflet(ctx, px, py, proj.vx)) {
           // BOOST / TRENDING marketing leaflet — drawn from the boss atlas.
         } else {

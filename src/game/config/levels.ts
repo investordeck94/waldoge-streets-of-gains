@@ -2,7 +2,7 @@
  * Level roster.
  *
  * Each level plays: 2 minion waves → 1 boss wave. Difficulty scales gradually
- * from level 1 (JEET) to level 7 (TICKER THIEF, the final boss).
+ * from level 1 (JEET) to level 7 (TICKER TAKER, the ultimate anti-Waldoge boss).
  *
  * Values are byte-identical to the original StreetBrawler.tsx inline table.
  */
@@ -76,7 +76,7 @@ export const LEVELS: LevelConfig[] = [
       { count: 5, hp: 90, speed: 2.3 },
       { count: 6, hp: 100, speed: 2.5 },
     ],
-    boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5, name: "TICKER THIEF" },
+    boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5, name: "TICKER TAKER" },
   },
 ];
 

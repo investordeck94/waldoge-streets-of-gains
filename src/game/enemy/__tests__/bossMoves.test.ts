@@ -189,11 +189,11 @@ describe("martial-arts combat layer — all 7 levels", () => {
   });
 
   it("rollChain only returns declared follow-ups and can decline", () => {
-    const jab = getMoveById("TICKER THIEF", "tt_jab")!;
-    const always = rollChain("TICKER THIEF", jab, () => 0);
+    const jab = getMoveById("TICKER TAKER", "tt_jab")!;
+    const always = rollChain("TICKER TAKER", jab, () => 0);
     expect(jab.chainTo).toContain(always!.id);
-    expect(rollChain("TICKER THIEF", jab, () => 0.99)).toBeNull();
-    const noChain = getMoveById("TICKER THIEF", "tt_crash")!;
-    expect(rollChain("TICKER THIEF", noChain, () => 0)).toBeNull();
+    expect(rollChain("TICKER TAKER", jab, () => 0.99)).toBeNull();
+    const noChain = getMoveById("TICKER TAKER", "tt_scythe_reap")!;
+    expect(rollChain("TICKER TAKER", noChain, () => 0)).toBeNull();
   });
 });

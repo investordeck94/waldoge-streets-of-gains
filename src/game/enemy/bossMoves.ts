@@ -223,16 +223,28 @@ const MR_MARKETER: BossMove[] = [
 ];
 
 
-const TICKER_THIEF: BossMove[] = [
-  { id: "tt_jab", name: "Ticker Jab", anim: "punch", martial: "jab", duration: 13, hitFrames: [9], damage: 6, range: 58, vertRange: 60, knockback: 5, cooldown: 18, minDist: 0, maxDist: 95, minPhase: 1, weight: 10, shake: 8, hitPause: 2, chainTo: ["tt_combo", "tt_kick"], chainChance: 0.5 },
-  { id: "tt_combo", name: "Wick Combo", anim: "punch", martial: "combo", duration: 32, hitFrames: [26, 18, 9], damage: 4, range: 60, vertRange: 60, knockback: 3, cooldown: 38, minDist: 0, maxDist: 105, minPhase: 1, weight: 8, shake: 9, hitPause: 2, shout: "WICK COMBO!" },
+// TICKER TAKER — ULTIMATE BOSS / ANTI-WALDOGE.
+// He fights with Waldoge's OWN move structure: the jab/straight chain, the
+// light 3-hit combo, the roundhouse and the dash strike all mirror the
+// player's timing bands from src/lib/fightMoves.ts + SPECIAL_ATTACKS. On top
+// of that he borrows the other bosses' signature weapons through the SAME
+// shared systems: Bad Actor's tommy gun uses the boss projectile spec,
+// Exit Liquidity's scythe uses the melee hit-frame path, and Mr Marketer's
+// megaphone uses the shared `drainEnergy` hook. No duplicate systems.
+const TICKER_TAKER: BossMove[] = [
+  // --- Waldoge's core melee, mirrored -------------------------------------
+  { id: "tt_jab", name: "Mirror Jab", anim: "punch", martial: "jab", duration: 13, hitFrames: [9], damage: 6, range: 58, vertRange: 60, knockback: 5, cooldown: 18, minDist: 0, maxDist: 95, minPhase: 1, weight: 10, shake: 8, hitPause: 2, chainTo: ["tt_combo", "tt_kick"], chainChance: 0.5 },
+  { id: "tt_combo", name: "Stolen Combo", anim: "punch", martial: "combo", duration: 32, hitFrames: [26, 18, 9], damage: 4, range: 60, vertRange: 60, knockback: 3, cooldown: 34, minDist: 0, maxDist: 105, minPhase: 1, weight: 9, shake: 9, hitPause: 2, shout: "YOUR COMBO!" },
   { id: "tt_kick", name: "Delisting Kick", anim: "kick", martial: "roundhouse", duration: 18, hitFrames: [11], damage: 7, range: 68, vertRange: 65, knockback: 7, cooldown: 24, minDist: 0, maxDist: 120, minPhase: 1, weight: 9, shake: 9, hitPause: 3 },
-  { id: "tt_slam", name: "Red Candle Slam", anim: "boss_slam", martial: "slam", duration: 26, hitFrames: [12], damage: 8, range: 120, vertRange: 95, knockback: 8, launch: -10, omni: true, cooldown: 40, minDist: 0, maxDist: 145, minPhase: 1, weight: 8, telegraph: 0.45, hop: 8, shake: 15, hitPause: 4, sfx: "slam", shout: "💀 RED CANDLE!" },
-  { id: "tt_spike", name: "Chart Spike", anim: "boss_throw", martial: "throw", duration: 20, hitFrames: [], damage: 0, range: 0, vertRange: 0, knockback: 0, cooldown: 32, minDist: 110, maxDist: 900, minPhase: 1, weight: 9, shake: 0, hitPause: 0, sfx: "throw", projectiles: [{ frame: 12, speed: 11, vy: 0 }] },
-  { id: "tt_barrage", name: "Candle Barrage", anim: "boss_throw", martial: "throw", duration: 36, hitFrames: [], damage: 0, range: 0, vertRange: 0, knockback: 0, cooldown: 56, minDist: 130, maxDist: 900, minPhase: 2, weight: 8, shake: 0, hitPause: 0, sfx: "throw", projectiles: [{ frame: 28, count: 3, speed: 8, vy: -1, spread: 2.5 }, { frame: 14, count: 2, speed: 8, vy: -4, spread: 2.5 }], shout: "BARRAGE!" },
-  { id: "tt_steal", name: "Ticker Steal Dash", anim: "boss_charge", martial: "lunge", duration: 30, hitFrames: [18, 9], damage: 6, range: 64, vertRange: 60, knockback: 12, cooldown: 44, minDist: 160, maxDist: 900, minPhase: 1, weight: 9, advance: 1, advanceUntil: 5, telegraph: 0.3, shake: 12, hitPause: 3, sfx: "charge" },
-  { id: "tt_crash", name: "Market Crash", anim: "boss_slam", martial: "combo", duration: 42, hitFrames: [30, 14], damage: 7, range: 170, vertRange: 120, knockback: 9, launch: -8, omni: true, cooldown: 70, minDist: 0, maxDist: 190, minPhase: 3, weight: 7, telegraph: 0.4, hop: 9, shake: 16, hitPause: 5, sfx: "slam", shout: "☠ MARKET CRASH!" },
+  { id: "tt_dash", name: "Ticker Dash Strike", anim: "boss_charge", martial: "lunge", duration: 30, hitFrames: [18, 9], damage: 6, range: 64, vertRange: 60, knockback: 12, cooldown: 44, minDist: 150, maxDist: 900, minPhase: 1, weight: 9, advance: 1.15, advanceUntil: 5, telegraph: 0.28, shake: 12, hitPause: 3, sfx: "charge" },
+  // --- Signature anti-Waldoge mechanic: steal ENERGY on a landed hit ------
+  { id: "tt_drain_steal", name: "TICKER STEAL", anim: "boss_slam", martial: "counter", duration: 34, hitFrames: [16], damage: 0, range: 120, vertRange: 90, knockback: 6, omni: true, cooldown: 96, minDist: 0, maxDist: 150, minPhase: 1, weight: 8, telegraph: 0.4, shake: 12, hitPause: 4, sfx: "slam", drainEnergy: 22, shout: "⚡ TICKER STEAL!" },
+  // --- Borrowed boss weapons (temporary specials, each on a long cooldown) -
+  { id: "tt_gun_burst", name: "Tommy Gun Burst", anim: "boss_throw", martial: "throw", duration: 44, hitFrames: [], damage: 0, range: 0, vertRange: 0, knockback: 0, cooldown: 110, minDist: 120, maxDist: 900, minPhase: 1, weight: 9, telegraph: 0.3, shake: 0, hitPause: 0, sfx: "throw", projectiles: [{ frame: 26, count: 2, speed: 12, vy: 0, spread: 1.2 }, { frame: 20, count: 2, speed: 12, vy: -1, spread: 1.2 }, { frame: 14, count: 2, speed: 12, vy: 1, spread: 1.2 }], shout: "🔫 TOMMY GUN!" },
+  { id: "tt_scythe_reap", name: "Stolen Scythe Reap", anim: "boss_slam", martial: "spin", duration: 36, hitFrames: [24, 14], damage: 8, range: 130, vertRange: 95, knockback: 9, launch: -7, omni: true, cooldown: 100, minDist: 0, maxDist: 150, minPhase: 2, weight: 8, telegraph: 0.42, shake: 15, hitPause: 4, sfx: "slam", shout: "☠ REAP!" },
+  { id: "tt_mega_blast", name: "Megaphone Blast", anim: "boss_slam", martial: "slam", duration: 40, hitFrames: [22, 14], damage: 0, range: 168, vertRange: 100, knockback: 6, cooldown: 132, minDist: 0, maxDist: 185, minPhase: 3, weight: 7, telegraph: 0.45, shake: 13, hitPause: 3, sfx: "slam", drainEnergy: 14, shout: "📢 EXIT PUMP!" },
 ];
+
 
 export const BOSS_MOVESETS: Record<string, BossMove[]> = {
   JEET,
@@ -241,7 +253,7 @@ export const BOSS_MOVESETS: Record<string, BossMove[]> = {
   FUDDER,
   "EXIT LIQUIDITY": EXIT_LIQUIDITY,
   "MR MARKETER": MR_MARKETER,
-  "TICKER THIEF": TICKER_THIEF,
+  "TICKER TAKER": TICKER_TAKER,
 };
 
 /** Fallback so an unknown boss name still gets a full, working move set. */
