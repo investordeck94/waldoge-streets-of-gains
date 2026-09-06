@@ -196,11 +196,14 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
   const form: MartialForm | null = poseMove ? poseMove.martial : null;
   const telegraphing = !!poseMove?.telegraph && prog < (poseMove.telegraph ?? 0);
 
-  // RUGGER uses the blueprint sprite artwork. Falls back to the shared
-  // procedural boss renderer until the atlas has downloaded.
+  // RUGGER and JEET use their blueprint sprite artwork. Both fall back to the
+  // shared procedural renderer until their atlas has downloaded.
   const drewSprite =
-    e.bossName === "RUGGER" &&
-    drawRuggerSprite(ctx, e as RuggerView, camX, form as RuggerForm, prog, telegraphing, e.bossPhase || 1);
+    (e.bossName === "RUGGER" &&
+      drawRuggerSprite(ctx, e as RuggerView, camX, form as RuggerForm, prog, telegraphing, e.bossPhase || 1)) ||
+    (e.bossName === "JEET" &&
+      drawJeetSprite(ctx, e as JeetView, camX, form as JeetForm, prog, telegraphing, e.bossPhase || 1));
+
 
   if (!drewSprite) {
   ctx.save();
