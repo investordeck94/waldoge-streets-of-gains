@@ -4128,7 +4128,7 @@ export const StreetBrawler: FC = () => {
               let bias: Record<string, number> | undefined;
               if (e.bossName === "TICKER TAKER") {
                 const energyFrac = (c.specialEnergy || 0) / 100;
-                const airborne = !c.grounded;
+                const airborne = vertGap > 20;
                 bias = {
                   tt_drain_steal: 0.5 + energyFrac * 3.2,
                   tt_gun_burst: dist > 260 ? 2.2 : 0.8,
