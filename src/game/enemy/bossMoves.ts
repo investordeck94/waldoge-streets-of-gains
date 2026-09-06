@@ -207,15 +207,21 @@ const EXIT_LIQUIDITY: BossMove[] = [
 ];
 
 
+// MR MARKETER — mixed-range sales boss. Punches and kicks up close,
+// BOOST/TRENDING leaflets at range, a megaphone broadcast that drains the
+// player's ENERGY meter (not HP) inside its cone, and a walkie-talkie call
+// that brings in a raiding team through the existing enemy spawner.
 const MR_MARKETER: BossMove[] = [
-  { id: "mm_mic", name: "Mic Drop", anim: "punch", martial: "jab", duration: 14, hitFrames: [9], damage: 5, range: 56, vertRange: 60, knockback: 4, cooldown: 20, minDist: 0, maxDist: 95, minPhase: 1, weight: 10, shake: 7, hitPause: 2, chainTo: ["mm_hype"], chainChance: 0.45 },
-  { id: "mm_hype", name: "Hype Kick", anim: "kick", martial: "roundhouse", duration: 17, hitFrames: [11], damage: 6, range: 64, vertRange: 60, knockback: 6, cooldown: 26, minDist: 0, maxDist: 115, minPhase: 1, weight: 9, shake: 8, hitPause: 2 },
-  { id: "mm_board", name: "Billboard Slam", anim: "boss_slam", martial: "slam", duration: 26, hitFrames: [12], damage: 7, range: 115, vertRange: 90, knockback: 7, launch: -9, omni: true, cooldown: 42, minDist: 0, maxDist: 140, minPhase: 1, weight: 8, telegraph: 0.45, hop: 8, shake: 14, hitPause: 4, sfx: "slam", shout: "💀 BILLBOARD!" },
-  { id: "mm_spam", name: "Ad Spam", anim: "boss_throw", martial: "throw", duration: 28, hitFrames: [], damage: 0, range: 0, vertRange: 0, knockback: 0, cooldown: 44, minDist: 110, maxDist: 900, minPhase: 1, weight: 9, shake: 0, hitPause: 0, sfx: "throw", projectiles: [{ frame: 18, count: 4, speed: 7, vy: -2, spread: 3 }] },
+  { id: "mm_mic", name: "Cold Call Punch", anim: "punch", martial: "jab", duration: 14, hitFrames: [9], damage: 5, range: 56, vertRange: 60, knockback: 4, cooldown: 20, minDist: 0, maxDist: 95, minPhase: 1, weight: 10, shake: 7, hitPause: 2, chainTo: ["mm_hype", "mm_pitch"], chainChance: 0.45 },
+  { id: "mm_hype", name: "Hard Sell Kick", anim: "kick", martial: "roundhouse", duration: 17, hitFrames: [11], damage: 6, range: 66, vertRange: 62, knockback: 6, cooldown: 26, minDist: 0, maxDist: 115, minPhase: 1, weight: 9, shake: 8, hitPause: 2 },
+  { id: "mm_pitch", name: "Sales Pitch Combo", anim: "punch", martial: "combo", duration: 30, hitFrames: [24, 15, 8], damage: 4, range: 62, vertRange: 60, knockback: 4, cooldown: 36, minDist: 0, maxDist: 110, minPhase: 2, weight: 8, shake: 9, hitPause: 2, shout: "CLOSING!" },
+  { id: "mm_spam", name: "BOOST Leaflets", anim: "boss_throw", martial: "throw", duration: 28, hitFrames: [], damage: 0, range: 0, vertRange: 0, knockback: 0, cooldown: 44, minDist: 110, maxDist: 900, minPhase: 1, weight: 9, shake: 0, hitPause: 0, sfx: "throw", projectiles: [{ frame: 18, count: 3, speed: 7, vy: -2, spread: 2.6 }], shout: "BOOST!" },
   { id: "mm_viral", name: "Viral Charge", anim: "boss_charge", martial: "lunge", duration: 30, hitFrames: [16, 8], damage: 6, range: 62, vertRange: 60, knockback: 11, cooldown: 46, minDist: 170, maxDist: 900, minPhase: 1, weight: 9, advance: 1, advanceUntil: 5, telegraph: 0.3, shake: 11, hitPause: 3, sfx: "charge" },
+  { id: "mm_mega", name: "BOOST Megaphone", anim: "boss_slam", martial: "slam", duration: 36, hitFrames: [18, 12], damage: 0, range: 150, vertRange: 95, knockback: 5, cooldown: 62, minDist: 0, maxDist: 165, minPhase: 1, weight: 8, telegraph: 0.42, shake: 10, hitPause: 3, sfx: "slam", drainEnergy: 18, shout: "📢 TRENDING!" },
   { id: "mm_pump", name: "Pump Storm", anim: "boss_throw", martial: "spin", duration: 40, hitFrames: [], damage: 0, range: 0, vertRange: 0, knockback: 0, cooldown: 66, minDist: 100, maxDist: 900, minPhase: 3, weight: 7, telegraph: 0.3, shake: 0, hitPause: 0, sfx: "throw", projectiles: [{ frame: 32, count: 2, speed: 9, vy: -1, spread: 2 }, { frame: 22, count: 2, speed: 9, vy: -3, spread: 2 }, { frame: 12, count: 2, speed: 9, vy: -5, spread: 2 }], shout: "☠ PUMP STORM!" },
-  { id: "mm_spin", name: "Engagement Spin", anim: "kick", martial: "spin", duration: 28, hitFrames: [20, 10], damage: 4, range: 88, vertRange: 70, knockback: 6, omni: true, cooldown: 40, minDist: 0, maxDist: 120, minPhase: 2, weight: 7, shake: 10, hitPause: 3, shout: "SPIN!" },
+  { id: "mm_raid", name: "Call The Raiding Team", anim: "boss_charge", martial: "counter", duration: 46, hitFrames: [], damage: 0, range: 0, vertRange: 0, knockback: 0, cooldown: 260, minDist: 90, maxDist: 900, minPhase: 2, weight: 6, telegraph: 0.45, advance: -0.5, advanceUntil: 30, shake: 0, hitPause: 0, summon: { frame: 22, count: 3, hp: 55, speed: 2.1, cap: 2 }, shout: "📻 RAID TEAM, GO!" },
 ];
+
 
 const TICKER_THIEF: BossMove[] = [
   { id: "tt_jab", name: "Ticker Jab", anim: "punch", martial: "jab", duration: 13, hitFrames: [9], damage: 6, range: 58, vertRange: 60, knockback: 5, cooldown: 18, minDist: 0, maxDist: 95, minPhase: 1, weight: 10, shake: 8, hitPause: 2, chainTo: ["tt_combo", "tt_kick"], chainChance: 0.5 },
