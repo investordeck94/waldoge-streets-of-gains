@@ -124,6 +124,19 @@ export interface BossMove {
   hitPause: number;
   /** Projectile volleys spawned by this move. */
   projectiles?: BossProjectileSpec[];
+  /**
+   * Drains the player's existing special-energy meter instead of HP when the
+   * hit lands (MR MARKETER's megaphone). Resolved by the same hit-frame code
+   * as normal damage — no separate energy system.
+   */
+  drainEnergy?: number;
+  /**
+   * Calls in a support wave using the existing enemy spawner. `frame` is the
+   * stateTimer value at which the wave arrives; `cap` limits how many minions
+   * may be alive for the call to succeed (prevents unlimited stacking).
+   */
+  summon?: { frame: number; count: number; hp: number; speed: number; cap: number };
+
   /** Which existing SFX to play on start, if any. */
   sfx?: "charge" | "slam" | "throw";
   /** Floating callout drawn when the move starts. */
