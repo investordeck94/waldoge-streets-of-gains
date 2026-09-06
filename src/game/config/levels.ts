@@ -45,7 +45,10 @@ export const LEVELS: LevelConfig[] = [
       { count: 4, hp: 50, speed: 1.7 },
       { count: 4, hp: 55, speed: 1.9 },
     ],
-    boss: { hp: 460, chargeSpeed: 5.5, aiSpeed: 2.0, dmgMult: 1.0, name: "FUDDER" },
+    // FUDDER is a heavy sumo boss: tankier and hits harder, but slower on his
+    // feet than the other bosses — his readable wind-ups are the counterplay.
+    boss: { hp: 520, chargeSpeed: 5.5, aiSpeed: 1.6, dmgMult: 1.0, name: "FUDDER" },
+
   },
   {
     name: "ROOFTOP REAPER",

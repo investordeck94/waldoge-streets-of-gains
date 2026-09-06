@@ -78,6 +78,7 @@ import { drawWaldogeSprite, preloadWaldogeSprites } from "@/game/presentation/re
 import { drawRuggerSprite, preloadRuggerSprites, type RuggerView, type RuggerForm } from "@/game/presentation/render2d/ruggerSprites";
 import { drawJeetSprite, preloadJeetSprites, type JeetView, type JeetForm } from "@/game/presentation/render2d/jeetSprites";
 import { drawBadActorSprite, preloadBadActorSprites, type BadActorView, type BadActorForm } from "@/game/presentation/render2d/badActorSprites";
+import { drawFudderSprite, preloadFudderSprites, type FudderView, type FudderForm } from "@/game/presentation/render2d/fudderSprites";
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
 // Player module — data model + pure helpers for player state, HP, stamina,
@@ -206,7 +207,9 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
     (e.bossName === "JEET" &&
       drawJeetSprite(ctx, e as JeetView, camX, form as JeetForm, prog, telegraphing, e.bossPhase || 1)) ||
     (e.bossName === "BAD ACTOR" &&
-      drawBadActorSprite(ctx, e as BadActorView, camX, form as BadActorForm, prog, telegraphing, e.bossPhase || 1));
+      drawBadActorSprite(ctx, e as BadActorView, camX, form as BadActorForm, prog, telegraphing, e.bossPhase || 1)) ||
+    (e.bossName === "FUDDER" &&
+      drawFudderSprite(ctx, e as FudderView, camX, form as FudderForm, prog, telegraphing, e.bossPhase || 1));
 
 
   if (!drewSprite) {
@@ -3281,6 +3284,7 @@ export const StreetBrawler: FC = () => {
     preloadRuggerSprites();
     preloadJeetSprites();
     preloadBadActorSprites();
+    preloadFudderSprites();
     const img = new Image();
     img.src = waldogeHead;
     img.onload = () => { gameRef.current.headImg = img; };
@@ -4204,6 +4208,14 @@ export const StreetBrawler: FC = () => {
                 x: p.x, y: p.y - 50, timer: 25,
                 text: `${dmg}`, color: "#ff0000", size: 18,
               });
+              // FUDDER's palm strikes spawn his signature "FUD" impact letters
+              // at the point of contact — only on a confirmed hit, driven by
+              // the same hit-frame resolution as the damage above.
+              if (e.bossName === "FUDDER" && activeMove.anim !== "boss_throw") {
+                const impactX = p.x - e.facing * 12;
+                g.effects.push({ x: impactX, y: p.y - 62, timer: 26, text: "FUD", color: "#ff2b57", size: 40 });
+                g.effects.push({ x: impactX, y: p.y - 62, timer: 14, text: "✸", color: "#ffe14d", size: 46 });
+              }
               if (p.hp <= 0) {
                 p.state = "dead";
                 g.running = false;
