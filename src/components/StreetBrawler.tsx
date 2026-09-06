@@ -4120,10 +4120,29 @@ export const StreetBrawler: FC = () => {
             e.bossChainId = undefined;
 
             if (chained || e.attackCooldown <= 0) {
+              // TICKER TAKER is the ultimate boss because he READS the
+              // player, not because he is bigger or has more HP: he steals
+              // energy when the player is charged up, reaches for the tommy
+              // gun when the player camps at range, and reaps with the scythe
+              // when the player crowds him.
+              let bias: Record<string, number> | undefined;
+              if (e.bossName === "TICKER TAKER") {
+                const energyFrac = (c.specialEnergy || 0) / 100;
+                const airborne = !c.grounded;
+                bias = {
+                  tt_drain_steal: 0.5 + energyFrac * 3.2,
+                  tt_gun_burst: dist > 260 ? 2.2 : 0.8,
+                  tt_dash: dist > 220 ? 1.8 : 1,
+                  tt_scythe_reap: dist < 110 ? 1.9 : 0.9,
+                  tt_mega_blast: energyFrac > 0.4 ? 1.8 : 0.9,
+                  tt_kick: airborne ? 1.6 : 1,
+                };
+              }
               const move = chained ?? selectBossMove(e.bossName, {
                 dist, vertGap, phase,
                 lastMoveId: e.bossLastMoveId,
                 repeatCount: e.bossRepeat,
+                bias,
               });
 
               if (move) {

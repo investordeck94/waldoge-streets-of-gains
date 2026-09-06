@@ -300,6 +300,8 @@ export interface BossSelectionContext {
   lastMoveId?: string;
   /** How many times in a row lastMoveId has been used. */
   repeatCount?: number;
+  /** Per-move weight multipliers from adaptive AI (1 = unchanged). */
+  bias?: Record<string, number>;
   /** Injectable RNG for deterministic tests. */
   rng?: () => number;
 }
@@ -342,6 +344,8 @@ export function selectBossMove(
     }
     // Later phases favour the heavier, later-unlocking moves.
     if (m.minPhase > 1) w *= 1 + (phase - m.minPhase) * 0.5;
+    // Adaptive AI bias (TICKER TAKER reads the player and punishes habits).
+    if (ctx.bias) w *= ctx.bias[m.id] ?? 1;
     return Math.max(0, w);
   });
 
