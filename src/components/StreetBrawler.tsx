@@ -4194,6 +4194,29 @@ export const StreetBrawler: FC = () => {
             }
           }
 
+          // Walkie-talkie support call (MR MARKETER). Reuses the existing
+          // grunt entities + enemy AI — no separate summon system. The move's
+          // own cooldown plus the live-minion cap stop unlimited stacking.
+          if (activeMove?.summon && e.stateTimer === activeMove.summon.frame) {
+            const alive = g.enemies.filter((o) => !o.isBoss && o.state !== "dead").length;
+            if (alive <= activeMove.summon.cap) {
+              sfx(() => SFX.bossThrow());
+              const s = activeMove.summon;
+              for (let i = 0; i < s.count; i++) {
+                const side = i % 2 === 0 ? 1 : -1;
+                const sx = Math.max(40, Math.min(LEVEL_WIDTH - 40, p.x + side * (360 + i * 90)));
+                g.enemies.push({
+                  x: sx, y: GROUND_Y, vy: 0, vx: 0, width: 30, height: 70,
+                  facing: (side > 0 ? -1 : 1) as 1 | -1,
+                  hp: s.hp, maxHp: s.hp, state: "idle", stateTimer: 0,
+                  attackCooldown: 20 + i * 10, aiTimer: Math.random() * 60,
+                });
+                g.effects.push({ x: sx, y: GROUND_Y - 90, timer: 30, text: "RAID!", color: "#ff2b3c", size: 18 });
+              }
+              triggerShake(8, 16);
+            }
+          }
+
           // Melee hit frames declared by the active move.
           if (activeMove && activeMove.hitFrames.includes(e.stateTimer)) {
             const dmg = Math.max(2, Math.round(activeMove.damage * bossCfg.dmgMult * (DIFFICULTY_BOSS_DMG[g.difficulty] || 1)));
@@ -4202,7 +4225,21 @@ export const StreetBrawler: FC = () => {
               ? Math.abs(edx) < activeMove.range && Math.abs(p.y - e.y) < activeMove.vertRange
               : edx * e.facing > 0 && Math.abs(edx) < activeMove.range && Math.abs(p.y - e.y) < activeMove.vertRange;
 
-            if (inRange && p.state !== "dead") {
+            // MR MARKETER's megaphone drains the player's existing ENERGY
+            // meter instead of HP — only while the player is actually inside
+            // the cone, resolved by this same hit-frame check.
+            if (inRange && p.state !== "dead" && activeMove.drainEnergy) {
+              sfx(() => SFX.hit());
+              const before = c.specialEnergy;
+              c.specialEnergy = Math.max(0, c.specialEnergy - activeMove.drainEnergy);
+              setEnergy(c.specialEnergy);
+              const lost = Math.round(before - c.specialEnergy);
+              p.vx = e.facing * activeMove.knockback;
+              triggerShake(activeMove.shake, 18);
+              g.hitPause = activeMove.hitPause;
+              g.effects.push({ x: p.x, y: p.y - 70, timer: 28, text: "BOOST!", color: "#ff2b3c", size: 24 });
+              g.effects.push({ x: p.x, y: p.y - 46, timer: 30, text: lost > 0 ? `-${lost} ENERGY` : "TRENDING!", color: "#ffd23c", size: 16 });
+            } else if (inRange && p.state !== "dead") {
               sfx(() => SFX.hit());
               p.hp -= dmg;
               p.state = "hit";
@@ -4219,6 +4256,7 @@ export const StreetBrawler: FC = () => {
                 x: p.x, y: p.y - 50, timer: 25,
                 text: `${dmg}`, color: "#ff0000", size: 18,
               });
+
               // FUDDER's palm strikes spawn his signature "FUD" impact letters
               // at the point of contact — only on a confirmed hit, driven by
               // the same hit-frame resolution as the damage above.
