@@ -4189,6 +4189,7 @@ export const StreetBrawler: FC = () => {
                   x: e.x + e.facing * 30, y: e.y - 30,
                   vx: e.facing * vol.speed, vy: (vol.vy ?? -2) + off,
                   timer: vol.timer ?? 120,
+                  leaflet: e.bossName === "MR MARKETER",
                 });
               }
             }
@@ -5083,6 +5084,8 @@ export const StreetBrawler: FC = () => {
             ctx.restore();
           }
           ctx.restore();
+        } else if (proj.leaflet && drawMarketerLeaflet(ctx, px, py, proj.vx)) {
+          // BOOST / TRENDING marketing leaflet — drawn from the boss atlas.
         } else {
           ctx.beginPath();
           ctx.arc(px, py, 8, 0, Math.PI * 2);
