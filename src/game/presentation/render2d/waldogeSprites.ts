@@ -17,6 +17,7 @@ import type { StyleName } from "@/lib/fightStyles";
 import atlasAsset from "@/assets/waldoge-atlas.png.asset.json";
 import punchExtAsset from "@/assets/waldoge-punch-extended.png.asset.json";
 import { drawWaldogeFighter, type FighterView, type WaldogeWeapon } from "./waldogeFighter";
+import { drawWeaponArt } from "./weaponArt";
 
 export type { FighterView, WaldogeWeapon };
 
@@ -158,31 +159,51 @@ function frameFor(e: FighterView, specialActive: boolean, clock: number): Pick {
 }
 
 
-function weaponInHand(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  s: number,
-  weapon: WaldogeWeapon,
-) {
-  if (!weapon) return;
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(s, s);
-  if (weapon === "bat") {
-    ctx.fillStyle = "#8B4513"; ctx.fillRect(-3, -30, 6, 32);
-    ctx.fillStyle = "#A0522D"; ctx.fillRect(-6, -36, 12, 10);
-  } else if (weapon === "sword") {
-    ctx.fillStyle = "#ccc"; ctx.fillRect(-2, -38, 4, 40);
-    ctx.fillStyle = "#888"; ctx.fillRect(-6, -2, 12, 5);
-  } else {
-    ctx.fillStyle = "#cc44ff";
-    for (let i = 0; i < 4; i++) {
-      ctx.save(); ctx.rotate((i * Math.PI) / 2); ctx.fillRect(-1.5, -11, 3, 11); ctx.restore();
-    }
-  }
-  ctx.restore();
-}
+/**
+ * Hand attachment points. One entry per artwork frame, expressed in the same
+ * frame-local space the sprite is drawn in (origin = feet anchor, +X = the
+ * direction Waldoge faces, -Y = up). `r` is the grip rotation in radians.
+ *
+ * Because these live on the frame itself, the weapon automatically follows the
+ * arm through every animation, mirrors with the character (the caller has
+ * already applied ctx.scale(facing, …)) and scales with the sprite. There are
+ * no hard-coded screen offsets anywhere.
+ */
+interface Hand { x: number; y: number; r: number }
+
+const HAND = new Map<Frame, Hand>([
+  [F.idle0, { x: 34, y: -100, r: 0.62 }],
+  [F.walk0, { x: 32, y: -100, r: 0.68 }],
+  [F.walk1, { x: 34, y: -102, r: 0.6 }],
+  [F.walk2, { x: 31, y: -99, r: 0.72 }],
+  [F.run0, { x: 37, y: -102, r: 0.5 }],
+  [F.run1, { x: 39, y: -104, r: 0.44 }],
+  [F.run2, { x: 35, y: -100, r: 0.56 }],
+  [F.punch0, { x: 36, y: -102, r: -0.55 }],
+  [F.punch1, { x: 52, y: -100, r: -1.0 }],
+  [F.punch2, { x: 30, y: -100, r: -0.15 }],
+  [F.kick0, { x: 10, y: -100, r: 0.8 }],
+  [F.kick1, { x: 8, y: -100, r: 0.9 }],
+  [F.kick2, { x: 6, y: -98, r: 0.95 }],
+  [F.uppercut0, { x: 30, y: -96, r: -0.6 }],
+  [F.uppercut1, { x: 28, y: -160, r: -2.5 }],
+  [F.spinkick0, { x: 34, y: -108, r: -1.5 }],
+  [F.spinkick1, { x: 36, y: -110, r: -1.9 }],
+  [F.dashpunch0, { x: 44, y: -100, r: -1.0 }],
+  [F.dashpunch1, { x: 95, y: -96, r: -1.5 }],
+  [F.groundpound0, { x: 26, y: -136, r: 2.4 }],
+  [F.groundpound1, { x: 14, y: -76, r: 1.1 }],
+  [F.stylespecial0, { x: 56, y: -112, r: -1.4 }],
+  [F.hit0, { x: 16, y: -106, r: 0.45 }],
+  [F.jump0, { x: 46, y: -138, r: 0.3 }],
+  [F.dead0, { x: 20, y: -24, r: 1.55 }],
+]);
+
+/** Extended-jab frame lives outside the atlas, so it carries its own anchor. */
+const PUNCH_EXT_HAND: Hand = { x: 72, y: -100, r: -1.4 };
+
+const DEFAULT_HAND: Hand = { x: 30, y: -104, r: 0.34 };
+
 
 /**
  * The punch-recovery cell in the atlas contains a stray, detached glove behind
@@ -279,8 +300,24 @@ export function drawWaldogeSprite(
   drawFrame(ctx, src, f);
 
 
-  // Weapon rides the lead glove.
-  weaponInHand(ctx, f.w * 0.32, -f.h * 0.52, 1, weaponType);
+  // ── Weapon rides the lead hand of the CURRENT frame ────────────────────
+  // The anchor comes from the frame itself, so the weapon follows the arm
+  // through every pose, mirrors with the body and scales with the sprite.
+  if (weaponType) {
+    const hand = (picked.ext ? PUNCH_EXT_HAND : HAND.get(f)) ?? DEFAULT_HAND;
+    // A thrown shuriken leaves the hand the instant the throw state starts —
+    // it becomes the projectile the gameplay layer already spawned. Only the
+    // brief wind-up still shows it in hand, so release reads clearly.
+    const thrown = weaponType === "shuriken" && e.state === "punch" && prog(e, 12) >= 0.2;
+    if (!thrown) {
+      ctx.save();
+      ctx.translate(hand.x, hand.y);
+      ctx.rotate(hand.r);
+      drawWeaponArt(ctx, weaponType, weaponType === "shuriken" ? 0.72 : 1.05);
+      ctx.restore();
+    }
+  }
+
 
   ctx.restore();
 }

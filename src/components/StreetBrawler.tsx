@@ -74,6 +74,7 @@ import { HARD_MODE_DIFFICULTY } from "@/lib/dogeos/weeklyCompetition";
 import type { RunResult } from "@/lib/dogeos/rewardsApi";
 import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter";
+import { drawWeaponArt, drawWeaponPickupArt, drawShurikenProjectile } from "@/game/presentation/render2d/weaponArt";
 import { drawWaldogeSprite, preloadWaldogeSprites } from "@/game/presentation/render2d/waldogeSprites";
 import { drawRuggerSprite, preloadRuggerSprites, type RuggerView, type RuggerForm } from "@/game/presentation/render2d/ruggerSprites";
 import { drawJeetSprite, preloadJeetSprites, type JeetView, type JeetForm } from "@/game/presentation/render2d/jeetSprites";
@@ -972,27 +973,7 @@ function drawStickFigure(
       ctx.save();
       ctx.translate(wX, wY);
       ctx.rotate(e.facing * -0.3);
-      if (weaponType === "bat") {
-        ctx.fillStyle = "#8B4513";
-        ctx.fillRect(-2, -22, 5, 24);
-        ctx.fillStyle = "#A0522D";
-        ctx.fillRect(-4, -26, 9, 8);
-      } else if (weaponType === "sword") {
-        ctx.fillStyle = "#ccc";
-        ctx.fillRect(-1.5, -28, 3, 30);
-        ctx.fillStyle = "#888";
-        ctx.fillRect(-4, -1, 8, 4);
-        ctx.fillStyle = "#664400";
-        ctx.fillRect(-2, 3, 4, 7);
-      } else if (weaponType === "shuriken") {
-        ctx.fillStyle = "#cc44ff";
-        for (let i = 0; i < 4; i++) {
-          ctx.save();
-          ctx.rotate((i * Math.PI) / 2);
-          ctx.fillRect(-1, -8, 2, 8);
-          ctx.restore();
-        }
-      }
+      drawWeaponArt(ctx, weaponType, 0.8);
       ctx.restore();
       ctx.beginPath();
     }
@@ -1092,27 +1073,7 @@ function drawStickFigure(
       ctx.save();
       ctx.translate(handX, handY);
       ctx.rotate(e.facing * 0.3);
-      if (weaponType === "bat") {
-        ctx.fillStyle = "#8B4513";
-        ctx.fillRect(-2, -2, 5, 22);
-        ctx.fillStyle = "#A0522D";
-        ctx.fillRect(-3, 18, 7, 6);
-      } else if (weaponType === "sword") {
-        ctx.fillStyle = "#ccc";
-        ctx.fillRect(-1.5, -2, 3, 26);
-        ctx.fillStyle = "#888";
-        ctx.fillRect(-4, -3, 8, 3);
-        ctx.fillStyle = "#664400";
-        ctx.fillRect(-2, 24, 4, 5);
-      } else if (weaponType === "shuriken") {
-        ctx.fillStyle = "#cc44ff";
-        for (let i = 0; i < 4; i++) {
-          ctx.save();
-          ctx.rotate((i * Math.PI) / 2);
-          ctx.fillRect(-1, -6, 2, 6);
-          ctx.restore();
-        }
-      }
+      drawWeaponArt(ctx, weaponType, 0.8);
       ctx.restore();
       ctx.beginPath();
     }
@@ -5027,40 +4988,8 @@ export const StreetBrawler: FC = () => {
         wGlow.addColorStop(1, ws.color + "00");
         ctx.fillStyle = wGlow;
         ctx.fill();
-        // Draw weapon shape
-        ctx.save();
-        ctx.translate(wx, wy - 12 + bob);
-        ctx.rotate(-Math.PI / 4);
-        if (wp.type === "bat") {
-          ctx.fillStyle = "#8B4513";
-          ctx.fillRect(-3, -18, 6, 28);
-          ctx.fillStyle = "#A0522D";
-          ctx.fillRect(-5, -22, 10, 8);
-        } else if (wp.type === "sword") {
-          ctx.fillStyle = "#ccc";
-          ctx.fillRect(-1.5, -22, 3, 32);
-          ctx.fillStyle = "#888";
-          ctx.fillRect(-5, 7, 10, 4);
-          ctx.fillStyle = "#664400";
-          ctx.fillRect(-2.5, 11, 5, 8);
-        } else if (wp.type === "shuriken") {
-          const spin = Date.now() / 200;
-          ctx.rotate(spin);
-          ctx.fillStyle = "#cc44ff";
-          for (let i = 0; i < 4; i++) {
-            ctx.save();
-            ctx.rotate((i * Math.PI) / 2);
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(-3, -10);
-            ctx.lineTo(0, -12);
-            ctx.lineTo(3, -10);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-          }
-        }
-        ctx.restore();
+        // Draw weapon shape — shared Waldoge-blueprint art.
+        drawWeaponPickupArt(ctx, wp.type, wx, wy - 12 + bob);
         ctx.globalAlpha = 1;
       }
 
@@ -5103,24 +5032,8 @@ export const StreetBrawler: FC = () => {
         const px = proj.x - g.camX;
         const py = proj.y;
         if (proj.isPlayerProjectile) {
-          // Spinning shuriken
-          ctx.save();
-          ctx.translate(px, py);
-          ctx.rotate(Date.now() / 80);
-          ctx.fillStyle = "#cc44ff";
-          for (let i = 0; i < 4; i++) {
-            ctx.save();
-            ctx.rotate((i * Math.PI) / 2);
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(-2, -7);
-            ctx.lineTo(0, -9);
-            ctx.lineTo(2, -7);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-          }
-          ctx.restore();
+          // Spinning shuriken — same art as the held/pickup weapon.
+          drawShurikenProjectile(ctx, px, py, Math.sign(proj.vx) || 1);
         } else if (proj.tracer && drawTickerTakerShot(ctx, px, py, proj.vx)) {
           // Tommy-gun tracer round — same projectile physics as every boss.
         } else if (proj.leaflet && drawMarketerLeaflet(ctx, px, py, proj.vx)) {
