@@ -158,31 +158,51 @@ function frameFor(e: FighterView, specialActive: boolean, clock: number): Pick {
 }
 
 
-function weaponInHand(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  s: number,
-  weapon: WaldogeWeapon,
-) {
-  if (!weapon) return;
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(s, s);
-  if (weapon === "bat") {
-    ctx.fillStyle = "#8B4513"; ctx.fillRect(-3, -30, 6, 32);
-    ctx.fillStyle = "#A0522D"; ctx.fillRect(-6, -36, 12, 10);
-  } else if (weapon === "sword") {
-    ctx.fillStyle = "#ccc"; ctx.fillRect(-2, -38, 4, 40);
-    ctx.fillStyle = "#888"; ctx.fillRect(-6, -2, 12, 5);
-  } else {
-    ctx.fillStyle = "#cc44ff";
-    for (let i = 0; i < 4; i++) {
-      ctx.save(); ctx.rotate((i * Math.PI) / 2); ctx.fillRect(-1.5, -11, 3, 11); ctx.restore();
-    }
-  }
-  ctx.restore();
-}
+/**
+ * Hand attachment points. One entry per artwork frame, expressed in the same
+ * frame-local space the sprite is drawn in (origin = feet anchor, +X = the
+ * direction Waldoge faces, -Y = up). `r` is the grip rotation in radians.
+ *
+ * Because these live on the frame itself, the weapon automatically follows the
+ * arm through every animation, mirrors with the character (the caller has
+ * already applied ctx.scale(facing, …)) and scales with the sprite. There are
+ * no hard-coded screen offsets anywhere.
+ */
+interface Hand { x: number; y: number; r: number }
+
+const HAND = new Map<Frame, Hand>([
+  [F.idle0, { x: 30, y: -104, r: 0.34 }],
+  [F.walk0, { x: 28, y: -104, r: 0.4 }],
+  [F.walk1, { x: 30, y: -106, r: 0.3 }],
+  [F.walk2, { x: 27, y: -103, r: 0.44 }],
+  [F.run0, { x: 33, y: -106, r: 0.24 }],
+  [F.run1, { x: 35, y: -108, r: 0.18 }],
+  [F.run2, { x: 31, y: -104, r: 0.3 }],
+  [F.punch0, { x: 34, y: -100, r: -0.45 }],
+  [F.punch1, { x: 52, y: -100, r: -1.0 }],
+  [F.punch2, { x: 30, y: -96, r: -0.2 }],
+  [F.kick0, { x: 22, y: -100, r: 0.5 }],
+  [F.kick1, { x: 20, y: -102, r: 0.6 }],
+  [F.kick2, { x: 18, y: -100, r: 0.7 }],
+  [F.uppercut0, { x: 40, y: -94, r: -0.8 }],
+  [F.uppercut1, { x: 36, y: -148, r: -2.3 }],
+  [F.spinkick0, { x: 42, y: -110, r: -1.5 }],
+  [F.spinkick1, { x: 48, y: -112, r: -1.9 }],
+  [F.dashpunch0, { x: 44, y: -100, r: -1.0 }],
+  [F.dashpunch1, { x: 108, y: -98, r: -1.5 }],
+  [F.groundpound0, { x: 30, y: -150, r: 2.5 }],
+  [F.groundpound1, { x: 34, y: -112, r: 1.1 }],
+  [F.stylespecial0, { x: 78, y: -112, r: -1.4 }],
+  [F.hit0, { x: 20, y: -98, r: 0.95 }],
+  [F.jump0, { x: 32, y: -138, r: 0.15 }],
+  [F.dead0, { x: 28, y: -26, r: 1.5 }],
+]);
+
+/** Extended-jab frame lives outside the atlas, so it carries its own anchor. */
+const PUNCH_EXT_HAND: Hand = { x: 72, y: -100, r: -1.4 };
+
+const DEFAULT_HAND: Hand = { x: 30, y: -104, r: 0.34 };
+
 
 /**
  * The punch-recovery cell in the atlas contains a stray, detached glove behind
