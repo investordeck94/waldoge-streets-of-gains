@@ -203,13 +203,17 @@ export function drawWaldogeSprite(
   const sx = e.x - camX;
   const sy = e.y;
   const clock = Date.now();
-  const f = frameFor(e, specialActive, clock);
+  const picked = frameFor(e, specialActive, clock);
+  const extImg = picked.ext ? getPunchExt() : null;
+  // Fall back to the atlas wind-up frame until the standalone jab has loaded.
+  const f = picked.ext && !extImg ? F.punch0 : picked.f;
+  const src = picked.ext && extImg ? extImg : img;
   const base = (e.height * SIZE) / REF_H;
   const tint = styleTint(style);
 
   // Subtle breathing / impact weight — visual only.
   let sqx = 1, sqy = 1, bob = 0;
-  if (e.state === "idle") {
+  if (e.state === "idle" && !airborne(e)) {
     bob = Math.sin(clock / 340) * 1.4;
     sqy = 1 + Math.sin(clock / 340) * 0.012;
   } else if (e.state === "groundpound" && e.vy <= 0.5) {
@@ -217,6 +221,7 @@ export function drawWaldogeSprite(
   } else if (e.state === "hit") {
     sqx = 1.04; sqy = 0.97;
   }
+
 
   ctx.save();
 
