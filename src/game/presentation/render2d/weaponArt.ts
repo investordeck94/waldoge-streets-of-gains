@@ -173,7 +173,7 @@ function drawSword(ctx: CanvasRenderingContext2D) {
 }
 
 // ---------------------------------------------------------------------------
-// SHURIKEN — four-point violet star. Centre at origin.
+// SHURIKEN — four-point blue-steel star. Centre at origin.
 // ---------------------------------------------------------------------------
 
 function drawShuriken(ctx: CanvasRenderingContext2D, r = 13) {
@@ -191,7 +191,7 @@ function drawShuriken(ctx: CanvasRenderingContext2D, r = 13) {
     ctx.lineTo(n[0], n[1]);
   }
   ctx.closePath();
-  ctx.fillStyle = "#b455ff";
+  ctx.fillStyle = "#6f9bc4";
   ctx.fill();
   outline(ctx, 2.6);
 
@@ -201,13 +201,13 @@ function drawShuriken(ctx: CanvasRenderingContext2D, r = 13) {
   ctx.lineTo(-r * 0.18, -r * 0.9);
   ctx.lineTo(r * 0.18, -r * 0.62);
   ctx.closePath();
-  ctx.fillStyle = "#e2b7ff";
+  ctx.fillStyle = "#dff3ff";
   ctx.fill();
 
   // Hub
   ctx.beginPath();
   ctx.arc(0, 0, r * 0.24, 0, Math.PI * 2);
-  ctx.fillStyle = "#f5ece0";
+  ctx.fillStyle = "#b9cddd";
   ctx.fill();
   outline(ctx, 2);
 }
@@ -245,7 +245,7 @@ export function drawShurikenProjectile(
   ctx.translate(x, y);
   // Motion trail behind the travel direction.
   ctx.globalAlpha = 0.35;
-  ctx.strokeStyle = "#cc44ff";
+  ctx.strokeStyle = "#8fc4ea";
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(-dir * 10, 0);

@@ -19,7 +19,7 @@ export interface WeaponStats {
 export const WEAPON_STATS: Record<WeaponType, WeaponStats> = {
   bat:      { duration: 600, rangeBonus: 25, dmgMult: 1.8, color: "#ff8c00", icon: "🏏", name: "BAT" },
   sword:    { duration: 480, rangeBonus: 35, dmgMult: 2.2, color: "#00ccff", icon: "⚔️", name: "SWORD" },
-  shuriken: { duration: 360, rangeBonus: 10, dmgMult: 1.3, color: "#cc44ff", icon: "✦", name: "SHURIKEN" },
+  shuriken: { duration: 360, rangeBonus: 10, dmgMult: 1.3, color: "#7fb6e0", icon: "✦", name: "SHURIKEN" },
 };
 
 /** Shuriken throws granted per pickup. */
