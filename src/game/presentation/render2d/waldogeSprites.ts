@@ -107,38 +107,56 @@ function pick<T>(arr: T[], t: number): T {
   return arr[Math.min(arr.length - 1, Math.max(0, Math.floor(t * arr.length)))];
 }
 
-function frameFor(e: FighterView, specialActive: boolean, clock: number): Frame {
+/** True while the fighter is off the ground (vy is zeroed on landing). */
+function airborne(e: FighterView): boolean {
+  return Math.abs(e.vy) > 0.4;
+}
+
+interface Pick { f: Frame; ext?: boolean }
+
+function frameFor(e: FighterView, specialActive: boolean, clock: number): Pick {
   const speed = Math.abs(e.vx);
   switch (e.state) {
-    case "walk": {
+    case "walk":
+    case "idle": {
+      // The combat state stays idle/walk while jumping — read the air pose off
+      // the actual vertical motion so Waldoge never floats in a ground stance.
+      if (airborne(e)) return { f: F.jump0 };
+      if (e.state === "idle") return { f: F.idle0 };
       const running = speed > 3.4;
       const cycle = Math.floor(clock / (running ? 90 : 140)) % 3;
-      return F[(running ? "run" : "walk") + cycle];
+      return { f: F[(running ? "run" : "walk") + cycle] };
     }
     case "jump":
-      return F.jump0;
-    case "punch":
-      return pick([F.punch0, F.punch1, F.punch2], prog(e, 12));
+      return { f: F.jump0 };
+    case "punch": {
+      const t = prog(e, 12);
+      // Wind-up → full extension (standalone frame) → recovery.
+      if (t < 0.25) return { f: F.punch0 };
+      if (t < 0.7) return { f: PUNCH_EXT, ext: true };
+      return { f: F.punch2 };
+    }
     case "kick":
       // Grounded style special reuses the "kick" combat state.
-      if (specialActive) return F.stylespecial0;
-      return pick([F.kick0, F.kick1, F.kick2], prog(e, 14));
+      if (specialActive) return { f: F.stylespecial0 };
+      return { f: pick([F.kick0, F.kick1, F.kick2], prog(e, 14)) };
     case "uppercut":
-      return prog(e, 18) < 0.35 ? F.uppercut0 : F.uppercut1;
+      return { f: prog(e, 18) < 0.35 ? F.uppercut0 : F.uppercut1 };
     case "spinkick":
-      return Math.floor(clock / 60) % 2 === 0 ? F.spinkick0 : F.spinkick1;
+      return { f: Math.floor(clock / 60) % 2 === 0 ? F.spinkick0 : F.spinkick1 };
     case "dashpunch":
-      return prog(e, 14) < 0.3 ? F.dashpunch0 : F.dashpunch1;
+      return { f: prog(e, 14) < 0.3 ? F.dashpunch0 : F.dashpunch1 };
     case "groundpound":
-      return e.vy > 0.5 ? F.groundpound0 : F.groundpound1;
+      return { f: e.vy > 0.5 ? F.groundpound0 : F.groundpound1 };
     case "hit":
-      return F.hit0;
+      return { f: F.hit0 };
     case "dead":
-      return F.dead0;
+      return { f: F.dead0 };
     default:
-      return F.idle0;
+      return { f: airborne(e) ? F.jump0 : F.idle0 };
   }
 }
+
 
 function weaponInHand(
   ctx: CanvasRenderingContext2D,
