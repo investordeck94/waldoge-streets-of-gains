@@ -3619,7 +3619,7 @@ export const StreetBrawler: FC = () => {
           });
           sfx(() => SFX.shurikenThrow?.());
           triggerShake(2, 4);
-          g.effects.push({ x: p.x, y: p.y - 60, timer: 20, text: "✦", color: "#cc44ff", size: 14 });
+          g.effects.push({ x: p.x, y: p.y - 60, timer: 20, text: "✦", color: "#7fb6e0", size: 14 });
           if (g.shurikenAmmo <= 0) { g.weaponType = null; g.weaponTimer = 0; }
           didSpecial = true;
         }
@@ -4377,7 +4377,7 @@ export const StreetBrawler: FC = () => {
               c.specialEnergy = Math.min(MAX_ENERGY, c.specialEnergy + 3);
               setEnergy(c.specialEnergy);
               setComboCount(c.hitCount);
-              g.effects.push({ x: e.x, y: e.y - 50, timer: 20, text: `${shurikenDmg}`, color: "#cc44ff", size: 14 });
+              g.effects.push({ x: e.x, y: e.y - 50, timer: 20, text: `${shurikenDmg}`, color: "#7fb6e0", size: 14 });
               g.effects.push({ x: proj.x, y: proj.y, timer: 12, text: "✦", color: "#ff66ff", size: 16 });
               if (e.hp <= 0) {
                 e.state = "dead";

@@ -1,0 +1,14 @@
+<!doctype html><html><body style="margin:0;background:#1b1e26">
+<canvas id="c" width="900" height="320"></canvas>
+<script type="module">
+import { drawWeaponArt, drawWeaponPickupArt, drawShurikenProjectile } from '/src/game/presentation/render2d/weaponArt.ts';
+const ctx=document.getElementById('c').getContext('2d');
+ctx.fillStyle='#1b1e26';ctx.fillRect(0,0,900,320);
+const labels=[['held (in hand)',150],['pickup (on ground)',450],['thrown (flying)',750]];
+ctx.save();ctx.translate(150,160);ctx.scale(4,4);drawWeaponArt(ctx,'shuriken',1);ctx.restore();
+ctx.save();ctx.translate(450,160);ctx.scale(4,4);drawWeaponPickupArt(ctx,'shuriken',0,0,0);ctx.restore();
+ctx.save();ctx.translate(750,160);ctx.scale(4,4);drawShurikenProjectile(ctx,0,0,1,0);ctx.restore();
+ctx.fillStyle='#fff';ctx.font='16px monospace';ctx.textAlign='center';
+for(const [t,x] of labels) ctx.fillText(t,x,290);
+window.__done=1;
+</script></body></html>
