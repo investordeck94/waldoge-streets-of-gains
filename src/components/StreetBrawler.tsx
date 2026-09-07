@@ -106,6 +106,7 @@ import {
   type MovingEnemy,
 } from "@/game/enemy/movement";
 import { selectBossMove, getMoveById, rollChain, type MartialForm } from "@/game/enemy/bossMoves";
+import { strikeConnects } from "@/game/core/strike";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
@@ -3904,9 +3905,17 @@ export const StreetBrawler: FC = () => {
           if (e.state === "dead") continue;
           const dx = e.x - p.x;
           const isGroundPound = p.state === "groundpound";
-          const inRange = isGroundPound
-            ? Math.abs(dx) < range && Math.abs(e.y - p.y) < 60
-            : dx * p.facing > 0 && Math.abs(dx) < range && Math.abs(e.y - p.y) < 50;
+          // Swept fist box (shoulder → glove tip) vs the target's real hurtbox.
+          // Body widths participate, so contact still registers when the two
+          // fighters are touching or partially overlapping — the old
+          // centre-to-centre `dx * facing > 0` test failed exactly there.
+          const inRange = strikeConnects(
+            { x: p.x, y: p.y, width: p.width, height: p.height, facing: p.facing },
+            e,
+            range,
+            isGroundPound,
+            isGroundPound ? 60 : 50,
+          );
 
           if (inRange) {
             e.hp -= dmg;
@@ -4021,11 +4030,14 @@ export const StreetBrawler: FC = () => {
 
         for (const obj of g.alleyObjects) {
           if (obj.broken) continue;
-          const dx = obj.x - p.x;
           const isGP = p.state === "groundpound";
-          const inRange = isGP
-            ? Math.abs(dx) < objRange && Math.abs(obj.y - p.y) < 60
-            : dx * p.facing > 0 && Math.abs(dx) < objRange && Math.abs(obj.y - p.y) < 50;
+          const inRange = strikeConnects(
+            { x: p.x, y: p.y, width: p.width, height: p.height, facing: p.facing },
+            { x: obj.x, y: obj.y, width: 40, height: 45 },
+            objRange,
+            isGP,
+            isGP ? 60 : 50,
+          );
           if (inRange) {
             obj.hp -= objDmg;
             sfx(() => SFX.hit());
