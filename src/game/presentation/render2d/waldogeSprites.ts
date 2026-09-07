@@ -15,6 +15,7 @@
 
 import type { StyleName } from "@/lib/fightStyles";
 import atlasAsset from "@/assets/waldoge-atlas.png.asset.json";
+import punchExtAsset from "@/assets/waldoge-punch-extended.png.asset.json";
 import { drawWaldogeFighter, type FighterView, type WaldogeWeapon } from "./waldogeFighter";
 
 export type { FighterView, WaldogeWeapon };
@@ -50,6 +51,12 @@ const F: Record<string, Frame> = {
   dead0: { x: 1076, y: 880, w: 269, h: 94, ax: 128, ay: 94 },
 };
 
+/**
+ * The atlas cell for the fully extended jab is clipped at the cell border, so
+ * the lead glove is sliced off the arm. This standalone frame replaces it.
+ */
+const PUNCH_EXT: Frame = { x: 0, y: 0, w: 156, h: 165, ax: 63, ay: 165 };
+
 /** Reference height of the idle pose — every frame scales against this. */
 const REF_H = 171;
 /** Visual size relative to the collision box (art is deliberately larger). */
@@ -57,6 +64,8 @@ const SIZE = 1.95;
 
 let atlas: HTMLImageElement | null = null;
 let atlasReady = false;
+let punchExt: HTMLImageElement | null = null;
+let punchExtReady = false;
 
 function getAtlas(): HTMLImageElement | null {
   if (typeof Image === "undefined") return null;
@@ -68,8 +77,19 @@ function getAtlas(): HTMLImageElement | null {
   return atlasReady && atlas.complete && atlas.naturalWidth > 0 ? atlas : null;
 }
 
+function getPunchExt(): HTMLImageElement | null {
+  if (typeof Image === "undefined") return null;
+  if (!punchExt) {
+    punchExt = new Image();
+    punchExt.onload = () => { punchExtReady = true; };
+    punchExt.src = punchExtAsset.url;
+  }
+  return punchExtReady && punchExt.complete && punchExt.naturalWidth > 0 ? punchExt : null;
+}
+
 /** Kick off the download early (called once from the game bootstrap). */
-export function preloadWaldogeSprites() { getAtlas(); }
+export function preloadWaldogeSprites() { getAtlas(); getPunchExt(); }
+
 
 function styleTint(style: StyleName): string {
   return style === "rush" ? "#00ccff"
@@ -87,38 +107,56 @@ function pick<T>(arr: T[], t: number): T {
   return arr[Math.min(arr.length - 1, Math.max(0, Math.floor(t * arr.length)))];
 }
 
-function frameFor(e: FighterView, specialActive: boolean, clock: number): Frame {
+/** True while the fighter is off the ground (vy is zeroed on landing). */
+function airborne(e: FighterView): boolean {
+  return Math.abs(e.vy) > 0.4;
+}
+
+interface Pick { f: Frame; ext?: boolean }
+
+function frameFor(e: FighterView, specialActive: boolean, clock: number): Pick {
   const speed = Math.abs(e.vx);
   switch (e.state) {
-    case "walk": {
+    case "walk":
+    case "idle": {
+      // The combat state stays idle/walk while jumping — read the air pose off
+      // the actual vertical motion so Waldoge never floats in a ground stance.
+      if (airborne(e)) return { f: F.jump0 };
+      if (e.state === "idle") return { f: F.idle0 };
       const running = speed > 3.4;
       const cycle = Math.floor(clock / (running ? 90 : 140)) % 3;
-      return F[(running ? "run" : "walk") + cycle];
+      return { f: F[(running ? "run" : "walk") + cycle] };
     }
     case "jump":
-      return F.jump0;
-    case "punch":
-      return pick([F.punch0, F.punch1, F.punch2], prog(e, 12));
+      return { f: F.jump0 };
+    case "punch": {
+      const t = prog(e, 12);
+      // Wind-up → full extension (standalone frame) → recovery.
+      if (t < 0.25) return { f: F.punch0 };
+      if (t < 0.7) return { f: PUNCH_EXT, ext: true };
+      return { f: F.punch2 };
+    }
     case "kick":
       // Grounded style special reuses the "kick" combat state.
-      if (specialActive) return F.stylespecial0;
-      return pick([F.kick0, F.kick1, F.kick2], prog(e, 14));
+      if (specialActive) return { f: F.stylespecial0 };
+      return { f: pick([F.kick0, F.kick1, F.kick2], prog(e, 14)) };
     case "uppercut":
-      return prog(e, 18) < 0.35 ? F.uppercut0 : F.uppercut1;
+      return { f: prog(e, 18) < 0.35 ? F.uppercut0 : F.uppercut1 };
     case "spinkick":
-      return Math.floor(clock / 60) % 2 === 0 ? F.spinkick0 : F.spinkick1;
+      return { f: Math.floor(clock / 60) % 2 === 0 ? F.spinkick0 : F.spinkick1 };
     case "dashpunch":
-      return prog(e, 14) < 0.3 ? F.dashpunch0 : F.dashpunch1;
+      return { f: prog(e, 14) < 0.3 ? F.dashpunch0 : F.dashpunch1 };
     case "groundpound":
-      return e.vy > 0.5 ? F.groundpound0 : F.groundpound1;
+      return { f: e.vy > 0.5 ? F.groundpound0 : F.groundpound1 };
     case "hit":
-      return F.hit0;
+      return { f: F.hit0 };
     case "dead":
-      return F.dead0;
+      return { f: F.dead0 };
     default:
-      return F.idle0;
+      return { f: airborne(e) ? F.jump0 : F.idle0 };
   }
 }
+
 
 function weaponInHand(
   ctx: CanvasRenderingContext2D,
@@ -165,13 +203,17 @@ export function drawWaldogeSprite(
   const sx = e.x - camX;
   const sy = e.y;
   const clock = Date.now();
-  const f = frameFor(e, specialActive, clock);
+  const picked = frameFor(e, specialActive, clock);
+  const extImg = picked.ext ? getPunchExt() : null;
+  // Fall back to the atlas wind-up frame until the standalone jab has loaded.
+  const f = picked.ext && !extImg ? F.punch0 : picked.f;
+  const src = picked.ext && extImg ? extImg : img;
   const base = (e.height * SIZE) / REF_H;
   const tint = styleTint(style);
 
   // Subtle breathing / impact weight — visual only.
   let sqx = 1, sqy = 1, bob = 0;
-  if (e.state === "idle") {
+  if (e.state === "idle" && !airborne(e)) {
     bob = Math.sin(clock / 340) * 1.4;
     sqy = 1 + Math.sin(clock / 340) * 0.012;
   } else if (e.state === "groundpound" && e.vy <= 0.5) {
@@ -179,6 +221,7 @@ export function drawWaldogeSprite(
   } else if (e.state === "hit") {
     sqx = 1.04; sqy = 0.97;
   }
+
 
   ctx.save();
 
@@ -210,7 +253,7 @@ export function drawWaldogeSprite(
   if (e.state === "dead") ctx.globalAlpha = 0.85;
 
   ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(img, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h);
+  ctx.drawImage(src, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h);
 
   // Weapon rides the lead glove.
   weaponInHand(ctx, f.w * 0.32, -f.h * 0.52, 1, weaponType);

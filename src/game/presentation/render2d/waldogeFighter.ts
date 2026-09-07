@@ -109,8 +109,13 @@ function poseFor(e: FighterView, style: StyleName, clock: number): Pose {
   const p = basePose();
   const moving = Math.abs(e.vx) > 0.2;
   const running = Math.abs(e.vx) > 3.4;
+  // The combat state stays idle/walk while jumping, so read the airborne pose
+  // off the actual vertical motion (vy is zeroed the moment Waldoge lands).
+  const inAir = Math.abs(e.vy) > 0.4;
+  const state = inAir && (e.state === "idle" || e.state === "walk") ? "jump" : e.state;
 
-  switch (e.state) {
+  switch (state) {
+
     case "walk": {
       const sp = running ? 8 : 5.5;
       const s = Math.sin(clock / (running ? 70 : 110)) * sp;
