@@ -74,6 +74,7 @@ import { HARD_MODE_DIFFICULTY } from "@/lib/dogeos/weeklyCompetition";
 import type { RunResult } from "@/lib/dogeos/rewardsApi";
 import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter";
+import { drawWeaponArt, drawWeaponPickupArt, drawShurikenProjectile } from "@/game/presentation/render2d/weaponArt";
 import { drawWaldogeSprite, preloadWaldogeSprites } from "@/game/presentation/render2d/waldogeSprites";
 import { drawRuggerSprite, preloadRuggerSprites, type RuggerView, type RuggerForm } from "@/game/presentation/render2d/ruggerSprites";
 import { drawJeetSprite, preloadJeetSprites, type JeetView, type JeetForm } from "@/game/presentation/render2d/jeetSprites";
