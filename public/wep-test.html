@@ -1,8 +1,8 @@
 <!doctype html><html><body style="margin:0;background:#20242e">
 <canvas id="c" width="1200" height="760"></canvas>
 <script type="module">
-import { drawWaldogeSprite } from '/src/game/presentation/render2d/waldogeSprites.ts';
-import { drawWeaponPickupArt, drawShurikenProjectile } from '/src/game/presentation/render2d/weaponArt.ts';
+const { drawWaldogeSprite } = await import('/src/game/presentation/render2d/waldogeSprites.ts?v='+Date.now());
+const { drawWeaponPickupArt, drawShurikenProjectile } = await import('/src/game/presentation/render2d/weaponArt.ts?v='+Date.now());
 const ctx = document.getElementById('c').getContext('2d');
 const states=['idle','walk','punch','kick','uppercut','jump','hit'];
 const weapons=['bat','sword','shuriken'];
@@ -19,6 +19,7 @@ setTimeout(()=>{
   drawWeaponPickupArt(ctx,w,1140,140+wi*230);
  });
  drawShurikenProjectile(ctx,1140,700,1);
+ ctx.drawImage(probe,0,0,269,220,900,470,269,220);
  window.__done=1;
 },4500);
 </script></body></html>
