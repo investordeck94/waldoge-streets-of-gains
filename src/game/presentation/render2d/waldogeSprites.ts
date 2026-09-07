@@ -15,6 +15,7 @@
 
 import type { StyleName } from "@/lib/fightStyles";
 import atlasAsset from "@/assets/waldoge-atlas.png.asset.json";
+import punchExtAsset from "@/assets/waldoge-punch-extended.png.asset.json";
 import { drawWaldogeFighter, type FighterView, type WaldogeWeapon } from "./waldogeFighter";
 
 export type { FighterView, WaldogeWeapon };
