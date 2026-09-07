@@ -4030,11 +4030,14 @@ export const StreetBrawler: FC = () => {
 
         for (const obj of g.alleyObjects) {
           if (obj.broken) continue;
-          const dx = obj.x - p.x;
           const isGP = p.state === "groundpound";
-          const inRange = isGP
-            ? Math.abs(dx) < objRange && Math.abs(obj.y - p.y) < 60
-            : dx * p.facing > 0 && Math.abs(dx) < objRange && Math.abs(obj.y - p.y) < 50;
+          const inRange = strikeConnects(
+            { x: p.x, y: p.y, width: p.width, height: p.height, facing: p.facing },
+            { x: obj.x, y: obj.y, width: 40, height: 45 },
+            objRange,
+            isGP,
+            isGP ? 60 : 50,
+          );
           if (inRange) {
             obj.hp -= objDmg;
             sfx(() => SFX.hit());
