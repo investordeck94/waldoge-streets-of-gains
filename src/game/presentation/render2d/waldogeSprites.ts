@@ -16,10 +16,9 @@
 import type { StyleName } from "@/lib/fightStyles";
 import atlasAsset from "@/assets/waldoge-atlas.png.asset.json";
 import punchExtAsset from "@/assets/waldoge-punch-extended.png.asset.json";
-import { drawWaldogeFighter, type FighterView, type WaldogeWeapon } from "./waldogeFighter";
-import { drawWeaponArt } from "./weaponArt";
+import { drawWaldogeFighter, type FighterView } from "./waldogeFighter";
 
-export type { FighterView, WaldogeWeapon };
+export type { FighterView };
 
 interface Frame { x: number; y: number; w: number; h: number; ax: number; ay: number }
 
@@ -233,14 +232,13 @@ export function drawWaldogeSprite(
   e: FighterView,
   camX: number,
   headImg: HTMLImageElement | null,
-  weaponType: WaldogeWeapon = null,
   style: StyleName = "brawler",
   specialActive = false,
 ) {
   const img = getAtlas();
   if (!img) {
     // Artwork not downloaded yet — keep the procedural fighter as a fallback.
-    drawWaldogeFighter(ctx, e, camX, headImg, weaponType, style);
+    drawWaldogeFighter(ctx, e, camX, headImg, style);
     return;
   }
 
@@ -298,26 +296,6 @@ export function drawWaldogeSprite(
 
   ctx.imageSmoothingEnabled = true;
   drawFrame(ctx, src, f);
-
-
-  // ── Weapon rides the lead hand of the CURRENT frame ────────────────────
-  // The anchor comes from the frame itself, so the weapon follows the arm
-  // through every pose, mirrors with the body and scales with the sprite.
-  if (weaponType) {
-    const hand = (picked.ext ? PUNCH_EXT_HAND : HAND.get(f)) ?? DEFAULT_HAND;
-    // A thrown shuriken leaves the hand the instant the throw state starts —
-    // it becomes the projectile the gameplay layer already spawned. Only the
-    // brief wind-up still shows it in hand, so release reads clearly.
-    const thrown = weaponType === "shuriken" && e.state === "punch" && prog(e, 12) >= 0.2;
-    if (!thrown) {
-      ctx.save();
-      ctx.translate(hand.x, hand.y);
-      ctx.rotate(hand.r);
-      drawWeaponArt(ctx, weaponType, weaponType === "shuriken" ? 0.72 : 1.05);
-      ctx.restore();
-    }
-  }
-
 
   ctx.restore();
 }

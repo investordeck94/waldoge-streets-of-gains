@@ -16,9 +16,7 @@
  */
 
 import type { StyleName } from "@/lib/fightStyles";
-import { drawWeaponArt } from "./weaponArt";
 
-export type WaldogeWeapon = "bat" | "sword" | "shuriken" | null;
 
 /** Minimal read-only view of the player the renderer needs. */
 export interface FighterView {
@@ -469,16 +467,6 @@ function shibaHead(ctx: CanvasRenderingContext2D, at: P, r: number) {
   ctx.restore();
 }
 
-function weaponInHand(ctx: CanvasRenderingContext2D, at: P, weapon: WaldogeWeapon, angle: number) {
-  if (!weapon) return;
-  ctx.save();
-  ctx.translate(at[0], at[1]);
-  ctx.rotate(angle);
-  // Shared Waldoge-blueprint weapon art — no stickman shapes here.
-  drawWeaponArt(ctx, weapon, 0.9);
-  ctx.restore();
-}
-
 // ---------------------------------------------------------------------------
 // Public entry point
 // ---------------------------------------------------------------------------
@@ -488,7 +476,6 @@ export function drawWaldogeFighter(
   e: FighterView,
   camX: number,
   headImg: HTMLImageElement | null,
-  weaponType: WaldogeWeapon = null,
   style: StyleName = "brawler",
 ) {
   const sx = e.x - camX;
@@ -594,7 +581,6 @@ export function drawWaldogeFighter(
     ctx.restore();
   }
 
-  weaponInHand(ctx, pose.armFront[2], weaponType, e.state === "punch" ? -0.3 : 0.4);
 
   // Motion accents (visual only) -----------------------------------------
   if (e.state === "dashpunch" || (e.state === "punch" && style === "rush")) {

@@ -133,3 +133,16 @@ export function updateStuckWatchdog(
   e.lastWatchdogX = e.x;
   return true;
 }
+
+/**
+ * Generic aliases — the same safety layer is required for the PLAYER, not just
+ * enemies. The player is a `PlayerEntity` like every fighter, so it runs
+ * through the exact same repair path instead of a second, parallel system.
+ */
+export const sanitizeFighterMotion = sanitizeEnemyMotion;
+export const clampFighterToWorld = clampEnemyToWorld;
+
+/** Repair a single scalar that must stay finite. */
+export function finite(v: number, fallback: number): number {
+  return Number.isFinite(v) ? v : fallback;
+}

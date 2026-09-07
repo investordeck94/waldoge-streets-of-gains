@@ -15,7 +15,6 @@ source).
 | `types.ts`         | Shared types: `SceneTheme`, `LevelConfig`, `Difficulty`     |
 | `player.ts`        | Canvas size, ground, gravity, player speed, jump, energy    |
 | `combat.ts`        | Combo timings, `SPECIAL_ATTACKS` table                      |
-| `weapons.ts`       | `WeaponType`, `WEAPON_STATS`, ammo & drop chance            |
 | `powerups.ts`      | Powerup drop chance, colors, icons                          |
 | `environment.ts`   | Rain count, puddle X positions                              |
 | `levels.ts`        | `LEVELS`, `WAVES_PER_LEVEL`, `TOTAL_LEVELS`                 |

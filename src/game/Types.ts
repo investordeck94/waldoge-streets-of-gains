@@ -16,7 +16,7 @@
  *   `PlayerAttackState` from `@/game/player/Player` (the canonical source).
  *
  * • The five presentation-side buffer types below (`HitEffect`,
- *   `WeaponPickup`, `RainDrop`, `Splash`, `ComboState`) are intentionally
+ *   `RainDrop`, `Splash`, `ComboState`) are intentionally
  *   still defined inline here. They describe rendering-oriented state
  *   (particle timers, combo HUD, weather visuals) that does not belong in
  *   the engine-agnostic `core/types.ts`. They will move to a dedicated
@@ -35,7 +35,6 @@
  * That's a later-phase concern once the loop itself is decomposed.
  */
 
-import type { WeaponType } from "@/game/config";
 
 // ---------------------------------------------------------------------------
 // Entity + attack states — source of truth is Player.ts. Re-exported so
@@ -48,7 +47,6 @@ export type {
 } from "@/game/player/Player";
 
 // Re-export shared config types that flow through gameplay code.
-export type { WeaponType } from "@/game/config";
 
 // ---------------------------------------------------------------------------
 // World-simulation types — canonical source is `@/game/core/types`.
@@ -74,15 +72,6 @@ export interface HitEffect {
   text: string;
   color: string;
   size: number;
-}
-
-export interface WeaponPickup {
-  x: number;
-  y: number;
-  vy: number;
-  type: WeaponType;
-  collected: boolean;
-  timer: number;
 }
 
 export interface RainDrop {

@@ -25,7 +25,7 @@
  *
  * Major systems (search headers below to jump to them):
  *   • Asset preloading         — boss head <Image> objects hoisted at module scope
- *   • Type model               — Entity / HitEffect / PowerUp / WeaponPickup / RainDrop / Splash
+ *   • Type model               — Entity / HitEffect / PowerUp / RainDrop / Splash
  *   • Tunables                 — WEAPON_STATS, RAIN_COUNT, POWERUP_COLORS, difficulty tables
  *   • Level / environment      — parallax layers, platforms, weather, puddles
  *   • Combat                   — MOVE_SETS (fightMoves.ts) + STYLES (fightStyles.ts) + input buffer
@@ -74,7 +74,6 @@ import { HARD_MODE_DIFFICULTY } from "@/lib/dogeos/weeklyCompetition";
 import type { RunResult } from "@/lib/dogeos/rewardsApi";
 import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter";
-import { drawWeaponArt, drawWeaponPickupArt, drawShurikenProjectile } from "@/game/presentation/render2d/weaponArt";
 import { drawWaldogeSprite, preloadWaldogeSprites } from "@/game/presentation/render2d/waldogeSprites";
 import { drawRuggerSprite, preloadRuggerSprites, type RuggerView, type RuggerForm } from "@/game/presentation/render2d/ruggerSprites";
 import { drawJeetSprite, preloadJeetSprites, type JeetView, type JeetForm } from "@/game/presentation/render2d/jeetSprites";
@@ -102,6 +101,9 @@ import {
 } from "@/game/enemy/Enemy";
 import {
   sanitizeEnemyMotion,
+  sanitizeFighterMotion,
+  clampFighterToWorld,
+  finite,
   clampEnemyToWorld,
   updateStuckWatchdog,
   type MovingEnemy,
@@ -135,8 +137,6 @@ import {
   CANVAS_W, CANVAS_H, GROUND_Y, GRAVITY, PLAYER_SPEED, JUMP_FORCE, LEVEL_WIDTH, MAX_ENERGY,
   // combat
   COMBO_WINDOW, COMBO_HIT_WINDOW, SPECIAL_ATTACKS,
-  // weapons
-  WEAPON_STATS, SHURIKEN_AMMO, WEAPON_DROP_CHANCE, type WeaponType,
   // powerups
   DROP_CHANCE, POWERUP_COLORS, POWERUP_ICONS,
   // environment
@@ -163,7 +163,7 @@ import {
 type AttackState = PlayerAttackState;
 type Entity = PlayerEntity;
 
-// Non-entity gameplay types (HitEffect / PowerUp / WeaponPickup / RainDrop /
+// Non-entity gameplay types (HitEffect / PowerUp / RainDrop /
 // Splash / ComboState / Projectile) now live in src/game/Types.ts (Phase 1).
 // Byte-identical shapes; every existing call site continues to compile
 // unchanged via the imports below.
@@ -173,7 +173,6 @@ import type {
 } from "@/game/core/types";
 import type {
   HitEffect,
-  WeaponPickup,
   RainDrop,
   Splash,
   ComboState,
@@ -804,7 +803,6 @@ function drawStickFigure(
   camX: number,
   headImg: HTMLImageElement | null,
   isPlayer: boolean,
-  weaponType: WeaponType | null = null,
   style: StyleName = "brawler",
 ) {
   const styleColor =
@@ -964,19 +962,6 @@ function drawStickFigure(
     }
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(backArmEnd[0], backArmEnd[1]);
-    // Draw weapon in hand during punch
-    if (weaponType) {
-      ctx.stroke();
-      ctx.beginPath();
-      const wX = frontArmEnd[0] * 0.85;
-      const wY = frontArmEnd[1] - 2;
-      ctx.save();
-      ctx.translate(wX, wY);
-      ctx.rotate(e.facing * -0.3);
-      drawWeaponArt(ctx, weaponType, 0.8);
-      ctx.restore();
-      ctx.beginPath();
-    }
   } else if (e.state === "kick") {
     ctx.moveTo(0, shoulderY);
     ctx.lineTo(-e.facing * limbLen * 0.5, shoulderY - 8);
@@ -1063,19 +1048,6 @@ function drawStickFigure(
       ctx.lineTo(-limbLen * 0.7, shoulderY + limbLen * 0.8 + swing);
       ctx.moveTo(0, shoulderY);
       ctx.lineTo(limbLen * 0.7, shoulderY + limbLen * 0.8 - swing);
-    }
-    // Draw weapon held at side when idle/walking
-    if (weaponType) {
-      ctx.stroke();
-      ctx.beginPath();
-      const handX = e.facing * limbLen * 0.7;
-      const handY = shoulderY + limbLen * 0.8 - swing;
-      ctx.save();
-      ctx.translate(handX, handY);
-      ctx.rotate(e.facing * 0.3);
-      drawWeaponArt(ctx, weaponType, 0.8);
-      ctx.restore();
-      ctx.beginPath();
     }
   }
   ctx.strokeStyle = isPlayer ? "#d92b2b" : "#ff4444";
@@ -3170,10 +3142,6 @@ export const StreetBrawler: FC = () => {
     projectiles: Projectile[];
     speedBoostTimer: number;
     dmgBoostTimer: number;
-    weapons: WeaponPickup[];
-    weaponType: WeaponType | null;
-    weaponTimer: number;
-    shurikenAmmo: number;
     style: StyleName;
     lightChain: { index: number; lastFrame: number };
     currentMove: Move | null;
@@ -3223,10 +3191,6 @@ export const StreetBrawler: FC = () => {
     projectiles: [],
     speedBoostTimer: 0,
     dmgBoostTimer: 0,
-    weapons: [],
-    weaponType: null,
-    weaponTimer: 0,
-    shurikenAmmo: 0,
     style: "brawler",
     lightChain: { index: 0, lastFrame: -9999 },
     currentMove: null,
@@ -3278,19 +3242,17 @@ export const StreetBrawler: FC = () => {
     setDifficulty(diff);
     g.player = createPlayer();
     g.wave = 0;
-    g.level = 0;
+    g.level = (() => { const v = Number(new URLSearchParams(location.search).get("lvl")); return Number.isFinite(v) && v > 0 ? Math.min(v, TOTAL_LEVELS - 1) : 0; })();
+    g.wave = Number(new URLSearchParams(location.search).get("wv")) || 0;
     g.score = 0;
     g.camX = 0;
-    g.enemies = spawnEnemies(0, 0, 200, diff);
+    g.enemies = g.wave >= LEVELS[g.level].waves.length ? [spawnBoss(200, g.level)] : spawnEnemies(g.level, g.wave, 200, diff);
     g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
     g.effects = [];
     g.powerups = [];
     g.projectiles = [];
     g.speedBoostTimer = 0;
     g.dmgBoostTimer = 0;
-    g.weaponType = null;
-    g.weaponTimer = 0;
-    g.shurikenAmmo = 0;
     g.bossIntro = { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" };
     g.healFlash = 0;
     g.vxHistory = [];
@@ -3305,15 +3267,8 @@ export const StreetBrawler: FC = () => {
     g.attackActiveFrames = 0;
     g.hitApplied = false;
     setStyleName("brawler");
-    // Spawn weapon pickups along the level (varied types)
-    g.weapons = [
-      { x: 600, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
-      { x: 1400, y: GROUND_Y, vy: 0, type: "sword", collected: false, timer: 900 },
-      { x: 2200, y: GROUND_Y, vy: 0, type: "shuriken", collected: false, timer: 900 },
-      { x: 2800, y: GROUND_Y, vy: 0, type: "bat", collected: false, timer: 900 },
-    ];
     g.alleyObjects = spawnAlleyObjects();
-    g.platforms = spawnPlatforms(0);
+    g.platforms = spawnPlatforms(g.level);
     g.powerups = spawnPlatformPickups(g.platforms, diff);
     g.animFrameCount = 0;
     // Initialize rain
@@ -3440,9 +3395,38 @@ export const StreetBrawler: FC = () => {
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const g = gameRef.current;
+    (window as unknown as { __g: unknown }).__g = g;
     g.running = true;
 
+    // Crash containment: before this, a single throw anywhere in simulation or
+    // rendering ended the requestAnimationFrame chain permanently — the canvas
+    // froze on its last frame with the characters missing. The frame is now
+    // isolated: the bad frame is dropped, the fighters are repaired, and the
+    // loop continues.
     const tick = () => {
+      try {
+        runFrame();
+      } catch (err) {
+        console.error("[Brawler] frame error — recovering", err);
+        try {
+          const pl = g.player;
+          sanitizeFighterMotion(pl as MovingEnemy, GROUND_Y);
+          clampFighterToWorld(pl as MovingEnemy, LEVEL_WIDTH);
+          g.camX = finite(g.camX, Math.max(0, pl.x - CANVAS_W / 2));
+          g.hitPause = 0;
+          for (const e of g.enemies) {
+            sanitizeEnemyMotion(e as MovingEnemy, GROUND_Y);
+            clampEnemyToWorld(e as MovingEnemy, LEVEL_WIDTH);
+          }
+          g.projectiles = g.projectiles.filter(
+            pr => Number.isFinite(pr.x) && Number.isFinite(pr.y),
+          );
+        } catch { /* recovery must never itself kill the loop */ }
+        if (g.running) g.animFrame = requestAnimationFrame(tick);
+      }
+    };
+
+    const runFrame = () => {
       if (!g.running) return;
       if (pausedRef.current) {
         // Draw pause overlay over the last frame and skip simulation
@@ -3599,32 +3583,11 @@ export const StreetBrawler: FC = () => {
         }
       }
 
-      // ── L key actions: shuriken (highest) → groundpound (air) → style special (ground) ──
+      // ── L key actions: groundpound (air) → style special (ground) ──
       const SPECIAL_ENERGY_COST = 25;
       if (!didSpecial && g.keyJustPressed.has("l") && p.attackCooldown <= 0 && p.state !== "dead") {
-        // 🌀 SHURIKEN THROW (highest priority if equipped)
-        if (g.weaponType === "shuriken" && g.shurikenAmmo > 0 && p.y >= GROUND_Y - 5) {
-          g.shurikenAmmo--;
-          p.state = "punch";
-          p.stateTimer = 12;
-          p.attackCooldown = 14;
-          g.projectiles.push({
-            x: p.x + p.facing * 30,
-            y: p.y - 40,
-            vx: p.facing * 14,
-            vy: 0,
-            timer: 90,
-            isPlayerProjectile: true,
-            damage: Math.round(18 * fightStyle.damage),
-          });
-          sfx(() => SFX.shurikenThrow?.());
-          triggerShake(2, 4);
-          g.effects.push({ x: p.x, y: p.y - 60, timer: 20, text: "✦", color: "#7fb6e0", size: 14 });
-          if (g.shurikenAmmo <= 0) { g.weaponType = null; g.weaponTimer = 0; }
-          didSpecial = true;
-        }
         // 💥 AIR: GROUNDPOUND
-        else if (p.y < GROUND_Y && c.specialEnergy >= SPECIAL_ATTACKS.groundpound.energyCost) {
+        if (p.y < GROUND_Y && c.specialEnergy >= SPECIAL_ATTACKS.groundpound.energyCost) {
           p.state = "groundpound";
           p.stateTimer = SPECIAL_ATTACKS.groundpound.frames;
           p.attackCooldown = SPECIAL_ATTACKS.groundpound.frames + 5;
@@ -3705,7 +3668,7 @@ export const StreetBrawler: FC = () => {
           g.attackActive = true;
           g.attackActiveFrames = activeFrames;
           p.state = "punch"; p.stateTimer = totalFrames; p.attackCooldown = totalFrames + 2;
-          sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.punch());
+          sfx(() => SFX.punch());
           if (import.meta.env.DEV) {
             console.log("[Brawler] STYLE:", g.style);
             console.log("[Brawler] INPUT: light");
@@ -3724,7 +3687,7 @@ export const StreetBrawler: FC = () => {
           g.attackActive = true;
           g.attackActiveFrames = activeFrames;
           p.state = "kick"; p.stateTimer = totalFrames; p.attackCooldown = totalFrames + 2;
-          sfx(() => g.weaponType ? (g.weaponType === "sword" ? SFX.swordSlash() : SFX.batSwing()) : SFX.kick());
+          sfx(() => SFX.kick());
           if (import.meta.env.DEV) {
             console.log("[Brawler] STYLE:", g.style);
             console.log("[Brawler] INPUT: heavy");
@@ -3747,12 +3710,18 @@ export const StreetBrawler: FC = () => {
         if (aLeft !== aRight) p.facing = aRight ? 1 : -1;
       }
 
-      // (Shuriken throw consolidated into the L-key block above)
 
 
       g.keyJustPressed.clear();
 
       // Player physics (with jump-through platforms)
+      // Waldoge runs through the SAME safety layer as every enemy/boss: any
+      // NaN/Infinity in position, velocity or timers is repaired, and an
+      // action state whose exit frame was missed is released. Without this the
+      // player could latch into an attack pose or a non-finite position, and a
+      // non-finite p.x poisons the camera (see the camX guard below), which
+      // makes every sprite draw at NaN — i.e. the whole arena "disappears".
+      sanitizeFighterMotion(p as MovingEnemy, GROUND_Y);
       const pAny = p as Entity & { onPlatform?: Platform | null };
       const prevFootY = p.y;
       p.vy += GRAVITY;
@@ -3779,10 +3748,13 @@ export const StreetBrawler: FC = () => {
           }
         }
       }
-      p.x = Math.max(20, Math.min(LEVEL_WIDTH - 20, p.x));
       p.x += p.vx || 0;
       if (p.state === "dashpunch" && p.stateTimer > 5) p.x += p.facing * 6; // dash forward
       p.vx = (p.vx || 0) * 0.85;
+      // Clamp AFTER integration: knockback and dashes are applied above, so
+      // clamping first let a single heavy hit push Waldoge outside the arena.
+      clampFighterToWorld(p as MovingEnemy, LEVEL_WIDTH);
+      p.x = Math.max(20, Math.min(LEVEL_WIDTH - 20, p.x));
       // Walk off platform edge — start falling on next frame.
       if (pAny.onPlatform) {
         const plat = pAny.onPlatform;
@@ -3841,9 +3813,9 @@ export const StreetBrawler: FC = () => {
           }
         } else {
         const baseRange = spec ? spec.range : (move ? move.range : (p.state === "punch" ? 45 : 55));
-        const range = baseRange + (g.weaponType ? WEAPON_STATS[g.weaponType].rangeBonus : 0);
+        const range = baseRange;
         const baseDmg = spec ? spec.dmg : (move ? move.damage : (p.state === "punch" ? 12 : 18));
-        const dmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
+        const dmgMult = g.dmgBoostTimer > 0 ? 1.5 : 1;
         const kb = spec ? spec.knockback : (move ? move.knockback : (p.state === "punch" ? 5 : 6));
         let dmg = Math.round(baseDmg * c.multiplier * dmgMult * fightStyle.damage);
         // Green Candle rage: bonus damage scales with combo hit count (cap +50%)
@@ -3954,18 +3926,6 @@ export const StreetBrawler: FC = () => {
                 }
                 g.powerups.push({ x: e.x, y: e.y - 30, vy: -3, type: pType, timer: 600 });
               }
-              // Drop weapon (separate from power-ups)
-              if (Math.random() < WEAPON_DROP_CHANCE) {
-                const wTypes: WeaponType[] = ["bat", "sword", "shuriken"];
-                const wWeights = [0.4, 0.3, 0.3];
-                let wr = Math.random();
-                let wType: WeaponType = "bat";
-                for (let wi = 0; wi < wTypes.length; wi++) {
-                  wr -= wWeights[wi];
-                  if (wr <= 0) { wType = wTypes[wi]; break; }
-                }
-                g.weapons.push({ x: e.x + 20, y: e.y - 40, vy: -4, type: wType, collected: false, timer: 600 });
-              }
             }
           }
         }
@@ -3984,9 +3944,9 @@ export const StreetBrawler: FC = () => {
       if (hitFrame) {
         const spec = SPECIAL_ATTACKS[p.state];
         const baseRange = spec ? spec.range : (p.state === "punch" ? 45 : 55);
-        const objRange = baseRange + (g.weaponType ? WEAPON_STATS[g.weaponType].rangeBonus : 0);
+        const objRange = baseRange;
         const baseDmg = spec ? spec.dmg : (p.state === "punch" ? 12 : 18);
-        const objDmgMult = (g.dmgBoostTimer > 0 ? 1.5 : 1) * (g.weaponType ? WEAPON_STATS[g.weaponType].dmgMult : 1);
+        const objDmgMult = g.dmgBoostTimer > 0 ? 1.5 : 1;
         const objDmg = Math.round(baseDmg * objDmgMult);
 
         for (const obj of g.alleyObjects) {
@@ -4358,40 +4318,7 @@ export const StreetBrawler: FC = () => {
         stepProjectile(proj);
         if (proj.y >= GROUND_Y) return false;
 
-        if (proj.isPlayerProjectile) {
-          // Player shuriken hits enemies
-          for (const e of g.enemies) {
-            if (e.state === "dead") continue;
-            const edx = Math.abs(e.x - proj.x);
-            const edy = Math.abs(e.y - proj.y);
-            if (edx < 40 && edy <= 50) {
-              const shurikenDmg = proj.damage ?? 20;
-              e.hp -= shurikenDmg;
-              e.state = "hit";
-              e.stateTimer = 8;
-              e.vx = (proj.vx > 0 ? 1 : -1) * 4;
-              sfx(() => SFX.hit());
-              c.hitCount++;
-              c.hitTimer = COMBO_HIT_WINDOW;
-              c.multiplier = 1 + Math.min(c.hitCount * 0.15, 2);
-              c.specialEnergy = Math.min(MAX_ENERGY, c.specialEnergy + 3);
-              setEnergy(c.specialEnergy);
-              setComboCount(c.hitCount);
-              g.effects.push({ x: e.x, y: e.y - 50, timer: 20, text: `${shurikenDmg}`, color: "#7fb6e0", size: 14 });
-              g.effects.push({ x: proj.x, y: proj.y, timer: 12, text: "✦", color: "#ff66ff", size: 16 });
-              if (e.hp <= 0) {
-                e.state = "dead";
-                e.stateTimer = 60;
-                sfx(() => SFX.enemyDeath());
-                const killBonus = Math.round(100 * c.multiplier);
-                g.score += killBonus;
-                setScore(g.score);
-                g.effects.push({ x: e.x, y: e.y - 70, timer: 35, text: `+${killBonus}`, color: "#00ff00", size: 16 });
-              }
-              return false;
-            }
-          }
-        } else {
+        {
           // Boss projectile hits player
           const dx = Math.abs(p.x - proj.x);
           const dy = Math.abs(p.y - proj.y);
@@ -4469,32 +4396,6 @@ export const StreetBrawler: FC = () => {
           return false;
         }
         return pu.timer > 0;
-      });
-
-      // Weapon pickup collection & weapon timer
-      g.weaponTimer = Math.max(0, g.weaponTimer - 1);
-      if (g.weaponTimer === 0 && g.weaponType) { g.weaponType = null; g.shurikenAmmo = 0; }
-
-      g.weapons = g.weapons.filter(wp => {
-        if (wp.collected) return false;
-        // Physics for dropped weapons
-        wp.vy += 0.3;
-        wp.y += wp.vy;
-        if (wp.y >= GROUND_Y) { wp.y = GROUND_Y; wp.vy = 0; }
-        wp.timer--;
-        // Check player pickup
-        const dx = Math.abs(p.x - wp.x);
-        const dy = Math.abs(p.y - wp.y);
-        if (dx < 35 && dy < 40 && p.state !== "dead") {
-          const ws = WEAPON_STATS[wp.type];
-          g.weaponType = wp.type;
-          g.weaponTimer = ws.duration;
-          if (wp.type === "shuriken") g.shurikenAmmo = SHURIKEN_AMMO;
-          sfx(() => SFX.weaponPickup());
-          g.effects.push({ x: wp.x, y: wp.y - 30, timer: 40, text: `${ws.icon} ${ws.name} EQUIPPED!`, color: ws.color, size: 16 });
-          return false;
-        }
-        return wp.timer > 0;
       });
 
       if (g.speedBoostTimer > 0) {
@@ -4687,6 +4588,11 @@ export const StreetBrawler: FC = () => {
         lerpSpeed = Math.min(maxLerp, baseLerp + dist * 0.0008);
         g.camX += (targetCam - g.camX) * lerpSpeed;
       }
+      // Math.max/min propagate NaN, so a single bad frame would otherwise
+      // leave camX permanently NaN and every sprite would draw off-canvas.
+      g.camAnchor = finite(g.camAnchor, 0.25);
+      g.camLookAhead = finite(g.camLookAhead, 0);
+      g.camX = finite(g.camX, Math.max(0, p.x - CANVAS_W / 2));
       g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
 
       // Camera shake (decays each frame, applied as render offset only)
@@ -4968,31 +4874,6 @@ export const StreetBrawler: FC = () => {
         ctx.restore();
       }
 
-      // Draw weapon pickups on ground
-      for (const wp of g.weapons) {
-        if (wp.collected) continue;
-        const wx = wp.x - g.camX;
-        if (wx < -40 || wx > CANVAS_W + 40) continue;
-        const wy = wp.y;
-        const bob = Math.sin(Date.now() / 300) * 2;
-        const ws = WEAPON_STATS[wp.type];
-        // Despawn flash
-        if (wp.timer < 120 && Math.floor(wp.timer / 10) % 2 === 0) {
-          ctx.globalAlpha = 0.4;
-        }
-        // Glow
-        ctx.beginPath();
-        ctx.arc(wx, wy - 12 + bob, 16, 0, Math.PI * 2);
-        const wGlow = ctx.createRadialGradient(wx, wy - 12 + bob, 3, wx, wy - 12 + bob, 16);
-        wGlow.addColorStop(0, ws.color + "88");
-        wGlow.addColorStop(1, ws.color + "00");
-        ctx.fillStyle = wGlow;
-        ctx.fill();
-        // Draw weapon shape — shared Waldoge-blueprint art.
-        drawWeaponPickupArt(ctx, wp.type, wx, wy - 12 + bob);
-        ctx.globalAlpha = 1;
-      }
-
       // Boost indicators
       let boostY = 60;
       if (g.speedBoostTimer > 0) {
@@ -5009,14 +4890,6 @@ export const StreetBrawler: FC = () => {
         ctx.fillText(`💥 DMG x1.5 ${Math.ceil(g.dmgBoostTimer / 60)}s`, 20, boostY);
         boostY += 14;
       }
-      if (g.weaponType) {
-        const ws = WEAPON_STATS[g.weaponType];
-        ctx.font = "bold 11px monospace";
-        ctx.fillStyle = ws.color;
-        ctx.textAlign = "left";
-        const ammoText = g.weaponType === "shuriken" ? ` x${g.shurikenAmmo}` : "";
-        ctx.fillText(`${ws.icon} ${ws.name} ${Math.ceil(g.weaponTimer / 60)}s${ammoText}`, 20, boostY);
-      }
 
       for (const e of g.enemies) {
         if (e.state === "dead" && e.stateTimer <= 0) continue;
@@ -5031,10 +4904,7 @@ export const StreetBrawler: FC = () => {
       for (const proj of g.projectiles) {
         const px = proj.x - g.camX;
         const py = proj.y;
-        if (proj.isPlayerProjectile) {
-          // Spinning shuriken — same art as the held/pickup weapon.
-          drawShurikenProjectile(ctx, px, py, Math.sign(proj.vx) || 1);
-        } else if (proj.tracer && drawTickerTakerShot(ctx, px, py, proj.vx)) {
+        if (proj.tracer && drawTickerTakerShot(ctx, px, py, proj.vx)) {
           // Tommy-gun tracer round — same projectile physics as every boss.
         } else if (proj.leaflet && drawMarketerLeaflet(ctx, px, py, proj.vx)) {
           // BOOST / TRENDING marketing leaflet — drawn from the boss atlas.
@@ -5167,7 +5037,7 @@ export const StreetBrawler: FC = () => {
 
       // Presentation only — combat state (p.state / p.stateTimer / p.facing)
       // is produced by the gameplay loop above and merely read here.
-      drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.weaponType, g.style, !!g.specialFx);
+      drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.style, !!g.specialFx);
 
       // Heal flash: expanding green ring + glow around player when fully healed at level start
       if (g.healFlash > 0) {
