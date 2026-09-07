@@ -184,6 +184,29 @@ function weaponInHand(
   ctx.restore();
 }
 
+/**
+ * The punch-recovery cell in the atlas contains a stray, detached glove behind
+ * the body (a leftover from the source artwork). Drawing it makes the fist look
+ * like it snaps backwards mid-punch, so that band of the cell is skipped: the
+ * frame is drawn as three slices that cover everything except the stray blob.
+ * Slices are [x, y, w, h] in frame-local pixels.
+ */
+const FRAME_SLICES = new Map<Frame, Array<[number, number, number, number]>>([
+  [F.punch2, [[0, 0, 129, 48], [28, 48, 101, 34], [0, 82, 129, 70]]],
+]);
+
+function drawFrame(ctx: CanvasRenderingContext2D, src: CanvasImageSource, f: Frame) {
+  const slices = FRAME_SLICES.get(f);
+  if (!slices) {
+    ctx.drawImage(src, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h);
+    return;
+  }
+  for (const [bx, by, bw, bh] of slices) {
+    ctx.drawImage(src, f.x + bx, f.y + by, bw, bh, -f.ax + bx, -f.ay + by, bw, bh);
+  }
+}
+
+
 export function drawWaldogeSprite(
   ctx: CanvasRenderingContext2D,
   e: FighterView,
@@ -253,7 +276,8 @@ export function drawWaldogeSprite(
   if (e.state === "dead") ctx.globalAlpha = 0.85;
 
   ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(src, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h);
+  drawFrame(ctx, src, f);
+
 
   // Weapon rides the lead glove.
   weaponInHand(ctx, f.w * 0.32, -f.h * 0.52, 1, weaponType);
