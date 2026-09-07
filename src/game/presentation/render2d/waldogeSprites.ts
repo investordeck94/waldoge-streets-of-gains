@@ -299,8 +299,24 @@ export function drawWaldogeSprite(
   drawFrame(ctx, src, f);
 
 
-  // Weapon rides the lead glove.
-  weaponInHand(ctx, f.w * 0.32, -f.h * 0.52, 1, weaponType);
+  // ── Weapon rides the lead hand of the CURRENT frame ────────────────────
+  // The anchor comes from the frame itself, so the weapon follows the arm
+  // through every pose, mirrors with the body and scales with the sprite.
+  if (weaponType) {
+    const hand = (picked.ext ? PUNCH_EXT_HAND : HAND.get(f)) ?? DEFAULT_HAND;
+    // A thrown shuriken leaves the hand the instant the throw state starts —
+    // it becomes the projectile the gameplay layer already spawned. Only the
+    // brief wind-up still shows it in hand, so release reads clearly.
+    const thrown = weaponType === "shuriken" && e.state === "punch" && prog(e, 12) >= 0.2;
+    if (!thrown) {
+      ctx.save();
+      ctx.translate(hand.x, hand.y);
+      ctx.rotate(hand.r);
+      drawWeaponArt(ctx, weaponType, weaponType === "shuriken" ? 0.72 : 1.05);
+      ctx.restore();
+    }
+  }
+
 
   ctx.restore();
 }
