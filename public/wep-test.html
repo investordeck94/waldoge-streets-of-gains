@@ -6,7 +6,7 @@ import { drawWeaponPickupArt, drawShurikenProjectile } from '/src/game/presentat
 const ctx = document.getElementById('c').getContext('2d');
 const states=['idle','walk','punch','kick','uppercut','jump','hit'];
 const weapons=['bat','sword','shuriken'];
-const probe=new Image();probe.onload=()=>console.log('ATLAS OK',probe.naturalWidth);probe.onerror=()=>console.log('ATLAS FAIL');
+const probe=new Image();probe.onload=()=>{console.log('ATLAS OK',probe.naturalWidth);ctx.drawImage(probe,0,0,269,220,900,470,269,220);};probe.onerror=()=>console.log('ATLAS FAIL');
 probe.src='/__l5e/assets-v1/e62275d8-519a-4abf-a558-15712cb43bf4/waldoge-atlas.png';
 setTimeout(()=>{
  ctx.clearRect(0,0,1200,760);
