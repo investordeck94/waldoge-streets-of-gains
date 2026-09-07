@@ -50,6 +50,12 @@ const F: Record<string, Frame> = {
   dead0: { x: 1076, y: 880, w: 269, h: 94, ax: 128, ay: 94 },
 };
 
+/**
+ * The atlas cell for the fully extended jab is clipped at the cell border, so
+ * the lead glove is sliced off the arm. This standalone frame replaces it.
+ */
+const PUNCH_EXT: Frame = { x: 0, y: 0, w: 156, h: 165, ax: 63, ay: 165 };
+
 /** Reference height of the idle pose — every frame scales against this. */
 const REF_H = 171;
 /** Visual size relative to the collision box (art is deliberately larger). */
@@ -57,6 +63,8 @@ const SIZE = 1.95;
 
 let atlas: HTMLImageElement | null = null;
 let atlasReady = false;
+let punchExt: HTMLImageElement | null = null;
+let punchExtReady = false;
 
 function getAtlas(): HTMLImageElement | null {
   if (typeof Image === "undefined") return null;
@@ -68,8 +76,19 @@ function getAtlas(): HTMLImageElement | null {
   return atlasReady && atlas.complete && atlas.naturalWidth > 0 ? atlas : null;
 }
 
+function getPunchExt(): HTMLImageElement | null {
+  if (typeof Image === "undefined") return null;
+  if (!punchExt) {
+    punchExt = new Image();
+    punchExt.onload = () => { punchExtReady = true; };
+    punchExt.src = punchExtAsset.url;
+  }
+  return punchExtReady && punchExt.complete && punchExt.naturalWidth > 0 ? punchExt : null;
+}
+
 /** Kick off the download early (called once from the game bootstrap). */
-export function preloadWaldogeSprites() { getAtlas(); }
+export function preloadWaldogeSprites() { getAtlas(); getPunchExt(); }
+
 
 function styleTint(style: StyleName): string {
   return style === "rush" ? "#00ccff"
