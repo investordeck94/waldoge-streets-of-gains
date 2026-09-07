@@ -1,8 +1,9 @@
 <!doctype html><html><body style="margin:0;background:#20242e">
 <canvas id="c" width="1200" height="760"></canvas>
 <script type="module">
-const { drawWaldogeSprite } = await import('/src/game/presentation/render2d/waldogeSprites.ts?v='+Date.now());
+const { drawWaldogeSprite, preloadWaldogeSprites } = await import('/src/game/presentation/render2d/waldogeSprites.ts?v='+Date.now());
 const { drawWeaponPickupArt, drawShurikenProjectile } = await import('/src/game/presentation/render2d/weaponArt.ts?v='+Date.now());
+preloadWaldogeSprites();
 const ctx = document.getElementById('c').getContext('2d');
 const states=['idle','walk','punch','kick','uppercut','jump','hit'];
 const weapons=['bat','sword','shuriken'];
