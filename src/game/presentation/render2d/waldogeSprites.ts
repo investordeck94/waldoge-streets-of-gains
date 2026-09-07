@@ -194,7 +194,7 @@ const HAND = new Map<Frame, Hand>([
   [F.groundpound0, { x: 26, y: -136, r: 2.4 }],
   [F.groundpound1, { x: 14, y: -76, r: 1.1 }],
   [F.stylespecial0, { x: 56, y: -112, r: -1.4 }],
-  [F.hit0, { x: 26, y: -104, r: 0.9 }],
+  [F.hit0, { x: 16, y: -106, r: 0.45 }],
   [F.jump0, { x: 46, y: -138, r: 0.3 }],
   [F.dead0, { x: 20, y: -24, r: 1.55 }],
 ]);
