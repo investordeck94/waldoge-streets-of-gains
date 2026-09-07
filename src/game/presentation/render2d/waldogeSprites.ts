@@ -253,7 +253,8 @@ export function drawWaldogeSprite(
   if (e.state === "dead") ctx.globalAlpha = 0.85;
 
   ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(src, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h);
+  drawFrame(ctx, src, f);
+
 
   // Weapon rides the lead glove.
   weaponInHand(ctx, f.w * 0.32, -f.h * 0.52, 1, weaponType);
