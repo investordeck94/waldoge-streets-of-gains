@@ -3800,16 +3800,51 @@ export const StreetBrawler: FC = () => {
       // non-finite p.x poisons the camera (see the camX guard below), which
       // makes every sprite draw at NaN — i.e. the whole arena "disappears".
       sanitizeFighterMotion(p as MovingEnemy, GROUND_Y);
-      const pAny = p as Entity & { onPlatform?: Platform | null };
+      const pAny = p as Entity & { onPlatform?: Platform | null } & Climber;
+      const levelWidth = getLevelWidth(g.level);
       const prevFootY = p.y;
+
+      // ---- LADDER CLIMBING (player) -------------------------------------
+      // A climbing fighter is exempt from gravity for the frame; everything
+      // else about combat is untouched. Reaching either end auto-dismounts.
+      let climbedThisFrame = false;
+      if (hasVerticalTraversal(g.level) && p.state !== "dead") {
+        const upHeld = g.keys.has("w") || g.keys.has("arrowup");
+        const downHeld = g.keys.has("s") || g.keys.has("arrowdown");
+        const feetY = groundYAt(g.level, p.x);
+        const grounded = p.y >= feetY - 1 && !pAny.onPlatform;
+        if (pAny.climbing) {
+          const lad = ladderAt(g.level, p.x) ?? nearestLadder(g.level, p.x);
+          if (lad) {
+            const dir: -1 | 0 | 1 = upHeld ? -1 : downHeld ? 1 : 0;
+            const still = stepClimb(pAny, lad, dir);
+            if (p.state !== "hit") p.state = "jump";
+            climbedThisFrame = still;
+            if (!still) p.y = Math.min(Math.max(p.y, lad.top), lad.bottom);
+          } else {
+            dismountLadder(pAny);
+          }
+        } else if (grounded) {
+          const lad = ladderAt(g.level, p.x);
+          if (lad) {
+            if (downHeld && p.y <= lad.top + 2) { mountLadder(pAny, lad); p.y = lad.top + 2; climbedThisFrame = true; }
+            else if (upHeld && p.y >= lad.bottom - 2) { mountLadder(pAny, lad); p.y = lad.bottom - 2; climbedThisFrame = true; }
+          }
+        }
+      } else if (pAny.climbing) {
+        dismountLadder(pAny);
+      }
+
+      if (!climbedThisFrame) {
       p.vy += GRAVITY;
       p.y += p.vy;
-      // Ground collision (unchanged)
-      if (p.y >= GROUND_Y) {
+      // Ground collision — level-aware (main street or lower street floor)
+      const footGroundY = groundYAt(g.level, p.x);
+      if (p.y >= footGroundY) {
         if (p.state === "groundpound" && p.vy > 5) {
-          g.effects.push({ x: p.x, y: GROUND_Y, timer: 15, text: "💥", color: "#ff6600", size: 24 });
+          g.effects.push({ x: p.x, y: footGroundY, timer: 15, text: "💥", color: "#ff6600", size: 24 });
         }
-        p.y = GROUND_Y;
+        p.y = footGroundY;
         p.vy = 0;
         pAny.onPlatform = null;
       } else if (p.vy >= 0 && p.state !== "groundpound") {
@@ -3829,10 +3864,13 @@ export const StreetBrawler: FC = () => {
       p.x += p.vx || 0;
       if (p.state === "dashpunch" && p.stateTimer > 5) p.x += p.facing * 6; // dash forward
       p.vx = (p.vx || 0) * 0.85;
+      }
       // Clamp AFTER integration: knockback and dashes are applied above, so
       // clamping first let a single heavy hit push Waldoge outside the arena.
-      clampFighterToWorld(p as MovingEnemy, LEVEL_WIDTH);
-      p.x = Math.max(20, Math.min(LEVEL_WIDTH - 20, p.x));
+      clampFighterToWorld(p as MovingEnemy, levelWidth);
+      p.x = Math.max(20, Math.min(levelWidth - 20, p.x));
+      // Never walk sideways through a lower-street wall.
+      p.x = clampToPitWalls(g.level, p.x, p.y, 16);
       // Walk off platform edge — start falling on next frame.
       if (pAny.onPlatform) {
         const plat = pAny.onPlatform;
@@ -3861,7 +3899,7 @@ export const StreetBrawler: FC = () => {
         (p.state === "uppercut" && p.stateTimer === 12) ||
         (p.state === "spinkick" && (p.stateTimer === 14 || p.stateTimer === 8)) ||
         (p.state === "dashpunch" && p.stateTimer === 8) ||
-        (p.state === "groundpound" && p.y >= GROUND_Y - 5 && p.stateTimer > 5)
+        (p.state === "groundpound" && p.y >= groundYAt(g.level, p.x) - 5 && p.stateTimer > 5)
       );
       // Data-driven J/K/L basics: percentage-based active window from attackCooldown.
       // Window opens at ~50% through the animation and lasts a few frames; hitApplied
