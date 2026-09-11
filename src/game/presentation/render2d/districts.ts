@@ -17,7 +17,7 @@
  * All branding is fictional and original.
  */
 
-import { CANVAS_H, GROUND_Y } from "@/game/config";
+import { GROUND_Y } from "@/game/config";
 import { getLevelWidth } from "@/game/config/world";
 import { flicker, renderNow } from "./clock";
 
@@ -603,7 +603,6 @@ function drawRooftopProp(ctx: CanvasRenderingContext2D, f: Storefront, sx: numbe
   ctx.save();
   switch (f.rooftop) {
     case "burger": {
-      ctx.fillStyle = "#e2a martial"; // overwritten below (kept simple)
       ctx.fillStyle = "#e0a860";
       ctx.beginPath(); ctx.ellipse(cx, y - 6, 48, 22, 0, Math.PI, 0); ctx.fill();
       ctx.fillStyle = "#4a8c3f"; ctx.fillRect(cx - 46, y - 6, 92, 7);
@@ -749,4 +748,4 @@ export function sectionLabelAt(level: number, x: number): string | null {
   return label;
 }
 
-export const __test = { buildJeetDistrict, buildRuggerDistrict, CANVAS_H };
+export const __test = { buildJeetDistrict, buildRuggerDistrict };
