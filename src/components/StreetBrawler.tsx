@@ -110,6 +110,15 @@ import {
   type MovingEnemy,
 } from "@/game/enemy/movement";
 import { setRenderClock, renderNow } from "@/game/presentation/render2d/clock";
+// --- New world / environment system (per-level size, pits, ladders) ---
+import {
+  getLevelWidth, groundYAt, clampToPitWalls, hasVerticalTraversal,
+  ladderAt, nearestLadder, encounterX, bossArenaX, BOSS_WAKE_DISTANCE,
+  PIT_DEPTH, LADDER_GRAB_X,
+} from "@/game/config/world";
+import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/districts";
+import { drawPits, drawLadders } from "@/game/presentation/render2d/terrain";
+import { mount as mountLadder, stepClimb, dismount as dismountLadder, climbDirectionFor, type Climber } from "@/game/world/climb";
 import { selectBossMove, getMoveById, rollChain, type MartialForm } from "@/game/enemy/bossMoves";
 import {
   computeBossBias, getBossProfile, bossCooldownFrames, chainChanceFor,
@@ -191,8 +200,8 @@ import type {
 // preserves the original signature so every call site continues to work
 // unchanged. The returned entity is byte-identical to the previous inline
 // literal (same clamp, same hitbox, same starting phase / cooldown).
-function spawnBoss(playerX: number, levelIndex: number): Entity {
-  return spawnBossModule(playerX, levelIndex);
+function spawnBoss(playerX: number, levelIndex: number, levelWidth?: number): Entity {
+  return spawnBossModule(playerX, levelIndex, levelWidth);
 }
 
 function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
@@ -1544,6 +1553,10 @@ interface Platform {
 // horizontal gaps ≤ ~70px so each platform is reachable with a normal jump.
 // Corridor segments abut (gap = 0) to form one continuous upper walkway.
 function spawnPlatforms(level: number): Platform[] {
+  // Redesigned district levels (1 & 2) use the new world system instead of the
+  // stickman-era trestle corridor: Level 1 is a flat traversal street and
+  // Level 2's verticality comes from lower streets + ladders (see world.ts).
+  if (level === 0 || level === 1) return [];
   // All levels share the wooden-plank-on-steel-trestle look from the reference;
   // mall uses a stair/balcony variant. Level-specific decorations (lamps,
   // crates, potted plants) are drawn on TOP of corridor platforms later.
@@ -1606,6 +1619,19 @@ function spawnPlatformPickups(platforms: Platform[], diff: "easy" | "normal" | "
       type: types[i % types.length],
       timer: 100000,
     });
+  }
+  return out;
+}
+
+/** Ground-level pickups spread along a long district street. */
+function spawnStreetPickups(level: number, diff: "easy" | "normal" | "blackMonday" = "normal"): PowerUp[] {
+  const width = getLevelWidth(level);
+  const count = diff === "easy" ? 7 : diff === "normal" ? 5 : 3;
+  const types: PowerUp["type"][] = ["health", "energy", "speed", "health", "damage", "energy", "health"];
+  const out: PowerUp[] = [];
+  for (let i = 0; i < count; i++) {
+    const x = Math.round(width * ((i + 1) / (count + 1)));
+    out.push({ x, y: groundYAt(level, x) - 2, vy: 0, type: types[i % types.length], timer: 100000 });
   }
   return out;
 }
@@ -3142,6 +3168,7 @@ export const StreetBrawler: FC = () => {
     keys: Set<string>;
     keyJustPressed: Set<string>;
     camX: number;
+    camY: number;
     wave: number;
     level: number;
     score: number;
@@ -3225,6 +3252,7 @@ export const StreetBrawler: FC = () => {
     vxHistory: [],
     camShake: { x: 0, y: 0, magnitude: 0, timer: 0, duration: 0 },
     hitPause: 0,
+    camY: 0,
     debugCam: { anchor: 0.5, lerp: 0, playerScreenX: 0, offset: 0, deadzone: 0, lookAhead: 0, vx: 0 },
   });
 
@@ -3259,7 +3287,14 @@ export const StreetBrawler: FC = () => {
     g.wave = Number(new URLSearchParams(location.search).get("wv")) || 0;
     g.score = 0;
     g.camX = 0;
-    g.enemies = g.wave >= LEVELS[g.level].waves.length ? [spawnBoss(200, g.level)] : spawnEnemies(g.level, g.wave, 200, diff);
+    g.camY = 0;
+    {
+      const arena0 = bossArenaX(g.level);
+      const enc0 = encounterX(g.level, g.wave);
+      g.enemies = g.wave >= LEVELS[g.level].waves.length
+        ? [spawnBoss(arena0 === null ? 200 : Math.max(200, arena0 - 500), g.level, getLevelWidth(g.level))]
+        : spawnEnemies(g.level, g.wave, enc0 === null ? 200 : Math.max(200, enc0 - 400), diff);
+    }
     g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
     g.effects = [];
     g.powerups = [];
@@ -3282,7 +3317,9 @@ export const StreetBrawler: FC = () => {
     setStyleName("brawler");
     g.alleyObjects = spawnAlleyObjects();
     g.platforms = spawnPlatforms(g.level);
-    g.powerups = spawnPlatformPickups(g.platforms, diff);
+    g.powerups = g.platforms.length
+      ? spawnPlatformPickups(g.platforms, diff)
+      : spawnStreetPickups(g.level, diff);
     g.animFrameCount = 0;
     // Initialize rain
     g.rain = [];
@@ -3448,12 +3485,12 @@ export const StreetBrawler: FC = () => {
         try {
           const pl = g.player;
           sanitizeFighterMotion(pl as MovingEnemy, GROUND_Y);
-          clampFighterToWorld(pl as MovingEnemy, LEVEL_WIDTH);
+          clampFighterToWorld(pl as MovingEnemy, getLevelWidth(g.level));
           g.camX = finite(g.camX, Math.max(0, pl.x - CANVAS_W / 2));
           g.hitPause = 0;
           for (const e of g.enemies) {
             sanitizeEnemyMotion(e as MovingEnemy, GROUND_Y);
-            clampEnemyToWorld(e as MovingEnemy, LEVEL_WIDTH);
+            clampEnemyToWorld(e as MovingEnemy, getLevelWidth(g.level));
           }
           g.projectiles = g.projectiles.filter(
             pr => Number.isFinite(pr.x) && Number.isFinite(pr.y),
@@ -3685,7 +3722,17 @@ export const StreetBrawler: FC = () => {
         const rightHeld = g.keys.has("d") || g.keys.has("arrowright");
         const dir = (rightHeld ? 1 : 0) - (leftHeld ? 1 : 0);
         if (dir !== 0) { p.x += dir * speed; p.facing = dir as 1 | -1; moving = true; }
-        if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && (p.y >= GROUND_Y || (p as Entity & { onPlatform?: Platform | null }).onPlatform)) { p.vy = JUMP_FORCE; (p as Entity & { onPlatform?: Platform | null }).onPlatform = null; }
+        {
+          const pClimbing = (p as unknown as Climber).climbing === true;
+          const feetY = groundYAt(g.level, p.x);
+          const canJump = !pClimbing && (p.y >= feetY || (p as Entity & { onPlatform?: Platform | null }).onPlatform);
+          // Pressing UP at the bottom of a ladder climbs instead of jumping.
+          const wantsLadderUp = !pClimbing && p.y >= feetY && feetY > GROUND_Y && ladderAt(g.level, p.x) !== null;
+          if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && canJump && !wantsLadderUp) {
+            p.vy = JUMP_FORCE;
+            (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
+          }
+        }
 
         // Reset light-chain index after CHAIN_RESET_MS of inactivity
         const chainResetFrames = msToFrames(CHAIN_RESET_MS);
@@ -3738,7 +3785,7 @@ export const StreetBrawler: FC = () => {
         } else if (p.stateTimer <= 0) {
           // NOTE: don't null currentMove here — it's cleared after damage applies
           // (or when a new attack overwrites it). Nulling here can race the hit-frame check.
-          p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
+          p.state = moving ? "walk" : p.y < groundYAt(g.level, p.x) ? "jump" : "idle";
         }
       } else if (p.state !== "hit" && p.state !== "dead" && !isAttacking && didSpecial) {
         // Special move was triggered, movement already handled by the special
@@ -3762,16 +3809,51 @@ export const StreetBrawler: FC = () => {
       // non-finite p.x poisons the camera (see the camX guard below), which
       // makes every sprite draw at NaN — i.e. the whole arena "disappears".
       sanitizeFighterMotion(p as MovingEnemy, GROUND_Y);
-      const pAny = p as Entity & { onPlatform?: Platform | null };
+      const pAny = p as Entity & { onPlatform?: Platform | null } & Climber;
+      const levelWidth = getLevelWidth(g.level);
       const prevFootY = p.y;
+
+      // ---- LADDER CLIMBING (player) -------------------------------------
+      // A climbing fighter is exempt from gravity for the frame; everything
+      // else about combat is untouched. Reaching either end auto-dismounts.
+      let climbedThisFrame = false;
+      if (hasVerticalTraversal(g.level) && p.state !== "dead") {
+        const upHeld = g.keys.has("w") || g.keys.has("arrowup");
+        const downHeld = g.keys.has("s") || g.keys.has("arrowdown");
+        const feetY = groundYAt(g.level, p.x);
+        const grounded = p.y >= feetY - 1 && !pAny.onPlatform;
+        if (pAny.climbing) {
+          const lad = ladderAt(g.level, p.x) ?? nearestLadder(g.level, p.x);
+          if (lad) {
+            const dir: -1 | 0 | 1 = upHeld ? -1 : downHeld ? 1 : 0;
+            const still = stepClimb(pAny, lad, dir);
+            if (p.state !== "hit") p.state = "jump";
+            climbedThisFrame = still;
+            if (!still) p.y = Math.min(Math.max(p.y, lad.top), lad.bottom);
+          } else {
+            dismountLadder(pAny);
+          }
+        } else if (grounded) {
+          const lad = ladderAt(g.level, p.x);
+          if (lad) {
+            if (downHeld && p.y <= lad.top + 2) { mountLadder(pAny, lad); p.y = lad.top + 2; climbedThisFrame = true; }
+            else if (upHeld && p.y >= lad.bottom - 2) { mountLadder(pAny, lad); p.y = lad.bottom - 2; climbedThisFrame = true; }
+          }
+        }
+      } else if (pAny.climbing) {
+        dismountLadder(pAny);
+      }
+
+      if (!climbedThisFrame) {
       p.vy += GRAVITY;
       p.y += p.vy;
-      // Ground collision (unchanged)
-      if (p.y >= GROUND_Y) {
+      // Ground collision — level-aware (main street or lower street floor)
+      const footGroundY = groundYAt(g.level, p.x);
+      if (p.y >= footGroundY) {
         if (p.state === "groundpound" && p.vy > 5) {
-          g.effects.push({ x: p.x, y: GROUND_Y, timer: 15, text: "💥", color: "#ff6600", size: 24 });
+          g.effects.push({ x: p.x, y: footGroundY, timer: 15, text: "💥", color: "#ff6600", size: 24 });
         }
-        p.y = GROUND_Y;
+        p.y = footGroundY;
         p.vy = 0;
         pAny.onPlatform = null;
       } else if (p.vy >= 0 && p.state !== "groundpound") {
@@ -3791,10 +3873,13 @@ export const StreetBrawler: FC = () => {
       p.x += p.vx || 0;
       if (p.state === "dashpunch" && p.stateTimer > 5) p.x += p.facing * 6; // dash forward
       p.vx = (p.vx || 0) * 0.85;
+      }
       // Clamp AFTER integration: knockback and dashes are applied above, so
       // clamping first let a single heavy hit push Waldoge outside the arena.
-      clampFighterToWorld(p as MovingEnemy, LEVEL_WIDTH);
-      p.x = Math.max(20, Math.min(LEVEL_WIDTH - 20, p.x));
+      clampFighterToWorld(p as MovingEnemy, levelWidth);
+      p.x = Math.max(20, Math.min(levelWidth - 20, p.x));
+      // Never walk sideways through a lower-street wall.
+      p.x = clampToPitWalls(g.level, p.x, p.y, 16);
       // Walk off platform edge — start falling on next frame.
       if (pAny.onPlatform) {
         const plat = pAny.onPlatform;
@@ -3823,7 +3908,7 @@ export const StreetBrawler: FC = () => {
         (p.state === "uppercut" && p.stateTimer === 12) ||
         (p.state === "spinkick" && (p.stateTimer === 14 || p.stateTimer === 8)) ||
         (p.state === "dashpunch" && p.stateTimer === 8) ||
-        (p.state === "groundpound" && p.y >= GROUND_Y - 5 && p.stateTimer > 5)
+        (p.state === "groundpound" && p.y >= groundYAt(g.level, p.x) - 5 && p.stateTimer > 5)
       );
       // Data-driven J/K/L basics: percentage-based active window from attackCooldown.
       // Window opens at ~50% through the animation and lasts a few frames; hitApplied
@@ -4042,12 +4127,59 @@ export const StreetBrawler: FC = () => {
         // their exit frame, so movement can never be locked out.
         sanitizeEnemyMotion(e, GROUND_Y);
 
+        // ---- ENEMY LADDER NAVIGATION -----------------------------------
+        // Minions understand "which street level am I on vs the player" and
+        // route to the nearest ladder to pursue across the vertical gap.
+        // Bosses are excluded: their arenas are flat.
+        if (hasVerticalTraversal(g.level) && !e.isBoss && e.hp > 0 && p.hp > 0) {
+          const eClimb = e as MovingEnemy & Climber;
+          const myGround = groundYAt(g.level, e.x);
+          const targetGround = groundYAt(g.level, p.x);
+          const grounded = e.y >= myGround - 1;
+          if (eClimb.climbing) {
+            const lad = ladderAt(g.level, e.x) ?? nearestLadder(g.level, e.x);
+            if (lad) {
+              const goalY = Math.min(Math.max(targetGround, lad.top), lad.bottom);
+              const dir = climbDirectionFor(e.y, goalY);
+              stepClimb(eClimb, lad, dir);
+              e.state = "walk";
+              e.stateTimer = Math.max(-1, e.stateTimer - 1);
+              e.attackCooldown = Math.max(-1, e.attackCooldown - 1);
+              continue;
+            }
+            dismountLadder(eClimb);
+          } else if (grounded && Math.abs(myGround - targetGround) > 10) {
+            const lad = nearestLadder(g.level, e.x);
+            if (lad) {
+              const dxl = lad.x - e.x;
+              if (Math.abs(dxl) <= LADDER_GRAB_X) {
+                mountLadder(eClimb, lad);
+                e.y = myGround > targetGround ? lad.bottom - 2 : lad.top + 2;
+              } else {
+                const spd = LEVELS[g.level]?.waves[Math.min(g.wave, 1)]?.speed || 1.5;
+                e.facing = dxl > 0 ? 1 : -1;
+                e.x += e.facing * spd;
+                e.state = "walk";
+              }
+              e.x = clampToPitWalls(g.level, e.x, e.y, 15);
+              clampEnemyToWorld(e, getLevelWidth(g.level));
+              e.stateTimer = Math.max(-1, e.stateTimer - 1);
+              e.attackCooldown = Math.max(-1, e.attackCooldown - 1);
+              continue;
+            }
+          }
+        }
+
         e.vy += GRAVITY;
         e.y += e.vy;
         e.x += e.vx || 0;
         e.vx = (e.vx || 0) * 0.85;
-        if (e.y >= GROUND_Y) { e.y = GROUND_Y; e.vy = 0; }
-        clampEnemyToWorld(e, LEVEL_WIDTH);
+        {
+          const eg = groundYAt(g.level, e.x);
+          if (e.y >= eg) { e.y = eg; e.vy = 0; }
+        }
+        e.x = clampToPitWalls(g.level, e.x, e.y, 15);
+        clampEnemyToWorld(e, getLevelWidth(g.level));
         e.stateTimer = Math.max(-1, e.stateTimer - 1);
         e.attackCooldown = Math.max(-1, e.attackCooldown - 1);
         if (e.state === "hit" && e.stateTimer <= 0) e.state = "idle";
@@ -4064,6 +4196,18 @@ export const StreetBrawler: FC = () => {
 
           const dx = p.x - e.x;
           const dist = Math.abs(dx);
+          // Staged boss: waits in his arena at the end of the district until
+          // Waldoge has actually travelled there. Purely a wake gate — no AI,
+          // damage or balance value is altered once he is awake.
+          if (hasDistrict(g.level) && dist > BOSS_WAKE_DISTANCE) {
+            e.facing = dx > 0 ? 1 : -1;
+            e.state = "idle";
+            e.stateTimer = 0;
+            e.vx = 0;
+            e.stuckFrames = 0;
+            e.lastWatchdogX = e.x;
+            continue;
+          }
           const vertGap = Math.abs(p.y - e.y);
           const activeMove = getMoveById(e.bossName, e.bossMoveId);
           const busy = activeMove !== null && e.state === activeMove.anim && e.stateTimer > 0;
@@ -4188,7 +4332,7 @@ export const StreetBrawler: FC = () => {
 
           // Keep the boss inside the level and recover it if its position
           // stops changing while it should be closing in on the player.
-          clampEnemyToWorld(e, LEVEL_WIDTH);
+          clampEnemyToWorld(e, getLevelWidth(g.level));
           const recovered = updateStuckWatchdog(
             e,
             p.x,
@@ -4233,7 +4377,7 @@ export const StreetBrawler: FC = () => {
               const s = activeMove.summon;
               for (let i = 0; i < s.count && g.enemies.length < MAX_LIVE_ENEMIES; i++) {
                 const side = i % 2 === 0 ? 1 : -1;
-                const sx = Math.max(40, Math.min(LEVEL_WIDTH - 40, p.x + side * (360 + i * 90)));
+                const sx = Math.max(40, Math.min(getLevelWidth(g.level) - 40, p.x + side * (360 + i * 90)));
                 g.enemies.push({
                   x: sx, y: GROUND_Y, vy: 0, vx: 0, width: 30, height: 70,
                   facing: (side > 0 ? -1 : 1) as 1 | -1,
@@ -4349,7 +4493,7 @@ export const StreetBrawler: FC = () => {
         }
 
         // Same shared recovery for grunts.
-        clampEnemyToWorld(e, LEVEL_WIDTH);
+        clampEnemyToWorld(e, getLevelWidth(g.level));
         updateStuckWatchdog(
           e,
           p.x,
@@ -4540,9 +4684,22 @@ export const StreetBrawler: FC = () => {
               text: "♥ FULL HP", color: "#22ff66", size: 18,
             });
             sfx(() => SFX.waveStart());
-            g.enemies = spawnEnemies(g.level, 0, p.x, g.difficulty);
+            // New level: worlds now have different widths, so restart the
+            // player (and camera) at the start of the new district.
+            p.x = 140;
+            p.y = GROUND_Y;
+            p.vx = 0; p.vy = 0;
+            (p as unknown as Climber).climbing = false;
+            g.camX = 0;
+            g.camY = 0;
+            {
+              const ex0 = encounterX(g.level, 0);
+              g.enemies = spawnEnemies(g.level, 0, ex0 === null ? p.x : Math.max(p.x, ex0 - 400), g.difficulty);
+            }
             g.platforms = spawnPlatforms(g.level);
-            g.powerups.push(...spawnPlatformPickups(g.platforms, g.difficulty));
+            g.powerups.push(...(g.platforms.length
+              ? spawnPlatformPickups(g.platforms, g.difficulty)
+              : spawnStreetPickups(g.level, g.difficulty)));
             (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
           } else {
             // Next wave within current level
@@ -4550,11 +4707,16 @@ export const StreetBrawler: FC = () => {
             setWave(g.wave);
             const isBossWave = g.wave === LEVELS[g.level].waves.length;
             if (isBossWave) {
-              const boss = spawnBoss(p.x, g.level);
+              const arenaX = bossArenaX(g.level);
+              const boss = spawnBoss(
+                arenaX === null ? p.x : Math.max(p.x, arenaX - 500),
+                g.level,
+                getLevelWidth(g.level),
+              );
               const minionCount = BOSS_WAVE_MINIONS[g.difficulty] || 0;
               const minionWave = LEVELS[g.level].waves[LEVELS[g.level].waves.length - 1];
               const minions: Entity[] = Array.from({ length: minionCount }, (_, i) => ({
-                x: Math.min(LEVEL_WIDTH - 60, p.x + 350 + i * 110 + Math.random() * 120),
+                x: Math.min(getLevelWidth(g.level) - 60, p.x + 350 + i * 110 + Math.random() * 120),
                 y: GROUND_Y, vy: 0, vx: 0,
                 width: 30, height: 70, facing: -1 as const,
                 hp: minionWave.hp, maxHp: minionWave.hp,
@@ -4575,7 +4737,12 @@ export const StreetBrawler: FC = () => {
               sfx(() => SFX.bossEntrance());
             } else {
               sfx(() => SFX.waveStart());
-              g.enemies = spawnEnemies(g.level, g.wave, p.x, g.difficulty);
+              const exN = encounterX(g.level, g.wave);
+              g.enemies = spawnEnemies(
+                g.level, g.wave,
+                exN === null ? p.x : Math.max(p.x, exN - 400),
+                g.difficulty,
+              );
             }
           }
         }
@@ -4666,7 +4833,20 @@ export const StreetBrawler: FC = () => {
       g.camAnchor = finite(g.camAnchor, 0.25);
       g.camLookAhead = finite(g.camLookAhead, 0);
       g.camX = finite(g.camX, Math.max(0, p.x - CANVAS_W / 2));
-      g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
+      g.camX = Math.max(0, Math.min(getLevelWidth(g.level) - CANVAS_W, g.camX));
+
+      // ---- VERTICAL CAMERA ---------------------------------------------
+      // Only levels with lower streets ever move vertically. The target is
+      // clamped to the pit depth, so the camera can never reveal outside the
+      // world, and it is lerped so entering/leaving a dip reads smoothly.
+      {
+        const depth = hasVerticalTraversal(g.level)
+          ? Math.max(0, Math.min(PIT_DEPTH, p.y - GROUND_Y))
+          : 0;
+        g.camY = finite(g.camY, 0) + (depth - finite(g.camY, 0)) * 0.1;
+        if (Math.abs(g.camY) < 0.2) g.camY = 0;
+        g.camY = Math.max(0, Math.min(PIT_DEPTH, finite(g.camY, 0)));
+      }
 
       // Camera shake (decays each frame, applied as render offset only)
       if (g.camShake.timer > 0) {
@@ -4699,8 +4879,17 @@ export const StreetBrawler: FC = () => {
       if (g.camShake.x !== 0 || g.camShake.y !== 0) {
         ctx.translate(g.camShake.x, g.camShake.y);
       }
-      const currentTheme = LEVELS[Math.min(g.level, LEVELS.length - 1)].theme;
-      drawScene(ctx, currentTheme, g.camX, CANVAS_W, g.animFrameCount);
+      // Vertical camera offset — world-space only; the HUD is drawn after restore().
+      if (g.camY !== 0) ctx.translate(0, -g.camY);
+      if (hasDistrict(g.level)) {
+        // Redesigned large districts (Level 1 Jeet / Level 2 Rugger).
+        drawDistrict(ctx, g.level, g.camX, g.camY, CANVAS_W);
+        drawPits(ctx, g.level, g.camX, CANVAS_W);
+        drawLadders(ctx, g.level, g.camX, CANVAS_W);
+      } else {
+        const currentTheme = LEVELS[Math.min(g.level, LEVELS.length - 1)].theme;
+        drawScene(ctx, currentTheme, g.camX, CANVAS_W, g.animFrameCount);
+      }
 
       // Draw alley objects (crates, trash cans)
       for (const obj of g.alleyObjects) {
@@ -4714,7 +4903,8 @@ export const StreetBrawler: FC = () => {
         if (p && p.hp > 0) {
           const sx = p.x - g.camX;
           // Shadow shrinks/fades as the player rises above the ground.
-          const heightAboveGround = Math.max(0, GROUND_Y - p.y);
+          const localGround = groundYAt(g.level, p.x);
+          const heightAboveGround = Math.max(0, localGround - p.y);
           const t = Math.min(1, heightAboveGround / 140);
           const rx = 14 * (1 - t * 0.55);
           const ry = 4 * (1 - t * 0.55);
@@ -4722,7 +4912,7 @@ export const StreetBrawler: FC = () => {
           ctx.globalAlpha = 0.35 * (1 - t * 0.5);
           ctx.fillStyle = "#000";
           ctx.beginPath();
-          ctx.ellipse(sx, GROUND_Y + 2, rx, ry, 0, 0, Math.PI * 2);
+          ctx.ellipse(sx, localGround + 2, rx, ry, 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
