@@ -86,6 +86,18 @@ export function drawJeetStreet(
     ctx.drawImage(img, x, TOP_Y, PANEL_W + 1, PANEL_H);
   }
 
+  // Soft shadow at panel joins so the cut between paintings reads as an alley.
+  for (let s2 = first; s2 <= last + 1; s2++) {
+    const jx = Math.round(s2 * PANEL_W - camX);
+    if (jx < -18 || jx > canvasW + 18) continue;
+    const g = ctx.createLinearGradient(jx - 18, 0, jx + 18, 0);
+    g.addColorStop(0, "rgba(8,6,14,0)");
+    g.addColorStop(0.5, "rgba(8,6,14,0.55)");
+    g.addColorStop(1, "rgba(8,6,14,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(jx - 18, TOP_Y, 36, PANEL_H * PAVEMENT);
+  }
+
   // Road continues below the artwork for raised-camera / tall-canvas cases.
   const bottom = TOP_Y + PANEL_H;
   ctx.fillStyle = ROAD;
