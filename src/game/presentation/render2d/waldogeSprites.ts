@@ -243,66 +243,86 @@ function drawWaldogeClimb(
   camX: number,
   style: StyleName,
   img: CanvasImageSource,
+  direction: -1 | 0 | 1,
 ) {
   const sx = e.x - camX;
   const sy = e.y;
   const base = (e.height * SIZE) / REF_H;
-  // One full grip cycle every ~26 world units of climb.
-  const ph = Math.sin((e.y / 26) * Math.PI * 2);
+  // The cycle comes from vertical travel, so descending reverses naturally and
+  // holding a rung freezes the pose. One cycle spans two 14px ladder rungs.
+  const phase = (e.y / 28) * Math.PI * 2;
+  const step = direction === 0 ? 0 : Math.sin(phase);
   const tint = styleTint(style);
 
   ctx.save();
   ctx.translate(sx, sy);
   ctx.scale(base, base);
 
-  // Body: narrowed idle silhouette, hugging the ladder face-on.
-  ctx.save();
-  ctx.scale(0.82, 1);
-  drawFrame(ctx, img, F.idle0);
-  ctx.restore();
+  // Build a dedicated front-facing climb silhouette from the existing atlas.
+  // Only the head and central jacket are retained; the standing frame's arms,
+  // legs and floor shadow are deliberately excluded so they cannot read as a
+  // character running in mid-air beside the ladder.
+  ctx.drawImage(img, F.idle0.x + 18, F.idle0.y, 94, 79, -47, -151, 94, 79);
+  ctx.drawImage(img, F.idle0.x + 39, F.idle0.y + 75, 52, 55, -26, -76, 52, 55);
+
+  // White shirt stripe and jacket centre reinforce a square, ladder-facing
+  // torso instead of the atlas frame's three-quarter fighting stance.
+  ctx.fillStyle = "#f4f1e8";
+  ctx.fillRect(-8, -68, 16, 42);
+  ctx.strokeStyle = "#8f151f";
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(0, -70); ctx.lineTo(0, -24); ctx.stroke();
 
   // Limbs drawn over the torso so the grip reads clearly.
-  const arm = (side: -1 | 1, lift: number) => {
-    const handX = side * 20;
-    const handY = -132 - lift * 12;
+  const arm = (side: -1 | 1, raised: boolean) => {
+    // Ladder rails sit at ±9 world px. At this sprite scale ±11 local px puts
+    // both glove centres directly over those rails instead of outside them.
+    const handX = side * 11;
+    const handY = raised ? -98 : -80.5;
+    ctx.strokeStyle = "#d92b2b";
+    ctx.lineWidth = 8;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(side * 18, -68);
+    ctx.lineTo(side * 22, handY + 10);
+    ctx.lineTo(handX, handY);
+    ctx.stroke();
+    // Closed glove over the rung: a horizontal palm with a dark grip notch.
+    ctx.fillStyle = "#e03434";
+    ctx.beginPath(); ctx.ellipse(handX, handY, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.ellipse(handX, handY, 11, 8, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = "#641018"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(handX - 6, handY + 2); ctx.lineTo(handX + 6, handY + 2); ctx.stroke();
+  };
+
+  const leg = (side: -1 | 1, raised: boolean) => {
+    const footX = side * 11;
+    const footY = raised ? -22 : -4.5;
     ctx.strokeStyle = "#d92b2b";
     ctx.lineWidth = 9;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(side * 15, -104);
-    ctx.lineTo(handX, handY);
-    ctx.stroke();
-    // Red glove closed around the rung
-    ctx.fillStyle = "#e03434";
-    ctx.beginPath(); ctx.arc(handX, handY, 12, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.arc(handX, handY, 12, 0, Math.PI * 2); ctx.stroke();
-  };
-
-  const leg = (side: -1 | 1, lift: number) => {
-    const footX = side * 17;
-    const footY = -14 - lift * 16;
-    ctx.strokeStyle = "#d92b2b";
-    ctx.lineWidth = 10;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(side * 10, -58);
+    ctx.moveTo(side * 10, -30);
+    ctx.lineTo(side * 16, footY - 8);
     ctx.lineTo(footX, footY);
     ctx.stroke();
-    // Sneaker planted on a rung
+    // Front-facing sneaker planted over the rail/rung intersection.
     ctx.fillStyle = "#f2f2f2";
     ctx.beginPath();
-    ctx.ellipse(footX, footY, 13, 7, 0, 0, Math.PI * 2);
+    ctx.ellipse(footX, footY, 11, 6.5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "#d92b2b"; ctx.lineWidth = 2;
     ctx.stroke();
   };
 
-  // Opposite limbs move together — classic climbing gait.
-  arm(-1, Math.max(0, ph));
-  leg(1, Math.max(0, ph));
-  arm(1, Math.max(0, -ph));
-  leg(-1, Math.max(0, -ph));
+  // Diagonal pairs alternate one rung at a time. Both hands remain visibly
+  // attached throughout ascent, descent and the initial grab frame.
+  const leftHigh = direction === 0 || step >= 0;
+  arm(-1, leftHigh);
+  leg(1, leftHigh);
+  arm(1, !leftHigh);
+  leg(-1, !leftHigh);
 
   // Style aura kept, drawn faintly around the climber.
   if (style !== "brawler") {
@@ -325,6 +345,7 @@ export function drawWaldogeSprite(
   style: StyleName = "brawler",
   specialActive = false,
   climbing = false,
+  climbDirection: -1 | 0 | 1 = 0,
 ) {
 
   const img = getAtlas();
@@ -335,7 +356,7 @@ export function drawWaldogeSprite(
   }
 
   if (climbing && e.state !== "dead" && e.state !== "hit") {
-    drawWaldogeClimb(ctx, e, camX, style, img);
+    drawWaldogeClimb(ctx, e, camX, style, img, climbDirection);
     return;
   }
 
