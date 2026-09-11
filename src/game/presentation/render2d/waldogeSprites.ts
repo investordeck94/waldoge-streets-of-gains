@@ -378,7 +378,7 @@ export function drawWaldogeSprite(
   if (!img) {
     // Artwork not downloaded yet — keep the procedural fighter at the same
     // requested presentation scale as the atlas instead of shrinking it.
-    const fallbackScale = Math.max(0.5, e.height / 70);
+    const fallbackScale = Math.max(0.5, (e.height * SIZE) / 70);
     ctx.save();
     ctx.translate(e.x - camX, e.y);
     ctx.scale(fallbackScale, fallbackScale);
