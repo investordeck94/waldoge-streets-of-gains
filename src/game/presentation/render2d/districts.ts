@@ -748,11 +748,13 @@ function drawProp(ctx: CanvasRenderingContext2D, d: District, p: Prop, sx: numbe
 
 /** Section label for a world x — used by the HUD/debug overlay. */
 export function sectionLabelAt(level: number, x: number): string | null {
+  if (hasFilmDistrict(level)) return filmSectionLabelAt(level, x);
   const d = districtFor(level);
   if (!d) return null;
   let label: string | null = null;
   for (const s of d.sections) if (x >= s.x) label = s.label;
   return label;
 }
+
 
 export const __test = { buildJeetDistrict, buildRuggerDistrict };
