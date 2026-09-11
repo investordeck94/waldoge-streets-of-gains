@@ -7,6 +7,7 @@ import {
 } from "@/game/config/world";
 import { mount, dismount, stepClimb, climbDirectionFor, type Climber } from "../climb";
 import { districtFor, hasDistrict, sectionLabelAt } from "@/game/presentation/render2d/districts";
+import { filmDistrictFor } from "@/game/presentation/render2d/filmDistrict";
 
 const fighter = (x: number, y: number): Climber => ({ x, y, state: "idle" });
 
@@ -163,12 +164,14 @@ describe("encounters", () => {
 });
 
 describe("districts", () => {
-  it("only levels 1 and 2 have the new art", () => {
+  it("levels 1, 2 and 3 have the new art", () => {
     expect(hasDistrict(0)).toBe(true);
     expect(hasDistrict(1)).toBe(true);
-    expect(hasDistrict(2)).toBe(false);
+    expect(hasDistrict(2)).toBe(true);
+    expect(hasDistrict(4)).toBe(false);
     expect(districtFor(4)).toBeNull();
   });
+
 
   it("fills the whole Jeet district with Jeet-branded food shops", () => {
     const d = districtFor(0)!;
@@ -226,5 +229,78 @@ describe("districts", () => {
       for (const pr of d.props) expect(Number.isFinite(pr.x)).toBe(true);
       for (const b of d.mid) expect(Number.isFinite(b.h)).toBe(true);
     }
+});
+
+describe("level 3 — Bad Actor's film district", () => {
+  it("is a large dedicated world, far bigger than the legacy arena", () => {
+    expect(getLevelWidth(2)).toBe(7400);
+    expect(getLevelWidth(2)).toBeGreaterThan(3200 * 2);
   });
+
+  it("stages waves and a boss arena inside the world", () => {
+    expect(encounterX(2, 0)!).toBeGreaterThan(0);
+    expect(encounterX(2, 1)!).toBeGreaterThan(encounterX(2, 0)!);
+    expect(bossArenaX(2)!).toBeLessThan(getLevelWidth(2));
+  });
+
+  it("progresses through distinct film-industry sections", () => {
+    const d = filmDistrictFor(2)!;
+    expect(d.sections.length).toBeGreaterThanOrEqual(8);
+    expect(sectionLabelAt(2, 10)).toBe("STUDIO ENTRANCE");
+    expect(sectionLabelAt(2, getLevelWidth(2) - 100)).toContain("BAD ACTOR");
+    const labels = new Set(d.sections.map(s => s.label));
+    expect(labels.size).toBe(d.sections.length);
+  });
+
+  it("fills the lot with studios, sets, screens and film kit", () => {
+    const d = filmDistrictFor(2)!;
+    expect(d.buildings.length).toBeGreaterThan(10);
+    expect(d.sets.length).toBeGreaterThanOrEqual(4);
+    expect(d.screens.length).toBeGreaterThan(5);
+    expect(d.props.length).toBeGreaterThan(30);
+    expect(d.buildings.some(b => b.kind === "gate")).toBe(true);
+    expect(d.buildings.some(b => b.kind === "soundStage")).toBe(true);
+    expect(d.buildings.some(b => b.kind === "cinema" || b.kind === "premiereHall")).toBe(true);
+    expect(d.buildings.some(b => b.kind === "badActorStudio")).toBe(true);
+    expect(d.buildings.filter(b => b.name.includes("BAD ACTOR")).length).toBeGreaterThan(3);
+  });
+
+  it("includes the SUS'TER ACT church set and premiere branding", () => {
+    const d = filmDistrictFor(2)!;
+    expect(d.sets.filter(s => s.kind === "church").length).toBe(1);
+    expect(d.sets.some(s => s.hero)).toBe(true);
+    expect(d.screens.some(s => s.text.includes("SUS'TER ACT"))).toBe(true);
+    expect(d.props.some(p => p.kind === "standee")).toBe(true);
+    const setKinds = new Set(d.sets.map(s => s.kind));
+    expect(setKinds.size).toBeGreaterThanOrEqual(4);
+  });
+
+  it("covers the whole world with no large empty stretches", () => {
+    const d = filmDistrictFor(2)!;
+    const spans = [
+      ...d.buildings.map(b => ({ x: b.x, w: b.w })),
+      ...d.sets.map(s => ({ x: s.x, w: s.w })),
+    ].sort((a, b) => a.x - b.x);
+    for (let i = 1; i < spans.length; i++) {
+      expect(spans[i].x - (spans[i - 1].x + spans[i - 1].w)).toBeLessThan(300);
+    }
+    const last = spans[spans.length - 1];
+    expect(last.x + last.w).toBeGreaterThan(d.width - 200);
+  });
+
+  it("is generated once, cached, and entirely finite", () => {
+    expect(filmDistrictFor(2)).toBe(filmDistrictFor(2));
+    expect(filmDistrictFor(3)).toBeNull();
+    const d = filmDistrictFor(2)!;
+    for (const b of d.buildings) {
+      expect(Number.isFinite(b.x) && Number.isFinite(b.w) && Number.isFinite(b.h)).toBe(true);
+    }
+    for (const s of d.sets) expect(Number.isFinite(s.x) && Number.isFinite(s.w)).toBe(true);
+    for (const s of d.screens) {
+      expect(Number.isFinite(s.x) && Number.isFinite(s.lift) && Number.isFinite(s.h)).toBe(true);
+    }
+    for (const p of d.props) expect(Number.isFinite(p.x)).toBe(true);
+  });
+});
+
 });

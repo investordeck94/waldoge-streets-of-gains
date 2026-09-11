@@ -20,6 +20,8 @@
 import { GROUND_Y } from "@/game/config";
 import { getLevelWidth } from "@/game/config/world";
 import { flicker, renderNow } from "./clock";
+import { drawFilmDistrict, filmSectionLabelAt, hasFilmDistrict } from "./filmDistrict";
+
 
 // ---------------------------------------------------------------------------
 // Deterministic RNG (build-time only)
@@ -320,8 +322,9 @@ export function districtFor(level: number): District | null {
 }
 
 export function hasDistrict(level: number): boolean {
-  return level === 0 || level === 1;
+  return level === 0 || level === 1 || hasFilmDistrict(level);
 }
+
 
 // ---------------------------------------------------------------------------
 // Rendering
@@ -340,9 +343,15 @@ export function drawDistrict(
   camY: number,
   canvasW: number,
 ): void {
+  if (hasFilmDistrict(level)) {
+    // Level 3 has its own Hollywood world model (buildings + sets + screens).
+    drawFilmDistrict(ctx, level, camX, canvasW);
+    return;
+  }
   const d = districtFor(level);
   if (!d) return;
   const now = renderNow();
+
 
   // --- SKY (static, extended above and below so camY never reveals a gap) ---
   const skyTop = -GROUND_OVERDRAW;
@@ -741,11 +750,13 @@ function drawProp(ctx: CanvasRenderingContext2D, d: District, p: Prop, sx: numbe
 
 /** Section label for a world x — used by the HUD/debug overlay. */
 export function sectionLabelAt(level: number, x: number): string | null {
+  if (hasFilmDistrict(level)) return filmSectionLabelAt(level, x);
   const d = districtFor(level);
   if (!d) return null;
   let label: string | null = null;
   for (const s of d.sections) if (x >= s.x) label = s.label;
   return label;
 }
+
 
 export const __test = { buildJeetDistrict, buildRuggerDistrict };

@@ -23,17 +23,19 @@ export const DEFAULT_LEVEL_WIDTH = LEVEL_WIDTH;
  * Per-level playable width.
  *   0 — JEET'S FAST FOOD DISTRICT   (long urban restaurant strip)
  *   1 — RUGGER'S FINANCIAL EMPIRE   (offices → casino strip, with lower streets)
- * Levels 2-6 keep the legacy width until they get the same treatment.
+ *   2 — BAD ACTOR'S FILM DISTRICT   (studio lot → backlots → premiere boulevard)
+ * Levels 3-6 keep the legacy width until they get the same treatment.
  */
 export const LEVEL_WORLD_WIDTHS: readonly number[] = [
   5600, // L1 Jeet's Fast Food District
   6600, // L2 Rugger's Financial / Casino Empire
-  DEFAULT_LEVEL_WIDTH,
+  7400, // L3 Bad Actor's Hollywood Film District
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
 ];
+
 
 /** Playable width for a level index. Always finite and > 0. */
 export function getLevelWidth(level: number): number {
@@ -207,7 +209,9 @@ export function hasVerticalTraversal(level: number): boolean {
 export const ENCOUNTER_ZONES: Record<number, { waves: number[]; boss: number }> = {
   0: { waves: [0.28, 0.58], boss: 0.9 },
   1: { waves: [0.26, 0.62], boss: 0.92 },
+  2: { waves: [0.24, 0.58], boss: 0.9 },
 };
+
 
 export function encounterX(level: number, wave: number): number | null {
   const z = ENCOUNTER_ZONES[level];
