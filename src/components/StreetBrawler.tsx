@@ -1553,10 +1553,12 @@ interface Platform {
 // horizontal gaps ≤ ~70px so each platform is reachable with a normal jump.
 // Corridor segments abut (gap = 0) to form one continuous upper walkway.
 function spawnPlatforms(level: number): Platform[] {
-  // Redesigned district levels (1 & 2) use the new world system instead of the
-  // stickman-era trestle corridor: Level 1 is a flat traversal street and
-  // Level 2's verticality comes from lower streets + ladders (see world.ts).
-  if (level === 0 || level === 1) return [];
+  // Redesigned district levels (1, 2 & 3) use the new world system instead of
+  // the stickman-era trestle corridor: Level 1 is a flat traversal street,
+  // Level 2's verticality comes from lower streets + ladders (see world.ts),
+  // and Level 3 is the open Bad Actor studio lot.
+  if (level === 0 || level === 1 || level === 2) return [];
+
   // All levels share the wooden-plank-on-steel-trestle look from the reference;
   // mall uses a stair/balcony variant. Level-specific decorations (lamps,
   // crates, potted plants) are drawn on TOP of corridor platforms later.
