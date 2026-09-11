@@ -5786,59 +5786,15 @@ export const StreetBrawler: FC = () => {
 
       <AnimatePresence mode="wait">
         {gameState === "menu" && (
-          <motion.div
-            key="menu"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="glass-card p-8 text-center space-y-6"
-          >
-            <img src={streetBrawlerCover} alt="Waldoge Street Brawl" className="w-full max-w-md mx-auto object-contain rounded-lg shadow-2xl" />
-            <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              Battle through 7 levels of red candle goons. Each level ends with a tougher boss — survive them all!
-            </p>
-            <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto text-xs text-muted-foreground">
-              <div className="glass-card p-2">A/D — Move</div>
-              <div className="glass-card p-2">W/Space — Jump</div>
-              <div className="glass-card p-2">J — Punch</div>
-              <div className="glass-card p-2">K — Kick</div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-primary">⚡ SPECIAL COMBOS</p>
-              <div className="grid grid-cols-1 gap-1 max-w-sm mx-auto text-xs text-muted-foreground">
-                <div className="glass-card p-2 flex justify-between"><span>J → J → K</span><span className="text-primary">Uppercut</span></div>
-                <div className="glass-card p-2 flex justify-between"><span>K → K → J</span><span className="text-primary">Spin Kick</span></div>
-                <div className="glass-card p-2 flex justify-between"><span>J → K → J</span><span className="text-primary">Dash Punch</span></div>
-                <div className="glass-card p-2 flex justify-between"><span>L (in air)</span><span className="text-primary">Ground Pound</span></div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-primary">CHOOSE DIFFICULTY</p>
-              <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <button
-                  onClick={() => startGame("easy")}
-                  className="px-5 py-3 bg-emerald-500 text-white rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
-                >
-                  <Play className="w-4 h-4" /> NEW TO CRYPTO
-                </button>
-                <button
-                  onClick={() => startGame("normal")}
-                  className="px-5 py-3 bg-primary text-primary-foreground rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
-                >
-                  <Play className="w-4 h-4" /> HALF A DEGEN
-                </button>
-                <button
-                  onClick={() => startGame("blackMonday")}
-                  className="px-5 py-3 bg-destructive text-destructive-foreground rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
-                >
-                  <Play className="w-4 h-4" /> FULL TRENCH MODE (2 CYCLES +)
-                </button>
-
-              </div>
-              <p className="text-[10px] text-muted-foreground">
-                Easy: standard goons, solo boss, full pickups · Normal: more goons, boss + 2 minions, faster boss · Black Monday: max goons, boss + 4 minions, brutal boss damage & speed
-              </p>
-              <div className="max-w-md mx-auto w-full">
+          <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full">
+            <TitleScreen
+              onStart={(diff, startLevel) => startGame(diff, startLevel)}
+              continueInfo={continueInfo}
+              sfxEnabled={sfxEnabled}
+              onToggleSfx={() => setSfxEnabled((v) => !v)}
+              camPreset={camPreset}
+              onCamPreset={setCamPreset}
+              leaderboardSlot={
                 <WeeklyHardModePanel
                   leaderboard={weeklyLeaderboard}
                   loading={weeklyLoading}
@@ -5846,10 +5802,11 @@ export const StreetBrawler: FC = () => {
                   onRefresh={refreshWeekly}
                   connected={!!address}
                 />
-              </div>
-            </div>
+              }
+            />
           </motion.div>
         )}
+
 
 
         {(gameState === "gameover" || gameState === "victory") && (
