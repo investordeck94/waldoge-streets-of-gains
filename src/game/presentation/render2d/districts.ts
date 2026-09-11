@@ -22,6 +22,7 @@ import { getLevelWidth } from "@/game/config/world";
 import { flicker, renderNow } from "./clock";
 import { drawFilmDistrict, filmSectionLabelAt, hasFilmDistrict } from "./filmDistrict";
 import { drawJeetStreet, hasJeetStreet, jeetSectionLabelAt } from "./jeetStreet";
+import { drawRuggerEmpire, hasRuggerEmpire, ruggerSectionLabelAt } from "./ruggerEmpire";
 
 
 // ---------------------------------------------------------------------------
@@ -353,6 +354,10 @@ export function drawDistrict(
   if (hasFilmDistrict(level)) {
     // Level 3 has its own Hollywood world model (buildings + sets + screens).
     drawFilmDistrict(ctx, level, camX, canvasW);
+    return;
+  }
+  if (hasRuggerEmpire(level)) {
+    drawRuggerEmpire(ctx, level, camX, canvasW);
     return;
   }
   const d = districtFor(level);
@@ -758,6 +763,7 @@ function drawProp(ctx: CanvasRenderingContext2D, d: District, p: Prop, sx: numbe
 /** Section label for a world x — used by the HUD/debug overlay. */
 export function sectionLabelAt(level: number, x: number): string | null {
   if (level === 0) return jeetSectionLabelAt(level, x);
+  if (level === 1) return ruggerSectionLabelAt(level, x);
   if (hasFilmDistrict(level)) return filmSectionLabelAt(level, x);
   const d = districtFor(level);
   if (!d) return null;

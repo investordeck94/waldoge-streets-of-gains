@@ -3,11 +3,12 @@ import { GROUND_Y } from "@/game/config";
 import {
   getLevelWidth, DEFAULT_LEVEL_WIDTH, groundYAt, pitsFor, laddersFor,
   ladderAt, nearestLadder, clampToPitWalls, hasVerticalTraversal,
-  encounterX, bossArenaX, PIT_DEPTH, LADDER_GRAB_X,
+  encounterX, bossArenaX, PIT_DEPTH, LADDER_GRAB_X, maxPitDepthFor,
 } from "@/game/config/world";
 import { mount, dismount, stepClimb, climbDirectionFor, type Climber } from "../climb";
 import { districtFor, hasDistrict, sectionLabelAt } from "@/game/presentation/render2d/districts";
 import { filmDistrictFor } from "@/game/presentation/render2d/filmDistrict";
+import { RUGGER_LANDMARKS, RUGGER_SECTIONS, ruggerSectionLabelAt, ruggerWorldFor } from "@/game/presentation/render2d/ruggerEmpire";
 
 const fighter = (x: number, y: number): Climber => ({ x, y, state: "idle" });
 
@@ -15,8 +16,8 @@ describe("per-level world width", () => {
   it("gives level 1 and 2 the new large worlds", () => {
     expect(getLevelWidth(0)).toBeGreaterThanOrEqual(5000);
     expect(getLevelWidth(0)).toBeLessThanOrEqual(6000);
-    expect(getLevelWidth(1)).toBeGreaterThanOrEqual(6000);
-    expect(getLevelWidth(1)).toBeLessThanOrEqual(7000);
+    expect(getLevelWidth(1)).toBe(10800);
+    expect(getLevelWidth(1)).toBeGreaterThan(3200 * 3);
   });
   it("falls back to the legacy width for untouched levels", () => {
     expect(getLevelWidth(6)).toBe(DEFAULT_LEVEL_WIDTH);
@@ -35,7 +36,7 @@ describe("terrain", () => {
   it("groundYAt returns the street outside pits and the floor inside", () => {
     expect(groundYAt(1, 100)).toBe(GROUND_Y);
     const pit = pitsFor(1)[0];
-    expect(groundYAt(1, (pit.x0 + pit.x1) / 2)).toBe(GROUND_Y + PIT_DEPTH);
+    expect(groundYAt(1, (pit.x0 + pit.x1) / 2)).toBe(pit.y);
     expect(groundYAt(1, pit.x0 - 5)).toBe(GROUND_Y);
     expect(groundYAt(1, pit.x1 + 5)).toBe(GROUND_Y);
   });
@@ -60,6 +61,15 @@ describe("ladders", () => {
     const l = laddersFor(1);
     expect(l.length).toBeGreaterThanOrEqual(4);
     expect(new Set(l.map(x => x.style)).size).toBeGreaterThan(1);
+  });
+  it("every Level 2 dip has at least two usable ladders and a finite camera depth", () => {
+    const ladders = laddersFor(1);
+    for (const pit of pitsFor(1)) {
+      const connected = ladders.filter(l => l.x > pit.x0 && l.x < pit.x1 && l.bottom === pit.y);
+      expect(connected.length).toBeGreaterThanOrEqual(2);
+    }
+    expect(maxPitDepthFor(1)).toBe(132);
+    expect(Number.isFinite(maxPitDepthFor(1))).toBe(true);
   });
   it("each ladder connects the street to a pit floor", () => {
     for (const l of laddersFor(1)) {
@@ -188,16 +198,18 @@ describe("districts", () => {
     expect(widths.size).toBeGreaterThan(3);
   });
 
-  it("gives the Rugger district offices and a casino strip", () => {
-    const d = districtFor(1)!;
-    expect(d.fronts.some(f => f.kind === "office")).toBe(true);
-    expect(d.fronts.some(f => f.kind === "casino")).toBe(true);
-    expect(d.fronts.some(f => f.name.includes("RUGGER"))).toBe(true);
-    expect(d.fronts.filter(f => f.tagline).length).toBeGreaterThan(3);
+  it("gives Rugger a ten-section world with all requested landmarks", () => {
+    expect(RUGGER_SECTIONS).toHaveLength(10);
+    expect(RUGGER_LANDMARKS).toContain("RUGGER EXCHANGE");
+    expect(RUGGER_LANDMARKS).toContain("GOLDEN BULL");
+    expect(RUGGER_LANDMARKS).toContain("RUGGER'S GAMBLING DEN");
+    expect(ruggerSectionLabelAt(1, 1)).toBe("FINANCIAL DISTRICT ENTRANCE");
+    expect(ruggerSectionLabelAt(1, getLevelWidth(1) - 1)).toBe("RUGGER BOSS ARENA");
+    expect(ruggerWorldFor(1)).toBe(ruggerWorldFor(1));
   });
 
   it("covers the full street with no large empty gaps", () => {
-    for (const level of [0, 1]) {
+    for (const level of [0]) {
       const d = districtFor(level)!;
       const sorted = [...d.fronts].sort((a, b) => a.x - b.x);
       for (let i = 1; i < sorted.length; i++) {
@@ -221,7 +233,7 @@ describe("districts", () => {
   });
 
   it("every generated coordinate is finite", () => {
-    for (const level of [0, 1]) {
+    for (const level of [0]) {
       const d = districtFor(level)!;
       for (const f of d.fronts) {
         expect(Number.isFinite(f.x) && Number.isFinite(f.w) && Number.isFinite(f.h)).toBe(true);
