@@ -5563,10 +5563,12 @@ export const StreetBrawler: FC = () => {
           </button>
         </div>
       )}
-      <div className="flex items-center gap-2 sm:gap-3">
-        <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-        <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Waldoge: Street of Gains</h2>
-      </div>
+      {gameState !== "menu" && (
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+          <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Waldoge: Streets of Gains</h2>
+        </div>
+      )}
 
       <div
         className="relative w-full mx-auto"
