@@ -110,6 +110,15 @@ import {
   type MovingEnemy,
 } from "@/game/enemy/movement";
 import { setRenderClock, renderNow } from "@/game/presentation/render2d/clock";
+// --- New world / environment system (per-level size, pits, ladders) ---
+import {
+  getLevelWidth, groundYAt, clampToPitWalls, hasVerticalTraversal,
+  ladderAt, nearestLadder, encounterX, bossArenaX, BOSS_WAKE_DISTANCE,
+  PIT_DEPTH, LADDER_GRAB_X,
+} from "@/game/config/world";
+import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/districts";
+import { drawPits, drawLadders } from "@/game/presentation/render2d/terrain";
+import { mount as mountLadder, stepClimb, dismount as dismountLadder, climbDirectionFor, type Climber } from "@/game/world/climb";
 import { selectBossMove, getMoveById, rollChain, type MartialForm } from "@/game/enemy/bossMoves";
 import {
   computeBossBias, getBossProfile, bossCooldownFrames, chainChanceFor,
