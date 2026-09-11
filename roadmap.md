@@ -35,9 +35,9 @@
 - [x] Verify DOWN + JUMP, repeated descent, normal jumps, enemy ladders, mobile, tests and build
 
 ## Current — Waldoge title-screen focus
-- [ ] Feature Waldoge prominently in the title screen
-- [ ] Add a looping live boxing animation without changing menu behavior
-- [ ] Verify desktop/mobile menu flows, tests and build
+- [x] Feature Waldoge prominently in the title screen
+- [x] Add a looping live boxing animation without changing menu behavior
+- [x] Verify desktop/mobile menu flows, tests and build
 
 ## Done — Game title screen redesign
 - [x] Cinematic WALDOGE: STREETS OF GAINS title screen (Start / Continue / How to play / Settings)

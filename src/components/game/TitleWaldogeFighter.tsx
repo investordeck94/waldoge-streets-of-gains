@@ -1,8 +1,8 @@
 import { useEffect, useRef, type FC } from "react";
 import { drawWaldogeSprite, preloadWaldogeSprites } from "@/game/presentation/render2d/waldogeSprites";
 
-const CANVAS_WIDTH = 420;
-const CANVAS_HEIGHT = 310;
+const CANVAS_WIDTH = 460;
+const CANVAS_HEIGHT = 400;
 
 /** Presentation-only title animation. It never enters or mutates the game loop. */
 export const TitleWaldogeFighter: FC = () => {
@@ -34,7 +34,7 @@ export const TitleWaldogeFighter: FC = () => {
           y: CANVAS_HEIGHT - 20,
           vx: striking ? 0 : Math.cos((now - startedAt) / 330) * 0.7,
           vy: 0,
-          height: 130,
+          height: 185,
           facing: 1,
           state: striking ? "punch" : "idle",
           stateTimer,
