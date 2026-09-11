@@ -21,6 +21,7 @@ import { GROUND_Y } from "@/game/config";
 import { getLevelWidth } from "@/game/config/world";
 import { flicker, renderNow } from "./clock";
 import { drawFilmDistrict, filmSectionLabelAt, hasFilmDistrict } from "./filmDistrict";
+import { drawJeetStreet, hasJeetStreet, jeetSectionLabelAt } from "./jeetStreet";
 
 
 // ---------------------------------------------------------------------------
@@ -343,6 +344,12 @@ export function drawDistrict(
   camY: number,
   canvasW: number,
 ): void {
+  if (hasJeetStreet(level)) {
+    // Level 1 is painted street artwork (falls back to the procedural street
+    // below until every panel has decoded).
+    drawJeetStreet(ctx, level, camX, canvasW);
+    return;
+  }
   if (hasFilmDistrict(level)) {
     // Level 3 has its own Hollywood world model (buildings + sets + screens).
     drawFilmDistrict(ctx, level, camX, canvasW);
@@ -750,6 +757,7 @@ function drawProp(ctx: CanvasRenderingContext2D, d: District, p: Prop, sx: numbe
 
 /** Section label for a world x — used by the HUD/debug overlay. */
 export function sectionLabelAt(level: number, x: number): string | null {
+  if (level === 0) return jeetSectionLabelAt(level, x);
   if (hasFilmDistrict(level)) return filmSectionLabelAt(level, x);
   const d = districtFor(level);
   if (!d) return null;
