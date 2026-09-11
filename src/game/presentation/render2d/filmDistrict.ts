@@ -234,16 +234,16 @@ function buildFilmDistrict(width: number): FilmDistrict {
     "western", "courtroom", "scifi", "horror",
   ];
 
-  while (x < bossZone) {
+  while (x < bossZone - 220) {
     const t = x / width;                       // 0..1 progression
     const badActorChance = 0.4 + t * 0.6;      // branding ramps toward the boss
     const branded = rnd() < badActorChance;
 
     // Zone selection: backlot sets dominate the middle, cinemas the late level.
     const roll = rnd();
-    const wantSet = t > 0.2 && t < 0.72 && roll < 0.42;
-    const wantCinema = t > 0.6 && roll > 0.62;
-    const wantWarehouse = t > 0.5 && t < 0.82 && roll > 0.42 && roll < 0.62;
+    const wantSet = t > 0.18 && t < 0.7 && roll < 0.45;
+    const wantCinema = t > 0.56 && roll > 0.5;
+    const wantWarehouse = t > 0.46 && t < 0.8 && roll > 0.3 && roll < 0.5;
 
     if (wantSet) {
       // ---- OPEN-AIR MOVIE SET (backlot) -------------------------------------
@@ -272,7 +272,7 @@ function buildFilmDistrict(width: number): FilmDistrict {
         props.push({ x: x + w - 70, kind: "standee", text: "SUS'TER ACT", seed: 43 });
         props.push({ x: x + w + 24, kind: "costumeRack", seed: 44 });
       }
-      x += w + 70 + rnd() * 60;
+      x += w + 46 + rnd() * 40;
     } else if (wantCinema) {
       // ---- CINEMA / PREMIERE HALL -------------------------------------------
       const w = 340 + rnd() * 180;
@@ -295,7 +295,7 @@ function buildFilmDistrict(width: number): FilmDistrict {
       props.push({ x: x + w * 0.2, kind: "standee", text: "SUS'TER ACT", seed: Math.floor(rnd() * 1000) });
       props.push({ x: x + w * 0.8, kind: "spotlight", seed: Math.floor(rnd() * 1000) });
       if (rnd() < 0.6) props.push({ x: x + w + 30, kind: "barrier", seed: Math.floor(rnd() * 1000) });
-      x += w + 80 + rnd() * 60;
+      x += w + 50 + rnd() * 40;
     } else if (wantWarehouse) {
       // ---- PROP / COSTUME DISTRICT -------------------------------------------
       const w = 260 + rnd() * 160;
@@ -310,7 +310,7 @@ function buildFilmDistrict(width: number): FilmDistrict {
       props.push({ x: x + w * 0.3, kind: "crate", text: "SET 1", seed: Math.floor(rnd() * 1000) });
       props.push({ x: x + w * 0.66, kind: "costumeRack", seed: Math.floor(rnd() * 1000) });
       if (rnd() < 0.5) props.push({ x: x + w + 34, kind: "filmTruck", seed: Math.floor(rnd() * 1000) });
-      x += w + 60 + rnd() * 60;
+      x += w + 40 + rnd() * 40;
     } else {
       // ---- SOUND STAGE / PRODUCTION OFFICE -----------------------------------
       const big = rnd() < 0.3 + t * 0.5;
@@ -345,7 +345,7 @@ function buildFilmDistrict(width: number): FilmDistrict {
       if (rnd() < 0.35) props.push({ x: x + w + 44, kind: "trailer", seed: Math.floor(rnd() * 1000) });
       if (rnd() < 0.3) props.push({ x: x + w * 0.25, kind: "crate", text: "GRIP", seed: Math.floor(rnd() * 1000) });
       if (rnd() < 0.3) props.push({ x: x + w * 0.9, kind: "directorChair", seed: Math.floor(rnd() * 1000) });
-      x += w + 55 + rnd() * (t < 0.3 ? 90 : 45);
+      x += w + 38 + rnd() * (t < 0.3 ? 60 : 34);
     }
     i++;
   }
