@@ -20,6 +20,8 @@
 import { GROUND_Y } from "@/game/config";
 import { getLevelWidth } from "@/game/config/world";
 import { flicker, renderNow } from "./clock";
+import { drawFilmDistrict, filmSectionLabelAt, hasFilmDistrict } from "./filmDistrict";
+
 
 // ---------------------------------------------------------------------------
 // Deterministic RNG (build-time only)
