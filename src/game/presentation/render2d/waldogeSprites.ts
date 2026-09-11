@@ -245,7 +245,10 @@ function drawWaldogeClimb(
 ) {
   const sx = e.x - camX;
   const sy = e.y;
-  const base = (e.height * SIZE) / REF_H;
+  // The combat atlas deliberately overhangs its hurtbox; on a ladder that same
+  // overhang covers several rungs and makes the body look pasted over the rail.
+  // Keep the feet anchor/hurtbox unchanged while using a tighter climb pose.
+  const base = (e.height * 1.65) / REF_H;
   // The cycle comes from vertical travel, so descending reverses naturally and
   // holding a rung freezes the pose. One cycle spans two 14px ladder rungs.
   const phase = (e.y / 28) * Math.PI * 2;
@@ -292,23 +295,23 @@ function drawWaldogeClimb(
   const arm = (side: -1 | 1, travel: number) => {
     // Ladder rails sit at ±9 world px. At this sprite scale ±11 local px puts
     // both glove centres directly over those rails instead of outside them.
-    const handX = side * 11;
-    const handY = -99 + travel * 14;
+    const handX = side * 13;
+    const handY = -143 + travel * 15;
     ctx.strokeStyle = "#d92b2b";
-    ctx.lineWidth = 8;
+    ctx.lineWidth = 6;
     ctx.lineCap = "round";
     ctx.beginPath();
     ctx.moveTo(side * 15, -76);
-    ctx.lineTo(side * 19, handY + 8);
+    ctx.lineTo(side * 20, -111);
     ctx.lineTo(handX, handY);
     ctx.stroke();
     // Closed glove over the rung: a horizontal palm with a dark grip notch.
     ctx.fillStyle = "#e03434";
-    ctx.beginPath(); ctx.ellipse(handX, handY, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.ellipse(handX, handY, 11, 8, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(handX, handY, 7, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(handX, handY, 7, 5.5, 0, 0, Math.PI * 2); ctx.stroke();
     ctx.strokeStyle = "#641018"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(handX - 6, handY + 2); ctx.lineTo(handX + 6, handY + 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(handX - 4, handY + 1); ctx.lineTo(handX + 4, handY + 1); ctx.stroke();
   };
 
   const leg = (side: -1 | 1, travel: number) => {
