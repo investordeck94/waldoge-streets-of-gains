@@ -3018,6 +3018,20 @@ export const StreetBrawler: FC = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
 
+  // Title-screen CONTINUE data, read once from the persisted GameState (the
+  // save was already restored at module import). Read-only — no gameplay use.
+  const continueInfo = useMemo<ContinueInfo>(() => {
+    const s = getGameState();
+    const lvl = Math.max(0, Math.min(TOTAL_LEVELS - 1, s.progression.highestLevel || 0));
+    return {
+      available: lvl > 0 || (s.bestScores.overall || 0) > 0,
+      level: lvl,
+      levelName: LEVELS[lvl]?.name ?? "",
+      difficulty: (s.settings.preferredDifficulty as Difficulty) || "normal",
+      bestScore: s.bestScores.overall || 0,
+    };
+  }, [gameState]);
+
   // DogeOS weekly competition — isolated from gameplay; wired only at final
   // victory. A completed run is RECORDED as a qualifying weekly entry; no
   // WDOGE is authorized or transferred here. The 10 WDOGE prize is settled
