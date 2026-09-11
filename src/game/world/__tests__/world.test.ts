@@ -163,12 +163,14 @@ describe("encounters", () => {
 });
 
 describe("districts", () => {
-  it("only levels 1 and 2 have the new art", () => {
+  it("levels 1, 2 and 3 have the new art", () => {
     expect(hasDistrict(0)).toBe(true);
     expect(hasDistrict(1)).toBe(true);
-    expect(hasDistrict(2)).toBe(false);
+    expect(hasDistrict(2)).toBe(true);
+    expect(hasDistrict(4)).toBe(false);
     expect(districtFor(4)).toBeNull();
   });
+
 
   it("fills the whole Jeet district with Jeet-branded food shops", () => {
     const d = districtFor(0)!;
