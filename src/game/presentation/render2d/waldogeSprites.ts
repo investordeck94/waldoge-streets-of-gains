@@ -242,7 +242,6 @@ function drawWaldogeClimb(
   e: FighterView,
   camX: number,
   style: StyleName,
-  img: CanvasImageSource,
 ) {
   const sx = e.x - camX;
   const sy = e.y;
@@ -364,19 +363,20 @@ export function drawWaldogeSprite(
   climbing = false,
 ) {
 
+  // The ladder pose is self-contained and must run before atlas fallback.
+  // Otherwise a slow/cached-miss image load briefly draws the normal fighter
+  // standing in mid-air while the climb state is already moving downward.
+  if (climbing && e.state !== "dead" && e.state !== "hit") {
+    drawWaldogeClimb(ctx, e, camX, style);
+    return;
+  }
+
   const img = getAtlas();
   if (!img) {
     // Artwork not downloaded yet — keep the procedural fighter as a fallback.
     drawWaldogeFighter(ctx, e, camX, headImg, style);
     return;
   }
-
-  if (climbing && e.state !== "dead" && e.state !== "hit") {
-    drawWaldogeClimb(ctx, e, camX, style, img);
-    return;
-  }
-
-
 
   const sx = e.x - camX;
   const sy = e.y;
