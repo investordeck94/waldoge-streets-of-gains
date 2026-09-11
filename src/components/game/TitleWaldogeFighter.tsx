@@ -46,7 +46,7 @@ export const TitleWaldogeFighter: FC = () => {
             y: CANVAS_HEIGHT - 10,
             vx: state === "idle" ? Math.cos((now - startedAt) / 330) * 0.7 : 0,
           vy: 0,
-            height: 205,
+            height: 235,
             facing,
             state,
           stateTimer,

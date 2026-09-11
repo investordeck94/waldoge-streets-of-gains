@@ -9,7 +9,7 @@ import { useState, type FC, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, RotateCcw, BookOpen, Settings as SettingsIcon, X, Volume2, VolumeX, Camera } from "lucide-react";
 import type { Difficulty } from "@/game/config";
-import titleBg from "@/assets/title-financial-city.jpg.asset.json";
+import titleBg from "@/assets/title-financial-city.jpg";
 import { TitleWaldogeFighter } from "@/components/game/TitleWaldogeFighter";
 
 export interface ContinueInfo {
@@ -124,7 +124,7 @@ export const TitleScreen: FC<TitleScreenProps> = ({
       {/* Cinematic backdrop */}
       <div className="absolute inset-0">
         <img
-          src={titleBg.url}
+          src={titleBg}
           alt=""
           aria-hidden
           width={1024}
@@ -155,7 +155,7 @@ export const TitleScreen: FC<TitleScreenProps> = ({
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.12 }}
-          className="relative -mt-4 flex h-[300px] w-full shrink-0 items-end justify-center sm:h-[420px]"
+          className="relative -mt-4 flex h-[330px] w-full shrink-0 items-end justify-center sm:h-[460px]"
         >
           <div className="absolute bottom-2 h-10 w-64 rounded-[50%] bg-background/80 blur-md" />
           <div className="relative h-full w-full max-w-[560px]">
