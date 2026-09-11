@@ -116,6 +116,7 @@ import {
 } from "@/game/enemy/bossTactics";
 
 import { strikeConnects } from "@/game/core/strike";
+import { GRUNT_STRIKES, resolveGruntStrike } from "@/game/enemy/meleeStrike";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
