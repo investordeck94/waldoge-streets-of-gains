@@ -167,28 +167,4 @@ export const SFX = {
     playNoise(0.06, 0.06 + Math.min(count * 0.01, 0.08));
   },
 
-  weaponPickup() {
-    playTone(400, 0.06, "square", 0.1);
-    setTimeout(() => playTone(600, 0.06, "square", 0.12), 40);
-    setTimeout(() => playTone(900, 0.1, "square", 0.1), 80);
-    playNoise(0.08, 0.06);
-  },
-
-  batSwing() {
-    playNoise(0.12, 0.14);
-    playTone(180, 0.1, "sawtooth", 0.12);
-    setTimeout(() => playTone(120, 0.08, "sawtooth", 0.08), 40);
-  },
-
-  swordSlash() {
-    playTone(800, 0.05, "sawtooth", 0.1);
-    setTimeout(() => playTone(400, 0.08, "sawtooth", 0.12), 30);
-    playNoise(0.1, 0.1);
-  },
-
-  shurikenThrow() {
-    playTone(1200, 0.04, "square", 0.08);
-    setTimeout(() => playTone(900, 0.06, "square", 0.06), 25);
-    setTimeout(() => playTone(600, 0.08, "square", 0.04), 50);
-  },
 };
