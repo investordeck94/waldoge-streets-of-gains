@@ -28,3 +28,11 @@
 
 ## Cleanup
 - [ ] Remove temporary debug hooks (?lvl / ?wv override, window.__g)
+
+## Current — Ladder descent presentation
+- [x] Replace standing-frame ladder pose with a dedicated rung-aligned climbing composition
+- [x] Keep Waldoge centered through mount, descent, and bottom dismount
+- [x] Verify DOWN + JUMP, repeated descent, normal jumps, enemy ladders, mobile, tests and build
+
+## Queued — Game title screen redesign
+- [ ] Resume only after the ladder presentation fix is complete
