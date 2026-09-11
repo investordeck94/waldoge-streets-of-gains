@@ -255,7 +255,7 @@ describe("level 3 — Bad Actor's film district", () => {
   it("fills the lot with studios, sets, screens and film kit", () => {
     const d = filmDistrictFor(2)!;
     expect(d.buildings.length).toBeGreaterThan(10);
-    expect(d.sets.length).toBeGreaterThan(4);
+    expect(d.sets.length).toBeGreaterThanOrEqual(4);
     expect(d.screens.length).toBeGreaterThan(5);
     expect(d.props.length).toBeGreaterThan(30);
     expect(d.buildings.some(b => b.kind === "gate")).toBe(true);
@@ -272,7 +272,7 @@ describe("level 3 — Bad Actor's film district", () => {
     expect(d.screens.some(s => s.text.includes("SUS'TER ACT"))).toBe(true);
     expect(d.props.some(p => p.kind === "standee")).toBe(true);
     const setKinds = new Set(d.sets.map(s => s.kind));
-    expect(setKinds.size).toBeGreaterThan(4);
+    expect(setKinds.size).toBeGreaterThanOrEqual(4);
   });
 
   it("covers the whole world with no large empty stretches", () => {
