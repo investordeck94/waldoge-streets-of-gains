@@ -123,7 +123,7 @@ export const TitleScreen: FC<TitleScreenProps> = ({
       {/* Cinematic backdrop */}
       <div className="absolute inset-0">
         <img
-          src={IMAGE_URLS.streetBrawlerCover}
+          src={titleBg}
           alt=""
           aria-hidden
           className="w-full h-full object-cover object-center scale-105 animate-[pulse_9s_ease-in-out_infinite]"
