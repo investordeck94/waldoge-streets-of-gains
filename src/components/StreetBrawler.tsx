@@ -116,6 +116,7 @@ import {
 } from "@/game/enemy/bossTactics";
 
 import { strikeConnects } from "@/game/core/strike";
+import { GRUNT_STRIKES, resolveGruntStrike } from "@/game/enemy/meleeStrike";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
 // inventory, quests and save metadata. The game loop keeps its own refs for
 // per-frame data; this store mirrors user-facing values so future systems
@@ -4340,8 +4341,10 @@ export const StreetBrawler: FC = () => {
           } else if (e.attackCooldown <= 0) {
             const atk = Math.random() > 0.5 ? "punch" : "kick";
             e.state = atk;
-            e.stateTimer = atk === "punch" ? 12 : 15;
+            e.stateTimer = GRUNT_STRIKES[atk].duration;
             e.attackCooldown = 30 + Math.random() * 20;
+            // New swing: clear the per-attack damage latch.
+            e.attackLanded = false;
           }
         }
 
@@ -4354,14 +4357,14 @@ export const StreetBrawler: FC = () => {
         );
 
 
-        // Enemy attack hit
-        if ((e.state === "punch" && e.stateTimer === 8) || (e.state === "kick" && e.stateTimer === 10)) {
-          const range = e.state === "punch" ? 40 : 50;
-          const dmg = e.state === "punch" ? 5 : 6;
-          const edx = p.x - e.x;
-          if (edx * e.facing > 0 && Math.abs(edx) < range && Math.abs(p.y - e.y) < 50 && p.state !== "dead") {
+        // Enemy attack hit — shared AABB solver over a 3-frame active window,
+        // latched so one swing can only damage once.
+        {
+          const strike = resolveGruntStrike(e, p, e.attackLanded === true);
+          if (strike.hit) {
+            e.attackLanded = true;
             sfx(() => SFX.hit());
-            p.hp -= dmg;
+            p.hp -= strike.damage;
             p.state = "hit";
             p.stateTimer = 8;
             p.vx = e.facing * 3;
