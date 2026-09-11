@@ -121,10 +121,15 @@ export function spawnEnemies(
 //   • bossName pulled straight from the level config so rendering picks the
 //     right custom head sprite.
 
-export function spawnBoss(playerX: number, levelIndex: number): Enemy {
+export function spawnBoss(playerX: number, levelIndex: number, levelWidth?: number): Enemy {
   const cfg = LEVELS[Math.min(levelIndex, LEVELS.length - 1)].boss;
+  // `levelWidth` lets per-level worlds (see game/config/world.ts) clamp the
+  // boss to their own right edge. Omitted → legacy LEVEL_WIDTH behaviour.
+  const width = Number.isFinite(levelWidth) && (levelWidth as number) > 0
+    ? (levelWidth as number)
+    : LEVEL_WIDTH;
   const spawnX = Math.min(
-    LEVEL_WIDTH - 80,
+    width - 80,
     Math.max(playerX + 350, playerX + 500),
   );
   return {

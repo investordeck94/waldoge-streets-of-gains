@@ -200,8 +200,8 @@ import type {
 // preserves the original signature so every call site continues to work
 // unchanged. The returned entity is byte-identical to the previous inline
 // literal (same clamp, same hitbox, same starting phase / cooldown).
-function spawnBoss(playerX: number, levelIndex: number): Entity {
-  return spawnBossModule(playerX, levelIndex);
+function spawnBoss(playerX: number, levelIndex: number, levelWidth?: number): Entity {
+  return spawnBossModule(playerX, levelIndex, levelWidth);
 }
 
 function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
@@ -3287,7 +3287,13 @@ export const StreetBrawler: FC = () => {
     g.score = 0;
     g.camX = 0;
     g.camY = 0;
-    g.enemies = g.wave >= LEVELS[g.level].waves.length ? [spawnBoss(200, g.level)] : spawnEnemies(g.level, g.wave, 200, diff);
+    {
+      const arena0 = bossArenaX(g.level);
+      const enc0 = encounterX(g.level, g.wave);
+      g.enemies = g.wave >= LEVELS[g.level].waves.length
+        ? [spawnBoss(arena0 === null ? 200 : Math.max(200, arena0 - 500), g.level, getLevelWidth(g.level))]
+        : spawnEnemies(g.level, g.wave, enc0 === null ? 200 : Math.max(200, enc0 - 400), diff);
+    }
     g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
     g.effects = [];
     g.powerups = [];
@@ -3310,7 +3316,9 @@ export const StreetBrawler: FC = () => {
     setStyleName("brawler");
     g.alleyObjects = spawnAlleyObjects();
     g.platforms = spawnPlatforms(g.level);
-    g.powerups = spawnPlatformPickups(g.platforms, diff);
+    g.powerups = g.platforms.length
+      ? spawnPlatformPickups(g.platforms, diff)
+      : spawnStreetPickups(g.level, diff);
     g.animFrameCount = 0;
     // Initialize rain
     g.rain = [];
@@ -4675,9 +4683,22 @@ export const StreetBrawler: FC = () => {
               text: "♥ FULL HP", color: "#22ff66", size: 18,
             });
             sfx(() => SFX.waveStart());
-            g.enemies = spawnEnemies(g.level, 0, p.x, g.difficulty);
+            // New level: worlds now have different widths, so restart the
+            // player (and camera) at the start of the new district.
+            p.x = 140;
+            p.y = GROUND_Y;
+            p.vx = 0; p.vy = 0;
+            (p as unknown as Climber).climbing = false;
+            g.camX = 0;
+            g.camY = 0;
+            {
+              const ex0 = encounterX(g.level, 0);
+              g.enemies = spawnEnemies(g.level, 0, ex0 === null ? p.x : Math.max(p.x, ex0 - 400), g.difficulty);
+            }
             g.platforms = spawnPlatforms(g.level);
-            g.powerups.push(...spawnPlatformPickups(g.platforms, g.difficulty));
+            g.powerups.push(...(g.platforms.length
+              ? spawnPlatformPickups(g.platforms, g.difficulty)
+              : spawnStreetPickups(g.level, g.difficulty)));
             (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
           } else {
             // Next wave within current level
@@ -4685,7 +4706,12 @@ export const StreetBrawler: FC = () => {
             setWave(g.wave);
             const isBossWave = g.wave === LEVELS[g.level].waves.length;
             if (isBossWave) {
-              const boss = spawnBoss(p.x, g.level);
+              const arenaX = bossArenaX(g.level);
+              const boss = spawnBoss(
+                arenaX === null ? p.x : Math.max(p.x, arenaX - 500),
+                g.level,
+                getLevelWidth(g.level),
+              );
               const minionCount = BOSS_WAVE_MINIONS[g.difficulty] || 0;
               const minionWave = LEVELS[g.level].waves[LEVELS[g.level].waves.length - 1];
               const minions: Entity[] = Array.from({ length: minionCount }, (_, i) => ({
@@ -4710,7 +4736,12 @@ export const StreetBrawler: FC = () => {
               sfx(() => SFX.bossEntrance());
             } else {
               sfx(() => SFX.waveStart());
-              g.enemies = spawnEnemies(g.level, g.wave, p.x, g.difficulty);
+              const exN = encounterX(g.level, g.wave);
+              g.enemies = spawnEnemies(
+                g.level, g.wave,
+                exN === null ? p.x : Math.max(p.x, exN - 400),
+                g.difficulty,
+              );
             }
           }
         }
@@ -4847,8 +4878,17 @@ export const StreetBrawler: FC = () => {
       if (g.camShake.x !== 0 || g.camShake.y !== 0) {
         ctx.translate(g.camShake.x, g.camShake.y);
       }
-      const currentTheme = LEVELS[Math.min(g.level, LEVELS.length - 1)].theme;
-      drawScene(ctx, currentTheme, g.camX, CANVAS_W, g.animFrameCount);
+      // Vertical camera offset — world-space only; the HUD is drawn after restore().
+      if (g.camY !== 0) ctx.translate(0, -g.camY);
+      if (hasDistrict(g.level)) {
+        // Redesigned large districts (Level 1 Jeet / Level 2 Rugger).
+        drawDistrict(ctx, g.level, g.camX, g.camY, CANVAS_W);
+        drawPits(ctx, g.level, g.camX, CANVAS_W);
+        drawLadders(ctx, g.level, g.camX, CANVAS_W);
+      } else {
+        const currentTheme = LEVELS[Math.min(g.level, LEVELS.length - 1)].theme;
+        drawScene(ctx, currentTheme, g.camX, CANVAS_W, g.animFrameCount);
+      }
 
       // Draw alley objects (crates, trash cans)
       for (const obj of g.alleyObjects) {
@@ -4862,7 +4902,8 @@ export const StreetBrawler: FC = () => {
         if (p && p.hp > 0) {
           const sx = p.x - g.camX;
           // Shadow shrinks/fades as the player rises above the ground.
-          const heightAboveGround = Math.max(0, GROUND_Y - p.y);
+          const localGround = groundYAt(g.level, p.x);
+          const heightAboveGround = Math.max(0, localGround - p.y);
           const t = Math.min(1, heightAboveGround / 140);
           const rx = 14 * (1 - t * 0.55);
           const ry = 4 * (1 - t * 0.55);
@@ -4870,7 +4911,7 @@ export const StreetBrawler: FC = () => {
           ctx.globalAlpha = 0.35 * (1 - t * 0.5);
           ctx.fillStyle = "#000";
           ctx.beginPath();
-          ctx.ellipse(sx, GROUND_Y + 2, rx, ry, 0, 0, Math.PI * 2);
+          ctx.ellipse(sx, localGround + 2, rx, ry, 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
