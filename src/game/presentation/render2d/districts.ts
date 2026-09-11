@@ -320,8 +320,9 @@ export function districtFor(level: number): District | null {
 }
 
 export function hasDistrict(level: number): boolean {
-  return level === 0 || level === 1;
+  return level === 0 || level === 1 || hasFilmDistrict(level);
 }
+
 
 // ---------------------------------------------------------------------------
 // Rendering
