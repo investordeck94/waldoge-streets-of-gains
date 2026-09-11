@@ -3279,13 +3279,22 @@ export const StreetBrawler: FC = () => {
     gameRef.current.camPreset = camPreset;
   }, [camPreset]);
 
-  const startGame = useCallback((diff: Difficulty = "normal") => {
+  // `startLevel` is used only by the title screen's CONTINUE entry, which
+  // resumes at the furthest district reached in the save file. Omitted for a
+  // fresh run, keeping the original level-0 / query-override behaviour.
+  const startGame = useCallback((diff: Difficulty = "normal", startLevel?: number) => {
     const g = gameRef.current;
     g.difficulty = diff;
     setDifficulty(diff);
     g.player = createPlayer();
     g.wave = 0;
-    g.level = (() => { const v = Number(new URLSearchParams(location.search).get("lvl")); return Number.isFinite(v) && v > 0 ? Math.min(v, TOTAL_LEVELS - 1) : 0; })();
+    g.level = (() => {
+      if (Number.isFinite(startLevel) && (startLevel as number) > 0) {
+        return Math.min(Math.floor(startLevel as number), TOTAL_LEVELS - 1);
+      }
+      const v = Number(new URLSearchParams(location.search).get("lvl"));
+      return Number.isFinite(v) && v > 0 ? Math.min(v, TOTAL_LEVELS - 1) : 0;
+    })();
     g.wave = Number(new URLSearchParams(location.search).get("wv")) || 0;
     g.score = 0;
     g.camX = 0;
