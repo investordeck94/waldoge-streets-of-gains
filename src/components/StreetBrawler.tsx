@@ -4340,8 +4340,10 @@ export const StreetBrawler: FC = () => {
           } else if (e.attackCooldown <= 0) {
             const atk = Math.random() > 0.5 ? "punch" : "kick";
             e.state = atk;
-            e.stateTimer = atk === "punch" ? 12 : 15;
+            e.stateTimer = GRUNT_STRIKES[atk].duration;
             e.attackCooldown = 30 + Math.random() * 20;
+            // New swing: clear the per-attack damage latch.
+            e.attackLanded = false;
           }
         }
 
