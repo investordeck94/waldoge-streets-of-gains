@@ -29,7 +29,7 @@
  *   dodge                 → sidestep reposition
  */
 
-import { renderNow } from "./clock";
+import { renderNow, flicker } from "./clock";
 import atlasAsset from "@/assets/ticker-taker-atlas.png.asset.json";
 
 export interface TickerTakerView {
@@ -288,7 +288,7 @@ export function drawTickerTakerSprite(
   if (pose.firing && e.state !== "dead") {
     const mx = sx + e.facing * 62;
     const my = sy - e.height * 0.98;
-    const flick = 0.6 + Math.random() * 0.4;
+    const flick = 0.6 + flicker(e.x) * 0.4;
     ctx.save();
     ctx.globalAlpha = flick;
     const g = ctx.createRadialGradient(mx, my, 2, mx, my, 26);
