@@ -29,8 +29,6 @@ export interface Climber {
   climbing?: boolean;
   /** World x of the ladder currently held (for rendering + re-grounding). */
   climbLadderX?: number;
-  /** Last vertical intent. Presentation reads this to pose the limbs correctly. */
-  climbDirection?: -1 | 0 | 1;
 }
 
 const BLOCKED_STATES = new Set(["dead", "hit"]);
@@ -46,7 +44,6 @@ export function canMount(c: Climber, level: number, grounded: boolean): Ladder |
 export function mount(c: Climber, ladder: Ladder): void {
   c.climbing = true;
   c.climbLadderX = ladder.x;
-  c.climbDirection = 0;
   c.x = ladder.x;
   c.vy = 0;
   c.vx = 0;
@@ -57,7 +54,6 @@ export function mount(c: Climber, ladder: Ladder): void {
 export function dismount(c: Climber): void {
   c.climbing = false;
   c.climbLadderX = undefined;
-  c.climbDirection = 0;
   c.vy = 0;
 }
 
@@ -72,7 +68,6 @@ export function stepClimb(c: Climber, ladder: Ladder, dir: -1 | 0 | 1): boolean 
   c.x = ladder.x;
   c.vx = 0;
   c.vy = 0;
-  c.climbDirection = dir;
   if (BLOCKED_STATES.has(c.state)) { dismount(c); return false; }
 
   if (dir !== 0) c.y += dir * CLIMB_SPEED;

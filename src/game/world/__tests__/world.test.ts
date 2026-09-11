@@ -98,7 +98,6 @@ describe("climb state machine", () => {
     expect(guard).toBeLessThan(500);
     expect(c.y).toBe(lad.bottom);
     expect(c.climbing).toBe(false);
-    expect(c.climbDirection).toBe(0);
   });
 
   it("climbs back up and dismounts at the top", () => {
@@ -118,7 +117,6 @@ describe("climb state machine", () => {
       expect(c.y).toBeGreaterThanOrEqual(lad.top);
       expect(c.y).toBeLessThanOrEqual(lad.bottom);
       expect(c.x).toBe(lad.x);
-      expect(c.climbDirection).toBe(i % 2 === 0 ? 1 : -1);
     }
   });
 
@@ -157,7 +155,6 @@ describe("climb state machine", () => {
     dismount(c);
     expect(c.climbing).toBe(false);
     expect(c.climbLadderX).toBeUndefined();
-    expect(c.climbDirection).toBe(0);
   });
 });
 

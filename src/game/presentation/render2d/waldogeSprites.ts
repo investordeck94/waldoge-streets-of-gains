@@ -243,7 +243,6 @@ function drawWaldogeClimb(
   camX: number,
   style: StyleName,
   img: CanvasImageSource,
-  direction: -1 | 0 | 1,
 ) {
   const sx = e.x - camX;
   const sy = e.y;
@@ -251,7 +250,7 @@ function drawWaldogeClimb(
   // The cycle comes from vertical travel, so descending reverses naturally and
   // holding a rung freezes the pose. One cycle spans two 14px ladder rungs.
   const phase = (e.y / 28) * Math.PI * 2;
-  const step = direction === 0 ? 0 : Math.sin(phase);
+  const step = Math.sin(phase);
   const tint = styleTint(style);
 
   ctx.save();
@@ -318,7 +317,7 @@ function drawWaldogeClimb(
 
   // Diagonal pairs alternate one rung at a time. Both hands remain visibly
   // attached throughout ascent, descent and the initial grab frame.
-  const leftHigh = direction === 0 || step >= 0;
+  const leftHigh = step >= 0;
   arm(-1, leftHigh);
   leg(1, leftHigh);
   arm(1, !leftHigh);
@@ -345,7 +344,6 @@ export function drawWaldogeSprite(
   style: StyleName = "brawler",
   specialActive = false,
   climbing = false,
-  climbDirection: -1 | 0 | 1 = 0,
 ) {
 
   const img = getAtlas();
@@ -356,7 +354,7 @@ export function drawWaldogeSprite(
   }
 
   if (climbing && e.state !== "dead" && e.state !== "hit") {
-    drawWaldogeClimb(ctx, e, camX, style, img, climbDirection);
+    drawWaldogeClimb(ctx, e, camX, style, img);
     return;
   }
 
