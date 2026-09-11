@@ -7,6 +7,7 @@ import {
 } from "@/game/config/world";
 import { mount, dismount, stepClimb, climbDirectionFor, type Climber } from "../climb";
 import { districtFor, hasDistrict, sectionLabelAt } from "@/game/presentation/render2d/districts";
+import { filmDistrictFor } from "@/game/presentation/render2d/filmDistrict";
 
 const fighter = (x: number, y: number): Climber => ({ x, y, state: "idle" });
 
