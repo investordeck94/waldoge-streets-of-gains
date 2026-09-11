@@ -100,6 +100,13 @@ export interface PlayerEntity {
    */
   bossChainDepth?: number;
 
+  /**
+   * Per-attack latch for grunt melee: set once a punch/kick has dealt its
+   * damage, cleared when a new attack state begins. Keeps the multi-frame
+   * active window from applying damage more than once per swing.
+   */
+  attackLanded?: boolean;
+
 }
 
 // ---------------------------------------------------------------------------
