@@ -32,6 +32,17 @@ export const COMBO_HIT_WINDOW = 40;
  */
 export const MAX_HIT_PAUSE = 10;
 
+/**
+ * Absolute ceilings on live entity arrays. Volleys and summons are already
+ * bounded by their own cooldowns and caps; these are the last line of defence
+ * against unbounded growth (and the frame-time collapse that follows) if any
+ * future move or chain spawns faster than things expire.
+ */
+export const MAX_LIVE_PROJECTILES = 48;
+export const MAX_LIVE_ENEMIES = 28;
+
+
+
 
 /**
  * Named special attacks unlocked via input sequences (see COMBOS in the
