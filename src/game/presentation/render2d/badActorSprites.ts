@@ -18,6 +18,7 @@
  *   dodge            → repositioning stride
  */
 
+import { renderNow } from "./clock";
 import atlasAsset from "@/assets/badactor-atlas.png.asset.json";
 
 export interface BadActorView {
@@ -141,7 +142,7 @@ export function drawBadActorSprite(
 
   const sx = e.x - camX;
   const sy = e.y;
-  const clock = Date.now();
+  const clock = renderNow();
   const pose = poseFor(e, form, prog, telegraphing, clock);
   const f = pose.f;
   const base = (e.height * SIZE) / REF_H;

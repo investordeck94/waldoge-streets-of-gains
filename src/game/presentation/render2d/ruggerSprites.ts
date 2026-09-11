@@ -12,6 +12,7 @@
  * the in-game character is the blueprint artwork rather than a reinterpretation.
  */
 
+import { renderNow } from "./clock";
 import atlasAsset from "@/assets/rugger-atlas.png.asset.json";
 
 export interface RuggerView {
@@ -132,7 +133,7 @@ export function drawRuggerSprite(
 
   const sx = e.x - camX;
   const sy = e.y;
-  const clock = Date.now();
+  const clock = renderNow();
   const f = frameFor(e, form, prog, telegraphing, clock);
   const base = (e.height * SIZE) / REF_H;
 

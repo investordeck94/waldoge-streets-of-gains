@@ -15,6 +15,7 @@
  * the groundpound / spinkick poses, driven by the active fight style.
  */
 
+import { renderNow } from "./clock";
 import type { StyleName } from "@/lib/fightStyles";
 
 
@@ -480,7 +481,7 @@ export function drawWaldogeFighter(
 ) {
   const sx = e.x - camX;
   const sy = e.y;
-  const clock = Date.now();
+  const clock = renderNow();
   const pose = poseFor(e, style, clock);
   const tint = styleTint(style);
 
