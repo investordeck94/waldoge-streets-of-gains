@@ -273,17 +273,25 @@ export function getMoveById(bossName: string | undefined, id: string | undefined
  * move (already validated as belonging to the same boss) or null. Chains are
  * always optional — the normal cooldown path runs when this returns null, so
  * a boss can never depend on a chain to keep acting.
+ *
+ * `chance` lets the caller override the move's authored chainChance with the
+ * phase/profile/depth-aware value from ./bossTactics. That override returns 0
+ * once the chain cap is hit, which is what bounds every combo.
  */
 export function rollChain(
   bossName: string | undefined,
   move: BossMove | null,
   rng: () => number = Math.random,
+  chance?: number,
 ): BossMove | null {
   if (!move?.chainTo?.length) return null;
-  if (rng() > (move.chainChance ?? 0.35)) return null;
+  const p = chance ?? move.chainChance ?? 0.35;
+  if (p <= 0) return null;
+  if (rng() > p) return null;
   const id = move.chainTo[Math.floor(rng() * move.chainTo.length)] ?? move.chainTo[0];
   return getMoveById(bossName, id);
 }
+
 
 // ---------------------------------------------------------------------------
 // Selection

@@ -110,6 +110,10 @@ import {
 } from "@/game/enemy/movement";
 import { setRenderClock, renderNow } from "@/game/presentation/render2d/clock";
 import { selectBossMove, getMoveById, rollChain, type MartialForm } from "@/game/enemy/bossMoves";
+import {
+  computeBossBias, getBossProfile, bossCooldownFrames, chainChanceFor,
+} from "@/game/enemy/bossTactics";
+
 import { strikeConnects } from "@/game/core/strike";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
 // inventory, quests and save metadata. The game loop keeps its own refs for
@@ -138,6 +142,8 @@ import {
   CANVAS_W, CANVAS_H, GROUND_Y, GRAVITY, PLAYER_SPEED, JUMP_FORCE, LEVEL_WIDTH, MAX_ENERGY,
   // combat
   COMBO_WINDOW, COMBO_HIT_WINDOW, SPECIAL_ATTACKS, MAX_HIT_PAUSE,
+  MAX_LIVE_PROJECTILES, MAX_LIVE_ENEMIES,
+
   // powerups
   DROP_CHANCE, POWERUP_COLORS, POWERUP_ICONS,
   // environment
@@ -4059,24 +4065,41 @@ export const StreetBrawler: FC = () => {
           const activeMove = getMoveById(e.bossName, e.bossMoveId);
           const busy = activeMove !== null && e.state === activeMove.anim && e.stateTimer > 0;
           const stunned = e.state === "hit" && e.stateTimer > 0;
+          const profile = getBossProfile(e.bossName);
+
+          // ---- Tactical read of the player (cheap booleans, no prediction) --
+          const pAttacking =
+            p.state === "punch" || p.state === "kick" ||
+            p.state === "spinkick" || p.state === "uppercut" || p.state === "groundpound";
+          // Attack is over but the cooldown is still running: the punish window.
+          const pRecovering = !pAttacking && p.attackCooldown > 0 && p.state !== "dead";
+          const pAirborne = p.y < GROUND_Y - 20;
+          const pPassive =
+            !pAttacking && !pRecovering && p.state !== "dead" && dist > 150;
 
           // A move that has finished (or whose state was released by the
           // shared safety layer) is always cleared — no attack can latch.
           // When it finishes cleanly we roll an optional combo follow-up; a
-          // chain is never required for the boss to keep acting.
+          // chain is never required for the boss to keep acting, and the
+          // depth counter caps how long any combo can run.
           if (!busy && e.bossMoveId) {
             const finished = getMoveById(e.bossName, e.bossMoveId);
-            if (!stunned && dist < 170) {
-              const next = rollChain(e.bossName, finished);
+            const depth = e.bossChainDepth || 0;
+            if (!stunned && finished && dist < 190) {
+              const chance = chainChanceFor(e.bossName, finished, e.bossPhase || 1, depth);
+              const next = rollChain(e.bossName, finished, Math.random, chance);
               if (next) e.bossChainId = next.id;
             }
             e.bossMoveId = undefined;
           }
+          // Being hit always breaks the combo — the player's counterattack is
+          // a guaranteed way out of pressure.
+          if (stunned) { e.bossChainId = undefined; e.bossChainDepth = 0; }
 
           if (!busy && !stunned) {
             e.facing = dx > 0 ? 1 : -1;
             const phase = e.bossPhase || 1;
-            const phaseSpeed = bossCfg.aiSpeed + phase * 0.4;
+            const phaseSpeed = (bossCfg.aiSpeed + phase * 0.4) * profile.mobility;
 
             // A queued combo link fires immediately, ignoring the cooldown
             // once; everything else waits for the normal cooldown.
@@ -4084,24 +4107,20 @@ export const StreetBrawler: FC = () => {
             e.bossChainId = undefined;
 
             if (chained || e.attackCooldown <= 0) {
-              // TICKER TAKER is the ultimate boss because he READS the
-              // player, not because he is bigger or has more HP: he steals
-              // energy when the player is charged up, reaches for the tommy
-              // gun when the player camps at range, and reaps with the scythe
-              // when the player crowds him.
-              let bias: Record<string, number> | undefined;
-              if (e.bossName === "TICKER TAKER") {
-                const energyFrac = (c.specialEnergy || 0) / 100;
-                const airborne = vertGap > 20;
-                bias = {
-                  tt_drain_steal: 0.5 + energyFrac * 3.2,
-                  tt_gun_burst: dist > 260 ? 2.2 : 0.8,
-                  tt_dash: dist > 220 ? 1.8 : 1,
-                  tt_scythe_reap: dist < 110 ? 1.9 : 0.9,
-                  tt_mega_blast: energyFrac > 0.4 ? 1.8 : 0.9,
-                  tt_kick: airborne ? 1.6 : 1,
-                };
-              }
+              // Every boss now reads the player through the SAME shared
+              // tactics layer — distance intent, whiff punishing, anti-air,
+              // pressure on passive play, energy stealing. How strongly the
+              // read bends its choices is the boss's own `tactic` value, which
+              // is what makes JEET readable and TICKER TAKER relentless.
+              const bias = computeBossBias(e.bossName, {
+                dist, vertGap, phase,
+                airborne: pAirborne,
+                attacking: pAttacking,
+                recovering: pRecovering,
+                passive: pPassive,
+                energyFrac: Math.max(0, Math.min(1, (c.specialEnergy || 0) / 100)),
+              });
+
               const move = chained ?? selectBossMove(e.bossName, {
                 dist, vertGap, phase,
                 lastMoveId: e.bossLastMoveId,
@@ -4110,13 +4129,16 @@ export const StreetBrawler: FC = () => {
               });
 
               if (move) {
+                // Chain links deepen the counter; a free decision resets it.
+                e.bossChainDepth = chained ? (e.bossChainDepth || 0) + 1 : 0;
                 e.bossRepeat = move.id === e.bossLastMoveId ? (e.bossRepeat || 1) + 1 : 1;
                 e.bossLastMoveId = move.id;
                 e.bossMoveId = move.id;
                 e.state = move.anim;
                 e.stateTimer = move.duration;
-                const cdScale = Math.max(0.45, 1.25 - g.level * 0.1) * (DIFFICULTY_BOSS_CD[g.difficulty] || 1);
-                e.attackCooldown = Math.max(6, Math.round((move.cooldown + move.duration) * cdScale));
+                e.attackCooldown = bossCooldownFrames(
+                  e.bossName, move, phase, DIFFICULTY_BOSS_CD[g.difficulty] || 1, pPassive,
+                );
                 // Jumping/aerial attacks leave the ground; gravity + the
                 // ground snap above always bring the boss back down.
                 if (move.hop && e.y >= GROUND_Y) e.vy = -move.hop;
@@ -4132,6 +4154,7 @@ export const StreetBrawler: FC = () => {
               } else {
 
                 // Nothing fits this range — close the gap instead of idling.
+                e.bossChainDepth = 0;
                 e.x += e.facing * phaseSpeed;
                 e.state = "walk";
               }
@@ -4142,11 +4165,18 @@ export const StreetBrawler: FC = () => {
               if (dist > 60 || (vertGap > 60 && dist > 16)) {
                 e.x += e.facing * phaseSpeed;
                 e.state = "walk";
+              } else if (profile.spacing && dist < 34) {
+                // Spacing control: the smarter bosses refuse to be walked
+                // into and step back to their preferred striking range
+                // instead of standing still inside the player's combo.
+                e.x -= e.facing * phaseSpeed * 0.6;
+                e.state = "walk";
               } else {
                 e.state = "idle";
               }
             }
           }
+
 
           // Movement carried by the active move (dashes, retreats).
           if (activeMove?.advance && e.stateTimer > (activeMove.advanceUntil ?? 0)) {
@@ -4161,16 +4191,21 @@ export const StreetBrawler: FC = () => {
             p.x,
             p.state !== "dead" && !busy && !stunned && Math.abs(p.x - e.x) > 60,
           );
-          if (recovered) { e.bossMoveId = undefined; e.bossChainId = undefined; }
+          if (recovered) { e.bossMoveId = undefined; e.bossChainId = undefined; e.bossChainDepth = 0; }
 
           // Projectile volleys declared by the active move.
+          // MAX_LIVE_PROJECTILES is a hard ceiling: volleys are small and
+          // expire on their own, but a stacked chain of ranged moves must
+          // never be able to grow the array without bound.
           if (activeMove?.projectiles) {
             for (const vol of activeMove.projectiles) {
               if (e.stateTimer !== vol.frame) continue;
+              if (g.projectiles.length >= MAX_LIVE_PROJECTILES) break;
               sfx(() => SFX.bossThrow());
               const count = vol.count ?? 1;
               const spread = vol.spread ?? 0;
               for (let i = 0; i < count; i++) {
+                if (g.projectiles.length >= MAX_LIVE_PROJECTILES) break;
                 const off = count > 1 ? (i - (count - 1) / 2) * spread : 0;
                 g.projectiles.push({
                   x: e.x + e.facing * 30, y: e.y - 30,
@@ -4185,13 +4220,15 @@ export const StreetBrawler: FC = () => {
 
           // Walkie-talkie support call (MR MARKETER). Reuses the existing
           // grunt entities + enemy AI — no separate summon system. The move's
-          // own cooldown plus the live-minion cap stop unlimited stacking.
+          // own cooldown, the live-minion cap and the absolute entity ceiling
+          // all have to agree before a wave arrives, so summons cannot stack.
           if (activeMove?.summon && e.stateTimer === activeMove.summon.frame) {
             const alive = g.enemies.filter((o) => !o.isBoss && o.state !== "dead").length;
-            if (alive <= activeMove.summon.cap) {
+            if (alive <= activeMove.summon.cap && g.enemies.length < MAX_LIVE_ENEMIES) {
+
               sfx(() => SFX.bossThrow());
               const s = activeMove.summon;
-              for (let i = 0; i < s.count; i++) {
+              for (let i = 0; i < s.count && g.enemies.length < MAX_LIVE_ENEMIES; i++) {
                 const side = i % 2 === 0 ? 1 : -1;
                 const sx = Math.max(40, Math.min(LEVEL_WIDTH - 40, p.x + side * (360 + i * 90)));
                 g.enemies.push({

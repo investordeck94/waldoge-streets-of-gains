@@ -93,6 +93,13 @@ export interface PlayerEntity {
   bossRepeat?: number;
   /** Queued combo follow-up move id (fires once, ignoring cooldown). */
   bossChainId?: string;
+  /**
+   * Links used in the current combo chain. Reset to 0 whenever the boss makes
+   * a free (non-chained) decision; compared against the chain cap in
+   * @/game/enemy/bossTactics so a chain can never sustain itself forever.
+   */
+  bossChainDepth?: number;
+
 }
 
 // ---------------------------------------------------------------------------
