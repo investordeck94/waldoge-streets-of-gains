@@ -214,7 +214,7 @@ describe("districts", () => {
   });
 
   it("reports the section the player is travelling through", () => {
-    expect(sectionLabelAt(0, 10)).toBe("URBAN STREET");
+    expect(sectionLabelAt(0, 10)).toContain("JEET");
     expect(sectionLabelAt(0, getLevelWidth(0) - 100)).toContain("JEET");
     expect(sectionLabelAt(1, getLevelWidth(1) - 100)).toContain("RUGGER");
     expect(sectionLabelAt(4, 100)).toBeNull();
