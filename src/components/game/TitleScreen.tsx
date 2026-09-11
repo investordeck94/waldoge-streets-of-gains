@@ -137,13 +137,13 @@ export const TitleScreen: FC<TitleScreenProps> = ({
         />
       </div>
 
-      <div className="relative z-10 grid min-h-[78svh] grid-rows-[auto_minmax(150px,0.75fr)_auto_auto] px-4 py-5 sm:grid-cols-[minmax(260px,0.8fr)_minmax(300px,0.62fr)] sm:grid-rows-[auto_1fr_auto] sm:px-8 sm:py-8 lg:px-12">
+      <div className="relative z-10 flex min-h-[78svh] flex-col items-center px-4 py-5 sm:px-8 sm:py-8 lg:px-12">
         {/* Logotype */}
         <motion.div
           initial={{ opacity: 0, y: -14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center sm:col-span-2"
+          className="text-center"
         >
           <p className="font-mono text-[9px] sm:text-xs tracking-[0.4em] text-muted-foreground">A WALDOGE ARCADE BEAT-EM-UP</p>
           <h1 className="mt-1 font-heading font-black uppercase leading-[0.82]">
@@ -158,7 +158,7 @@ export const TitleScreen: FC<TitleScreenProps> = ({
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.12 }}
-          className="relative flex min-h-0 items-end justify-center sm:row-start-2"
+          className="relative flex h-[clamp(170px,34svh,390px)] w-full shrink-0 items-end justify-center"
         >
           <div className="absolute bottom-5 h-10 w-52 rounded-[50%] bg-background/70 blur-md" />
           <div className="relative h-full max-h-[330px] w-full max-w-[440px]">
@@ -167,7 +167,7 @@ export const TitleScreen: FC<TitleScreenProps> = ({
         </motion.div>
 
         {/* Menu */}
-        <div className="flex items-center justify-center sm:row-start-2 sm:py-4">
+        <div className="relative z-10 -mt-4 flex w-full items-center justify-center sm:-mt-8">
           <div className="w-full max-w-sm space-y-2">
             <AnimatePresence mode="wait">
               {panel === "main" ? (
@@ -230,9 +230,9 @@ export const TitleScreen: FC<TitleScreenProps> = ({
           </div>
         </div>
 
-        {leaderboardSlot && <div className="mt-3 w-full max-w-md mx-auto sm:col-span-2">{leaderboardSlot}</div>}
+        {leaderboardSlot && <div className="mt-5 w-full max-w-md mx-auto">{leaderboardSlot}</div>}
 
-        <p className="mt-3 text-center font-mono text-[10px] text-muted-foreground sm:col-span-2">
+        <p className="mt-3 text-center font-mono text-[10px] text-muted-foreground">
           7 districts · 7 bosses · one very good dog
         </p>
       </div>
