@@ -34,5 +34,5 @@
 - [x] Keep Waldoge centered through mount, descent, and bottom dismount
 - [x] Verify DOWN + JUMP, repeated descent, normal jumps, enemy ladders, mobile, tests and build
 
-## Queued — Game title screen redesign
-- [ ] Resume only after the ladder presentation fix is complete
+## Done — Game title screen redesign
+- [x] Cinematic WALDOGE: STREETS OF GAINS title screen (Start / Continue / How to play / Settings)
