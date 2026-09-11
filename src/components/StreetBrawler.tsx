@@ -77,6 +77,7 @@ import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter"
 import { drawWaldogeSprite, preloadWaldogeSprites } from "@/game/presentation/render2d/waldogeSprites";
 import { drawRuggerSprite, preloadRuggerSprites, type RuggerView, type RuggerForm } from "@/game/presentation/render2d/ruggerSprites";
 import { drawJeetSprite, preloadJeetSprites, type JeetView, type JeetForm } from "@/game/presentation/render2d/jeetSprites";
+import { drawCandleMinionSprite, preloadCandleMinionSprites } from "@/game/presentation/render2d/candleMinionSprites";
 import { drawBadActorSprite, preloadBadActorSprites, type BadActorView, type BadActorForm } from "@/game/presentation/render2d/badActorSprites";
 import { drawFudderSprite, preloadFudderSprites, type FudderView, type FudderForm } from "@/game/presentation/render2d/fudderSprites";
 import { drawExitLiquiditySprite, preloadExitLiquiditySprites, type ExitLiquidityView, type ExitLiquidityForm } from "@/game/presentation/render2d/exitLiquiditySprites";
@@ -3230,6 +3231,7 @@ export const StreetBrawler: FC = () => {
     preloadWaldogeSprites();
     preloadRuggerSprites();
     preloadJeetSprites();
+    preloadCandleMinionSprites();
     preloadBadActorSprites();
     preloadFudderSprites();
     preloadExitLiquiditySprites();
@@ -4964,7 +4966,8 @@ export const StreetBrawler: FC = () => {
         if (e.isBoss) {
           drawBoss(ctx, e, g.camX);
         } else {
-          drawCandleMinion(ctx, e, g.camX);
+          // Full-body candle-boxer artwork; procedural draw is the pre-load fallback.
+          if (!drawCandleMinionSprite(ctx, e, g.camX)) drawCandleMinion(ctx, e, g.camX);
         }
       }
 
