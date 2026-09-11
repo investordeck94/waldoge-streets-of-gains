@@ -40,7 +40,8 @@
  * are welcome; behavior-changing refactors are not. See ARCHITECTURE.md for
  * the migration map (2D systems -> planned 3D equivalents).
  * ============================================================================= */
-import { FC, useEffect, useRef, useState, useCallback } from "react";
+import { FC, useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { TitleScreen, type ContinueInfo } from "@/components/game/TitleScreen";
 // Static asset URLs + preloaded boss-head Image objects live in
 // src/game/assets/index.ts. Individual named exports are aliased below
 // so every existing draw-site keeps its short local name unchanged.
