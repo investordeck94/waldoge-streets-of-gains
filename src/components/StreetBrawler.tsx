@@ -1553,6 +1553,10 @@ interface Platform {
 // horizontal gaps ≤ ~70px so each platform is reachable with a normal jump.
 // Corridor segments abut (gap = 0) to form one continuous upper walkway.
 function spawnPlatforms(level: number): Platform[] {
+  // Redesigned district levels (1 & 2) use the new world system instead of the
+  // stickman-era trestle corridor: Level 1 is a flat traversal street and
+  // Level 2's verticality comes from lower streets + ladders (see world.ts).
+  if (level === 0 || level === 1) return [];
   // All levels share the wooden-plank-on-steel-trestle look from the reference;
   // mall uses a stair/balcony variant. Level-specific decorations (lamps,
   // crates, potted plants) are drawn on TOP of corridor platforms later.
@@ -1615,6 +1619,19 @@ function spawnPlatformPickups(platforms: Platform[], diff: "easy" | "normal" | "
       type: types[i % types.length],
       timer: 100000,
     });
+  }
+  return out;
+}
+
+/** Ground-level pickups spread along a long district street. */
+function spawnStreetPickups(level: number, diff: "easy" | "normal" | "blackMonday" = "normal"): PowerUp[] {
+  const width = getLevelWidth(level);
+  const count = diff === "easy" ? 7 : diff === "normal" ? 5 : 3;
+  const types: PowerUp["type"][] = ["health", "energy", "speed", "health", "damage", "energy", "health"];
+  const out: PowerUp[] = [];
+  for (let i = 0; i < count; i++) {
+    const x = Math.round(width * ((i + 1) / (count + 1)));
+    out.push({ x, y: groundYAt(level, x) - 2, vy: 0, type: types[i % types.length], timer: 100000 });
   }
   return out;
 }
@@ -3234,6 +3251,7 @@ export const StreetBrawler: FC = () => {
     vxHistory: [],
     camShake: { x: 0, y: 0, magnitude: 0, timer: 0, duration: 0 },
     hitPause: 0,
+    camY: 0,
     debugCam: { anchor: 0.5, lerp: 0, playerScreenX: 0, offset: 0, deadzone: 0, lookAhead: 0, vx: 0 },
   });
 
@@ -3268,6 +3286,7 @@ export const StreetBrawler: FC = () => {
     g.wave = Number(new URLSearchParams(location.search).get("wv")) || 0;
     g.score = 0;
     g.camX = 0;
+    g.camY = 0;
     g.enemies = g.wave >= LEVELS[g.level].waves.length ? [spawnBoss(200, g.level)] : spawnEnemies(g.level, g.wave, 200, diff);
     g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
     g.effects = [];
@@ -3457,12 +3476,12 @@ export const StreetBrawler: FC = () => {
         try {
           const pl = g.player;
           sanitizeFighterMotion(pl as MovingEnemy, GROUND_Y);
-          clampFighterToWorld(pl as MovingEnemy, LEVEL_WIDTH);
+          clampFighterToWorld(pl as MovingEnemy, getLevelWidth(g.level));
           g.camX = finite(g.camX, Math.max(0, pl.x - CANVAS_W / 2));
           g.hitPause = 0;
           for (const e of g.enemies) {
             sanitizeEnemyMotion(e as MovingEnemy, GROUND_Y);
-            clampEnemyToWorld(e as MovingEnemy, LEVEL_WIDTH);
+            clampEnemyToWorld(e as MovingEnemy, getLevelWidth(g.level));
           }
           g.projectiles = g.projectiles.filter(
             pr => Number.isFinite(pr.x) && Number.isFinite(pr.y),
@@ -3694,7 +3713,17 @@ export const StreetBrawler: FC = () => {
         const rightHeld = g.keys.has("d") || g.keys.has("arrowright");
         const dir = (rightHeld ? 1 : 0) - (leftHeld ? 1 : 0);
         if (dir !== 0) { p.x += dir * speed; p.facing = dir as 1 | -1; moving = true; }
-        if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && (p.y >= GROUND_Y || (p as Entity & { onPlatform?: Platform | null }).onPlatform)) { p.vy = JUMP_FORCE; (p as Entity & { onPlatform?: Platform | null }).onPlatform = null; }
+        {
+          const pClimbing = (p as unknown as Climber).climbing === true;
+          const feetY = groundYAt(g.level, p.x);
+          const canJump = !pClimbing && (p.y >= feetY || (p as Entity & { onPlatform?: Platform | null }).onPlatform);
+          // Pressing UP at the bottom of a ladder climbs instead of jumping.
+          const wantsLadderUp = !pClimbing && p.y >= feetY && feetY > GROUND_Y && ladderAt(g.level, p.x) !== null;
+          if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && canJump && !wantsLadderUp) {
+            p.vy = JUMP_FORCE;
+            (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
+          }
+        }
 
         // Reset light-chain index after CHAIN_RESET_MS of inactivity
         const chainResetFrames = msToFrames(CHAIN_RESET_MS);
@@ -3747,7 +3776,7 @@ export const StreetBrawler: FC = () => {
         } else if (p.stateTimer <= 0) {
           // NOTE: don't null currentMove here — it's cleared after damage applies
           // (or when a new attack overwrites it). Nulling here can race the hit-frame check.
-          p.state = moving ? "walk" : p.y < GROUND_Y ? "jump" : "idle";
+          p.state = moving ? "walk" : p.y < groundYAt(g.level, p.x) ? "jump" : "idle";
         }
       } else if (p.state !== "hit" && p.state !== "dead" && !isAttacking && didSpecial) {
         // Special move was triggered, movement already handled by the special
