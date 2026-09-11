@@ -242,11 +242,13 @@ function drawWaldogeClimb(
   e: FighterView,
   camX: number,
   style: StyleName,
-  img: CanvasImageSource,
 ) {
   const sx = e.x - camX;
   const sy = e.y;
-  const base = (e.height * SIZE) / REF_H;
+  // The combat atlas deliberately overhangs its hurtbox; on a ladder that same
+  // overhang covers several rungs and makes the body look pasted over the rail.
+  // Keep the feet anchor/hurtbox unchanged while using a tighter climb pose.
+  const base = (e.height * 1.65) / REF_H;
   // The cycle comes from vertical travel, so descending reverses naturally and
   // holding a rung freezes the pose. One cycle spans two 14px ladder rungs.
   const phase = (e.y / 28) * Math.PI * 2;
@@ -257,53 +259,70 @@ function drawWaldogeClimb(
   ctx.translate(sx, sy);
   ctx.scale(base, base);
 
-  // Build a dedicated front-facing climb silhouette from the existing atlas.
-  // Only the head and central jacket are retained; the standing frame's arms,
-  // legs and floor shadow are deliberately excluded so they cannot read as a
-  // character running in mid-air beside the ladder.
-  ctx.drawImage(img, F.idle0.x + 18, F.idle0.y, 94, 79, -47, -151, 94, 79);
-  ctx.drawImage(img, F.idle0.x + 39, F.idle0.y + 75, 52, 55, -26, -76, 52, 55);
+  // A narrow, back-facing silhouette is required here. Reusing even a cropped
+  // idle frame leaves its sideways gloves and wide fighting stance visible,
+  // which reads as Waldoge standing in mid-air. This ladder-only composition
+  // keeps his normal palette and proportions while placing every limb over the
+  // rails. It changes no entity dimensions or collision data.
+  // Hoodie torso.
+  ctx.fillStyle = "#d92b2b";
+  ctx.beginPath();
+  ctx.moveTo(-19, -72); ctx.quadraticCurveTo(-17, -88, 0, -91);
+  ctx.quadraticCurveTo(17, -88, 19, -72); ctx.lineTo(14, -32);
+  ctx.quadraticCurveTo(0, -25, -14, -32); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2.5; ctx.stroke();
+  // White centre stripe and hood seam preserve the established jacket design.
+  ctx.fillStyle = "#f4f1e8"; ctx.fillRect(-4, -86, 8, 55);
+  ctx.strokeStyle = "#8f151f"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0, -76, 13, 0.12 * Math.PI, 0.88 * Math.PI); ctx.stroke();
 
-  // White shirt stripe and jacket centre reinforce a square, ladder-facing
-  // torso instead of the atlas frame's three-quarter fighting stance.
-  ctx.fillStyle = "#f4f1e8";
-  ctx.fillRect(-8, -68, 16, 42);
-  ctx.strokeStyle = "#8f151f";
-  ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(0, -70); ctx.lineTo(0, -24); ctx.stroke();
+  // Back of the Shiba head: ears, fur and striped beanie. Hiding the face is
+  // intentional—it makes the direction unambiguous while facing the ladder.
+  ctx.fillStyle = "#8f151f";
+  ctx.beginPath(); ctx.moveTo(-20, -111); ctx.lineTo(-13, -130); ctx.lineTo(-5, -108); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(20, -111); ctx.lineTo(13, -130); ctx.lineTo(5, -108); ctx.fill();
+  ctx.fillStyle = "#d99032";
+  ctx.beginPath(); ctx.ellipse(0, -106, 23, 22, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.fillStyle = "#d92b2b";
+  ctx.beginPath(); ctx.ellipse(0, -125, 24, 10, 0, Math.PI, Math.PI * 2); ctx.fill();
+  ctx.fillRect(-23, -126, 46, 7);
+  ctx.fillStyle = "#f4f1e8"; ctx.fillRect(-23, -124, 46, 4);
+  ctx.fillStyle = "#d92b2b";
+  ctx.beginPath(); ctx.arc(0, -137, 7, 0, Math.PI * 2); ctx.fill();
 
   // Limbs drawn over the torso so the grip reads clearly.
-  const arm = (side: -1 | 1, raised: boolean) => {
+  const arm = (side: -1 | 1, travel: number) => {
     // Ladder rails sit at ±9 world px. At this sprite scale ±11 local px puts
     // both glove centres directly over those rails instead of outside them.
-    const handX = side * 11;
-    const handY = raised ? -98 : -80.5;
+    const handX = side * 13;
+    const handY = -143 + travel * 15;
     ctx.strokeStyle = "#d92b2b";
-    ctx.lineWidth = 8;
+    ctx.lineWidth = 6;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(side * 18, -68);
-    ctx.lineTo(side * 22, handY + 10);
+    ctx.moveTo(side * 15, -76);
+    ctx.lineTo(side * 20, -111);
     ctx.lineTo(handX, handY);
     ctx.stroke();
     // Closed glove over the rung: a horizontal palm with a dark grip notch.
     ctx.fillStyle = "#e03434";
-    ctx.beginPath(); ctx.ellipse(handX, handY, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.ellipse(handX, handY, 11, 8, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(handX, handY, 7, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(handX, handY, 7, 5.5, 0, 0, Math.PI * 2); ctx.stroke();
     ctx.strokeStyle = "#641018"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(handX - 6, handY + 2); ctx.lineTo(handX + 6, handY + 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(handX - 4, handY + 1); ctx.lineTo(handX + 4, handY + 1); ctx.stroke();
   };
 
-  const leg = (side: -1 | 1, raised: boolean) => {
-    const footX = side * 11;
-    const footY = raised ? -22 : -4.5;
+  const leg = (side: -1 | 1, travel: number) => {
+    const footX = side * 10;
+    const footY = -24 + travel * 16;
     ctx.strokeStyle = "#d92b2b";
     ctx.lineWidth = 9;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(side * 10, -30);
-    ctx.lineTo(side * 16, footY - 8);
+    ctx.moveTo(side * 8, -34);
+    ctx.lineTo(side * 13, footY - 7);
     ctx.lineTo(footX, footY);
     ctx.stroke();
     // Front-facing sneaker planted over the rail/rung intersection.
@@ -315,13 +334,14 @@ function drawWaldogeClimb(
     ctx.stroke();
   };
 
-  // Diagonal pairs alternate one rung at a time. Both hands remain visibly
-  // attached throughout ascent, descent and the initial grab frame.
-  const leftHigh = step >= 0;
-  arm(-1, leftHigh);
-  leg(1, leftHigh);
-  arm(1, !leftHigh);
-  leg(-1, !leftHigh);
+  // Continuous opposing motion replaces the old high/low pose swap. This keeps
+  // all four contacts on the ladder while removing the visible limb snapping.
+  const leftTravel = (step + 1) * 0.5;
+  const rightTravel = 1 - leftTravel;
+  arm(-1, leftTravel);
+  leg(1, leftTravel);
+  arm(1, rightTravel);
+  leg(-1, rightTravel);
 
   // Style aura kept, drawn faintly around the climber.
   if (style !== "brawler") {
@@ -346,19 +366,20 @@ export function drawWaldogeSprite(
   climbing = false,
 ) {
 
+  // The ladder pose is self-contained and must run before atlas fallback.
+  // Otherwise a slow/cached-miss image load briefly draws the normal fighter
+  // standing in mid-air while the climb state is already moving downward.
+  if (climbing && e.state !== "dead" && e.state !== "hit") {
+    drawWaldogeClimb(ctx, e, camX, style);
+    return;
+  }
+
   const img = getAtlas();
   if (!img) {
     // Artwork not downloaded yet — keep the procedural fighter as a fallback.
     drawWaldogeFighter(ctx, e, camX, headImg, style);
     return;
   }
-
-  if (climbing && e.state !== "dead" && e.state !== "hit") {
-    drawWaldogeClimb(ctx, e, camX, style, img);
-    return;
-  }
-
-
 
   const sx = e.x - camX;
   const sy = e.y;
