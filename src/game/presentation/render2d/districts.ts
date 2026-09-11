@@ -341,9 +341,15 @@ export function drawDistrict(
   camY: number,
   canvasW: number,
 ): void {
+  if (hasFilmDistrict(level)) {
+    // Level 3 has its own Hollywood world model (buildings + sets + screens).
+    drawFilmDistrict(ctx, level, camX, canvasW);
+    return;
+  }
   const d = districtFor(level);
   if (!d) return;
   const now = renderNow();
+
 
   // --- SKY (static, extended above and below so camY never reveals a gap) ---
   const skyTop = -GROUND_OVERDRAW;
