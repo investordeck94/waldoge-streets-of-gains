@@ -3,7 +3,7 @@ import { GROUND_Y } from "@/game/config";
 import {
   getLevelWidth, DEFAULT_LEVEL_WIDTH, groundYAt, pitsFor, laddersFor,
   ladderAt, nearestLadder, clampToPitWalls, hasVerticalTraversal,
-  encounterX, bossArenaX, PIT_DEPTH, LADDER_GRAB_X, maxPitDepthFor,
+  encounterX, bossArenaX, PIT_DEPTH, LADDER_GRAB_X, maxPitDepthFor, landingDecksFor, pitAt,
 } from "@/game/config/world";
 import { mount, dismount, stepClimb, climbDirectionFor, type Climber } from "../climb";
 import { districtFor, hasDistrict, sectionLabelAt } from "@/game/presentation/render2d/districts";
@@ -315,4 +315,38 @@ describe("level 3 — Bad Actor's film district", () => {
   });
 });
 
+});
+
+describe("ladder landing decks", () => {
+  it("gives every pit-spanning ladder a solid deck at its top", () => {
+    const decks = landingDecksFor(1);
+    const overPit = laddersFor(1).filter((l) => pitAt(1, l.x));
+    expect(decks.length).toBe(overPit.length);
+    for (const l of overPit) {
+      const deck = decks.find((d) => d.ladderX === l.x);
+      expect(deck).toBeTruthy();
+      expect(deck!.y).toBe(l.top);
+      expect(deck!.x1 - deck!.x0).toBeGreaterThan(60);
+    }
+  });
+
+  it("makes the ladder top walkable instead of empty space", () => {
+    for (const l of laddersFor(1)) {
+      expect(groundYAt(1, l.x, l.top)).toBe(l.top);
+      expect(groundYAt(1, l.x, l.top - 40)).toBe(l.top);
+    }
+  });
+
+  it("keeps the pit floor under the deck for fighters already below it", () => {
+    const l = laddersFor(1)[0];
+    const pit = pitAt(1, l.x)!;
+    expect(groundYAt(1, l.x, pit.y)).toBe(pit.y);
+  });
+
+  it("leaves flat levels and open pit spans untouched", () => {
+    expect(landingDecksFor(0).length).toBe(0);
+    const pit = pitsFor(1)[0];
+    const mid = (pit.x0 + pit.x1) / 2;
+    expect(groundYAt(1, mid, GROUND_Y)).toBe(pit.y);
+  });
 });

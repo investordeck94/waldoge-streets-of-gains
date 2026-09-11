@@ -9,7 +9,7 @@
  */
 
 import { GROUND_Y } from "@/game/config";
-import { laddersFor, pitsFor, type Ladder, type GroundPit } from "@/game/config/world";
+import { laddersFor, landingDecksFor, pitsFor, type Ladder, type GroundPit } from "@/game/config/world";
 import { flicker } from "./clock";
 
 const WALL_DARK = "#0b0c11";
@@ -97,7 +97,52 @@ function drawPit(ctx: CanvasRenderingContext2D, pit: GroundPit, sx: number, ex: 
   ctx.textAlign = "left";
 }
 
+/**
+ * Solid walkable decks bridging a pit at each ladder's top end. Collision for
+ * these comes from `groundYAt` in world.ts — this only draws the surface so the
+ * floor the player stands on is visible.
+ */
+export function drawLandingDecks(
+  ctx: CanvasRenderingContext2D,
+  level: number,
+  camX: number,
+  canvasW: number,
+): void {
+  const decks = landingDecksFor(level);
+  if (decks.length === 0) return;
+  for (const d of decks) {
+    const sx = d.x0 - camX;
+    const w = d.x1 - d.x0;
+    if (sx + w < -60 || sx > canvasW + 60) continue;
+    // Deck slab
+    const slab = ctx.createLinearGradient(0, d.y - 8, 0, d.y + 14);
+    slab.addColorStop(0, "#6b7180");
+    slab.addColorStop(0.35, "#464c59");
+    slab.addColorStop(1, "#22262f");
+    ctx.fillStyle = slab;
+    ctx.fillRect(sx, d.y - 8, w, 20);
+    // Walk surface highlight + tread plate
+    ctx.fillStyle = "rgba(255,255,255,0.16)";
+    ctx.fillRect(sx, d.y - 8, w, 3);
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.lineWidth = 1;
+    for (let tx = sx + 6; tx < sx + w - 4; tx += 12) {
+      ctx.beginPath(); ctx.moveTo(tx, d.y - 5); ctx.lineTo(tx + 6, d.y + 1); ctx.stroke();
+    }
+    // Hazard edge stripes so the walkable ledge reads clearly
+    for (let i = 0; i * 10 < w; i++) {
+      ctx.fillStyle = i % 2 === 0 ? "#e8c342" : "#1b1b22";
+      ctx.fillRect(sx + i * 10, d.y + 10, Math.min(10, w - i * 10), 3);
+    }
+    // Support brackets under the deck
+    ctx.fillStyle = "#2b3038";
+    ctx.fillRect(sx + 4, d.y + 12, 7, 22);
+    ctx.fillRect(sx + w - 11, d.y + 12, 7, 22);
+  }
+}
+
 export function drawLadders(
+
   ctx: CanvasRenderingContext2D,
   level: number,
   camX: number,
