@@ -108,6 +108,7 @@ import {
   updateStuckWatchdog,
   type MovingEnemy,
 } from "@/game/enemy/movement";
+import { setRenderClock, renderNow } from "@/game/presentation/render2d/clock";
 import { selectBossMove, getMoveById, rollChain, type MartialForm } from "@/game/enemy/bossMoves";
 import { strikeConnects } from "@/game/core/strike";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
@@ -246,7 +247,7 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
   // Telegraph: pulsing warning ring before heavy/committed moves so the
   // player can read the attack and counter during its recovery window.
   if (telegraphing && e.state !== "dead") {
-    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 45);
+    const pulse = 0.5 + 0.5 * Math.sin(renderNow() / 45);
     ctx.beginPath();
     ctx.arc(0, headCY + headR + bodyLen / 2, 56 + pulse * 12, 0, Math.PI * 2);
     ctx.strokeStyle = `rgba(255, 210, 60, ${0.25 + pulse * 0.5})`;
@@ -323,8 +324,8 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
   const L = limbLen;
   // 0 → 1 → 0 across the move: windup, extension, retraction.
   const strike = Math.sin(Math.min(1, Math.max(0, prog)) * Math.PI);
-  const walkPhase = Math.sin(Date.now() / 200) * 12;
-  const legPhase = Math.sin(Date.now() / 120) * 15;
+  const walkPhase = Math.sin(renderNow() / 200) * 12;
+  const legPhase = Math.sin(renderNow() / 120) * 15;
 
   type Pt = [number, number];
   let leadArm: Pt = [F * L * 0.9, shoulderY + L * 0.45];
@@ -643,7 +644,7 @@ function drawCandleMinion(ctx: CanvasRenderingContext2D, e: Entity, camX: number
 
   // ---- Flame (animated flicker) ----
   if (e.state !== "dead") {
-    const flicker = Math.sin(Date.now() / 90 + sx * 0.05) * 1.2;
+    const flicker = Math.sin(renderNow() / 90 + sx * 0.05) * 1.2;
     const fY = wickTop;
     // Outer orange flame
     ctx.beginPath();
@@ -699,7 +700,7 @@ function drawCandleMinion(ctx: CanvasRenderingContext2D, e: Entity, camX: number
     rHandX = shoulderR + limbLen * 0.5;
     rHandY = shoulderY + limbLen * 0.3;
   } else if (e.state === "walk") {
-    const sw = Math.sin(Date.now() / 150) * 6;
+    const sw = Math.sin(renderNow() / 150) * 6;
     lHandY += sw;
     rHandY -= sw;
   }
@@ -750,7 +751,7 @@ function drawCandleMinion(ctx: CanvasRenderingContext2D, e: Entity, camX: number
     lFootY = -limbLen * 0.4;
     rFootY = -limbLen * 0.4;
   } else if (e.state === "walk") {
-    const sw = Math.sin(Date.now() / 150) * 6;
+    const sw = Math.sin(renderNow() / 150) * 6;
     lFootX += sw;
     rFootX -= sw;
   }
@@ -1027,7 +1028,7 @@ function drawStickFigure(
       ctx.lineTo(limbLen * 0.8, shoulderY + limbLen * 0.3);
     }
   } else {
-    const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
+    const swing = e.state === "walk" ? Math.sin(renderNow() / 150) * 10 : 0;
     if (style === "rush") {
       ctx.moveTo(0, shoulderY);
       ctx.lineTo(-limbLen * 1.3, shoulderY + 4);
@@ -1105,13 +1106,16 @@ function drawStickFigure(
 
   // Green Candle: pump rage particles around head
   if (isPlayer && isGreen) {
+    // Deterministic time-based orbit (no per-frame RNG in a draw call).
+    const gcT = renderNow() / 260;
+    ctx.fillStyle = "rgba(0,255,100,0.25)";
     for (let i = 0; i < 6; i++) {
-      ctx.fillStyle = "rgba(0,255,100,0.25)";
+      const a = gcT + (i * Math.PI) / 3;
       ctx.beginPath();
       ctx.arc(
-        (Math.random() - 0.5) * 20,
-        headCY - Math.random() * 20,
-        3 + Math.random() * 4,
+        Math.sin(a) * 10,
+        headCY - (1 + Math.cos(a * 1.3)) * 9,
+        3 + (1 + Math.sin(a * 2.1)) * 2,
         0,
         Math.PI * 2
       );
@@ -1201,7 +1205,7 @@ function drawStickFigure(
         backHand = [limbLen * 0.8, shoulderY + limbLen * 0.3];
       }
     } else {
-      const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
+      const swing = e.state === "walk" ? Math.sin(renderNow() / 150) * 10 : 0;
       // Match per-style idle/walk arm geometry
       if (style === "rush") {
         frontHand = [limbLen * 1.3, shoulderY + 4];
@@ -1287,7 +1291,7 @@ function drawStickFigure(
     legAEnd = [limbLen, hipY + limbLen * 0.3];
     legBEnd = [-limbLen, hipY + limbLen * 0.3];
   } else {
-    const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 12 : 0;
+    const swing = e.state === "walk" ? Math.sin(renderNow() / 150) * 12 : 0;
     let aX: number, bX: number, aY = hipY + limbLen, bY = hipY + limbLen;
     if (isPlayer && style === "rush") {
       aX = e.facing * (limbLen * 0.9 - swing * 0.5);
@@ -1377,7 +1381,7 @@ function drawStickFigure(
       frontFoot = [e.facing * limbLen, hipY + limbLen * 0.3];
       backFoot = [-e.facing * limbLen, hipY + limbLen * 0.3];
     } else {
-      const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 12 : 0;
+      const swing = e.state === "walk" ? Math.sin(renderNow() / 150) * 12 : 0;
       if (style === "rush") {
         frontFoot = [e.facing * (limbLen * 0.9 - swing * 0.5), hipY + limbLen];
         backFoot = [-e.facing * (limbLen * 0.4 + swing * 0.5), hipY + limbLen];
@@ -4796,7 +4800,7 @@ export const StreetBrawler: FC = () => {
         const px = pu.x - g.camX;
         const py = pu.y;
         if (px < -40 || px > CANVAS_W + 40) continue;
-        const bob = Math.sin(Date.now() / 200) * 3;
+        const bob = Math.sin(renderNow() / 200) * 3;
         const flashing = pu.timer < 120 && Math.floor(pu.timer / 10) % 2 === 0;
         ctx.save();
         if (flashing) ctx.globalAlpha = 0.4;
@@ -4842,7 +4846,7 @@ export const StreetBrawler: FC = () => {
           ctx.lineTo(cx, baseY - candleH - wickLen);
           ctx.stroke();
           // Flame (flicker)
-          const flick = Math.sin(Date.now() / 90 + cx * 0.05) * 0.8;
+          const flick = Math.sin(renderNow() / 90 + cx * 0.05) * 0.8;
           const fY = baseY - candleH - wickLen;
           ctx.beginPath();
           ctx.moveTo(cx, fY - 8 - flick);
