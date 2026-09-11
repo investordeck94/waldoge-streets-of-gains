@@ -47,7 +47,7 @@ const REF_H = 453;
  * hitboxHeight * 1.95; the minion sits deliberately just under him so it
  * reads as the smaller aggressor while keeping the same 30x70 hurtbox.
  */
-const SIZE = 1.72;
+const SIZE = 1.95;
 
 let atlas: HTMLImageElement | null = null;
 let ready = false;
