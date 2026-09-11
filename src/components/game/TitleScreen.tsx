@@ -9,7 +9,7 @@ import { useState, type FC, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, RotateCcw, BookOpen, Settings as SettingsIcon, X, Volume2, VolumeX, Camera } from "lucide-react";
 import type { Difficulty } from "@/game/config";
-import { IMAGE_URLS } from "@/game/assets";
+import titleBg from "@/assets/title-screen-bg.jpg";
 
 export interface ContinueInfo {
   available: boolean;
