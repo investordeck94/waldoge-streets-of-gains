@@ -26,6 +26,14 @@ export const COMBO_WINDOW = 40;
 export const COMBO_HIT_WINDOW = 40;
 
 /**
+ * Hard ceiling for the impact freeze, in frames. Simulation is fully paused
+ * while hit-pause runs, so an out-of-range value (bad data, future move) must
+ * never be able to stall the game.
+ */
+export const MAX_HIT_PAUSE = 10;
+
+
+/**
  * Named special attacks unlocked via input sequences (see COMBOS in the
  * game component). Values match the pre-refactor inline table exactly.
  */

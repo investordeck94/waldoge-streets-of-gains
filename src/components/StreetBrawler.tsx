@@ -108,6 +108,7 @@ import {
   updateStuckWatchdog,
   type MovingEnemy,
 } from "@/game/enemy/movement";
+import { setRenderClock, renderNow } from "@/game/presentation/render2d/clock";
 import { selectBossMove, getMoveById, rollChain, type MartialForm } from "@/game/enemy/bossMoves";
 import { strikeConnects } from "@/game/core/strike";
 // Central GameState — authoritative meta-state for progression, wallet, XP,
@@ -136,7 +137,7 @@ import {
   // player / world / physics
   CANVAS_W, CANVAS_H, GROUND_Y, GRAVITY, PLAYER_SPEED, JUMP_FORCE, LEVEL_WIDTH, MAX_ENERGY,
   // combat
-  COMBO_WINDOW, COMBO_HIT_WINDOW, SPECIAL_ATTACKS,
+  COMBO_WINDOW, COMBO_HIT_WINDOW, SPECIAL_ATTACKS, MAX_HIT_PAUSE,
   // powerups
   DROP_CHANCE, POWERUP_COLORS, POWERUP_ICONS,
   // environment
@@ -246,7 +247,7 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
   // Telegraph: pulsing warning ring before heavy/committed moves so the
   // player can read the attack and counter during its recovery window.
   if (telegraphing && e.state !== "dead") {
-    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 45);
+    const pulse = 0.5 + 0.5 * Math.sin(renderNow() / 45);
     ctx.beginPath();
     ctx.arc(0, headCY + headR + bodyLen / 2, 56 + pulse * 12, 0, Math.PI * 2);
     ctx.strokeStyle = `rgba(255, 210, 60, ${0.25 + pulse * 0.5})`;
@@ -323,8 +324,8 @@ function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
   const L = limbLen;
   // 0 → 1 → 0 across the move: windup, extension, retraction.
   const strike = Math.sin(Math.min(1, Math.max(0, prog)) * Math.PI);
-  const walkPhase = Math.sin(Date.now() / 200) * 12;
-  const legPhase = Math.sin(Date.now() / 120) * 15;
+  const walkPhase = Math.sin(renderNow() / 200) * 12;
+  const legPhase = Math.sin(renderNow() / 120) * 15;
 
   type Pt = [number, number];
   let leadArm: Pt = [F * L * 0.9, shoulderY + L * 0.45];
@@ -643,7 +644,7 @@ function drawCandleMinion(ctx: CanvasRenderingContext2D, e: Entity, camX: number
 
   // ---- Flame (animated flicker) ----
   if (e.state !== "dead") {
-    const flicker = Math.sin(Date.now() / 90 + sx * 0.05) * 1.2;
+    const flicker = Math.sin(renderNow() / 90 + sx * 0.05) * 1.2;
     const fY = wickTop;
     // Outer orange flame
     ctx.beginPath();
@@ -699,7 +700,7 @@ function drawCandleMinion(ctx: CanvasRenderingContext2D, e: Entity, camX: number
     rHandX = shoulderR + limbLen * 0.5;
     rHandY = shoulderY + limbLen * 0.3;
   } else if (e.state === "walk") {
-    const sw = Math.sin(Date.now() / 150) * 6;
+    const sw = Math.sin(renderNow() / 150) * 6;
     lHandY += sw;
     rHandY -= sw;
   }
@@ -750,7 +751,7 @@ function drawCandleMinion(ctx: CanvasRenderingContext2D, e: Entity, camX: number
     lFootY = -limbLen * 0.4;
     rFootY = -limbLen * 0.4;
   } else if (e.state === "walk") {
-    const sw = Math.sin(Date.now() / 150) * 6;
+    const sw = Math.sin(renderNow() / 150) * 6;
     lFootX += sw;
     rFootX -= sw;
   }
@@ -1027,7 +1028,7 @@ function drawStickFigure(
       ctx.lineTo(limbLen * 0.8, shoulderY + limbLen * 0.3);
     }
   } else {
-    const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
+    const swing = e.state === "walk" ? Math.sin(renderNow() / 150) * 10 : 0;
     if (style === "rush") {
       ctx.moveTo(0, shoulderY);
       ctx.lineTo(-limbLen * 1.3, shoulderY + 4);
@@ -1105,13 +1106,16 @@ function drawStickFigure(
 
   // Green Candle: pump rage particles around head
   if (isPlayer && isGreen) {
+    // Deterministic time-based orbit (no per-frame RNG in a draw call).
+    const gcT = renderNow() / 260;
+    ctx.fillStyle = "rgba(0,255,100,0.25)";
     for (let i = 0; i < 6; i++) {
-      ctx.fillStyle = "rgba(0,255,100,0.25)";
+      const a = gcT + (i * Math.PI) / 3;
       ctx.beginPath();
       ctx.arc(
-        (Math.random() - 0.5) * 20,
-        headCY - Math.random() * 20,
-        3 + Math.random() * 4,
+        Math.sin(a) * 10,
+        headCY - (1 + Math.cos(a * 1.3)) * 9,
+        3 + (1 + Math.sin(a * 2.1)) * 2,
         0,
         Math.PI * 2
       );
@@ -1201,7 +1205,7 @@ function drawStickFigure(
         backHand = [limbLen * 0.8, shoulderY + limbLen * 0.3];
       }
     } else {
-      const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 10 : 0;
+      const swing = e.state === "walk" ? Math.sin(renderNow() / 150) * 10 : 0;
       // Match per-style idle/walk arm geometry
       if (style === "rush") {
         frontHand = [limbLen * 1.3, shoulderY + 4];
@@ -1287,7 +1291,7 @@ function drawStickFigure(
     legAEnd = [limbLen, hipY + limbLen * 0.3];
     legBEnd = [-limbLen, hipY + limbLen * 0.3];
   } else {
-    const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 12 : 0;
+    const swing = e.state === "walk" ? Math.sin(renderNow() / 150) * 12 : 0;
     let aX: number, bX: number, aY = hipY + limbLen, bY = hipY + limbLen;
     if (isPlayer && style === "rush") {
       aX = e.facing * (limbLen * 0.9 - swing * 0.5);
@@ -1377,7 +1381,7 @@ function drawStickFigure(
       frontFoot = [e.facing * limbLen, hipY + limbLen * 0.3];
       backFoot = [-e.facing * limbLen, hipY + limbLen * 0.3];
     } else {
-      const swing = e.state === "walk" ? Math.sin(Date.now() / 150) * 12 : 0;
+      const swing = e.state === "walk" ? Math.sin(renderNow() / 150) * 12 : 0;
       if (style === "rush") {
         frontFoot = [e.facing * (limbLen * 0.9 - swing * 0.5), hipY + limbLen];
         backFoot = [-e.facing * (limbLen * 0.4 + swing * 0.5), hipY + limbLen];
@@ -3403,11 +3407,35 @@ export const StreetBrawler: FC = () => {
     // froze on its last frame with the characters missing. The frame is now
     // isolated: the bad frame is dropped, the fighters are repaired, and the
     // loop continues.
-    const tick = () => {
+    const tick = (ts?: number) => {
+      // One clock stamp per frame for EVERY renderer (see render2d/clock.ts).
+      setRenderClock(typeof ts === "number" ? ts : performance.now());
       try {
         runFrame();
       } catch (err) {
         console.error("[Brawler] frame error — recovering", err);
+        if (import.meta.env.DEV) {
+          try {
+            const pl = g.player;
+            const bs = g.enemies.find(e => e.isBoss);
+            console.error("[Brawler] FRAME DIAGNOSTICS", {
+              frame: g.animFrameCount,
+              level: g.level,
+              wave: g.wave,
+              playerState: pl?.state, playerX: pl?.x, playerY: pl?.y,
+              playerHp: pl?.hp, playerStateTimer: pl?.stateTimer,
+              bossName: bs?.bossName, bossState: bs?.state,
+              bossX: bs?.x, bossY: bs?.y, bossHp: bs?.hp,
+              bossMoveId: bs?.bossMoveId, bossPhase: bs?.bossPhase,
+              bossStateTimer: bs?.stateTimer,
+              enemies: g.enemies.length,
+              projectiles: g.projectiles.length,
+              effects: g.effects.length,
+              camX: g.camX,
+              hitPause: g.hitPause,
+            });
+          } catch { /* diagnostics must never mask the original error */ }
+        }
         try {
           const pl = g.player;
           sanitizeFighterMotion(pl as MovingEnemy, GROUND_Y);
@@ -3425,6 +3453,7 @@ export const StreetBrawler: FC = () => {
         if (g.running) g.animFrame = requestAnimationFrame(tick);
       }
     };
+
 
     const runFrame = () => {
       if (!g.running) return;
@@ -3446,21 +3475,23 @@ export const StreetBrawler: FC = () => {
         return;
       }
 
-      // Hit-pause: freeze simulation for a few frames on impactful hits
-      // for that classic "juicy" feel. Rendering still happens so shake reads.
+      // Hit-pause: freeze the simulation for a few frames on impactful hits
+      // for that classic "juicy" feel.
+      //
+      // The frame returns BEFORE the draw pass, so the canvas keeps the last
+      // fully drawn frame — that is the intended "frozen impact" image. The
+      // old code advanced the shake offset here, which could never be seen
+      // (nothing redraws) and burned two Math.random() calls per paused frame
+      // while silently consuming the shake's lifetime. Shake is now frozen
+      // together with everything else and resumes when the pause ends, so the
+      // impact shake plays out in full instead of being eaten by the pause.
+      // Bounded: hitPause is only ever set to small move-authored values, and
+      // is hard-capped here so no value can stall the loop.
       if (g.hitPause > 0) {
-        g.hitPause -= 1;
-        // Re-render last frame with shake offset for visible impact
-        if (g.camShake.timer > 0) {
-          const dur = Math.max(1, g.camShake.duration);
-          const t = g.camShake.timer;
-          const m = g.camShake.magnitude * (t / dur);
-          g.camShake.x = (Math.random() - 0.5) * 2 * m;
-          g.camShake.y = (Math.random() - 0.5) * 2 * m;
-          g.camShake.timer -= 1;
-        }
+        g.hitPause = Math.min(g.hitPause, MAX_HIT_PAUSE) - 1;
         g.animFrame = requestAnimationFrame(tick);
         return;
+
       }
 
       // Helper: trigger screen shake. Stronger or longer shakes win over
@@ -4796,7 +4827,7 @@ export const StreetBrawler: FC = () => {
         const px = pu.x - g.camX;
         const py = pu.y;
         if (px < -40 || px > CANVAS_W + 40) continue;
-        const bob = Math.sin(Date.now() / 200) * 3;
+        const bob = Math.sin(renderNow() / 200) * 3;
         const flashing = pu.timer < 120 && Math.floor(pu.timer / 10) % 2 === 0;
         ctx.save();
         if (flashing) ctx.globalAlpha = 0.4;
@@ -4842,7 +4873,7 @@ export const StreetBrawler: FC = () => {
           ctx.lineTo(cx, baseY - candleH - wickLen);
           ctx.stroke();
           // Flame (flicker)
-          const flick = Math.sin(Date.now() / 90 + cx * 0.05) * 0.8;
+          const flick = Math.sin(renderNow() / 90 + cx * 0.05) * 0.8;
           const fY = baseY - candleH - wickLen;
           ctx.beginPath();
           ctx.moveTo(cx, fY - 8 - flick);

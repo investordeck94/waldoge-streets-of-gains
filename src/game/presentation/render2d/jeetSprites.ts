@@ -13,6 +13,7 @@
  * striped track trousers, red/white sneakers and the burger spatula.
  */
 
+import { renderNow } from "./clock";
 import atlasAsset from "@/assets/jeet-atlas.png.asset.json";
 
 export interface JeetView {
@@ -119,7 +120,7 @@ export function drawJeetSprite(
 
   const sx = e.x - camX;
   const sy = e.y;
-  const clock = Date.now();
+  const clock = renderNow();
   const f = frameFor(e, form, prog, telegraphing, clock);
   const base = (e.height * SIZE) / REF_H;
 

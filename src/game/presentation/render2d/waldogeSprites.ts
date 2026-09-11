@@ -13,6 +13,7 @@
  *   hit | dead
  */
 
+import { renderNow } from "./clock";
 import type { StyleName } from "@/lib/fightStyles";
 import atlasAsset from "@/assets/waldoge-atlas.png.asset.json";
 import punchExtAsset from "@/assets/waldoge-punch-extended.png.asset.json";
@@ -244,7 +245,7 @@ export function drawWaldogeSprite(
 
   const sx = e.x - camX;
   const sy = e.y;
-  const clock = Date.now();
+  const clock = renderNow();
   const picked = frameFor(e, specialActive, clock);
   const extImg = picked.ext ? getPunchExt() : null;
   // Fall back to the atlas wind-up frame until the standalone jab has loaded.

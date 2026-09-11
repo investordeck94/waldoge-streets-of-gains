@@ -21,6 +21,7 @@
  *   dodge                 → business reposition step
  */
 
+import { renderNow } from "./clock";
 import atlasAsset from "@/assets/mr-marketer-atlas.png.asset.json";
 
 export interface MrMarketerView {
@@ -147,7 +148,7 @@ export function drawMarketerLeaflet(
   ctx.save();
   ctx.translate(sx, sy);
   // Slight spinning / floating motion as it flies.
-  ctx.rotate(Math.sin(Date.now() / 90 + sx * 0.05) * 0.5);
+  ctx.rotate(Math.sin(renderNow() / 90 + sx * 0.05) * 0.5);
   ctx.scale((dir >= 0 ? 1 : -1) * scale, scale);
   ctx.shadowColor = "rgba(255,255,255,0.6)";
   ctx.shadowBlur = 8;
@@ -175,7 +176,7 @@ export function drawMrMarketerSprite(
 
   const sx = e.x - camX;
   const sy = e.y;
-  const clock = Date.now();
+  const clock = renderNow();
   const pose = poseFor(e, form, prog, telegraphing, clock);
   const f = pose.f;
   const base = (e.height * SIZE) / REF_H;

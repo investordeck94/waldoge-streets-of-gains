@@ -18,6 +18,7 @@
  *   dodge            → heavy repositioning shuffle
  */
 
+import { renderNow } from "./clock";
 import atlasAsset from "@/assets/fudder-atlas.png.asset.json";
 
 export interface FudderView {
@@ -141,7 +142,7 @@ export function drawFudderSprite(
 
   const sx = e.x - camX;
   const sy = e.y;
-  const clock = Date.now();
+  const clock = renderNow();
   const pose = poseFor(e, form, prog, telegraphing, clock);
   const f = pose.f;
   const base = (e.height * SIZE) / REF_H;
