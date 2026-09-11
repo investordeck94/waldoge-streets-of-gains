@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play, RotateCcw, BookOpen, Settings as SettingsIcon, X, Volume2, VolumeX, Camera } from "lucide-react";
 import type { Difficulty } from "@/game/config";
 import titleBg from "@/assets/title-screen-bg.jpg";
+import { TitleWaldogeFighter } from "@/components/game/TitleWaldogeFighter";
 
 export interface ContinueInfo {
   available: boolean;
@@ -136,25 +137,38 @@ export const TitleScreen: FC<TitleScreenProps> = ({
         />
       </div>
 
-      <div className="relative z-10 flex flex-col flex-1 px-4 sm:px-8 py-8 sm:py-10">
+      <div className="relative z-10 grid min-h-[78svh] grid-rows-[auto_minmax(150px,0.75fr)_auto_auto] px-4 py-5 sm:grid-cols-[minmax(260px,0.8fr)_minmax(300px,0.62fr)] sm:grid-rows-[auto_1fr_auto] sm:px-8 sm:py-8 lg:px-12">
         {/* Logotype */}
         <motion.div
           initial={{ opacity: 0, y: -14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center"
+          className="text-center sm:col-span-2"
         >
-          <p className="font-mono text-[10px] sm:text-xs tracking-[0.5em] text-muted-foreground">A WALDOGE ARCADE BEAT-EM-UP</p>
-          <h1 className="mt-2 font-heading font-black leading-[0.85] tracking-tight">
-            <span className="block text-3xl sm:text-5xl text-foreground drop-shadow-[0_3px_0_hsl(var(--background))]">WALDOGE</span>
-            <span className="block text-4xl sm:text-6xl text-primary drop-shadow-[0_0_25px_hsl(var(--primary)/0.55)]">STREETS OF GAINS</span>
+          <p className="font-mono text-[9px] sm:text-xs tracking-[0.4em] text-muted-foreground">A WALDOGE ARCADE BEAT-EM-UP</p>
+          <h1 className="mt-1 font-heading font-black uppercase leading-[0.82]">
+            <span className="block text-4xl sm:text-6xl text-foreground drop-shadow-[3px_4px_0_hsl(var(--waldoge-red))]">WALDOGE</span>
+            <span className="block text-[2rem] sm:text-6xl text-primary drop-shadow-[0_0_25px_hsl(var(--primary)/0.55)]">STREETS OF GAINS</span>
           </h1>
-          <div className="mx-auto mt-3 h-px w-40 bg-gradient-to-r from-transparent via-primary to-transparent" />
+          <div className="mx-auto mt-2 h-px w-40 bg-gradient-to-r from-transparent via-primary to-transparent" />
+        </motion.div>
+
+        {/* Live title fighter — existing game artwork, independent of gameplay. */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.12 }}
+          className="relative flex min-h-0 items-end justify-center sm:row-start-2"
+        >
+          <div className="absolute bottom-5 h-10 w-52 rounded-[50%] bg-background/70 blur-md" />
+          <div className="relative h-full max-h-[330px] w-full max-w-[440px]">
+            <TitleWaldogeFighter />
+          </div>
         </motion.div>
 
         {/* Menu */}
-        <div className="flex-1 flex items-center justify-center py-8">
-          <div className="w-full max-w-sm space-y-2.5">
+        <div className="flex items-center justify-center sm:row-start-2 sm:py-4">
+          <div className="w-full max-w-sm space-y-2">
             <AnimatePresence mode="wait">
               {panel === "main" ? (
                 <motion.div
@@ -163,7 +177,7 @@ export const TitleScreen: FC<TitleScreenProps> = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -18 }}
                   transition={{ duration: 0.22 }}
-                  className="space-y-2.5"
+                   className="space-y-2"
                 >
                   <MenuButton primary icon={<Play className="w-5 h-5" />} label="START GAME" onClick={() => setPanel("difficulty")} />
                   <MenuButton
@@ -191,7 +205,7 @@ export const TitleScreen: FC<TitleScreenProps> = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 18 }}
                   transition={{ duration: 0.22 }}
-                  className="space-y-2.5"
+                   className="space-y-2"
                 >
                   <p className="font-mono text-[10px] tracking-[0.35em] text-muted-foreground text-center">CHOOSE DIFFICULTY</p>
                   {DIFFICULTIES.map((d) => (
@@ -216,9 +230,9 @@ export const TitleScreen: FC<TitleScreenProps> = ({
           </div>
         </div>
 
-        {leaderboardSlot && <div className="w-full max-w-md mx-auto">{leaderboardSlot}</div>}
+        {leaderboardSlot && <div className="mt-3 w-full max-w-md mx-auto sm:col-span-2">{leaderboardSlot}</div>}
 
-        <p className="mt-6 text-center font-mono text-[10px] text-muted-foreground">
+        <p className="mt-3 text-center font-mono text-[10px] text-muted-foreground sm:col-span-2">
           7 districts · 7 bosses · one very good dog
         </p>
       </div>
