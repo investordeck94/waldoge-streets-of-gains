@@ -43,9 +43,8 @@ const F: Record<string, Frame> = {
 /** Reference height of the idle pose — every frame scales against this. */
 const REF_H = 453;
 /**
- * Visual size relative to the collision box. Waldoge renders at
- * hitboxHeight * 1.95; the minion sits deliberately just under him so it
- * reads as the smaller aggressor while keeping the same 30x70 hurtbox.
+ * Visual size relative to the collision box. Matches Waldoge's 1.95 so the
+ * minion reads as an equal-sized opponent, same 30x70 hurtbox.
  */
 const SIZE = 1.95;
 
