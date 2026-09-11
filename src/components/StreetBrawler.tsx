@@ -3407,11 +3407,35 @@ export const StreetBrawler: FC = () => {
     // froze on its last frame with the characters missing. The frame is now
     // isolated: the bad frame is dropped, the fighters are repaired, and the
     // loop continues.
-    const tick = () => {
+    const tick = (ts?: number) => {
+      // One clock stamp per frame for EVERY renderer (see render2d/clock.ts).
+      setRenderClock(typeof ts === "number" ? ts : performance.now());
       try {
         runFrame();
       } catch (err) {
         console.error("[Brawler] frame error — recovering", err);
+        if (import.meta.env.DEV) {
+          try {
+            const pl = g.player;
+            const bs = g.enemies.find(e => e.isBoss);
+            console.error("[Brawler] FRAME DIAGNOSTICS", {
+              frame: g.animFrameCount,
+              level: g.level,
+              wave: g.wave,
+              playerState: pl?.state, playerX: pl?.x, playerY: pl?.y,
+              playerHp: pl?.hp, playerStateTimer: pl?.stateTimer,
+              bossName: bs?.bossName, bossState: bs?.state,
+              bossX: bs?.x, bossY: bs?.y, bossHp: bs?.hp,
+              bossMoveId: bs?.bossMoveId, bossPhase: bs?.bossPhase,
+              bossStateTimer: bs?.stateTimer,
+              enemies: g.enemies.length,
+              projectiles: g.projectiles.length,
+              effects: g.effects.length,
+              camX: g.camX,
+              hitPause: g.hitPause,
+            });
+          } catch { /* diagnostics must never mask the original error */ }
+        }
         try {
           const pl = g.player;
           sanitizeFighterMotion(pl as MovingEnemy, GROUND_Y);
@@ -3429,6 +3453,7 @@ export const StreetBrawler: FC = () => {
         if (g.running) g.animFrame = requestAnimationFrame(tick);
       }
     };
+
 
     const runFrame = () => {
       if (!g.running) return;
