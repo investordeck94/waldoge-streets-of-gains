@@ -228,6 +228,95 @@ function drawFrame(ctx: CanvasRenderingContext2D, src: CanvasImageSource, f: Fra
 }
 
 
+/**
+ * Dedicated LADDER CLIMB pose.
+ *
+ * Presentation only. The gameplay loop centres a climbing fighter on the ladder
+ * (see world/climb.ts), so here we simply draw the body against the rungs and
+ * overlay gripping gloves / stepping sneakers whose alternation is driven by the
+ * fighter's own vertical position — no clock, no randomness, no allocation.
+ * Holding still on the ladder therefore holds the pose, and climbing animates.
+ */
+function drawWaldogeClimb(
+  ctx: CanvasRenderingContext2D,
+  e: FighterView,
+  camX: number,
+  style: StyleName,
+  img: CanvasImageSource,
+) {
+  const sx = e.x - camX;
+  const sy = e.y;
+  const base = (e.height * SIZE) / REF_H;
+  // One full grip cycle every ~26 world units of climb.
+  const ph = Math.sin((e.y / 26) * Math.PI * 2);
+  const tint = styleTint(style);
+
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.scale(base, base);
+
+  // Body: narrowed idle silhouette, hugging the ladder face-on.
+  ctx.save();
+  ctx.scale(0.82, 1);
+  drawFrame(ctx, img, F.idle0);
+  ctx.restore();
+
+  // Limbs drawn over the torso so the grip reads clearly.
+  const arm = (side: -1 | 1, lift: number) => {
+    const handX = side * 20;
+    const handY = -132 - lift * 12;
+    ctx.strokeStyle = "#d92b2b";
+    ctx.lineWidth = 9;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(side * 15, -104);
+    ctx.lineTo(handX, handY);
+    ctx.stroke();
+    // Red glove closed around the rung
+    ctx.fillStyle = "#e03434";
+    ctx.beginPath(); ctx.arc(handX, handY, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(handX, handY, 12, 0, Math.PI * 2); ctx.stroke();
+  };
+
+  const leg = (side: -1 | 1, lift: number) => {
+    const footX = side * 17;
+    const footY = -14 - lift * 16;
+    ctx.strokeStyle = "#d92b2b";
+    ctx.lineWidth = 10;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(side * 10, -58);
+    ctx.lineTo(footX, footY);
+    ctx.stroke();
+    // Sneaker planted on a rung
+    ctx.fillStyle = "#f2f2f2";
+    ctx.beginPath();
+    ctx.ellipse(footX, footY, 13, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#d92b2b"; ctx.lineWidth = 2;
+    ctx.stroke();
+  };
+
+  // Opposite limbs move together — classic climbing gait.
+  arm(-1, Math.max(0, ph));
+  leg(1, Math.max(0, ph));
+  arm(1, Math.max(0, -ph));
+  leg(-1, Math.max(0, -ph));
+
+  // Style aura kept, drawn faintly around the climber.
+  if (style !== "brawler") {
+    ctx.globalAlpha = 0.25;
+    ctx.strokeStyle = tint;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, -84, 26, 62, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
 export function drawWaldogeSprite(
   ctx: CanvasRenderingContext2D,
   e: FighterView,
@@ -235,13 +324,22 @@ export function drawWaldogeSprite(
   headImg: HTMLImageElement | null,
   style: StyleName = "brawler",
   specialActive = false,
+  climbing = false,
 ) {
+
   const img = getAtlas();
   if (!img) {
     // Artwork not downloaded yet — keep the procedural fighter as a fallback.
     drawWaldogeFighter(ctx, e, camX, headImg, style);
     return;
   }
+
+  if (climbing && e.state !== "dead" && e.state !== "hit") {
+    drawWaldogeClimb(ctx, e, camX, style, img);
+    return;
+  }
+
+
 
   const sx = e.x - camX;
   const sy = e.y;

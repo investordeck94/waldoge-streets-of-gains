@@ -83,14 +83,27 @@ export function pitsFor(level: number): GroundPit[] {
   return LEVEL_PITS[level] ?? [];
 }
 
-/** Ground (foot) y at a world x for a level. */
-export function groundYAt(level: number, x: number): number {
+/**
+ * Ground (foot) y at a world x for a level.
+ *
+ * `fromY` (optional) is the fighter's CURRENT foot y. It only matters where a
+ * ladder landing deck spans a pit: a fighter at or above deck height stands on
+ * the deck, while a fighter already down on the pit floor walks underneath it.
+ */
+export function groundYAt(level: number, x: number, fromY?: number): number {
   if (!Number.isFinite(x)) return GROUND_Y;
-  for (const p of pitsFor(level)) {
-    if (x > p.x0 && x < p.x1) return p.y;
+  const pit = pitAt(level, x);
+  if (!pit) return GROUND_Y;
+  for (const deck of landingDecksFor(level)) {
+    if (x >= deck.x0 && x <= deck.x1) {
+      if (fromY === undefined || !Number.isFinite(fromY) || fromY <= deck.y + LANDING_CLEARANCE) {
+        return deck.y;
+      }
+    }
   }
-  return GROUND_Y;
+  return pit.y;
 }
+
 
 /** The pit containing x, or null when x is over the main street. */
 export function pitAt(level: number, x: number): GroundPit | null {
@@ -178,6 +191,53 @@ export const LEVEL_LADDERS: Record<number, Ladder[]> = {
 export function laddersFor(level: number): Ladder[] {
   return LEVEL_LADDERS[level] ?? [];
 }
+
+// ---------------------------------------------------------------------------
+// Ladder landing decks
+// ---------------------------------------------------------------------------
+//
+// A ladder whose x sits over a pit used to end in thin air at the top: the
+// ground under that x was the pit floor, so a climber who reached the top rung
+// simply fell back down. Every such ladder now gets a SOLID walkable deck at
+// its top end, wide enough to stand on and step off in either direction.
+//
+// Derived from the ladder table (single source of truth) and cached per level.
+
+/** A solid walkable surface bridging a pit at a ladder's top end. */
+export interface LandingDeck {
+  x0: number;
+  x1: number;
+  /** Walkable surface y (the ladder's top). */
+  y: number;
+  /** Ladder centre this deck belongs to. */
+  ladderX: number;
+}
+
+/** Half-width of a landing deck, in world units. */
+export const LANDING_HALF_W = 52;
+/**
+ * How far below deck height a fighter may be and still be considered "on top
+ * of" the deck rather than underneath it.
+ */
+export const LANDING_CLEARANCE = 30;
+
+const deckCache = new Map<number, LandingDeck[]>();
+
+/** Solid landing decks for a level (never undefined; cached, no allocation). */
+export function landingDecksFor(level: number): LandingDeck[] {
+  const cached = deckCache.get(level);
+  if (cached) return cached;
+  const decks: LandingDeck[] = [];
+  for (const l of laddersFor(level)) {
+    const pit = pitAt(level, l.x);
+    if (!pit || l.top >= pit.y) continue;
+    decks.push({ x0: l.x - LANDING_HALF_W, x1: l.x + LANDING_HALF_W, y: l.top, ladderX: l.x });
+  }
+  deckCache.set(level, decks);
+  return decks;
+}
+
+
 
 /** The ladder a fighter at x can currently grab, or null. */
 export function ladderAt(level: number, x: number): Ladder | null {

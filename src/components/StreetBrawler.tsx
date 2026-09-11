@@ -117,7 +117,7 @@ import {
   maxPitDepthFor, LADDER_GRAB_X,
 } from "@/game/config/world";
 import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/districts";
-import { drawPits, drawLadders } from "@/game/presentation/render2d/terrain";
+import { drawPits, drawLadders, drawLandingDecks } from "@/game/presentation/render2d/terrain";
 import { mount as mountLadder, stepClimb, dismount as dismountLadder, climbDirectionFor, type Climber } from "@/game/world/climb";
 import { selectBossMove, getMoveById, rollChain, type MartialForm } from "@/game/enemy/bossMoves";
 import {
@@ -3726,15 +3726,19 @@ export const StreetBrawler: FC = () => {
         if (dir !== 0) { p.x += dir * speed; p.facing = dir as 1 | -1; moving = true; }
         {
           const pClimbing = (p as unknown as Climber).climbing === true;
-          const feetY = groundYAt(g.level, p.x);
+          const feetY = groundYAt(g.level, p.x, p.y);
           const canJump = !pClimbing && (p.y >= feetY || (p as Entity & { onPlatform?: Platform | null }).onPlatform);
-          // Pressing UP at the bottom of a ladder climbs instead of jumping.
-          const wantsLadderUp = !pClimbing && p.y >= feetY && feetY > GROUND_Y && ladderAt(g.level, p.x) !== null;
-          if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && canJump && !wantsLadderUp) {
+          // Inside a ladder's grab zone the JUMP button becomes the ladder
+          // control (handled in the physics step below); everywhere else JUMP
+          // is exactly the normal jump it has always been.
+          const wantsLadder = !pClimbing && p.y >= feetY - 1
+            && hasVerticalTraversal(g.level) && ladderAt(g.level, p.x) !== null;
+          if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && canJump && !wantsLadder) {
             p.vy = JUMP_FORCE;
             (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
           }
         }
+
 
         // Reset light-chain index after CHAIN_RESET_MS of inactivity
         const chainResetFrames = msToFrames(CHAIN_RESET_MS);
@@ -3787,7 +3791,7 @@ export const StreetBrawler: FC = () => {
         } else if (p.stateTimer <= 0) {
           // NOTE: don't null currentMove here — it's cleared after damage applies
           // (or when a new attack overwrites it). Nulling here can race the hit-frame check.
-          p.state = moving ? "walk" : p.y < groundYAt(g.level, p.x) ? "jump" : "idle";
+          p.state = moving ? "walk" : p.y < groundYAt(g.level, p.x, p.y) ? "jump" : "idle";
         }
       } else if (p.state !== "hit" && p.state !== "dead" && !isAttacking && didSpecial) {
         // Special move was triggered, movement already handled by the special
@@ -3818,39 +3822,73 @@ export const StreetBrawler: FC = () => {
       // ---- LADDER CLIMBING (player) -------------------------------------
       // A climbing fighter is exempt from gravity for the frame; everything
       // else about combat is untouched. Reaching either end auto-dismounts.
+      //
+      // INPUT: the existing JUMP control (W / ↑ / Space / mobile JUMP button)
+      // mounts the ladder while standing in its grab zone. UP or DOWN chooses
+      // the direction when held; with no direction held (mobile, where there is
+      // no D-pad up/down) the climber automatically travels towards the end it
+      // is not standing on. A short input lock stops the JUMP tap's own "w"
+      // from immediately reversing an auto-descent.
       let climbedThisFrame = false;
+      const pClimb = pAny as Climber & { climbAuto?: -1 | 1; climbLock?: number };
       if (hasVerticalTraversal(g.level) && p.state !== "dead") {
         const upHeld = g.keys.has("w") || g.keys.has("arrowup");
         const downHeld = g.keys.has("s") || g.keys.has("arrowdown");
-        const feetY = groundYAt(g.level, p.x);
+        const jumpHeld = upHeld || g.keys.has(" ");
+        const feetY = groundYAt(g.level, p.x, p.y);
         const grounded = p.y >= feetY - 1 && !pAny.onPlatform;
         if (pAny.climbing) {
           const lad = ladderAt(g.level, p.x) ?? nearestLadder(g.level, p.x);
           if (lad) {
-            const dir: -1 | 0 | 1 = upHeld ? -1 : downHeld ? 1 : 0;
+            if ((pClimb.climbLock ?? 0) > 0) pClimb.climbLock = (pClimb.climbLock ?? 0) - 1;
+            let dir: -1 | 0 | 1 = pClimb.climbAuto ?? 0;
+            if ((pClimb.climbLock ?? 0) <= 0) {
+              if (downHeld) dir = 1;
+              else if (upHeld) dir = -1;
+            }
             const still = stepClimb(pAny, lad, dir);
             if (p.state !== "hit") p.state = "jump";
             climbedThisFrame = still;
-            if (!still) p.y = Math.min(Math.max(p.y, lad.top), lad.bottom);
+            if (!still) {
+              p.y = Math.min(Math.max(p.y, lad.top), lad.bottom);
+              pClimb.climbAuto = undefined;
+              pClimb.climbLock = 0;
+            }
           } else {
             dismountLadder(pAny);
+            pClimb.climbAuto = undefined;
           }
-        } else if (grounded) {
+        } else if (grounded && jumpHeld) {
           const lad = ladderAt(g.level, p.x);
           if (lad) {
-            if (downHeld && p.y <= lad.top + 2) { mountLadder(pAny, lad); p.y = lad.top + 2; climbedThisFrame = true; }
-            else if (upHeld && p.y >= lad.bottom - 2) { mountLadder(pAny, lad); p.y = lad.bottom - 2; climbedThisFrame = true; }
+            const atTop = p.y <= lad.top + 3;
+            const atBottom = p.y >= lad.bottom - 3;
+            let dir: -1 | 1 | 0 = 0;
+            if (downHeld && atTop) dir = 1;
+            else if (atBottom) dir = -1;
+            else if (atTop) dir = 1;
+            if (dir !== 0) {
+              mountLadder(pAny, lad);
+              p.y = dir === 1 ? lad.top + 2 : lad.bottom - 2;
+              pClimb.climbAuto = dir;
+              pClimb.climbLock = 16;
+              climbedThisFrame = true;
+            }
           }
         }
       } else if (pAny.climbing) {
         dismountLadder(pAny);
+        pClimb.climbAuto = undefined;
       }
 
       if (!climbedThisFrame) {
       p.vy += GRAVITY;
       p.y += p.vy;
-      // Ground collision — level-aware (main street or lower street floor)
-      const footGroundY = groundYAt(g.level, p.x);
+      // Ground collision — level-aware (main street, ladder landing deck or
+      // lower street floor). `prevFootY` keeps a fighter already below a deck
+      // from being popped back up on to it.
+      const footGroundY = groundYAt(g.level, p.x, prevFootY);
+
       if (p.y >= footGroundY) {
         if (p.state === "groundpound" && p.vy > 5) {
           g.effects.push({ x: p.x, y: footGroundY, timer: 15, text: "💥", color: "#ff6600", size: 24 });
@@ -3910,7 +3948,7 @@ export const StreetBrawler: FC = () => {
         (p.state === "uppercut" && p.stateTimer === 12) ||
         (p.state === "spinkick" && (p.stateTimer === 14 || p.stateTimer === 8)) ||
         (p.state === "dashpunch" && p.stateTimer === 8) ||
-        (p.state === "groundpound" && p.y >= groundYAt(g.level, p.x) - 5 && p.stateTimer > 5)
+        (p.state === "groundpound" && p.y >= groundYAt(g.level, p.x, p.y) - 5 && p.stateTimer > 5)
       );
       // Data-driven J/K/L basics: percentage-based active window from attackCooldown.
       // Window opens at ~50% through the animation and lasts a few frames; hitApplied
@@ -4135,8 +4173,8 @@ export const StreetBrawler: FC = () => {
         // Bosses are excluded: their arenas are flat.
         if (hasVerticalTraversal(g.level) && !e.isBoss && e.hp > 0 && p.hp > 0) {
           const eClimb = e as MovingEnemy & Climber;
-          const myGround = groundYAt(g.level, e.x);
-          const targetGround = groundYAt(g.level, p.x);
+          const myGround = groundYAt(g.level, e.x, e.y);
+          const targetGround = groundYAt(g.level, p.x, p.y);
           const grounded = e.y >= myGround - 1;
           if (eClimb.climbing) {
             const lad = ladderAt(g.level, e.x) ?? nearestLadder(g.level, e.x);
@@ -4177,7 +4215,7 @@ export const StreetBrawler: FC = () => {
         e.x += e.vx || 0;
         e.vx = (e.vx || 0) * 0.85;
         {
-          const eg = groundYAt(g.level, e.x);
+          const eg = groundYAt(g.level, e.x, e.y);
           if (e.y >= eg) { e.y = eg; e.vy = 0; }
         }
         e.x = clampToPitWalls(g.level, e.x, e.y, 15);
@@ -4888,6 +4926,7 @@ export const StreetBrawler: FC = () => {
         // Redesigned large districts (Level 1 Jeet / Level 2 Rugger).
         drawDistrict(ctx, g.level, g.camX, g.camY, CANVAS_W);
         drawPits(ctx, g.level, g.camX, CANVAS_W);
+        drawLandingDecks(ctx, g.level, g.camX, CANVAS_W);
         drawLadders(ctx, g.level, g.camX, CANVAS_W);
       } else {
         const currentTheme = LEVELS[Math.min(g.level, LEVELS.length - 1)].theme;
@@ -4906,7 +4945,7 @@ export const StreetBrawler: FC = () => {
         if (p && p.hp > 0) {
           const sx = p.x - g.camX;
           // Shadow shrinks/fades as the player rises above the ground.
-          const localGround = groundYAt(g.level, p.x);
+          const localGround = groundYAt(g.level, p.x, p.y);
           const heightAboveGround = Math.max(0, localGround - p.y);
           const t = Math.min(1, heightAboveGround / 140);
           const rx = 14 * (1 - t * 0.55);
@@ -5304,7 +5343,7 @@ export const StreetBrawler: FC = () => {
 
       // Presentation only — combat state (p.state / p.stateTimer / p.facing)
       // is produced by the gameplay loop above and merely read here.
-      drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.style, !!g.specialFx);
+      drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.style, !!g.specialFx, (p as unknown as Climber).climbing === true);
 
       // Heal flash: expanding green ring + glow around player when fully healed at level start
       if (g.healFlash > 0) {
