@@ -209,7 +209,9 @@ export function hasVerticalTraversal(level: number): boolean {
 export const ENCOUNTER_ZONES: Record<number, { waves: number[]; boss: number }> = {
   0: { waves: [0.28, 0.58], boss: 0.9 },
   1: { waves: [0.26, 0.62], boss: 0.92 },
+  2: { waves: [0.24, 0.58], boss: 0.9 },
 };
+
 
 export function encounterX(level: number, wave: number): number | null {
   const z = ENCOUNTER_ZONES[level];
