@@ -28,7 +28,7 @@ export const DEFAULT_LEVEL_WIDTH = LEVEL_WIDTH;
  */
 export const LEVEL_WORLD_WIDTHS: readonly number[] = [
   5600, // L1 Jeet's Fast Food District
-  6600, // L2 Rugger's Financial / Casino Empire
+  10800, // L2 Rugger's Financial / Casino Empire
   7400, // L3 Bad Actor's Hollywood Film District
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
@@ -63,14 +63,18 @@ export interface GroundPit {
 export const PIT_DEPTH = 84;
 
 const L2_PIT_Y = GROUND_Y + PIT_DEPTH;
+const L2_DEEP_PIT_Y = GROUND_Y + 112;
+const L2_VAULT_PIT_Y = GROUND_Y + 132;
 
 export const LEVEL_PITS: Record<number, GroundPit[]> = {
   // Level 1 stays completely flat — it is the traversal/introduction level.
   0: [],
   // Level 2 introduces the first real vertical traversal.
   1: [
-    { x0: 1850, x1: 2750, y: L2_PIT_Y, kind: "service" },
-    { x0: 4250, x1: 5150, y: L2_PIT_Y, kind: "underpass" },
+    { x0: 1760, x1: 2620, y: L2_PIT_Y, kind: "service" },
+    { x0: 4380, x1: 5480, y: L2_DEEP_PIT_Y, kind: "underpass" },
+    { x0: 6900, x1: 7860, y: L2_PIT_Y, kind: "service" },
+    { x0: 8500, x1: 9460, y: L2_VAULT_PIT_Y, kind: "vault" },
   ],
 };
 
@@ -158,11 +162,16 @@ export const CLIMB_SPEED = 2.4;
 export const LEVEL_LADDERS: Record<number, Ladder[]> = {
   0: [],
   1: [
-    { x: 1890, top: GROUND_Y, bottom: L2_PIT_Y, style: "maintenance" },
-    { x: 2710, top: GROUND_Y, bottom: L2_PIT_Y, style: "fireEscape" },
-    { x: 4290, top: GROUND_Y, bottom: L2_PIT_Y, style: "underground" },
-    { x: 4700, top: GROUND_Y, bottom: L2_PIT_Y, style: "construction" },
-    { x: 5110, top: GROUND_Y, bottom: L2_PIT_Y, style: "casinoService" },
+    { x: 1800, top: GROUND_Y, bottom: L2_PIT_Y, style: "maintenance" },
+    { x: 2580, top: GROUND_Y, bottom: L2_PIT_Y, style: "fireEscape" },
+    { x: 4420, top: GROUND_Y, bottom: L2_DEEP_PIT_Y, style: "underground" },
+    { x: 4960, top: GROUND_Y, bottom: L2_DEEP_PIT_Y, style: "construction" },
+    { x: 5440, top: GROUND_Y, bottom: L2_DEEP_PIT_Y, style: "maintenance" },
+    { x: 6940, top: GROUND_Y, bottom: L2_PIT_Y, style: "casinoService" },
+    { x: 7820, top: GROUND_Y, bottom: L2_PIT_Y, style: "fireEscape" },
+    { x: 8540, top: GROUND_Y, bottom: L2_VAULT_PIT_Y, style: "underground" },
+    { x: 9000, top: GROUND_Y, bottom: L2_VAULT_PIT_Y, style: "casinoService" },
+    { x: 9420, top: GROUND_Y, bottom: L2_VAULT_PIT_Y, style: "maintenance" },
   ],
 };
 
@@ -197,6 +206,13 @@ export function hasVerticalTraversal(level: number): boolean {
   return pitsFor(level).length > 0;
 }
 
+/** Deepest authored floor below the main street for camera bounds. */
+export function maxPitDepthFor(level: number): number {
+  let depth = 0;
+  for (const pit of pitsFor(level)) depth = Math.max(depth, pit.y - GROUND_Y);
+  return Number.isFinite(depth) ? Math.max(0, depth) : 0;
+}
+
 // ---------------------------------------------------------------------------
 // Encounters — where waves and the boss live in the world
 // ---------------------------------------------------------------------------
@@ -208,7 +224,7 @@ export function hasVerticalTraversal(level: number): boolean {
  */
 export const ENCOUNTER_ZONES: Record<number, { waves: number[]; boss: number }> = {
   0: { waves: [0.28, 0.58], boss: 0.9 },
-  1: { waves: [0.26, 0.62], boss: 0.92 },
+  1: { waves: [0.24, 0.61], boss: 0.93 },
   2: { waves: [0.24, 0.58], boss: 0.9 },
 };
 

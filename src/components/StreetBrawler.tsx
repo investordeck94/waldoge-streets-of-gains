@@ -114,7 +114,7 @@ import { setRenderClock, renderNow } from "@/game/presentation/render2d/clock";
 import {
   getLevelWidth, groundYAt, clampToPitWalls, hasVerticalTraversal,
   ladderAt, nearestLadder, encounterX, bossArenaX, BOSS_WAKE_DISTANCE,
-  PIT_DEPTH, LADDER_GRAB_X,
+  maxPitDepthFor, LADDER_GRAB_X,
 } from "@/game/config/world";
 import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/districts";
 import { drawPits, drawLadders } from "@/game/presentation/render2d/terrain";
@@ -4842,12 +4842,13 @@ export const StreetBrawler: FC = () => {
       // clamped to the pit depth, so the camera can never reveal outside the
       // world, and it is lerped so entering/leaving a dip reads smoothly.
       {
+        const maxDepth = maxPitDepthFor(g.level);
         const depth = hasVerticalTraversal(g.level)
-          ? Math.max(0, Math.min(PIT_DEPTH, p.y - GROUND_Y))
+          ? Math.max(0, Math.min(maxDepth, p.y - GROUND_Y))
           : 0;
         g.camY = finite(g.camY, 0) + (depth - finite(g.camY, 0)) * 0.1;
         if (Math.abs(g.camY) < 0.2) g.camY = 0;
-        g.camY = Math.max(0, Math.min(PIT_DEPTH, finite(g.camY, 0)));
+        g.camY = Math.max(0, Math.min(maxDepth, finite(g.camY, 0)));
       }
 
       // Camera shake (decays each frame, applied as render offset only)

@@ -52,7 +52,7 @@ function drawPit(ctx: CanvasRenderingContext2D, pit: GroundPit, sx: number, ex: 
 
   // Lower floor
   const floor = ctx.createLinearGradient(0, pit.y, 0, pit.y + 60);
-  floor.addColorStop(0, pit.kind === "underpass" ? "#2a2c38" : "#26282f");
+  floor.addColorStop(0, pit.kind === "vault" ? "#282215" : pit.kind === "underpass" ? "#172b35" : "#26282f");
   floor.addColorStop(1, "#101219");
   ctx.fillStyle = floor;
   ctx.fillRect(sx, pit.y, w, 60);
@@ -88,6 +88,13 @@ function drawPit(ctx: CanvasRenderingContext2D, pit: GroundPit, sx: number, ex: 
   ctx.beginPath();
   ctx.moveTo(sx + 4, GROUND_Y + 40); ctx.lineTo(ex - 4, GROUND_Y + 40);
   ctx.stroke();
+
+  // Zone identity remains decorative; all collision still comes from world.ts.
+  ctx.fillStyle = pit.kind === "vault" ? "rgba(232,195,66,0.75)" : "rgba(126,220,255,0.68)";
+  ctx.font = "bold 9px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(pit.kind === "vault" ? "RUGGER VAULTS • LIQUIDITY ACCESS" : pit.kind === "underpass" ? "EXCHANGE INFRASTRUCTURE" : "SERVICE & TRADING LEVEL", sx + w / 2, pit.y - 12);
+  ctx.textAlign = "left";
 }
 
 export function drawLadders(
