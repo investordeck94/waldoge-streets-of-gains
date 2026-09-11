@@ -111,7 +111,7 @@ describe("climb state machine", () => {
   });
 
   it("never leaves the ladder bounds and stays snapped to it horizontally", () => {
-    const c = fighter(lad.x + 12, lad.top);
+    const c = fighter(lad.x + 12, lad.top + 30);
     mount(c, lad);
     for (let i = 0; i < 60; i++) {
       stepClimb(c, lad, i % 2 === 0 ? 1 : -1);
