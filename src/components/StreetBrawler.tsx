@@ -3475,21 +3475,23 @@ export const StreetBrawler: FC = () => {
         return;
       }
 
-      // Hit-pause: freeze simulation for a few frames on impactful hits
-      // for that classic "juicy" feel. Rendering still happens so shake reads.
+      // Hit-pause: freeze the simulation for a few frames on impactful hits
+      // for that classic "juicy" feel.
+      //
+      // The frame returns BEFORE the draw pass, so the canvas keeps the last
+      // fully drawn frame — that is the intended "frozen impact" image. The
+      // old code advanced the shake offset here, which could never be seen
+      // (nothing redraws) and burned two Math.random() calls per paused frame
+      // while silently consuming the shake's lifetime. Shake is now frozen
+      // together with everything else and resumes when the pause ends, so the
+      // impact shake plays out in full instead of being eaten by the pause.
+      // Bounded: hitPause is only ever set to small move-authored values, and
+      // is hard-capped here so no value can stall the loop.
       if (g.hitPause > 0) {
-        g.hitPause -= 1;
-        // Re-render last frame with shake offset for visible impact
-        if (g.camShake.timer > 0) {
-          const dur = Math.max(1, g.camShake.duration);
-          const t = g.camShake.timer;
-          const m = g.camShake.magnitude * (t / dur);
-          g.camShake.x = (Math.random() - 0.5) * 2 * m;
-          g.camShake.y = (Math.random() - 0.5) * 2 * m;
-          g.camShake.timer -= 1;
-        }
+        g.hitPause = Math.min(g.hitPause, MAX_HIT_PAUSE) - 1;
         g.animFrame = requestAnimationFrame(tick);
         return;
+
       }
 
       // Helper: trigger screen shake. Stronger or longer shakes win over
