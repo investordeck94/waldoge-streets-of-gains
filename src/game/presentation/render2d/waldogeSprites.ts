@@ -15,8 +15,8 @@
 
 import { renderNow } from "./clock";
 import type { StyleName } from "@/lib/fightStyles";
-import atlasAsset from "@/assets/waldoge-atlas.png.asset.json";
-import punchExtAsset from "@/assets/waldoge-punch-extended.png.asset.json";
+import atlasUrl from "@/assets/waldoge-atlas-local.png";
+import punchExtUrl from "@/assets/waldoge-punch-extended-local.png";
 import { drawWaldogeFighter, type FighterView } from "./waldogeFighter";
 
 export type { FighterView };
@@ -73,7 +73,7 @@ function getAtlas(): HTMLImageElement | null {
   if (!atlas) {
     atlas = new Image();
     atlas.onload = () => { atlasReady = true; };
-    atlas.src = atlasAsset.url;
+    atlas.src = atlasUrl;
   }
   return atlasReady && atlas.complete && atlas.naturalWidth > 0 ? atlas : null;
 }
@@ -83,7 +83,7 @@ function getPunchExt(): HTMLImageElement | null {
   if (!punchExt) {
     punchExt = new Image();
     punchExt.onload = () => { punchExtReady = true; };
-    punchExt.src = punchExtAsset.url;
+    punchExt.src = punchExtUrl;
   }
   return punchExtReady && punchExt.complete && punchExt.naturalWidth > 0 ? punchExt : null;
 }
@@ -376,8 +376,14 @@ export function drawWaldogeSprite(
 
   const img = getAtlas();
   if (!img) {
-    // Artwork not downloaded yet — keep the procedural fighter as a fallback.
-    drawWaldogeFighter(ctx, e, camX, headImg, style);
+    // Artwork not downloaded yet — keep the procedural fighter at the same
+    // requested presentation scale as the atlas instead of shrinking it.
+    const fallbackScale = Math.max(0.5, (e.height * SIZE) / 70);
+    ctx.save();
+    ctx.translate(e.x - camX, e.y);
+    ctx.scale(fallbackScale, fallbackScale);
+    drawWaldogeFighter(ctx, { ...e, x: 0, y: 0, height: 70 }, 0, headImg, style);
+    ctx.restore();
     return;
   }
 

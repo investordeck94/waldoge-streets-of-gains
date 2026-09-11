@@ -9,7 +9,7 @@ import { useState, type FC, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, RotateCcw, BookOpen, Settings as SettingsIcon, X, Volume2, VolumeX, Camera } from "lucide-react";
 import type { Difficulty } from "@/game/config";
-import titleBg from "@/assets/title-screen-bg.jpg";
+import titleBg from "@/assets/title-financial-city.jpg";
 import { TitleWaldogeFighter } from "@/components/game/TitleWaldogeFighter";
 
 export interface ContinueInfo {
@@ -64,18 +64,18 @@ const MenuButton: FC<{
     onClick={onClick}
     disabled={disabled}
     className={[
-      "group relative w-full flex items-center gap-3 px-5 py-3.5 rounded-lg border text-left transition-all duration-200 font-heading tracking-wide",
-      "backdrop-blur-sm",
+      "group relative w-full flex items-center gap-4 px-5 py-3 rounded-sm border-2 text-left transition-all duration-200 font-heading tracking-wide shadow-lg",
+      "backdrop-blur-md",
       disabled
-        ? "border-border/40 bg-background/40 text-muted-foreground cursor-not-allowed"
+        ? "border-border/60 bg-background/85 text-muted-foreground cursor-not-allowed"
         : primary
-          ? "border-primary bg-primary/20 text-foreground hover:bg-primary/35 hover:translate-x-1"
-          : "border-border/60 bg-background/50 text-foreground hover:border-primary/70 hover:bg-primary/10 hover:translate-x-1",
+          ? "border-primary bg-destructive/80 text-foreground shadow-[0_0_22px_hsl(var(--destructive)/0.48)] hover:bg-destructive hover:scale-[1.02]"
+          : "border-border/80 bg-background/85 text-foreground hover:border-primary/70 hover:bg-background hover:scale-[1.01]",
     ].join(" ")}
   >
     <span className={disabled ? "" : "text-primary"}>{icon}</span>
     <span className="flex-1">
-      <span className="block text-sm sm:text-base font-bold">{label}</span>
+      <span className="block text-base sm:text-lg font-black">{label}</span>
       {hint && <span className="block text-[10px] font-mono text-muted-foreground normal-case">{hint}</span>}
     </span>
   </button>
@@ -120,35 +120,32 @@ export const TitleScreen: FC<TitleScreenProps> = ({
   const [modal, setModal] = useState<null | "howto" | "settings">(null);
 
   return (
-    <div className="relative w-full overflow-hidden rounded-xl border border-border/50 min-h-[78svh] flex flex-col">
+    <div className="relative mx-auto flex min-h-[780px] w-full max-w-[680px] flex-col overflow-hidden border border-border/50 sm:min-h-[960px]">
       {/* Cinematic backdrop */}
       <div className="absolute inset-0">
         <img
           src={titleBg}
           alt=""
           aria-hidden
-          className="w-full h-full object-cover object-center scale-105 animate-[pulse_9s_ease-in-out_infinite]"
+          width={1024}
+          height={1536}
+          className="h-full w-full object-cover object-center animate-[pulse_9s_ease-in-out_infinite]"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,transparent,hsl(var(--background))_78%)]" />
-        <div
-          className="absolute inset-0 opacity-[0.16] mix-blend-overlay"
-          style={{ backgroundImage: "repeating-linear-gradient(to bottom, hsl(var(--foreground)/0.5) 0px, hsl(var(--foreground)/0.5) 1px, transparent 1px, transparent 3px)" }}
-        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/15 via-transparent to-background/75" />
       </div>
 
-      <div className="relative z-10 flex min-h-[78svh] flex-col items-center px-4 py-5 sm:px-8 sm:py-8 lg:px-12">
+      <div className="relative z-10 flex min-h-[780px] flex-col items-center px-4 py-5 sm:min-h-[960px] sm:px-10 sm:py-8">
         {/* Logotype */}
         <motion.div
           initial={{ opacity: 0, y: -14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center"
+          className="relative z-20 -rotate-2 text-center"
         >
-          <p className="font-mono text-[9px] sm:text-xs tracking-[0.4em] text-muted-foreground">A WALDOGE ARCADE BEAT-EM-UP</p>
-          <h1 className="mt-1 font-heading font-black uppercase leading-[0.82]">
-            <span className="block text-4xl sm:text-6xl text-foreground drop-shadow-[3px_4px_0_hsl(var(--waldoge-red))]">WALDOGE</span>
-            <span className="block text-[2rem] sm:text-6xl text-primary drop-shadow-[0_0_25px_hsl(var(--primary)/0.55)]">STREETS OF GAINS</span>
+          <p className="font-mono text-[8px] tracking-[0.38em] text-primary sm:text-[10px]">A WALDOGE ARCADE BEAT-EM-UP</p>
+          <h1 className="mt-2 font-heading font-black uppercase italic leading-[0.76] drop-shadow-[0_6px_0_hsl(var(--background))]">
+            <span className="block text-6xl text-foreground drop-shadow-[5px_6px_0_hsl(var(--waldoge-red))] sm:text-8xl">WALDOGE</span>
+            <span className="block text-[2.55rem] text-foreground drop-shadow-[4px_5px_0_hsl(var(--waldoge-red))] sm:text-[4.5rem]">STREETS OF GAINS</span>
           </h1>
           <div className="mx-auto mt-2 h-px w-40 bg-gradient-to-r from-transparent via-primary to-transparent" />
         </motion.div>
@@ -158,17 +155,17 @@ export const TitleScreen: FC<TitleScreenProps> = ({
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.12 }}
-          className="relative flex h-[clamp(170px,34svh,390px)] w-full shrink-0 items-end justify-center"
+          className="relative -mt-4 flex h-[330px] w-full shrink-0 items-end justify-center sm:h-[460px]"
         >
-          <div className="absolute bottom-5 h-10 w-52 rounded-[50%] bg-background/70 blur-md" />
-          <div className="relative h-full max-h-[330px] w-full max-w-[440px]">
+          <div className="absolute bottom-2 h-10 w-64 rounded-[50%] bg-background/80 blur-md" />
+          <div className="relative h-full w-full max-w-[560px]">
             <TitleWaldogeFighter />
           </div>
         </motion.div>
 
         {/* Menu */}
-        <div className="relative z-10 -mt-4 flex w-full items-center justify-center sm:-mt-8">
-          <div className="w-full max-w-sm space-y-2">
+        <div className="relative z-10 -mt-10 flex w-full items-center justify-center sm:-mt-16">
+          <div className="w-full max-w-[370px] space-y-2">
             <AnimatePresence mode="wait">
               {panel === "main" ? (
                 <motion.div
@@ -177,7 +174,7 @@ export const TitleScreen: FC<TitleScreenProps> = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -18 }}
                   transition={{ duration: 0.22 }}
-                   className="space-y-2"
+                   className="space-y-2.5"
                 >
                   <MenuButton primary icon={<Play className="w-5 h-5" />} label="START GAME" onClick={() => setPanel("difficulty")} />
                   <MenuButton
@@ -230,7 +227,7 @@ export const TitleScreen: FC<TitleScreenProps> = ({
           </div>
         </div>
 
-        {leaderboardSlot && <div className="mt-5 w-full max-w-md mx-auto">{leaderboardSlot}</div>}
+        {leaderboardSlot && <div className="mt-5 hidden w-full max-w-md mx-auto sm:block">{leaderboardSlot}</div>}
 
         <p className="mt-3 text-center font-mono text-[10px] text-muted-foreground">
           7 districts · 7 bosses · one very good dog
