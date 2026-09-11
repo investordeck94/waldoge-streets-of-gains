@@ -4118,12 +4118,59 @@ export const StreetBrawler: FC = () => {
         // their exit frame, so movement can never be locked out.
         sanitizeEnemyMotion(e, GROUND_Y);
 
+        // ---- ENEMY LADDER NAVIGATION -----------------------------------
+        // Minions understand "which street level am I on vs the player" and
+        // route to the nearest ladder to pursue across the vertical gap.
+        // Bosses are excluded: their arenas are flat.
+        if (hasVerticalTraversal(g.level) && !e.isBoss && e.state !== "dead" && p.state !== "dead") {
+          const eClimb = e as MovingEnemy & Climber;
+          const myGround = groundYAt(g.level, e.x);
+          const targetGround = groundYAt(g.level, p.x);
+          const grounded = e.y >= myGround - 1;
+          if (eClimb.climbing) {
+            const lad = ladderAt(g.level, e.x) ?? nearestLadder(g.level, e.x);
+            if (lad) {
+              const goalY = Math.min(Math.max(targetGround, lad.top), lad.bottom);
+              const dir = climbDirectionFor(e.y, goalY);
+              stepClimb(eClimb, lad, dir);
+              e.state = "walk";
+              e.stateTimer = Math.max(-1, e.stateTimer - 1);
+              e.attackCooldown = Math.max(-1, e.attackCooldown - 1);
+              continue;
+            }
+            dismountLadder(eClimb);
+          } else if (grounded && Math.abs(myGround - targetGround) > 10) {
+            const lad = nearestLadder(g.level, e.x);
+            if (lad) {
+              const dxl = lad.x - e.x;
+              if (Math.abs(dxl) <= LADDER_GRAB_X) {
+                mountLadder(eClimb, lad);
+                e.y = myGround > targetGround ? lad.bottom - 2 : lad.top + 2;
+              } else {
+                const spd = LEVELS[g.level]?.waves[Math.min(g.wave, 1)]?.speed || 1.5;
+                e.facing = dxl > 0 ? 1 : -1;
+                e.x += e.facing * spd;
+                e.state = "walk";
+              }
+              e.x = clampToPitWalls(g.level, e.x, e.y, 15);
+              clampEnemyToWorld(e, getLevelWidth(g.level));
+              e.stateTimer = Math.max(-1, e.stateTimer - 1);
+              e.attackCooldown = Math.max(-1, e.attackCooldown - 1);
+              continue;
+            }
+          }
+        }
+
         e.vy += GRAVITY;
         e.y += e.vy;
         e.x += e.vx || 0;
         e.vx = (e.vx || 0) * 0.85;
-        if (e.y >= GROUND_Y) { e.y = GROUND_Y; e.vy = 0; }
-        clampEnemyToWorld(e, LEVEL_WIDTH);
+        {
+          const eg = groundYAt(g.level, e.x);
+          if (e.y >= eg) { e.y = eg; e.vy = 0; }
+        }
+        e.x = clampToPitWalls(g.level, e.x, e.y, 15);
+        clampEnemyToWorld(e, getLevelWidth(g.level));
         e.stateTimer = Math.max(-1, e.stateTimer - 1);
         e.attackCooldown = Math.max(-1, e.attackCooldown - 1);
         if (e.state === "hit" && e.stateTimer <= 0) e.state = "idle";
@@ -4140,6 +4187,18 @@ export const StreetBrawler: FC = () => {
 
           const dx = p.x - e.x;
           const dist = Math.abs(dx);
+          // Staged boss: waits in his arena at the end of the district until
+          // Waldoge has actually travelled there. Purely a wake gate — no AI,
+          // damage or balance value is altered once he is awake.
+          if (hasDistrict(g.level) && dist > BOSS_WAKE_DISTANCE) {
+            e.facing = dx > 0 ? 1 : -1;
+            e.state = "idle";
+            e.stateTimer = 0;
+            e.vx = 0;
+            e.stuckFrames = 0;
+            e.lastWatchdogX = e.x;
+            continue;
+          }
           const vertGap = Math.abs(p.y - e.y);
           const activeMove = getMoveById(e.bossName, e.bossMoveId);
           const busy = activeMove !== null && e.state === activeMove.anim && e.stateTimer > 0;
@@ -4264,7 +4323,7 @@ export const StreetBrawler: FC = () => {
 
           // Keep the boss inside the level and recover it if its position
           // stops changing while it should be closing in on the player.
-          clampEnemyToWorld(e, LEVEL_WIDTH);
+          clampEnemyToWorld(e, getLevelWidth(g.level));
           const recovered = updateStuckWatchdog(
             e,
             p.x,
@@ -4309,7 +4368,7 @@ export const StreetBrawler: FC = () => {
               const s = activeMove.summon;
               for (let i = 0; i < s.count && g.enemies.length < MAX_LIVE_ENEMIES; i++) {
                 const side = i % 2 === 0 ? 1 : -1;
-                const sx = Math.max(40, Math.min(LEVEL_WIDTH - 40, p.x + side * (360 + i * 90)));
+                const sx = Math.max(40, Math.min(getLevelWidth(g.level) - 40, p.x + side * (360 + i * 90)));
                 g.enemies.push({
                   x: sx, y: GROUND_Y, vy: 0, vx: 0, width: 30, height: 70,
                   facing: (side > 0 ? -1 : 1) as 1 | -1,
@@ -4425,7 +4484,7 @@ export const StreetBrawler: FC = () => {
         }
 
         // Same shared recovery for grunts.
-        clampEnemyToWorld(e, LEVEL_WIDTH);
+        clampEnemyToWorld(e, getLevelWidth(g.level));
         updateStuckWatchdog(
           e,
           p.x,
@@ -4630,7 +4689,7 @@ export const StreetBrawler: FC = () => {
               const minionCount = BOSS_WAVE_MINIONS[g.difficulty] || 0;
               const minionWave = LEVELS[g.level].waves[LEVELS[g.level].waves.length - 1];
               const minions: Entity[] = Array.from({ length: minionCount }, (_, i) => ({
-                x: Math.min(LEVEL_WIDTH - 60, p.x + 350 + i * 110 + Math.random() * 120),
+                x: Math.min(getLevelWidth(g.level) - 60, p.x + 350 + i * 110 + Math.random() * 120),
                 y: GROUND_Y, vy: 0, vx: 0,
                 width: 30, height: 70, facing: -1 as const,
                 hp: minionWave.hp, maxHp: minionWave.hp,
@@ -4742,7 +4801,20 @@ export const StreetBrawler: FC = () => {
       g.camAnchor = finite(g.camAnchor, 0.25);
       g.camLookAhead = finite(g.camLookAhead, 0);
       g.camX = finite(g.camX, Math.max(0, p.x - CANVAS_W / 2));
-      g.camX = Math.max(0, Math.min(LEVEL_WIDTH - CANVAS_W, g.camX));
+      g.camX = Math.max(0, Math.min(getLevelWidth(g.level) - CANVAS_W, g.camX));
+
+      // ---- VERTICAL CAMERA ---------------------------------------------
+      // Only levels with lower streets ever move vertically. The target is
+      // clamped to the pit depth, so the camera can never reveal outside the
+      // world, and it is lerped so entering/leaving a dip reads smoothly.
+      {
+        const depth = hasVerticalTraversal(g.level)
+          ? Math.max(0, Math.min(PIT_DEPTH, p.y - GROUND_Y))
+          : 0;
+        g.camY = finite(g.camY, 0) + (depth - finite(g.camY, 0)) * 0.1;
+        if (Math.abs(g.camY) < 0.2) g.camY = 0;
+        g.camY = Math.max(0, Math.min(PIT_DEPTH, finite(g.camY, 0)));
+      }
 
       // Camera shake (decays each frame, applied as render offset only)
       if (g.camShake.timer > 0) {
