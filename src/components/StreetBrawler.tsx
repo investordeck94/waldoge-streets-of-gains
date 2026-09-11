@@ -3168,6 +3168,7 @@ export const StreetBrawler: FC = () => {
     keys: Set<string>;
     keyJustPressed: Set<string>;
     camX: number;
+    camY: number;
     wave: number;
     level: number;
     score: number;
@@ -4130,7 +4131,7 @@ export const StreetBrawler: FC = () => {
         // Minions understand "which street level am I on vs the player" and
         // route to the nearest ladder to pursue across the vertical gap.
         // Bosses are excluded: their arenas are flat.
-        if (hasVerticalTraversal(g.level) && !e.isBoss && e.state !== "dead" && p.state !== "dead") {
+        if (hasVerticalTraversal(g.level) && !e.isBoss && e.state !== "dead" && p.hp > 0) {
           const eClimb = e as MovingEnemy & Climber;
           const myGround = groundYAt(g.level, e.x);
           const targetGround = groundYAt(g.level, p.x);
