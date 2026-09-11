@@ -40,7 +40,8 @@
  * are welcome; behavior-changing refactors are not. See ARCHITECTURE.md for
  * the migration map (2D systems -> planned 3D equivalents).
  * ============================================================================= */
-import { FC, useEffect, useRef, useState, useCallback } from "react";
+import { FC, useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { TitleScreen, type ContinueInfo } from "@/components/game/TitleScreen";
 // Static asset URLs + preloaded boss-head Image objects live in
 // src/game/assets/index.ts. Individual named exports are aliased below
 // so every existing draw-site keeps its short local name unchanged.
@@ -3018,6 +3019,20 @@ export const StreetBrawler: FC = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
 
+  // Title-screen CONTINUE data, read once from the persisted GameState (the
+  // save was already restored at module import). Read-only — no gameplay use.
+  const continueInfo = useMemo<ContinueInfo>(() => {
+    const s = getGameState();
+    const lvl = Math.max(0, Math.min(TOTAL_LEVELS - 1, s.progression.highestLevel || 0));
+    return {
+      available: lvl > 0 || (s.bestScores.overall || 0) > 0,
+      level: lvl,
+      levelName: LEVELS[lvl]?.name ?? "",
+      difficulty: (s.settings.preferredDifficulty as Difficulty) || "normal",
+      bestScore: s.bestScores.overall || 0,
+    };
+  }, [gameState]);
+
   // DogeOS weekly competition — isolated from gameplay; wired only at final
   // victory. A completed run is RECORDED as a qualifying weekly entry; no
   // WDOGE is authorized or transferred here. The 10 WDOGE prize is settled
@@ -3279,13 +3294,22 @@ export const StreetBrawler: FC = () => {
     gameRef.current.camPreset = camPreset;
   }, [camPreset]);
 
-  const startGame = useCallback((diff: Difficulty = "normal") => {
+  // `startLevel` is used only by the title screen's CONTINUE entry, which
+  // resumes at the furthest district reached in the save file. Omitted for a
+  // fresh run, keeping the original level-0 / query-override behaviour.
+  const startGame = useCallback((diff: Difficulty = "normal", startLevel?: number) => {
     const g = gameRef.current;
     g.difficulty = diff;
     setDifficulty(diff);
     g.player = createPlayer();
     g.wave = 0;
-    g.level = (() => { const v = Number(new URLSearchParams(location.search).get("lvl")); return Number.isFinite(v) && v > 0 ? Math.min(v, TOTAL_LEVELS - 1) : 0; })();
+    g.level = (() => {
+      if (Number.isFinite(startLevel) && (startLevel as number) > 0) {
+        return Math.min(Math.floor(startLevel as number), TOTAL_LEVELS - 1);
+      }
+      const v = Number(new URLSearchParams(location.search).get("lvl"));
+      return Number.isFinite(v) && v > 0 ? Math.min(v, TOTAL_LEVELS - 1) : 0;
+    })();
     g.wave = Number(new URLSearchParams(location.search).get("wv")) || 0;
     g.score = 0;
     g.camX = 0;
@@ -5554,10 +5578,12 @@ export const StreetBrawler: FC = () => {
           </button>
         </div>
       )}
-      <div className="flex items-center gap-2 sm:gap-3">
-        <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-        <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Waldoge: Street of Gains</h2>
-      </div>
+      {gameState !== "menu" && (
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+          <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Waldoge: Streets of Gains</h2>
+        </div>
+      )}
 
       <div
         className="relative w-full mx-auto"
@@ -5777,59 +5803,15 @@ export const StreetBrawler: FC = () => {
 
       <AnimatePresence mode="wait">
         {gameState === "menu" && (
-          <motion.div
-            key="menu"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="glass-card p-8 text-center space-y-6"
-          >
-            <img src={streetBrawlerCover} alt="Waldoge Street Brawl" className="w-full max-w-md mx-auto object-contain rounded-lg shadow-2xl" />
-            <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              Battle through 7 levels of red candle goons. Each level ends with a tougher boss — survive them all!
-            </p>
-            <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto text-xs text-muted-foreground">
-              <div className="glass-card p-2">A/D — Move</div>
-              <div className="glass-card p-2">W/Space — Jump</div>
-              <div className="glass-card p-2">J — Punch</div>
-              <div className="glass-card p-2">K — Kick</div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-primary">⚡ SPECIAL COMBOS</p>
-              <div className="grid grid-cols-1 gap-1 max-w-sm mx-auto text-xs text-muted-foreground">
-                <div className="glass-card p-2 flex justify-between"><span>J → J → K</span><span className="text-primary">Uppercut</span></div>
-                <div className="glass-card p-2 flex justify-between"><span>K → K → J</span><span className="text-primary">Spin Kick</span></div>
-                <div className="glass-card p-2 flex justify-between"><span>J → K → J</span><span className="text-primary">Dash Punch</span></div>
-                <div className="glass-card p-2 flex justify-between"><span>L (in air)</span><span className="text-primary">Ground Pound</span></div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-primary">CHOOSE DIFFICULTY</p>
-              <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <button
-                  onClick={() => startGame("easy")}
-                  className="px-5 py-3 bg-emerald-500 text-white rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
-                >
-                  <Play className="w-4 h-4" /> NEW TO CRYPTO
-                </button>
-                <button
-                  onClick={() => startGame("normal")}
-                  className="px-5 py-3 bg-primary text-primary-foreground rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
-                >
-                  <Play className="w-4 h-4" /> HALF A DEGEN
-                </button>
-                <button
-                  onClick={() => startGame("blackMonday")}
-                  className="px-5 py-3 bg-destructive text-destructive-foreground rounded-lg font-bold flex items-center gap-2 justify-center hover:opacity-90 transition"
-                >
-                  <Play className="w-4 h-4" /> FULL TRENCH MODE (2 CYCLES +)
-                </button>
-
-              </div>
-              <p className="text-[10px] text-muted-foreground">
-                Easy: standard goons, solo boss, full pickups · Normal: more goons, boss + 2 minions, faster boss · Black Monday: max goons, boss + 4 minions, brutal boss damage & speed
-              </p>
-              <div className="max-w-md mx-auto w-full">
+          <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full">
+            <TitleScreen
+              onStart={(diff, startLevel) => startGame(diff, startLevel)}
+              continueInfo={continueInfo}
+              sfxEnabled={sfxEnabled}
+              onToggleSfx={() => setSfxEnabled((v) => !v)}
+              camPreset={camPreset}
+              onCamPreset={setCamPreset}
+              leaderboardSlot={
                 <WeeklyHardModePanel
                   leaderboard={weeklyLeaderboard}
                   loading={weeklyLoading}
@@ -5837,10 +5819,11 @@ export const StreetBrawler: FC = () => {
                   onRefresh={refreshWeekly}
                   connected={!!address}
                 />
-              </div>
-            </div>
+              }
+            />
           </motion.div>
         )}
+
 
 
         {(gameState === "gameover" || gameState === "victory") && (
