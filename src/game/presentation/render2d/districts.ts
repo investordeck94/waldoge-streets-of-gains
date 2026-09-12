@@ -21,6 +21,11 @@ import { GROUND_Y } from "@/game/config";
 import { getLevelWidth } from "@/game/config/world";
 import { flicker, renderNow } from "./clock";
 import { drawFilmDistrict, filmSectionLabelAt, hasFilmDistrict } from "./filmDistrict";
+import {
+  badActorSectionLabelAt,
+  drawBadActorStudios,
+  hasBadActorStudios,
+} from "./badActorStudios";
 import { drawJeetStreet, hasJeetStreet, jeetSectionLabelAt } from "./jeetStreet";
 import { drawRuggerEmpire, hasRuggerEmpire, ruggerSectionLabelAt } from "./ruggerEmpire";
 
