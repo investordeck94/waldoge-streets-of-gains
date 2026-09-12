@@ -21,42 +21,52 @@ import { drawWaldogeFighter, type FighterView } from "./waldogeFighter";
 
 export type { FighterView };
 
-interface Frame { x: number; y: number; w: number; h: number; ax: number; ay: number }
+export interface WaldogeFrame {
+  x: number; y: number; w: number; h: number;
+  /** Horizontal pivot and the visible shoe-sole row inside the source art. */
+  ax: number; ay: number;
+}
 
-/** Frame rects inside the atlas, with a feet anchor (ax = feet x, ay = feet y). */
-const F: Record<string, Frame> = {
-  idle0: { x: 0, y: 0, w: 130, h: 171, ax: 64.5, ay: 171 },
-  walk0: { x: 269, y: 0, w: 124, h: 170, ax: 61.5, ay: 170 },
-  walk1: { x: 538, y: 0, w: 130, h: 170, ax: 65, ay: 170 },
-  walk2: { x: 807, y: 0, w: 128, h: 172, ax: 62, ay: 172 },
-  run0: { x: 1076, y: 0, w: 124, h: 173, ax: 61.5, ay: 173 },
-  run1: { x: 0, y: 220, w: 130, h: 173, ax: 64.5, ay: 173 },
-  run2: { x: 269, y: 220, w: 125, h: 174, ax: 61.5, ay: 174 },
-  punch0: { x: 538, y: 220, w: 139, h: 157, ax: 66.5, ay: 157 },
-  punch1: { x: 807, y: 220, w: 138, h: 155, ax: 68.5, ay: 155 },
-  punch2: { x: 1076, y: 220, w: 129, h: 152, ax: 58, ay: 152 },
-  kick0: { x: 0, y: 440, w: 131, h: 156, ax: 60.5, ay: 156 },
-  kick1: { x: 269, y: 440, w: 137, h: 156, ax: 63, ay: 156 },
-  kick2: { x: 538, y: 440, w: 100, h: 158, ax: 49.5, ay: 158 },
-  uppercut0: { x: 807, y: 440, w: 150, h: 145, ax: 70.5, ay: 145 },
-  uppercut1: { x: 1076, y: 440, w: 137, h: 191, ax: 67.5, ay: 191 },
-  spinkick0: { x: 0, y: 660, w: 144, h: 176, ax: 75.5, ay: 176 },
-  spinkick1: { x: 269, y: 660, w: 168, h: 181, ax: 83.5, ay: 181 },
-  dashpunch0: { x: 538, y: 660, w: 146, h: 166, ax: 77, ay: 166 },
-  dashpunch1: { x: 807, y: 660, w: 257, h: 161, ax: 124, ay: 161 },
+/**
+ * Atlas rectangles anchored to each frame's painted shoe sole, not the cell
+ * edge. The source includes 0–7 transparent/shadow rows beneath the shoes;
+ * using `h` as the old vertical pivot visibly suspended Waldoge above every
+ * collision surface even though the physics feet coordinate was correct.
+ */
+export const WALDOGE_FRAMES: Record<string, WaldogeFrame> = {
+  idle0: { x: 0, y: 0, w: 130, h: 171, ax: 64.5, ay: 167 },
+  walk0: { x: 269, y: 0, w: 124, h: 170, ax: 61.5, ay: 166 },
+  walk1: { x: 538, y: 0, w: 130, h: 170, ax: 65, ay: 167 },
+  walk2: { x: 807, y: 0, w: 128, h: 172, ax: 62, ay: 169 },
+  run0: { x: 1076, y: 0, w: 124, h: 173, ax: 61.5, ay: 171 },
+  run1: { x: 0, y: 220, w: 130, h: 173, ax: 64.5, ay: 167 },
+  run2: { x: 269, y: 220, w: 125, h: 174, ax: 61.5, ay: 169 },
+  punch0: { x: 538, y: 220, w: 139, h: 157, ax: 66.5, ay: 153 },
+  punch1: { x: 807, y: 220, w: 138, h: 155, ax: 68.5, ay: 151 },
+  punch2: { x: 1076, y: 220, w: 129, h: 152, ax: 58, ay: 148 },
+  kick0: { x: 0, y: 440, w: 131, h: 156, ax: 60.5, ay: 153 },
+  kick1: { x: 269, y: 440, w: 137, h: 156, ax: 63, ay: 153 },
+  kick2: { x: 538, y: 440, w: 100, h: 158, ax: 49.5, ay: 156 },
+  uppercut0: { x: 807, y: 440, w: 150, h: 145, ax: 70.5, ay: 140 },
+  uppercut1: { x: 1076, y: 440, w: 137, h: 191, ax: 67.5, ay: 186 },
+  spinkick0: { x: 0, y: 660, w: 144, h: 176, ax: 75.5, ay: 171 },
+  spinkick1: { x: 269, y: 660, w: 168, h: 181, ax: 83.5, ay: 176 },
+  dashpunch0: { x: 538, y: 660, w: 146, h: 166, ax: 77, ay: 162 },
+  dashpunch1: { x: 807, y: 660, w: 257, h: 161, ax: 124, ay: 154 },
   groundpound0: { x: 1076, y: 660, w: 139, h: 213, ax: 69, ay: 213 },
-  groundpound1: { x: 0, y: 880, w: 160, h: 171, ax: 79.5, ay: 171 },
-  stylespecial0: { x: 269, y: 880, w: 228, h: 199, ax: 114, ay: 199 },
-  hit0: { x: 538, y: 880, w: 200, h: 183, ax: 99.5, ay: 183 },
-  jump0: { x: 807, y: 880, w: 162, h: 220, ax: 80.5, ay: 220 },
-  dead0: { x: 1076, y: 880, w: 269, h: 94, ax: 128, ay: 94 },
+  groundpound1: { x: 0, y: 880, w: 160, h: 171, ax: 79.5, ay: 168 },
+  stylespecial0: { x: 269, y: 880, w: 228, h: 199, ax: 114, ay: 194 },
+  hit0: { x: 538, y: 880, w: 200, h: 183, ax: 99.5, ay: 179 },
+  jump0: { x: 807, y: 880, w: 162, h: 220, ax: 80.5, ay: 218 },
+  dead0: { x: 1076, y: 880, w: 269, h: 94, ax: 128, ay: 89 },
 };
+const F = WALDOGE_FRAMES;
 
 /**
  * The atlas cell for the fully extended jab is clipped at the cell border, so
  * the lead glove is sliced off the arm. This standalone frame replaces it.
  */
-const PUNCH_EXT: Frame = { x: 0, y: 0, w: 156, h: 165, ax: 63, ay: 165 };
+const PUNCH_EXT: WaldogeFrame = { x: 0, y: 0, w: 156, h: 165, ax: 63, ay: 164 };
 
 /** Reference height of the idle pose — every frame scales against this. */
 const REF_H = 171;
@@ -113,7 +123,7 @@ function airborne(e: FighterView): boolean {
   return Math.abs(e.vy) > 0.4;
 }
 
-interface Pick { f: Frame; ext?: boolean }
+interface Pick { f: WaldogeFrame; ext?: boolean }
 
 function frameFor(e: FighterView, specialActive: boolean, clock: number): Pick {
   const speed = Math.abs(e.vx);
@@ -171,7 +181,7 @@ function frameFor(e: FighterView, specialActive: boolean, clock: number): Pick {
  */
 interface Hand { x: number; y: number; r: number }
 
-const HAND = new Map<Frame, Hand>([
+const HAND = new Map<WaldogeFrame, Hand>([
   [F.idle0, { x: 34, y: -100, r: 0.62 }],
   [F.walk0, { x: 32, y: -100, r: 0.68 }],
   [F.walk1, { x: 34, y: -102, r: 0.6 }],
@@ -212,11 +222,11 @@ const DEFAULT_HAND: Hand = { x: 30, y: -104, r: 0.34 };
  * frame is drawn as three slices that cover everything except the stray blob.
  * Slices are [x, y, w, h] in frame-local pixels.
  */
-const FRAME_SLICES = new Map<Frame, Array<[number, number, number, number]>>([
+const FRAME_SLICES = new Map<WaldogeFrame, Array<[number, number, number, number]>>([
   [F.punch2, [[0, 0, 129, 48], [28, 48, 101, 34], [0, 82, 129, 70]]],
 ]);
 
-function drawFrame(ctx: CanvasRenderingContext2D, src: CanvasImageSource, f: Frame) {
+function drawFrame(ctx: CanvasRenderingContext2D, src: CanvasImageSource, f: WaldogeFrame) {
   const slices = FRAME_SLICES.get(f);
   if (!slices) {
     ctx.drawImage(src, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h);
