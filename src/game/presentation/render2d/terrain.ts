@@ -93,7 +93,10 @@ function drawPit(ctx: CanvasRenderingContext2D, pit: GroundPit, sx: number, ex: 
   ctx.fillStyle = pit.kind === "vault" ? "rgba(232,195,66,0.75)" : "rgba(126,220,255,0.68)";
   ctx.font = "bold 9px monospace";
   ctx.textAlign = "center";
-  ctx.fillText(pit.kind === "vault" ? "RUGGER VAULTS • LIQUIDITY ACCESS" : pit.kind === "underpass" ? "EXCHANGE INFRASTRUCTURE" : "SERVICE & TRADING LEVEL", sx + w / 2, pit.y - 12);
+  const label = pit.kind === "vault" ? "RUGGER VAULTS • LIQUIDITY ACCESS"
+    : pit.kind === "underpass" ? "BACKSTAGE INFRASTRUCTURE"
+    : "STUDIO SERVICE LEVEL";
+  ctx.fillText(label, sx + w / 2, pit.y - 12);
   ctx.textAlign = "left";
 }
 

@@ -145,38 +145,8 @@ export interface FilmDistrict {
 }
 
 // ---------------------------------------------------------------------------
-// Fictional naming pools
+// Authored set labels
 // ---------------------------------------------------------------------------
-
-const STUDIO_NAMES = [
-  "BAD ACTOR STUDIOS", "BAD ACTOR PICTURES", "BAD ACTOR PRODUCTIONS",
-  "BAD ACTOR FILMWORKS", "BAD ACTOR ENTERTAINMENT", "THE BAD ACTOR LOT",
-  "BAD ACTOR SOUND STAGE", "BAD ACTOR POST HOUSE",
-];
-const NEUTRAL_NAMES = [
-  "LOT SERVICES", "CAMERA RENTAL", "GRIP & LIGHTING", "CASTING OFFICE",
-  "SCRIPT DEPT", "CATERING TRUCK CO.",
-];
-const CINEMA_NAMES = [
-  "THE BAD ACTOR THEATRE", "PREMIERE PALACE", "THE GOLDEN SCREEN",
-  "BAD ACTOR CINEPLEX", "THE RED CARPET ROOM",
-];
-const WAREHOUSE_NAMES = [
-  "PROP WAREHOUSE 1", "PROP WAREHOUSE 2", "COSTUME DEPT", "SET STORAGE",
-  "WARDROBE HOUSE", "PROPS & FX", "BACKDROP STORE",
-];
-const JOKES = [
-  "100% REAL ACTING", "OSCAR NOMINEE*", "*PROBABLY", "NO CGI — TRUST ME",
-  "ACTING IS NOT FINANCIAL ADVICE", "COMING SOON", "COMING SOON FOR 4 YEARS",
-  "DIRECTOR'S CUT", "THE RUGGED CUT", "BAD ACTOR APPROVED", "10/10 ACTING",
-  "CRITICS HATED IT", "FLOP OR MOON?", "EARLY ACCESS PREMIERE",
-  "BASED ON A TRUE ROADMAP", "SEQUEL ALREADY GREENLIT",
-];
-const SUSTER_LINES = [
-  "SUS'TER ACT", "SUS'TER ACT — COMING SOON", "NOW PLAYING",
-  "BAD ACTOR PRESENTS: SUS'TER ACT", "SUS'TER ACT II — THE RUGGED CUT",
-  "SUS'TER ACT — PREMIERE TONIGHT",
-];
 const SET_LABELS: Record<SetKind, string> = {
   fakeCity: "SET 4 — FAKE CITY STREET",
   police: "SET 7 — PRECINCT",
@@ -434,18 +404,18 @@ function drawHillLetters(ctx: CanvasRenderingContext2D, sx: number, w: number) {
   if (sx + w < -80 || sx > 2000) return;
   const y = 138;
   ctx.save();
-  ctx.font = "bold 34px monospace";
+  ctx.font = "bold 30px monospace";
   ctx.textAlign = "left";
   ctx.fillStyle = "#efe6d6";
   ctx.shadowColor = "rgba(0,0,0,0.6)";
   ctx.shadowBlur = 6;
-  ctx.fillText("BAD ACTOR", sx, y);
+  ctx.fillText("REDACTED HOLLYWOOD", sx, y);
   ctx.shadowBlur = 0;
   // Support struts under the letters
   ctx.strokeStyle = "rgba(60,50,60,0.8)";
   ctx.lineWidth = 2;
-  for (let i = 0; i < 9; i++) {
-    const lx = sx + 10 + i * 21;
+  for (let i = 0; i < 19; i++) {
+    const lx = sx + 8 + i * 20;
     ctx.beginPath(); ctx.moveTo(lx, y + 4); ctx.lineTo(lx, y + 16); ctx.stroke();
   }
   ctx.restore();
@@ -959,7 +929,10 @@ function drawGiantScreen(ctx: CanvasRenderingContext2D, s: GiantScreen, sx: numb
   ctx.strokeRect(sx - 8, top - 8, s.w + 16, s.h + 16);
 
   // Picture
-  const img = s.art === "poster" ? SUSTER_POSTER_IMG : SUSTER_SCREEN_IMG;
+  const img = s.art === "poster" ? SUSTER_POSTER_IMG
+    : s.art === "susDog" ? SUS_DOG_IMG
+    : s.art === "badActor" ? BAD_ACTOR_HEAD_IMG
+    : SUSTER_SCREEN_IMG;
   if (s.art !== "text" && ready(img)) {
     ctx.drawImage(img, sx, top, s.w, s.h);
     // Subtle projector shimmer over the picture
