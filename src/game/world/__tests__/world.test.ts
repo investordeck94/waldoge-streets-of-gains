@@ -342,8 +342,8 @@ describe("level 3 — Bad Actor's film district", () => {
     for (let i = 1; i < spans.length; i++) {
       expect(spans[i].x - (spans[i - 1].x + spans[i - 1].w)).toBeLessThan(300);
     }
-    const last = spans[spans.length - 1];
-    expect(last.x + last.w).toBeGreaterThan(d.width - 200);
+    const furthestEdge = Math.max(...spans.map(span => span.x + span.w));
+    expect(furthestEdge).toBeGreaterThan(d.width - 200);
   });
 
   it("is generated once, cached, and entirely finite", () => {

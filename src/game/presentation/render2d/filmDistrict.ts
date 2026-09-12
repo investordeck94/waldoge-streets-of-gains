@@ -50,6 +50,20 @@ function ready(img: HTMLImageElement | null): img is HTMLImageElement {
   return !!img && img.complete && img.naturalWidth > 0;
 }
 
+function drawImageContain(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): void {
+  const scale = Math.min(w / img.naturalWidth, h / img.naturalHeight);
+  const dw = img.naturalWidth * scale;
+  const dh = img.naturalHeight * scale;
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
+
 // ---------------------------------------------------------------------------
 // Deterministic RNG (build-time only)
 // ---------------------------------------------------------------------------
@@ -934,7 +948,9 @@ function drawGiantScreen(ctx: CanvasRenderingContext2D, s: GiantScreen, sx: numb
     : s.art === "badActor" ? BAD_ACTOR_HEAD_IMG
     : SUSTER_SCREEN_IMG;
   if (s.art !== "text" && ready(img)) {
-    ctx.drawImage(img, sx, top, s.w, s.h);
+    ctx.fillStyle = "#08070d";
+    ctx.fillRect(sx, top, s.w, s.h);
+    drawImageContain(ctx, img, sx, top, s.w, s.h);
     // Subtle projector shimmer over the picture
     ctx.fillStyle = `rgba(255,244,214,${0.05 + flicker(s.seed + 3, 0.02) * 0.05})`;
     ctx.fillRect(sx, top, s.w, s.h);
