@@ -59,4 +59,8 @@
 - [ ] Reproduce exact landmarks: studio gate, Redacted Hollywood sign, Bad Actor District screen, Sus'ter Act, makeup/prop/backstage rooms, Stage 2, rooftop/backlot, boss arena
 - [ ] Keep collision, ladders, combat, HUD and progression unchanged
 - [ ] Validate rendering, tests, typecheck and build
+## Current — SUS’TER ACT advertisements
+- [ ] Use the exact uploaded Nun Frog and Nun Sus Dog in every movie advertisement
+- [ ] Keep REDACTED HOLLYWOOD and BAD ACTOR DISTRICT identity art isolated
+- [ ] Verify assets, rendering, tests, typecheck and build
 
