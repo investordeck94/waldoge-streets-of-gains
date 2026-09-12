@@ -231,7 +231,7 @@ function buildFilmDistrict(width: number): FilmDistrict {
   // 13: stable, flat final arena with no traversal geometry through its lane.
   const bossZone = Math.round(width * 0.925);
   const arenaX = bossZone - 260;
-  addBuilding(arenaX, 920, 350, "badActorStudio", "BAD ACTOR STUDIOS", "STAGE 13 — CLOSED SET");
+  addBuilding(arenaX, 1240, 350, "badActorStudio", "BAD ACTOR STUDIOS", "STAGE 13 — CLOSED SET");
   screens.push({ x: arenaX + 230, w: 480, h: 230, lift: 330, art: "badActor", text: "BAD ACTOR", sub: "FINAL SCENE", projector: "ground", seed: 100 });
   addKit(arenaX + 30, ["BOSS", "FINAL"]);
 
