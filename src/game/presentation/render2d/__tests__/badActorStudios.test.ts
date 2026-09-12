@@ -71,6 +71,13 @@ describe("level 3 — Bad Actors Studios blueprint areas", () => {
     expect(advertisedAreas.reduce((sum, area) => sum + area.ads, 0)).toBe(11);
   });
 
+  it("gives every advertisement a different design with a COMING SOON strap", () => {
+    const ads = BAD_ACTOR_AREAS.flatMap((area) => area.susterAds);
+    expect(ads).toHaveLength(11);
+    expect(new Set(ads.map((ad) => ad.style)).size).toBe(ads.length);
+    for (const ad of ads) expect(ad.tagline ?? "COMING SOON").toBe("COMING SOON");
+  });
+
   it("keeps every overlay rectangle inside its area", () => {
     for (const area of BAD_ACTOR_AREAS) {
       for (const o of area.overlays) {
