@@ -4,6 +4,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TitleScreen } from "../TitleScreen";
 
 vi.mock("@/components/game/TitleWaldogeFighter", () => ({ TitleWaldogeFighter: () => <div /> }));
+vi.mock("framer-motion", async () => {
+  const React = await import("react");
+  return {
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    motion: new Proxy({}, {
+      get: (_target, tag: string) => React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
+        ({ children, ...props }, ref) => React.createElement(tag, { ...props, ref }, children),
+      ),
+    }),
+  };
+});
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const defaults = {
   continueInfo: { available: true, level: 2, levelName: "DOCKSIDE ENFORCER", difficulty: "normal" as const, bestScore: 900 },
