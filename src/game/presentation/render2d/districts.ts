@@ -356,8 +356,13 @@ export function drawDistrict(
     drawJeetStreet(ctx, level, camX, canvasW);
     return;
   }
+  if (hasBadActorStudios(level)) {
+    // Level 3 is painted Bad Actors Studios artwork authored from the blueprint.
+    drawBadActorStudios(ctx, level, camX, canvasW);
+    return;
+  }
   if (hasFilmDistrict(level)) {
-    // Level 3 has its own Hollywood world model (buildings + sets + screens).
+    // Procedural fallback until every painted Level 3 panel has decoded.
     drawFilmDistrict(ctx, level, camX, canvasW);
     return;
   }
