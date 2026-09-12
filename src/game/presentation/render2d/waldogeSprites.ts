@@ -399,9 +399,8 @@ export function drawWaldogeSprite(
   const tint = styleTint(style);
 
   // Subtle breathing / impact weight — visual only.
-  let sqx = 1, sqy = 1, bob = 0;
+  let sqx = 1, sqy = 1;
   if (e.state === "idle" && !airborne(e)) {
-    bob = Math.sin(clock / 340) * 1.4;
     sqy = 1 + Math.sin(clock / 340) * 0.012;
   } else if (e.state === "groundpound" && e.vy <= 0.5) {
     sqx = 1.06; sqy = 0.94;
@@ -434,7 +433,9 @@ export function drawWaldogeSprite(
     ctx.restore();
   }
 
-  ctx.translate(sx, sy + bob);
+  // Keep the feet anchor fixed on the collision surface. Idle breathing uses
+  // anchored squash only, so it cannot lift Waldoge above a platform.
+  ctx.translate(sx, sy);
   ctx.scale(e.facing * base * sqx, base * sqy);
   if (e.state === "hit") ctx.globalAlpha = 0.9;
   if (e.state === "dead") ctx.globalAlpha = 0.85;

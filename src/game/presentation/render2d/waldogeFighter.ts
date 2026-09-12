@@ -236,9 +236,10 @@ function poseFor(e: FighterView, style: StyleName, clock: number): Pose {
       break;
     }
     default: {
-      // idle — breathing bounce + light guard sway
+      // idle — grounded breathing + light guard sway. The feet anchor must
+      // stay at y=0; moving the whole rig creates a visible platform gap.
       const b = Math.sin(clock / 320) * 1.6;
-      p.bob = b;
+      p.squash = 1 + b * 0.004;
       p.armFront[2] = [17, CHEST_Y + 4 + b];
       p.armBack[2] = [-11, CHEST_Y + 3 - b];
       if (moving) p.lean = 0.05;

@@ -5,7 +5,7 @@ import {
   ladderAt, nearestLadder, clampToPitWalls, hasVerticalTraversal,
   encounterX, bossArenaX, PIT_DEPTH, LADDER_GRAB_X, maxPitDepthFor, landingDecksFor, pitAt,
 } from "@/game/config/world";
-import { mount, dismount, stepClimb, climbDirectionFor, type Climber } from "../climb";
+import { mount, dismount, stepClimb, climbDirectionFor, ladderExitSurfaceY, type Climber } from "../climb";
 import { districtFor, hasDistrict, sectionLabelAt } from "@/game/presentation/render2d/districts";
 import { filmDistrictFor } from "@/game/presentation/render2d/filmDistrict";
 import { RUGGER_LANDMARKS, RUGGER_SECTIONS, ruggerSectionLabelAt, ruggerWorldFor } from "@/game/presentation/render2d/ruggerEmpire";
@@ -107,6 +107,32 @@ describe("climb state machine", () => {
     while (c.climbing && guard++ < 500) stepClimb(c, lad, -1);
     expect(c.y).toBe(lad.top);
     expect(c.climbing).toBe(false);
+  });
+
+  it("grounds every upward exit on its actual landing collision surface", () => {
+    for (const ladder of laddersFor(1)) {
+      const c = fighter(ladder.x, ladder.bottom);
+      mount(c, ladder);
+      let guard = 0;
+      while (c.climbing && guard++ < 500) stepClimb(c, ladder, -1);
+      c.y = ladderExitSurfaceY(1, ladder, -1);
+      expect(c.climbing).toBe(false);
+      expect(c.y).toBe(groundYAt(1, ladder.x, ladder.top));
+      expect(c.y).toBe(ladder.top);
+    }
+  });
+
+  it("grounds every downward exit on its lower collision surface", () => {
+    for (const ladder of laddersFor(1)) {
+      const c = fighter(ladder.x, ladder.top);
+      mount(c, ladder);
+      let guard = 0;
+      while (c.climbing && guard++ < 500) stepClimb(c, ladder, 1);
+      c.y = ladderExitSurfaceY(1, ladder, 1);
+      expect(c.climbing).toBe(false);
+      expect(c.y).toBe(groundYAt(1, ladder.x, ladder.bottom));
+      expect(c.y).toBe(ladder.bottom);
+    }
   });
 
   it("never leaves the ladder bounds and stays snapped to it horizontally", () => {
