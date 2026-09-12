@@ -4230,7 +4230,10 @@ export const StreetBrawler: FC = () => {
             }
             dismountLadder(eClimb);
           } else if (grounded && Math.abs(myGround - targetGround) > 10) {
-            const lad = nearestLadder(g.level, e.x);
+            // Only route to a ladder that actually joins these two floors and
+            // is reachable from this side of the pit wall; otherwise fall
+            // through to the normal chase so the enemy never walks in place.
+            const lad = connectingLadder(g.level, e.x, myGround, targetGround);
             if (lad) {
               const dxl = lad.x - e.x;
               if (Math.abs(dxl) <= LADDER_GRAB_X) {
