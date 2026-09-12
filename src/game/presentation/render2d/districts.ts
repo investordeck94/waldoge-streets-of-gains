@@ -21,6 +21,11 @@ import { GROUND_Y } from "@/game/config";
 import { getLevelWidth } from "@/game/config/world";
 import { flicker, renderNow } from "./clock";
 import { drawFilmDistrict, filmSectionLabelAt, hasFilmDistrict } from "./filmDistrict";
+import {
+  badActorSectionLabelAt,
+  drawBadActorStudios,
+  hasBadActorStudios,
+} from "./badActorStudios";
 import { drawJeetStreet, hasJeetStreet, jeetSectionLabelAt } from "./jeetStreet";
 import { drawRuggerEmpire, hasRuggerEmpire, ruggerSectionLabelAt } from "./ruggerEmpire";
 
@@ -351,8 +356,13 @@ export function drawDistrict(
     drawJeetStreet(ctx, level, camX, canvasW);
     return;
   }
+  if (hasBadActorStudios(level)) {
+    // Level 3 is painted Bad Actors Studios artwork authored from the blueprint.
+    drawBadActorStudios(ctx, level, camX, canvasW);
+    return;
+  }
   if (hasFilmDistrict(level)) {
-    // Level 3 has its own Hollywood world model (buildings + sets + screens).
+    // Procedural fallback until every painted Level 3 panel has decoded.
     drawFilmDistrict(ctx, level, camX, canvasW);
     return;
   }
@@ -764,6 +774,7 @@ function drawProp(ctx: CanvasRenderingContext2D, d: District, p: Prop, sx: numbe
 export function sectionLabelAt(level: number, x: number): string | null {
   if (level === 0) return jeetSectionLabelAt(level, x);
   if (level === 1) return ruggerSectionLabelAt(level, x);
+  if (hasBadActorStudios(level)) return badActorSectionLabelAt(level, x);
   if (hasFilmDistrict(level)) return filmSectionLabelAt(level, x);
   const d = districtFor(level);
   if (!d) return null;
