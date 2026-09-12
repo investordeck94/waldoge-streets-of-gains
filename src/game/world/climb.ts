@@ -15,6 +15,7 @@
 
 import {
   CLIMB_SPEED,
+  groundYAt,
   ladderAt,
   type Ladder,
 } from "@/game/config/world";
@@ -81,6 +82,20 @@ export function stepClimb(c: Climber, ladder: Ladder, dir: -1 | 0 | 1): boolean 
     if (dir > 0) { dismount(c); return false; }
   }
   return true;
+}
+
+/**
+ * Resolve a completed climb against the same collision surface used by normal
+ * ground physics. The entity y-coordinate is its feet anchor, so no visual
+ * offset belongs here.
+ */
+export function ladderExitSurfaceY(
+  level: number,
+  ladder: Ladder,
+  dir: -1 | 1,
+): number {
+  const endpoint = dir < 0 ? ladder.top : ladder.bottom;
+  return groundYAt(level, ladder.x, endpoint);
 }
 
 /**

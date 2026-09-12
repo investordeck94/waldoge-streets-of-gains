@@ -119,7 +119,7 @@ import {
 } from "@/game/config/world";
 import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/districts";
 import { drawPits, drawLadders, drawLandingDecks } from "@/game/presentation/render2d/terrain";
-import { mount as mountLadder, stepClimb, dismount as dismountLadder, climbDirectionFor, type Climber } from "@/game/world/climb";
+import { mount as mountLadder, stepClimb, dismount as dismountLadder, climbDirectionFor, ladderExitSurfaceY, type Climber } from "@/game/world/climb";
 import { selectBossMove, getMoveById, rollChain, type MartialForm } from "@/game/enemy/bossMoves";
 import {
   computeBossBias, getBossProfile, bossCooldownFrames, chainChanceFor,
@@ -3871,12 +3871,20 @@ export const StreetBrawler: FC = () => {
               else if (upHeld) dir = -1;
             }
             const still = stepClimb(pAny, lad, dir);
-            if (p.state !== "hit") p.state = "jump";
             climbedThisFrame = still;
             if (!still) {
-              p.y = Math.min(Math.max(p.y, lad.top), lad.bottom);
+              // The entity y-coordinate and sprite origin are both feet
+              // anchors. Finish against the real collision surface rather
+              // than retaining a ladder endpoint or airborne pose.
+              const exitDir: -1 | 1 = dir < 0 ? -1 : 1;
+              p.y = ladderExitSurfaceY(g.level, lad, exitDir);
+              p.vy = 0;
+              p.state = "idle";
+              pAny.onPlatform = null;
               pClimb.climbAuto = undefined;
               pClimb.climbLock = 0;
+            } else if (p.state !== "hit") {
+              p.state = "jump";
             }
           } else {
             dismountLadder(pAny);
