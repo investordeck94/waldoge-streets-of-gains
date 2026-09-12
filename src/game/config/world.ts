@@ -305,6 +305,34 @@ export function nearestLadder(level: number, x: number): Ladder | null {
   return best;
 }
 
+/**
+ * The ladder that actually connects the floor a fighter stands on to the floor
+ * the target stands on, and that the fighter can reach without crossing a pit
+ * wall. Returns null when no such route exists, so callers can fall back to a
+ * normal horizontal chase instead of walking into a wall forever.
+ */
+export function connectingLadder(
+  level: number,
+  x: number,
+  fromGroundY: number,
+  toGroundY: number,
+): Ladder | null {
+  const TOL = 12;
+  const pit = pitAt(level, x);
+  let best: Ladder | null = null;
+  let bestD = Infinity;
+  for (const l of laddersFor(level)) {
+    const spansFrom = Math.abs(l.top - fromGroundY) <= TOL || Math.abs(l.bottom - fromGroundY) <= TOL;
+    const spansTo = Math.abs(l.top - toGroundY) <= TOL || Math.abs(l.bottom - toGroundY) <= TOL;
+    if (!spansFrom || !spansTo) continue;
+    // A fighter standing inside a pit can only reach ladders inside that pit.
+    if (pit && (l.x <= pit.x0 || l.x >= pit.x1)) continue;
+    const d = Math.abs(l.x - x);
+    if (d < bestD) { bestD = d; best = l; }
+  }
+  return best;
+}
+
 /** True when the level has any vertical traversal at all. */
 export function hasVerticalTraversal(level: number): boolean {
   return pitsFor(level).length > 0 || laddersFor(level).length > 0;
