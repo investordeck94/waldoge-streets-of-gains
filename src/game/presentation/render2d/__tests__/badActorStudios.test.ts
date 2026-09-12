@@ -3,6 +3,7 @@ import {
   AREA_W,
   BAD_ACTOR_AREAS,
   BAD_ACTOR_SECTIONS,
+  SUSTER_CHARACTER_URLS,
   badActorAreaBounds,
   badActorSectionLabelAt,
   badActorWorldFor,
@@ -52,10 +53,22 @@ describe("level 3 — Bad Actors Studios blueprint areas", () => {
     const projector = BAD_ACTOR_AREAS[4];
     expect(projector.overlays.some((o) => o.src.includes("badactor-boss-head"))).toBe(true);
     const suster = BAD_ACTOR_AREAS[5];
-    expect(suster.overlays.length).toBeGreaterThanOrEqual(5);
-    expect(suster.overlays.every((o) => /suster-act/.test(o.src))).toBe(true);
+    expect(suster.susterAds.length).toBe(3);
+    expect(SUSTER_CHARACTER_URLS.nunFrog).toContain("suster-act-nun-frog");
+    expect(SUSTER_CHARACTER_URLS.nunSusDog).toContain("suster-act-nun-sus-dog");
+    // Protected landmarks never receive the nun movie campaign.
+    expect(redacted.susterAds).toHaveLength(0);
+    expect(projector.susterAds).toHaveLength(0);
     // The environment never contains the player character.
     expect(JSON.stringify(BAD_ACTOR_AREAS).toUpperCase()).not.toContain("WALDOGE");
+  });
+
+  it("places the same two-character SUS'TER ACT campaign throughout production", () => {
+    const advertisedAreas = BAD_ACTOR_AREAS
+      .map((area, index) => ({ index, ads: area.susterAds.length }))
+      .filter((area) => area.ads > 0);
+    expect(advertisedAreas.map((area) => area.index)).toEqual([0, 1, 3, 5, 6, 7, 8, 10, 11]);
+    expect(advertisedAreas.reduce((sum, area) => sum + area.ads, 0)).toBe(11);
   });
 
   it("keeps every overlay rectangle inside its area", () => {
@@ -65,6 +78,12 @@ describe("level 3 — Bad Actors Studios blueprint areas", () => {
         expect(o.y).toBeGreaterThanOrEqual(0);
         expect(o.x + o.w).toBeLessThanOrEqual(1);
         expect(o.y + o.h).toBeLessThanOrEqual(1);
+      }
+      for (const ad of area.susterAds) {
+        expect(ad.x).toBeGreaterThanOrEqual(0);
+        expect(ad.y).toBeGreaterThanOrEqual(0);
+        expect(ad.x + ad.w).toBeLessThanOrEqual(1);
+        expect(ad.y + ad.h).toBeLessThanOrEqual(1);
       }
     }
   });

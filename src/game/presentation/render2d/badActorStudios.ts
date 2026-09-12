@@ -18,7 +18,7 @@
  * re-invented by the scenery art:
  *   • REDACTED HOLLYWOOD billboard  -> `susdog-original.jpg` (NO nun outfit)
  *   • BAD ACTOR DISTRICT screen     -> `badactor-boss-head.png`
- *   • SUS'TER ACT posters / screen  -> the approved nun-outfit movie art
+ *   • SUS'TER ACT posters / screens -> the two exact supplied nun characters
  *
  * Presentation only. Collision, ladders, decks, encounters, combat and AI all
  * live in `src/game/config/world.ts` and the gameplay loop and are untouched.
@@ -50,8 +50,8 @@ import rooftopArt from "@/assets/l3-13-rooftop.jpg.asset.json";
 
 import susDogUrl from "@/assets/susdog-original.jpg";
 import badActorHeadUrl from "@/assets/badactor-boss-head.png";
-import susterPoster from "@/assets/suster-act-poster.jpg.asset.json";
-import susterScreen from "@/assets/suster-act-screen.jpg.asset.json";
+import nunFrogAsset from "@/assets/suster-act-nun-frog.png.asset.json";
+import nunSusDogAsset from "@/assets/suster-act-nun-sus-dog.png.asset.json";
 
 export const BAD_ACTOR_LEVEL = 2;
 
@@ -77,6 +77,15 @@ interface Overlay {
   glow?: string;
 }
 
+/** A physical SUS'TER ACT advertisement carrying both exact character images. */
+export interface SusterAd {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  kind: "poster" | "billboard" | "backlit" | "screen";
+}
+
 export interface StudioArea {
   /** HUD / debug label. */
   label: string;
@@ -84,28 +93,44 @@ export interface StudioArea {
   art: string;
   /** Approved identity imagery composited on top. */
   overlays: Overlay[];
+  /** Physical movie advertising integrated into this area. */
+  susterAds: readonly SusterAd[];
 }
 
-const posterRow: Overlay[] = [0, 1, 2, 3, 4].map((i) => ({
-  src: susterPoster.url,
-  x: 0.298 + i * 0.0825,
-  y: 0.4,
-  w: 0.069,
-  h: 0.38,
-  fit: "cover" as const,
-}));
+export const SUSTER_CHARACTER_URLS = {
+  nunFrog: nunFrogAsset.url,
+  nunSusDog: nunSusDogAsset.url,
+} as const;
+
+const noAds: readonly SusterAd[] = [];
 
 /** The blueprint area order. Index = traversal order. */
 export const BAD_ACTOR_AREAS: readonly StudioArea[] = [
-  { label: "BAD ACTORS STUDIOS", art: entranceArt.url, overlays: [] },
-  { label: "OUTDOOR FILM LOT", art: lotArt.url, overlays: [] },
+  {
+    label: "BAD ACTORS STUDIOS",
+    art: entranceArt.url,
+    overlays: [],
+    susterAds: [{ x: 0.06, y: 0.25, w: 0.2, h: 0.55, kind: "backlit" }],
+  },
+  {
+    label: "OUTDOOR FILM LOT",
+    art: lotArt.url,
+    overlays: [],
+    susterAds: [{ x: 0.66, y: 0.18, w: 0.28, h: 0.48, kind: "billboard" }],
+  },
   {
     label: "REDACTED HOLLYWOOD",
     art: redactedArt.url,
     // Sus Dog on the billboard — approved face, NO nun outfit.
     overlays: [{ src: susDogUrl, x: 0.556, y: 0.125, w: 0.253, h: 0.29, fit: "cover" }],
+    susterAds: noAds,
   },
-  { label: "DIRECTOR'S OFFICE", art: officeArt.url, overlays: [] },
+  {
+    label: "DIRECTOR'S OFFICE",
+    art: officeArt.url,
+    overlays: [],
+    susterAds: [{ x: 0.08, y: 0.24, w: 0.18, h: 0.54, kind: "poster" }],
+  },
   {
     label: "BAD ACTOR DISTRICT",
     art: projectorArt.url,
@@ -113,24 +138,50 @@ export const BAD_ACTOR_AREAS: readonly StudioArea[] = [
     overlays: [
       { src: badActorHeadUrl, x: 0.515, y: 0.19, w: 0.36, h: 0.47, fit: "contain", glow: "rgba(255,60,60,0.16)" },
     ],
+    susterAds: noAds,
   },
   {
     label: "SUS'TER ACT MOVIE SET",
     art: susterArt.url,
-    // SUS'TER ACT promotional material — the nun-outfit Sus Dog + frog art.
-    overlays: [
-      ...posterRow,
-      { src: susterScreen.url, x: 0.115, y: 0.29, w: 0.062, h: 0.32, fit: "cover" },
-      { src: susterScreen.url, x: 0.812, y: 0.29, w: 0.062, h: 0.32, fit: "cover" },
+    overlays: [],
+    susterAds: [
+      { x: 0.07, y: 0.18, w: 0.2, h: 0.62, kind: "backlit" },
+      { x: 0.31, y: 0.12, w: 0.38, h: 0.59, kind: "billboard" },
+      { x: 0.73, y: 0.18, w: 0.2, h: 0.62, kind: "backlit" },
     ],
   },
-  { label: "STAGE 1", art: stage1Art.url, overlays: [] },
-  { label: "STAGE 2", art: stage2Art.url, overlays: [] },
-  { label: "GREEN SCREEN STAGE", art: greenScreenArt.url, overlays: [] },
-  { label: "PROP DEPARTMENT", art: propsArt.url, overlays: [] },
-  { label: "MAKEUP / DRESSING ROOMS", art: makeupArt.url, overlays: [] },
-  { label: "BACKSTAGE STORAGE", art: backstageArt.url, overlays: [] },
-  { label: "ROOFTOP / BAD ACTOR ARENA", art: rooftopArt.url, overlays: [] },
+  {
+    label: "STAGE 1",
+    art: stage1Art.url,
+    overlays: [],
+    susterAds: [{ x: 0.69, y: 0.2, w: 0.24, h: 0.54, kind: "screen" }],
+  },
+  {
+    label: "STAGE 2",
+    art: stage2Art.url,
+    overlays: [],
+    susterAds: [{ x: 0.08, y: 0.23, w: 0.2, h: 0.54, kind: "poster" }],
+  },
+  {
+    label: "GREEN SCREEN STAGE",
+    art: greenScreenArt.url,
+    overlays: [],
+    susterAds: [{ x: 0.68, y: 0.2, w: 0.25, h: 0.55, kind: "screen" }],
+  },
+  { label: "PROP DEPARTMENT", art: propsArt.url, overlays: [], susterAds: noAds },
+  {
+    label: "MAKEUP / DRESSING ROOMS",
+    art: makeupArt.url,
+    overlays: [],
+    susterAds: [{ x: 0.06, y: 0.23, w: 0.21, h: 0.57, kind: "backlit" }],
+  },
+  {
+    label: "BACKSTAGE STORAGE",
+    art: backstageArt.url,
+    overlays: [],
+    susterAds: [{ x: 0.69, y: 0.22, w: 0.24, h: 0.53, kind: "poster" }],
+  },
+  { label: "ROOFTOP / BAD ACTOR ARENA", art: rooftopArt.url, overlays: [], susterAds: noAds },
 ];
 
 /** Labels only, for tests and the debug overlay. */
@@ -156,6 +207,8 @@ for (const area of BAD_ACTOR_AREAS) {
   load(area.art);
   for (const o of area.overlays) load(o.src);
 }
+load(SUSTER_CHARACTER_URLS.nunFrog);
+load(SUSTER_CHARACTER_URLS.nunSusDog);
 
 function ready(src: string): HTMLImageElement | null {
   const image = images.get(src) ?? load(src);
@@ -282,6 +335,72 @@ function drawOverlay(
   }
 }
 
+function drawContainedImage(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+) {
+  const scale = Math.min(w / image.naturalWidth, h / image.naturalHeight);
+  const dw = image.naturalWidth * scale;
+  const dh = image.naturalHeight * scale;
+  ctx.drawImage(image, x + (w - dw) / 2, y + h - dh, dw, dh);
+}
+
+/** Draws one consistent physical movie ad while preserving both source images. */
+function drawSusterAd(
+  ctx: CanvasRenderingContext2D,
+  ad: SusterAd,
+  areaScreenX: number,
+) {
+  const frog = ready(SUSTER_CHARACTER_URLS.nunFrog);
+  const dog = ready(SUSTER_CHARACTER_URLS.nunSusDog);
+  if (!frog || !dog) return;
+
+  const x = areaScreenX + ad.x * AREA_W;
+  const y = TOP_Y + ad.y * AREA_H;
+  const w = ad.w * AREA_W;
+  const h = ad.h * AREA_H;
+  const frame = ad.kind === "billboard" ? 6 : 4;
+  const titleH = Math.max(20, h * 0.19);
+
+  ctx.save();
+  ctx.shadowColor = ad.kind === "backlit" || ad.kind === "screen" ? "rgba(255,55,38,0.72)" : "rgba(0,0,0,0.65)";
+  ctx.shadowBlur = ad.kind === "backlit" || ad.kind === "screen" ? 16 : 5;
+  ctx.fillStyle = "#e8dfc8";
+  ctx.fillRect(x - frame, y - frame, w + frame * 2, h + frame * 2);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#09090d";
+  ctx.fillRect(x, y, w, h);
+
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+
+  const characterTop = y + titleH;
+  const characterH = h - titleH;
+  const gutter = Math.max(2, w * 0.018);
+  const halfW = (w - gutter * 3) / 2;
+  drawContainedImage(ctx, frog, x + gutter, characterTop, halfW, characterH);
+  drawContainedImage(ctx, dog, x + gutter * 2 + halfW, characterTop, halfW, characterH);
+
+  const titleSize = Math.max(11, Math.min(42, titleH * 0.64));
+  ctx.fillStyle = "rgba(8,8,12,0.9)";
+  ctx.fillRect(x, y, w, titleH);
+  ctx.fillStyle = "#f4d04b";
+  ctx.font = `900 ${titleSize}px Impact, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("SUS'TER ACT", x + w / 2, y + titleH * 0.52, w * 0.94);
+  ctx.restore();
+
+  ctx.strokeStyle = "rgba(8,8,12,0.85)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x - frame, y - frame, w + frame * 2, h + frame * 2);
+}
+
 export function drawBadActorStudios(
   ctx: CanvasRenderingContext2D,
   level: number,
@@ -302,6 +421,7 @@ export function drawBadActorStudios(
     const x = Math.round(i * AREA_W - camX);
     ctx.drawImage(image, x, TOP_Y, AREA_W + 1, AREA_H);
     for (const o of area.overlays) drawOverlay(ctx, o, x);
+    for (const ad of area.susterAds) drawSusterAd(ctx, ad, x);
   }
 
   // Area transitions read as dark service alleys rather than hard cuts.
