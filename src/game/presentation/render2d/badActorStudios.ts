@@ -77,6 +77,20 @@ interface Overlay {
   glow?: string;
 }
 
+/** Distinct art treatments — every ad in the studio looks different. */
+export type SusterStyle =
+  | "marquee"
+  | "noir"
+  | "neon"
+  | "technicolor"
+  | "curtain"
+  | "filmstrip"
+  | "onesheet"
+  | "premiere"
+  | "storyboard"
+  | "drivein"
+  | "lobbycard";
+
 /** A physical SUS'TER ACT advertisement carrying both exact character images. */
 export interface SusterAd {
   x: number;
@@ -84,7 +98,12 @@ export interface SusterAd {
   w: number;
   h: number;
   kind: "poster" | "billboard" | "backlit" | "screen";
+  /** Unique visual treatment for this individual advertisement. */
+  style: SusterStyle;
+  /** Bottom strap line, always a release tease. */
+  tagline?: string;
 }
+
 
 export interface StudioArea {
   /** HUD / debug label. */
