@@ -47,3 +47,9 @@
 
 ## Done — Game title screen redesign
 - [x] Cinematic WALDOGE: STREETS OF GAINS title screen (Start / Continue / How to play / Settings)
+
+## Current — Level 3 Bad Actors Studios
+- [ ] Rebuild the 13-area studio progression from the supplied blueprint
+- [ ] Add exact Sus Dog, Bad Actor, and SUS’TER ACT landmark usage
+- [ ] Add collision-backed platforms and connected ladder routes
+- [ ] Validate full traversal, combat, mobile/desktop, tests and build
