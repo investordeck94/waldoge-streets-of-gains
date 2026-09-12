@@ -27,7 +27,7 @@ import { flicker } from "./clock";
 
 export const BAD_ACTOR_LEVEL = 2;
 
-const PANEL_W = 1350;
+const PANEL_W = 1120;
 const PANEL_H = PANEL_W / 3;
 /** Fraction of a panel's height that sits above the playable street line. */
 const PAVEMENT = 0.9;
@@ -36,9 +36,10 @@ const TOP_Y = GROUND_Y - PANEL_H * PAVEMENT;
 /**
  * Panel running order across the 10,400-unit world:
  *   A entrance + REDACTED HOLLYWOOD, B main projector stage,
- *   C SUS'TER ACT / makeup / props, D sound stage + Stage 2 + rooftop/backlot.
+ *   C SUS'TER ACT / makeup / props, D sound stage + Stage 2 + rooftop/backlot,
+ *   then a final stage/backlot approach into the boss arena.
  */
-const PANEL_ORDER = [0, 0, 1, 1, 2, 2, 3, 3] as const;
+const PANEL_ORDER = [0, 0, 1, 1, 2, 2, 3, 3, 1, 3] as const;
 
 /** Blueprint key locations, in traversal order. */
 export const BAD_ACTOR_SECTIONS = [
