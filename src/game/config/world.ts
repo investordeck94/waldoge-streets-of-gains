@@ -196,24 +196,28 @@ export const LEVEL_LADDERS: Record<number, Ladder[]> = {
     { x: 9420, top: GROUND_Y, bottom: L2_VAULT_PIT_Y, style: "maintenance" },
   ],
   2: [
-    // REDACTED hill / director catwalk
-    { x: 2240, top: 188, bottom: GROUND_Y, style: "fireEscape" },
-    { x: 2720, top: 188, bottom: GROUND_Y, style: "construction" },
-    // Main projector service floor
-    { x: 2960, top: GROUND_Y, bottom: GROUND_Y + 92, style: "maintenance" },
-    { x: 3740, top: GROUND_Y, bottom: GROUND_Y + 92, style: "construction" },
-    // Dressing rooms / prop-department catwalk
-    { x: 4300, top: 198, bottom: GROUND_Y, style: "fireEscape" },
-    { x: 5020, top: 198, bottom: GROUND_Y, style: "maintenance" },
-    // Backstage and sound-stage lower route
-    { x: 5560, top: GROUND_Y, bottom: GROUND_Y + 112, style: "underground" },
-    { x: 6380, top: GROUND_Y, bottom: GROUND_Y + 112, style: "construction" },
-    // Stage 2 lighting gantry
-    { x: 6720, top: 178, bottom: GROUND_Y, style: "construction" },
-    { x: 7240, top: 178, bottom: GROUND_Y, style: "fireEscape" },
-    // Rooftop/backlot service floor
-    { x: 7480, top: GROUND_Y, bottom: GROUND_Y + 92, style: "maintenance" },
-    { x: 8220, top: GROUND_Y, bottom: GROUND_Y + 92, style: "fireEscape" },
+    // REDACTED HOLLYWOOD hillside catwalk (area 3)
+    { x: 2540, top: 188, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 3260, top: 188, bottom: GROUND_Y, style: "construction" },
+    // BAD ACTOR DISTRICT projector service floor (area 5)
+    { x: 5020, top: GROUND_Y, bottom: GROUND_Y + 92, style: "maintenance" },
+    { x: 5780, top: GROUND_Y, bottom: GROUND_Y + 92, style: "construction" },
+    // Stage 1 lighting catwalk + underfloor (area 7)
+    { x: 7340, top: 178, bottom: GROUND_Y, style: "construction" },
+    { x: 8260, top: 178, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 7420, top: GROUND_Y, bottom: GROUND_Y + 92, style: "maintenance" },
+    { x: 8180, top: GROUND_Y, bottom: GROUND_Y + 92, style: "construction" },
+    // Stage 2 gantry (area 8)
+    { x: 8540, top: 182, bottom: GROUND_Y, style: "construction" },
+    { x: 9460, top: 182, bottom: GROUND_Y, style: "fireEscape" },
+    // Prop department mezzanine (area 10)
+    { x: 10940, top: 188, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 11860, top: 188, bottom: GROUND_Y, style: "maintenance" },
+    // Backstage catwalk + lower storage floor (area 12)
+    { x: 13340, top: 170, bottom: GROUND_Y, style: "construction" },
+    { x: 14260, top: 170, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 13420, top: GROUND_Y, bottom: GROUND_Y + 112, style: "underground" },
+    { x: 14180, top: GROUND_Y, bottom: GROUND_Y + 112, style: "maintenance" },
   ],
 };
 
