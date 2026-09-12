@@ -1,8 +1,22 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TitleScreen } from "../TitleScreen";
 
 vi.mock("@/components/game/TitleWaldogeFighter", () => ({ TitleWaldogeFighter: () => <div /> }));
+vi.mock("framer-motion", async () => {
+  const React = await import("react");
+  return {
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    motion: new Proxy({}, {
+      get: (_target, tag: string) => React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
+        ({ children, ...props }, ref) => React.createElement(tag, { ...props, ref }, children),
+      ),
+    }),
+  };
+});
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const defaults = {
   continueInfo: { available: true, level: 2, levelName: "DOCKSIDE ENFORCER", difficulty: "normal" as const, bestScore: 900 },
@@ -12,39 +26,69 @@ const defaults = {
   onCamPreset: vi.fn(),
 };
 
+let container: HTMLDivElement;
+let root: Root;
+
+beforeEach(() => {
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+});
+
+afterEach(() => {
+  act(() => root.unmount());
+  container.remove();
+});
+
+function renderTitle(onStart: ReturnType<typeof vi.fn>) {
+  act(() => root.render(<TitleScreen {...defaults} onStart={onStart} />));
+}
+
+function button(name: RegExp): HTMLButtonElement {
+  const match = Array.from(container.querySelectorAll("button")).find((item) =>
+    name.test(item.getAttribute("aria-label") ?? item.textContent ?? ""),
+  );
+  if (!match) throw new Error(`Button not found: ${name}`);
+  return match;
+}
+
+function click(target: HTMLButtonElement) {
+  act(() => target.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+}
+
 describe("TitleScreen game flows", () => {
   it("keeps Start Game on level 1", () => {
     const onStart = vi.fn();
-    render(<TitleScreen {...defaults} onStart={onStart} />);
-    fireEvent.click(screen.getByRole("button", { name: /start game/i }));
-    fireEvent.click(screen.getByRole("button", { name: /half a degen/i }));
+    renderTitle(onStart);
+    click(button(/start game/i));
+    click(button(/half a degen/i));
     expect(onStart).toHaveBeenCalledWith("normal", undefined, false);
   });
 
   it("preserves Continue save behavior", () => {
     const onStart = vi.fn();
-    render(<TitleScreen {...defaults} onStart={onStart} />);
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    renderTitle(onStart);
+    click(button(/continue/i));
     expect(onStart).toHaveBeenCalledWith("normal", 2);
   });
 
   it("offers all seven levels and forwards the selected level and difficulty", () => {
     const onStart = vi.fn();
-    render(<TitleScreen {...defaults} onStart={onStart} />);
-    fireEvent.click(screen.getByRole("button", { name: /free play/i }));
-    expect(screen.getAllByText(/LEVEL [1-7]/)).toHaveLength(7);
-    fireEvent.click(screen.getByRole("button", { name: /LEVEL 3.*BAD ACTOR/i }));
-    fireEvent.click(screen.getByRole("button", { name: /full trench mode/i }));
+    renderTitle(onStart);
+    click(button(/free play/i));
+    expect(container.querySelectorAll('[aria-label^="Level "]')).toHaveLength(7);
+    click(button(/Level 3 Bad Actor/i));
+    click(button(/full trench mode/i));
     expect(onStart).toHaveBeenCalledWith("blackMonday", 2, true);
   });
 
   it("backs from difficulty to levels and levels to the main menu", () => {
-    render(<TitleScreen {...defaults} onStart={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: /free play/i }));
-    fireEvent.click(screen.getByRole("button", { name: /LEVEL 4.*FUDDER/i }));
-    fireEvent.click(screen.getByRole("button", { name: /back/i }));
-    expect(screen.getByText("SELECT A LEVEL")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /back/i }));
-    expect(screen.getByRole("button", { name: /start game/i })).toBeInTheDocument();
+    renderTitle(vi.fn());
+    click(button(/free play/i));
+    click(button(/Level 4 Fudder/i));
+    click(button(/back/i));
+    expect(container.textContent).toContain("SELECT A LEVEL");
+    click(button(/back/i));
+    expect(button(/start game/i)).toBeInTheDocument();
   });
 });
