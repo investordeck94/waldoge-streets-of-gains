@@ -20,11 +20,11 @@
 import { GROUND_Y } from "@/game/config";
 import { getLevelWidth } from "@/game/config/world";
 import { flicker, renderNow } from "./clock";
-import { drawFilmDistrict, filmSectionLabelAt, hasFilmDistrict } from "./filmDistrict";
+
 import {
+  BAD_ACTOR_LEVEL,
   badActorSectionLabelAt,
   drawBadActorStudios,
-  hasBadActorStudios,
 } from "./badActorStudios";
 import { drawJeetStreet, hasJeetStreet, jeetSectionLabelAt } from "./jeetStreet";
 import { drawRuggerEmpire, hasRuggerEmpire, ruggerSectionLabelAt } from "./ruggerEmpire";
@@ -329,7 +329,7 @@ export function districtFor(level: number): District | null {
 }
 
 export function hasDistrict(level: number): boolean {
-  return level === 0 || level === 1 || hasFilmDistrict(level);
+  return level === 0 || level === 1 || level === 2;
 }
 
 
@@ -356,14 +356,11 @@ export function drawDistrict(
     drawJeetStreet(ctx, level, camX, canvasW);
     return;
   }
-  if (hasBadActorStudios(level)) {
-    // Level 3 is painted Bad Actors Studios artwork authored from the blueprint.
+  if (level === BAD_ACTOR_LEVEL) {
+    // Level 3 is the painted Bad Actors Studios world, authored area by area
+    // from the blueprint. Areas that have not decoded yet simply show the
+    // parallax studio skyline until their artwork arrives.
     drawBadActorStudios(ctx, level, camX, canvasW);
-    return;
-  }
-  if (hasFilmDistrict(level)) {
-    // Procedural fallback until every painted Level 3 panel has decoded.
-    drawFilmDistrict(ctx, level, camX, canvasW);
     return;
   }
   if (hasRuggerEmpire(level)) {
@@ -774,8 +771,8 @@ function drawProp(ctx: CanvasRenderingContext2D, d: District, p: Prop, sx: numbe
 export function sectionLabelAt(level: number, x: number): string | null {
   if (level === 0) return jeetSectionLabelAt(level, x);
   if (level === 1) return ruggerSectionLabelAt(level, x);
-  if (hasBadActorStudios(level)) return badActorSectionLabelAt(level, x);
-  if (hasFilmDistrict(level)) return filmSectionLabelAt(level, x);
+  if (level === BAD_ACTOR_LEVEL) return badActorSectionLabelAt(level, x);
+
   const d = districtFor(level);
   if (!d) return null;
   let label: string | null = null;

@@ -29,7 +29,7 @@ export const DEFAULT_LEVEL_WIDTH = LEVEL_WIDTH;
 export const LEVEL_WORLD_WIDTHS: readonly number[] = [
   5600, // L1 Jeet's Fast Food District
   10800, // L2 Rugger's Financial / Casino Empire
-  10400, // L3 Bad Actors Studios — long 13-area Hollywood production district
+  15600, // L3 Bad Actors Studios — 13 authored areas x 1200 units each
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
@@ -78,10 +78,12 @@ export const LEVEL_PITS: Record<number, GroundPit[]> = {
   ],
   // Level 3 backstage service floors. These are broad production basements,
   // not hazards: each has connected ladders and a clear lower combat lane.
+  // Level 3 backstage service floors, one per blueprint area that has a lower
+  // technical level: projector service pit, Stage 1 underfloor, backstage.
   2: [
-    { x0: 2920, x1: 3780, y: GROUND_Y + 92, kind: "service" },
-    { x0: 5520, x1: 6420, y: GROUND_Y + 112, kind: "underpass" },
-    { x0: 7440, x1: 8260, y: GROUND_Y + 92, kind: "service" },
+    { x0: 4980, x1: 5820, y: GROUND_Y + 92, kind: "service" },
+    { x0: 7380, x1: 8220, y: GROUND_Y + 92, kind: "service" },
+    { x0: 13340, x1: 14260, y: GROUND_Y + 112, kind: "underpass" },
   ],
 };
 
@@ -194,24 +196,28 @@ export const LEVEL_LADDERS: Record<number, Ladder[]> = {
     { x: 9420, top: GROUND_Y, bottom: L2_VAULT_PIT_Y, style: "maintenance" },
   ],
   2: [
-    // REDACTED hill / director catwalk
-    { x: 2240, top: 188, bottom: GROUND_Y, style: "fireEscape" },
-    { x: 2720, top: 188, bottom: GROUND_Y, style: "construction" },
-    // Main projector service floor
-    { x: 2960, top: GROUND_Y, bottom: GROUND_Y + 92, style: "maintenance" },
-    { x: 3740, top: GROUND_Y, bottom: GROUND_Y + 92, style: "construction" },
-    // Dressing rooms / prop-department catwalk
-    { x: 4300, top: 198, bottom: GROUND_Y, style: "fireEscape" },
-    { x: 5020, top: 198, bottom: GROUND_Y, style: "maintenance" },
-    // Backstage and sound-stage lower route
-    { x: 5560, top: GROUND_Y, bottom: GROUND_Y + 112, style: "underground" },
-    { x: 6380, top: GROUND_Y, bottom: GROUND_Y + 112, style: "construction" },
-    // Stage 2 lighting gantry
-    { x: 6720, top: 178, bottom: GROUND_Y, style: "construction" },
-    { x: 7240, top: 178, bottom: GROUND_Y, style: "fireEscape" },
-    // Rooftop/backlot service floor
-    { x: 7480, top: GROUND_Y, bottom: GROUND_Y + 92, style: "maintenance" },
-    { x: 8220, top: GROUND_Y, bottom: GROUND_Y + 92, style: "fireEscape" },
+    // REDACTED HOLLYWOOD hillside catwalk (area 3)
+    { x: 2540, top: 188, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 3260, top: 188, bottom: GROUND_Y, style: "construction" },
+    // BAD ACTOR DISTRICT projector service floor (area 5)
+    { x: 5020, top: GROUND_Y, bottom: GROUND_Y + 92, style: "maintenance" },
+    { x: 5780, top: GROUND_Y, bottom: GROUND_Y + 92, style: "construction" },
+    // Stage 1 lighting catwalk + underfloor (area 7)
+    { x: 7340, top: 178, bottom: GROUND_Y, style: "construction" },
+    { x: 8260, top: 178, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 7420, top: GROUND_Y, bottom: GROUND_Y + 92, style: "maintenance" },
+    { x: 8180, top: GROUND_Y, bottom: GROUND_Y + 92, style: "construction" },
+    // Stage 2 gantry (area 8)
+    { x: 8540, top: 182, bottom: GROUND_Y, style: "construction" },
+    { x: 9460, top: 182, bottom: GROUND_Y, style: "fireEscape" },
+    // Prop department mezzanine (area 10)
+    { x: 10940, top: 188, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 11860, top: 188, bottom: GROUND_Y, style: "maintenance" },
+    // Backstage catwalk + lower storage floor (area 12)
+    { x: 13340, top: 170, bottom: GROUND_Y, style: "construction" },
+    { x: 14260, top: 170, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 13420, top: GROUND_Y, bottom: GROUND_Y + 112, style: "underground" },
+    { x: 14180, top: GROUND_Y, bottom: GROUND_Y + 112, style: "maintenance" },
   ],
 };
 
@@ -253,9 +259,11 @@ const deckCache = new Map<number, LandingDeck[]>();
 /** Long authored upper production decks; all use the same collision contract. */
 const LEVEL_AUTHORED_DECKS: Record<number, LandingDeck[]> = {
   2: [
-    { x0: 2200, x1: 2760, y: 188, ladderX: 2240 },
-    { x0: 4260, x1: 5060, y: 198, ladderX: 4300 },
-    { x0: 6680, x1: 7280, y: 178, ladderX: 6720 },
+    { x0: 2500, x1: 3300, y: 188, ladderX: 2540 },
+    { x0: 7300, x1: 8300, y: 178, ladderX: 7340 },
+    { x0: 8500, x1: 9500, y: 182, ladderX: 8540 },
+    { x0: 10900, x1: 11900, y: 188, ladderX: 10940 },
+    { x0: 13300, x1: 14300, y: 170, ladderX: 13340 },
   ],
 };
 
@@ -321,7 +329,7 @@ export function maxPitDepthFor(level: number): number {
 export const ENCOUNTER_ZONES: Record<number, { waves: number[]; boss: number }> = {
   0: { waves: [0.28, 0.58], boss: 0.9 },
   1: { waves: [0.24, 0.61], boss: 0.93 },
-  2: { waves: [0.29, 0.64], boss: 0.925 },
+  2: { waves: [0.16, 0.55], boss: 0.945 },
 };
 
 
