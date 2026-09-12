@@ -772,7 +772,7 @@ export function sectionLabelAt(level: number, x: number): string | null {
   if (level === 0) return jeetSectionLabelAt(level, x);
   if (level === 1) return ruggerSectionLabelAt(level, x);
   if (hasBadActorStudios(level)) return badActorSectionLabelAt(level, x);
-  if (hasFilmDistrict(level)) return filmSectionLabelAt(level, x);
+
   const d = districtFor(level);
   if (!d) return null;
   let label: string | null = null;
