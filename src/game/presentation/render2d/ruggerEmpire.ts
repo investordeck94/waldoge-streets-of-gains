@@ -112,10 +112,13 @@ export function drawRuggerEmpire(
   const first = Math.max(0, Math.floor(camX / PANEL_W));
   const last = Math.min(slots - 1, Math.floor((camX + canvasW) / PANEL_W));
   for (let slot = first; slot <= last; slot++) {
-    const image = IMAGES[PANEL_ORDER[Math.min(slot, PANEL_ORDER.length - 1)]];
+    const panel = PANEL_ORDER[Math.min(slot, PANEL_ORDER.length - 1)];
+    const image = IMAGES[panel];
     if (!ready(image)) continue;
     const x = Math.round(slot * PANEL_W - camX);
-    ctx.drawImage(image, x, TOP_Y, PANEL_W + 1, PANEL_H);
+    // Each painting places its standing plane at a different height, so the
+    // panel is anchored by its own pavement line instead of a shared one.
+    ctx.drawImage(image, x, GROUND_Y - PANEL_H * PANEL_PAVEMENT[panel], PANEL_W + 1, PANEL_H);
   }
 
   // Architectural seams become dark alleys rather than visible panel cuts.
