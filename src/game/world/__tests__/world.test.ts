@@ -3,7 +3,7 @@ import { GROUND_Y } from "@/game/config";
 import {
   getLevelWidth, DEFAULT_LEVEL_WIDTH, groundYAt, pitsFor, laddersFor,
   ladderAt, nearestLadder, clampToPitWalls, hasVerticalTraversal,
-  encounterX, bossArenaX, PIT_DEPTH, LADDER_GRAB_X, maxPitDepthFor, landingDecksFor, pitAt,
+  encounterX, bossArenaX, PIT_DEPTH, LADDER_GRAB_X, maxPitDepthFor, landingDecksFor, pitAt, connectingLadder,
 } from "@/game/config/world";
 import { mount, dismount, stepClimb, climbDirectionFor, ladderExitSurfaceY, type Climber } from "../climb";
 import { districtFor, hasDistrict, sectionLabelAt } from "@/game/presentation/render2d/districts";
@@ -333,5 +333,28 @@ describe("ladder landing decks", () => {
     const pit = pitsFor(1)[0];
     const mid = (pit.x0 + pit.x1) / 2;
     expect(groundYAt(1, mid, GROUND_Y)).toBe(pit.y);
+  });
+});
+
+describe("connectingLadder", () => {
+  it("only returns ladders joining the two given floors", () => {
+    const pit = pitsFor(2)[0];
+    const lad = connectingLadder(2, pit.x0 + 40, pit.y, 320);
+    expect(lad).not.toBeNull();
+    expect(lad!.x).toBeGreaterThan(pit.x0);
+    expect(lad!.x).toBeLessThan(pit.x1);
+  });
+
+  it("never routes a fighter inside a pit to a ladder outside that pit", () => {
+    const pit = pitsFor(2)[0];
+    const lad = connectingLadder(2, pit.x0 + 10, pit.y, 320);
+    if (lad) {
+      expect(lad.x).toBeGreaterThan(pit.x0);
+      expect(lad.x).toBeLessThan(pit.x1);
+    }
+  });
+
+  it("returns null when both fighters share a floor with no joining ladder", () => {
+    expect(connectingLadder(2, 100, 320, 320)).toBeNull();
   });
 });

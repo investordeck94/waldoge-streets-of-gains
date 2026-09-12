@@ -15,6 +15,10 @@ export const RUGGER_LEVEL = 1;
 const PANEL_W = 1350;
 const PANEL_H = PANEL_W / 3;
 const PAVEMENT = 0.84;
+// Per-panel standing plane, measured from the artwork. Panel C (the service
+// level interior) paints its floor lower than the open street panels, which
+// made Waldoge read as levitating in that stretch.
+export const PANEL_PAVEMENT = [0.84, 0.84, 0.88, 0.84] as const;
 const TOP_Y = GROUND_Y - PANEL_H * PAVEMENT;
 const PANEL_ORDER = [0, 0, 1, 1, 2, 2, 3, 3] as const;
 
@@ -112,10 +116,13 @@ export function drawRuggerEmpire(
   const first = Math.max(0, Math.floor(camX / PANEL_W));
   const last = Math.min(slots - 1, Math.floor((camX + canvasW) / PANEL_W));
   for (let slot = first; slot <= last; slot++) {
-    const image = IMAGES[PANEL_ORDER[Math.min(slot, PANEL_ORDER.length - 1)]];
+    const panel = PANEL_ORDER[Math.min(slot, PANEL_ORDER.length - 1)];
+    const image = IMAGES[panel];
     if (!ready(image)) continue;
     const x = Math.round(slot * PANEL_W - camX);
-    ctx.drawImage(image, x, TOP_Y, PANEL_W + 1, PANEL_H);
+    // Each painting places its standing plane at a different height, so the
+    // panel is anchored by its own pavement line instead of a shared one.
+    ctx.drawImage(image, x, GROUND_Y - PANEL_H * PANEL_PAVEMENT[panel], PANEL_W + 1, PANEL_H);
   }
 
   // Architectural seams become dark alleys rather than visible panel cuts.
@@ -134,8 +141,12 @@ export function drawRuggerEmpire(
   const pulse = 0.035 + flicker(camX, 0.002) * 0.035;
   ctx.fillStyle = `rgba(42,205,255,${pulse})`;
   ctx.fillRect(0, GROUND_Y - 2, canvasW, 2);
+  // Start the understructure at the highest panel bottom so a deeper-anchored
+  // panel never leaves a gap above the fill.
+  const deepest = Math.max(...PANEL_PAVEMENT);
+  const fillTop = GROUND_Y - PANEL_H * deepest + PANEL_H - 1;
   ctx.fillStyle = "#080b13";
-  ctx.fillRect(0, TOP_Y + PANEL_H - 1, canvasW, GROUND_Y + 400 - (TOP_Y + PANEL_H));
+  ctx.fillRect(0, fillTop, canvasW, GROUND_Y + 400 - fillTop);
 }
 
 export function ruggerSectionLabelAt(level: number, x: number): string | null {

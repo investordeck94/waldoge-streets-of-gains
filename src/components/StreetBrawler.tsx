@@ -114,7 +114,7 @@ import { setRenderClock, renderNow } from "@/game/presentation/render2d/clock";
 // --- New world / environment system (per-level size, pits, ladders) ---
 import {
   getLevelWidth, groundYAt, clampToPitWalls, hasVerticalTraversal,
-  ladderAt, nearestLadder, encounterX, bossArenaX, BOSS_WAKE_DISTANCE,
+  ladderAt, nearestLadder, connectingLadder, encounterX, bossArenaX, BOSS_WAKE_DISTANCE,
   maxPitDepthFor, LADDER_GRAB_X,
 } from "@/game/config/world";
 import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/districts";
@@ -4222,15 +4222,26 @@ export const StreetBrawler: FC = () => {
             if (lad) {
               const goalY = Math.min(Math.max(targetGround, lad.top), lad.bottom);
               const dir = climbDirectionFor(e.y, goalY);
-              stepClimb(eClimb, lad, dir);
-              e.state = "walk";
-              e.stateTimer = Math.max(-1, e.stateTimer - 1);
-              e.attackCooldown = Math.max(-1, e.attackCooldown - 1);
-              continue;
+              if (dir === 0) {
+                // Arrived on the target floor: let go and re-ground, otherwise
+                // the climber hovers on the ladder and never chases again.
+                dismountLadder(eClimb);
+                e.y = groundYAt(g.level, e.x, e.y);
+                e.vy = 0;
+              } else {
+                stepClimb(eClimb, lad, dir);
+                e.state = "walk";
+                e.stateTimer = Math.max(-1, e.stateTimer - 1);
+                e.attackCooldown = Math.max(-1, e.attackCooldown - 1);
+                continue;
+              }
             }
             dismountLadder(eClimb);
           } else if (grounded && Math.abs(myGround - targetGround) > 10) {
-            const lad = nearestLadder(g.level, e.x);
+            // Only route to a ladder that actually joins these two floors and
+            // is reachable from this side of the pit wall; otherwise fall
+            // through to the normal chase so the enemy never walks in place.
+            const lad = connectingLadder(g.level, e.x, myGround, targetGround);
             if (lad) {
               const dxl = lad.x - e.x;
               if (Math.abs(dxl) <= LADDER_GRAB_X) {
