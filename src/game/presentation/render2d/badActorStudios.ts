@@ -94,7 +94,7 @@ export interface StudioArea {
   /** Approved identity imagery composited on top. */
   overlays: Overlay[];
   /** Physical movie advertising integrated into this area. */
-  susterAds: SusterAd[];
+  susterAds: readonly SusterAd[];
 }
 
 export const SUSTER_CHARACTER_URLS = {

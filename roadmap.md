@@ -62,5 +62,5 @@
 ## Current — SUS’TER ACT advertisements
 - [x] Use the exact uploaded Nun Frog and Nun Sus Dog in every movie advertisement
 - [x] Keep REDACTED HOLLYWOOD and BAD ACTOR DISTRICT identity art isolated
-- [ ] Verify assets, rendering, tests, typecheck and build
+- [x] Verify assets, rendering, tests, typecheck and build
 
