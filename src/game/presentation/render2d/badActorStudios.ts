@@ -77,6 +77,20 @@ interface Overlay {
   glow?: string;
 }
 
+/** Distinct art treatments — every ad in the studio looks different. */
+export type SusterStyle =
+  | "marquee"
+  | "noir"
+  | "neon"
+  | "technicolor"
+  | "curtain"
+  | "filmstrip"
+  | "onesheet"
+  | "premiere"
+  | "storyboard"
+  | "drivein"
+  | "lobbycard";
+
 /** A physical SUS'TER ACT advertisement carrying both exact character images. */
 export interface SusterAd {
   x: number;
@@ -84,7 +98,12 @@ export interface SusterAd {
   w: number;
   h: number;
   kind: "poster" | "billboard" | "backlit" | "screen";
+  /** Unique visual treatment for this individual advertisement. */
+  style: SusterStyle;
+  /** Bottom strap line, always a release tease. */
+  tagline?: string;
 }
+
 
 export interface StudioArea {
   /** HUD / debug label. */
@@ -110,13 +129,13 @@ export const BAD_ACTOR_AREAS: readonly StudioArea[] = [
     label: "BAD ACTORS STUDIOS",
     art: entranceArt.url,
     overlays: [],
-    susterAds: [{ x: 0.06, y: 0.25, w: 0.2, h: 0.55, kind: "backlit" }],
+    susterAds: [{ x: 0.06, y: 0.25, w: 0.2, h: 0.55, kind: "backlit", style: "marquee", tagline: "COMING SOON" }],
   },
   {
     label: "OUTDOOR FILM LOT",
     art: lotArt.url,
     overlays: [],
-    susterAds: [{ x: 0.66, y: 0.18, w: 0.28, h: 0.48, kind: "billboard" }],
+    susterAds: [{ x: 0.66, y: 0.18, w: 0.28, h: 0.48, kind: "billboard", style: "technicolor", tagline: "COMING SOON" }],
   },
   {
     label: "REDACTED HOLLYWOOD",
@@ -129,7 +148,7 @@ export const BAD_ACTOR_AREAS: readonly StudioArea[] = [
     label: "DIRECTOR'S OFFICE",
     art: officeArt.url,
     overlays: [],
-    susterAds: [{ x: 0.08, y: 0.24, w: 0.18, h: 0.54, kind: "poster" }],
+    susterAds: [{ x: 0.08, y: 0.24, w: 0.18, h: 0.54, kind: "poster", style: "noir", tagline: "COMING SOON" }],
   },
   {
     label: "BAD ACTOR DISTRICT",
@@ -145,41 +164,41 @@ export const BAD_ACTOR_AREAS: readonly StudioArea[] = [
     art: susterArt.url,
     overlays: [],
     susterAds: [
-      { x: 0.07, y: 0.18, w: 0.2, h: 0.62, kind: "backlit" },
-      { x: 0.31, y: 0.12, w: 0.38, h: 0.59, kind: "billboard" },
-      { x: 0.73, y: 0.18, w: 0.2, h: 0.62, kind: "backlit" },
+      { x: 0.07, y: 0.18, w: 0.2, h: 0.62, kind: "backlit", style: "neon", tagline: "COMING SOON" },
+      { x: 0.31, y: 0.12, w: 0.38, h: 0.59, kind: "billboard", style: "premiere", tagline: "COMING SOON" },
+      { x: 0.73, y: 0.18, w: 0.2, h: 0.62, kind: "backlit", style: "curtain", tagline: "COMING SOON" },
     ],
   },
   {
     label: "STAGE 1",
     art: stage1Art.url,
     overlays: [],
-    susterAds: [{ x: 0.69, y: 0.2, w: 0.24, h: 0.54, kind: "screen" }],
+    susterAds: [{ x: 0.69, y: 0.2, w: 0.24, h: 0.54, kind: "screen", style: "drivein", tagline: "COMING SOON" }],
   },
   {
     label: "STAGE 2",
     art: stage2Art.url,
     overlays: [],
-    susterAds: [{ x: 0.08, y: 0.23, w: 0.2, h: 0.54, kind: "poster" }],
+    susterAds: [{ x: 0.08, y: 0.23, w: 0.2, h: 0.54, kind: "poster", style: "onesheet", tagline: "COMING SOON" }],
   },
   {
     label: "GREEN SCREEN STAGE",
     art: greenScreenArt.url,
     overlays: [],
-    susterAds: [{ x: 0.68, y: 0.2, w: 0.25, h: 0.55, kind: "screen" }],
+    susterAds: [{ x: 0.68, y: 0.2, w: 0.25, h: 0.55, kind: "screen", style: "storyboard", tagline: "COMING SOON" }],
   },
   { label: "PROP DEPARTMENT", art: propsArt.url, overlays: [], susterAds: noAds },
   {
     label: "MAKEUP / DRESSING ROOMS",
     art: makeupArt.url,
     overlays: [],
-    susterAds: [{ x: 0.06, y: 0.23, w: 0.21, h: 0.57, kind: "backlit" }],
+    susterAds: [{ x: 0.06, y: 0.23, w: 0.21, h: 0.57, kind: "backlit", style: "lobbycard", tagline: "COMING SOON" }],
   },
   {
     label: "BACKSTAGE STORAGE",
     art: backstageArt.url,
     overlays: [],
-    susterAds: [{ x: 0.69, y: 0.22, w: 0.24, h: 0.53, kind: "poster" }],
+    susterAds: [{ x: 0.69, y: 0.22, w: 0.24, h: 0.53, kind: "poster", style: "filmstrip", tagline: "COMING SOON" }],
   },
   { label: "ROOFTOP / BAD ACTOR ARENA", art: rooftopArt.url, overlays: [], susterAds: noAds },
 ];
@@ -349,7 +368,230 @@ function drawContainedImage(
   ctx.drawImage(image, x + (w - dw) / 2, y + h - dh, dw, dh);
 }
 
-/** Draws one consistent physical movie ad while preserving both source images. */
+/** Per-advertisement art treatment. Characters stay identical; the ad changes. */
+interface SusterTheme {
+  /** Outer physical frame colour. */
+  frame: string;
+  /** Backdrop gradient behind the two characters. */
+  top: string;
+  bottom: string;
+  /** Title bar fill and lettering. */
+  titleBar: string;
+  title: string;
+  titleFont: string;
+  /** Strap-line bar at the foot of the ad. */
+  strapBar: string;
+  strap: string;
+  /** Ambient glow of the housing. */
+  glow: string;
+}
+
+const SUSTER_THEMES: Record<SusterStyle, SusterTheme> = {
+  marquee: {
+    frame: "#f2e6c4", top: "#fbf3dc", bottom: "#e6d5a8",
+    titleBar: "#f6edd4", title: "#b31724", titleFont: "900 {s}px Georgia, serif",
+    strapBar: "#1a1206", strap: "#f6edd4", glow: "rgba(255,214,120,0.85)",
+  },
+  technicolor: {
+    frame: "#f0c04a", top: "#ffd9a3", bottom: "#e8663c",
+    titleBar: "#b31724", title: "#ffe9b0", titleFont: "900 {s}px Impact, sans-serif",
+    strapBar: "#2a0d0a", strap: "#ffd36b", glow: "rgba(255,140,60,0.6)",
+  },
+  noir: {
+    frame: "#1c1c20", top: "#14161c", bottom: "#05060a",
+    titleBar: "#0a0a0e", title: "#d9d9df", titleFont: "700 {s}px Georgia, serif",
+    strapBar: "#0a0a0e", strap: "#9aa0aa", glow: "rgba(140,170,220,0.35)",
+  },
+  neon: {
+    frame: "#221033", top: "#2a1046", bottom: "#120720",
+    titleBar: "#160a26", title: "#4ef0ff", titleFont: "900 {s}px Impact, sans-serif",
+    strapBar: "#160a26", strap: "#ff5ad0", glow: "rgba(120,60,255,0.8)",
+  },
+  premiere: {
+    frame: "#c9a227", top: "#3a0b12", bottom: "#12040a",
+    titleBar: "#12040a", title: "#f4d04b", titleFont: "900 {s}px Georgia, serif",
+    strapBar: "#c9a227", strap: "#2a0810", glow: "rgba(255,190,80,0.6)",
+  },
+  curtain: {
+    frame: "#8d1220", top: "#6d1020", bottom: "#2c0610",
+    titleBar: "#f0e2bd", title: "#8d1220", titleFont: "900 {s}px Georgia, serif",
+    strapBar: "#2c0610", strap: "#f0e2bd", glow: "rgba(255,70,70,0.5)",
+  },
+  drivein: {
+    frame: "#3b4048", top: "#1d2b3a", bottom: "#0a1018",
+    titleBar: "#0d1420", title: "#eaf4ff", titleFont: "900 {s}px Impact, sans-serif",
+    strapBar: "#0d1420", strap: "#8fd0ff", glow: "rgba(160,220,255,0.55)",
+  },
+  onesheet: {
+    frame: "#e6e1d4", top: "#f3efe2", bottom: "#cfc6ae",
+    titleBar: "#111318", title: "#f3efe2", titleFont: "900 {s}px Impact, sans-serif",
+    strapBar: "#b31724", strap: "#fdf6e2", glow: "rgba(0,0,0,0.4)",
+  },
+  storyboard: {
+    frame: "#8a8070", top: "#d9d2bd", bottom: "#a89d83",
+    titleBar: "#2d2a22", title: "#e8e0c8", titleFont: "700 {s}px Courier New, monospace",
+    strapBar: "#2d2a22", strap: "#e8e0c8", glow: "rgba(0,0,0,0.4)",
+  },
+  lobbycard: {
+    frame: "#d8b45a", top: "#2b6b6b", bottom: "#0e2e30",
+    titleBar: "#d8b45a", title: "#11292b", titleFont: "900 {s}px Georgia, serif",
+    strapBar: "#11292b", strap: "#d8b45a", glow: "rgba(120,230,220,0.5)",
+  },
+  filmstrip: {
+    frame: "#17171a", top: "#463a2c", bottom: "#1b1610",
+    titleBar: "#0d0d10", title: "#e5c07a", titleFont: "700 {s}px Courier New, monospace",
+    strapBar: "#0d0d10", strap: "#e5c07a", glow: "rgba(0,0,0,0.5)",
+  },
+};
+
+/** Style-specific decoration drawn behind the characters, inside the clip. */
+function drawSusterDecor(
+  ctx: CanvasRenderingContext2D,
+  style: SusterStyle,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+) {
+  switch (style) {
+    case "marquee": {
+      // Bulb border, like a cinema frontage.
+      const r = Math.max(1.6, h * 0.012);
+      const step = Math.max(10, w / 14);
+      for (let bx = x + step / 2; bx < x + w; bx += step) {
+        const a = 0.55 + flicker(bx, 0.003) * 0.45;
+        ctx.fillStyle = `rgba(255,206,110,${a})`;
+        ctx.beginPath();
+        ctx.arc(bx, y + r * 2, r, 0, Math.PI * 2);
+        ctx.arc(bx, y + h - r * 2, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+    case "technicolor": {
+      // Sunburst rays behind the pair.
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = "#fff0c0";
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(x + w / 2, y + h * 0.55);
+        ctx.lineTo(x + w / 2 + Math.cos(a) * w, y + h * 0.55 + Math.sin(a) * h);
+        ctx.lineTo(x + w / 2 + Math.cos(a + 0.13) * w, y + h * 0.55 + Math.sin(a + 0.13) * h);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+      break;
+    }
+    case "noir": {
+      // Hard diagonal spotlight wedge.
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = "#cfe0ff";
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + w * 0.75, y);
+      ctx.lineTo(x + w * 0.3, y + h);
+      ctx.lineTo(x, y + h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      break;
+    }
+    case "neon": {
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,90,208,0.75)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x + 5, y + 5, w - 10, h - 10);
+      ctx.strokeStyle = "rgba(78,240,255,0.6)";
+      ctx.strokeRect(x + 10, y + 10, w - 20, h - 20);
+      ctx.restore();
+      break;
+    }
+    case "premiere": {
+      // Deco arch and searchlight beams.
+      ctx.save();
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = "#ffe6a8";
+      ctx.beginPath();
+      ctx.moveTo(x + w * 0.1, y + h);
+      ctx.lineTo(x + w * 0.42, y);
+      ctx.lineTo(x + w * 0.56, y);
+      ctx.lineTo(x + w * 0.26, y + h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x + w * 0.9, y + h);
+      ctx.lineTo(x + w * 0.58, y);
+      ctx.lineTo(x + w * 0.44, y);
+      ctx.lineTo(x + w * 0.74, y + h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      break;
+    }
+    case "curtain": {
+      const folds = Math.max(6, Math.round(w / 26));
+      for (let i = 0; i < folds; i++) {
+        const fx = x + (i / folds) * w;
+        ctx.fillStyle = i % 2 ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.05)";
+        ctx.fillRect(fx, y, w / folds / 2, h);
+      }
+      break;
+    }
+    case "drivein": {
+      // Starfield above a flat horizon.
+      for (let i = 0; i < 26; i++) {
+        const sx = x + ((i * 97) % Math.max(1, Math.round(w)));
+        const sy = y + ((i * 53) % Math.max(1, Math.round(h * 0.6)));
+        ctx.fillStyle = i % 3 ? "rgba(255,255,255,0.5)" : "rgba(180,220,255,0.7)";
+        ctx.fillRect(sx, sy, 1.6, 1.6);
+      }
+      break;
+    }
+    case "onesheet": {
+      ctx.strokeStyle = "rgba(179,23,36,0.55)";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x + 7, y + 7, w - 14, h - 14);
+      break;
+    }
+    case "storyboard": {
+      ctx.strokeStyle = "rgba(45,42,34,0.35)";
+      ctx.lineWidth = 1;
+      for (let gx = x; gx < x + w; gx += 18) {
+        ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + h); ctx.stroke();
+      }
+      for (let gy = y; gy < y + h; gy += 18) {
+        ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); ctx.stroke();
+      }
+      break;
+    }
+    case "lobbycard": {
+      ctx.strokeStyle = "rgba(216,180,90,0.8)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x + 6, y + 6, w - 12, h - 12);
+      ctx.fillStyle = "rgba(216,180,90,0.25)";
+      ctx.fillRect(x + 6, y + h * 0.52, w - 12, 2);
+      break;
+    }
+    case "filmstrip": {
+      const hole = Math.max(3, w * 0.035);
+      ctx.fillStyle = "#0b0b0e";
+      ctx.fillRect(x, y, hole * 1.8, h);
+      ctx.fillRect(x + w - hole * 1.8, y, hole * 1.8, h);
+      ctx.fillStyle = "#d8d2c4";
+      for (let hy = y + hole; hy < y + h - hole; hy += hole * 2.4) {
+        ctx.fillRect(x + hole * 0.4, hy, hole, hole);
+        ctx.fillRect(x + w - hole * 1.4, hy, hole, hole);
+      }
+      break;
+    }
+  }
+}
+
+/** Draws one physical movie ad. Every ad differs; the two characters never do. */
 function drawSusterAd(
   ctx: CanvasRenderingContext2D,
   ad: SusterAd,
@@ -359,47 +601,65 @@ function drawSusterAd(
   const dog = ready(SUSTER_CHARACTER_URLS.nunSusDog);
   if (!frog || !dog) return;
 
+  const theme = SUSTER_THEMES[ad.style];
   const x = areaScreenX + ad.x * AREA_W;
   const y = TOP_Y + ad.y * AREA_H;
   const w = ad.w * AREA_W;
   const h = ad.h * AREA_H;
   const frame = ad.kind === "billboard" ? 6 : 4;
-  const titleH = Math.max(20, h * 0.19);
+  const titleH = Math.max(18, h * 0.17);
+  const strapH = Math.max(12, h * 0.11);
 
   ctx.save();
-  ctx.shadowColor = ad.kind === "backlit" || ad.kind === "screen" ? "rgba(255,55,38,0.72)" : "rgba(0,0,0,0.65)";
-  ctx.shadowBlur = ad.kind === "backlit" || ad.kind === "screen" ? 16 : 5;
-  ctx.fillStyle = "#e8dfc8";
+  ctx.shadowColor = theme.glow;
+  ctx.shadowBlur = ad.kind === "backlit" || ad.kind === "screen" ? 16 : 6;
+  ctx.fillStyle = theme.frame;
   ctx.fillRect(x - frame, y - frame, w + frame * 2, h + frame * 2);
   ctx.shadowBlur = 0;
-  ctx.fillStyle = "#09090d";
-  ctx.fillRect(x, y, w, h);
 
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
 
+  const bg = ctx.createLinearGradient(0, y, 0, y + h);
+  bg.addColorStop(0, theme.top);
+  bg.addColorStop(1, theme.bottom);
+  ctx.fillStyle = bg;
+  ctx.fillRect(x, y, w, h);
+  drawSusterDecor(ctx, ad.style, x, y, w, h);
+
+  // The two supplied characters, unchanged, side by side.
   const characterTop = y + titleH;
-  const characterH = h - titleH;
+  const characterH = h - titleH - strapH;
   const gutter = Math.max(2, w * 0.018);
   const halfW = (w - gutter * 3) / 2;
   drawContainedImage(ctx, frog, x + gutter, characterTop, halfW, characterH);
   drawContainedImage(ctx, dog, x + gutter * 2 + halfW, characterTop, halfW, characterH);
 
-  const titleSize = Math.max(11, Math.min(42, titleH * 0.64));
-  ctx.fillStyle = "rgba(8,8,12,0.9)";
+  // Title bar.
+  const titleSize = Math.max(10, Math.min(40, titleH * 0.66));
+  ctx.fillStyle = theme.titleBar;
   ctx.fillRect(x, y, w, titleH);
-  ctx.fillStyle = "#f4d04b";
-  ctx.font = `900 ${titleSize}px Impact, sans-serif`;
+  ctx.fillStyle = theme.title;
+  ctx.font = theme.titleFont.replace("{s}", String(Math.round(titleSize)));
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("SUS'TER ACT", x + w / 2, y + titleH * 0.52, w * 0.94);
+  ctx.fillText("SUS'TER ACT", x + w / 2, y + titleH * 0.54, w * 0.94);
+
+  // "COMING SOON" strap line at the foot of every advertisement.
+  const strapSize = Math.max(8, Math.min(22, strapH * 0.6));
+  ctx.fillStyle = theme.strapBar;
+  ctx.fillRect(x, y + h - strapH, w, strapH);
+  ctx.fillStyle = theme.strap;
+  ctx.font = `700 ${Math.round(strapSize)}px Arial, sans-serif`;
+  ctx.fillText(ad.tagline ?? "COMING SOON", x + w / 2, y + h - strapH * 0.46, w * 0.9);
   ctx.restore();
 
   ctx.strokeStyle = "rgba(8,8,12,0.85)";
   ctx.lineWidth = 2;
   ctx.strokeRect(x - frame, y - frame, w + frame * 2, h + frame * 2);
 }
+
 
 export function drawBadActorStudios(
   ctx: CanvasRenderingContext2D,
