@@ -52,4 +52,4 @@
 - [x] Rebuild the 13-area studio progression from the supplied blueprint
 - [x] Add exact Sus Dog, Bad Actor, and SUS’TER ACT landmark usage
 - [x] Add collision-backed platforms and connected ladder routes
-- [ ] Validate full traversal, combat, mobile/desktop, tests and build
+- [x] Validate full traversal, combat, mobile/desktop, tests and build
