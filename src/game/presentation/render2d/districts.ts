@@ -356,14 +356,11 @@ export function drawDistrict(
     drawJeetStreet(ctx, level, camX, canvasW);
     return;
   }
-  if (hasBadActorStudios(level)) {
-    // Level 3 is painted Bad Actors Studios artwork authored from the blueprint.
+  if (level === BAD_ACTOR_LEVEL) {
+    // Level 3 is the painted Bad Actors Studios world, authored area by area
+    // from the blueprint. Areas that have not decoded yet simply show the
+    // parallax studio skyline until their artwork arrives.
     drawBadActorStudios(ctx, level, camX, canvasW);
-    return;
-  }
-  if (hasFilmDistrict(level)) {
-    // Procedural fallback until every painted Level 3 panel has decoded.
-    drawFilmDistrict(ctx, level, camX, canvasW);
     return;
   }
   if (hasRuggerEmpire(level)) {
