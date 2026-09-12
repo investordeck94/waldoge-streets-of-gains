@@ -53,3 +53,10 @@
 - [x] Add exact Sus Dog, Bad Actor, and SUS’TER ACT landmark usage
 - [x] Add collision-backed platforms and connected ladder routes
 - [x] Validate full traversal, combat, mobile/desktop, tests and build
+
+## Current — Level 3 blueprint fidelity rebuild
+- [ ] Replace procedural Level 3 scenery with painted panel artwork matching the approved blueprint
+- [ ] Reproduce exact landmarks: studio gate, Redacted Hollywood sign, Bad Actor District screen, Sus'ter Act, makeup/prop/backstage rooms, Stage 2, rooftop/backlot, boss arena
+- [ ] Keep collision, ladders, combat, HUD and progression unchanged
+- [ ] Validate rendering, tests, typecheck and build
+
