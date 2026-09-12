@@ -666,14 +666,14 @@ function drawSusterMarqueePanels(
   if (!frog || !dog) return;
 
   const panels = [
-    { x: 0.293, w: 0.063 },
-    { x: 0.378, w: 0.063 },
-    { x: 0.463, w: 0.063 },
-    { x: 0.548, w: 0.063 },
-    { x: 0.633, w: 0.063 },
+    { x: 0.300, w: 0.047 },
+    { x: 0.389, w: 0.047 },
+    { x: 0.479, w: 0.047 },
+    { x: 0.570, w: 0.047 },
+    { x: 0.661, w: 0.047 },
   ];
-  const panelY = TOP_Y + AREA_H * 0.424;
-  const panelH = AREA_H * 0.318;
+  const panelY = TOP_Y + AREA_H * 0.470;
+  const panelH = AREA_H * 0.273;
 
   ctx.save();
   ctx.beginPath();
@@ -682,17 +682,26 @@ function drawSusterMarqueePanels(
   panels.forEach((panel, index) => {
     const panelX = areaScreenX + AREA_W * panel.x;
     const panelW = AREA_W * panel.w;
+    const image = index % 2 === 0 ? frog : dog;
+    const sourceX = image === frog ? 65 : 65;
+    const sourceW = image === frog ? 833 : 873;
+    const scale = Math.max(panelW / sourceW, panelH / image.naturalHeight);
+    const drawW = sourceW * scale;
+    const drawH = image.naturalHeight * scale;
     ctx.save();
     ctx.beginPath();
     ctx.rect(panelX, panelY, panelW, panelH);
     ctx.clip();
-    drawContainedImage(
-      ctx,
-      index % 2 === 0 ? frog : dog,
-      panelX,
-      panelY,
-      panelW,
-      panelH,
+    ctx.drawImage(
+      image,
+      sourceX,
+      0,
+      sourceW,
+      image.naturalHeight,
+      panelX + (panelW - drawW) / 2,
+      panelY + (panelH - drawH) / 2,
+      drawW,
+      drawH,
     );
     ctx.restore();
   });
