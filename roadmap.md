@@ -64,3 +64,9 @@
 - [x] Keep REDACTED HOLLYWOOD and BAD ACTOR DISTRICT identity art isolated
 - [x] Verify assets, rendering, tests, typecheck and build
 
+## Current — Free Play and difficulty-aware retries
+- [x] Add a seven-level Free Play picker using the canonical roster and existing difficulty picker
+- [x] Keep campaign Continue progression isolated from Free Play sessions
+- [x] Retry the defeated level on Easy/Normal and restart Level 1 on Hard
+- [ ] Verify menu navigation, retry rules, mobile/desktop, tests and build
+

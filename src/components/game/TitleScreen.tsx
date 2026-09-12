@@ -7,8 +7,8 @@
  */
 import { useState, type FC, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, RotateCcw, BookOpen, Settings as SettingsIcon, X, Volume2, VolumeX, Camera } from "lucide-react";
-import type { Difficulty } from "@/game/config";
+import { Play, RotateCcw, BookOpen, Settings as SettingsIcon, X, Volume2, VolumeX, Camera, Map } from "lucide-react";
+import { LEVELS, type Difficulty } from "@/game/config";
 import titleBg from "@/assets/title-financial-city.jpg";
 import { TitleWaldogeFighter } from "@/components/game/TitleWaldogeFighter";
 
@@ -21,7 +21,7 @@ export interface ContinueInfo {
 }
 
 interface TitleScreenProps {
-  onStart: (diff: Difficulty, startLevel?: number) => void;
+  onStart: (diff: Difficulty, startLevel?: number, freePlay?: boolean) => void;
   continueInfo: ContinueInfo;
   sfxEnabled: boolean;
   onToggleSfx: () => void;
@@ -116,7 +116,8 @@ export const TitleScreen: FC<TitleScreenProps> = ({
   onCamPreset,
   leaderboardSlot,
 }) => {
-  const [panel, setPanel] = useState<"main" | "difficulty">("main");
+  const [panel, setPanel] = useState<"main" | "levels" | "difficulty">("main");
+  const [freePlayLevel, setFreePlayLevel] = useState<number | null>(null);
   const [modal, setModal] = useState<null | "howto" | "settings">(null);
 
   return (
@@ -176,7 +177,7 @@ export const TitleScreen: FC<TitleScreenProps> = ({
                   transition={{ duration: 0.22 }}
                    className="space-y-2.5"
                 >
-                  <MenuButton primary icon={<Play className="w-5 h-5" />} label="START GAME" onClick={() => setPanel("difficulty")} />
+                   <MenuButton primary icon={<Play className="w-5 h-5" />} label="START GAME" onClick={() => { setFreePlayLevel(null); setPanel("difficulty"); }} />
                   <MenuButton
                     icon={<RotateCcw className="w-5 h-5" />}
                     label="CONTINUE"
@@ -192,8 +193,35 @@ export const TitleScreen: FC<TitleScreenProps> = ({
                         : undefined
                     }
                   />
+                   <MenuButton icon={<Map className="w-5 h-5" />} label="FREE PLAY" hint="Choose any district" onClick={() => setPanel("levels")} />
                   <MenuButton icon={<BookOpen className="w-5 h-5" />} label="HOW TO PLAY" onClick={() => setModal("howto")} />
                   <MenuButton icon={<SettingsIcon className="w-5 h-5" />} label="SETTINGS" onClick={() => setModal("settings")} />
+                </motion.div>
+              ) : panel === "levels" ? (
+                <motion.div
+                  key="levels"
+                  initial={{ opacity: 0, x: 18 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -18 }}
+                  transition={{ duration: 0.22 }}
+                  className="space-y-2"
+                >
+                  <p className="text-center font-mono text-[10px] tracking-[0.35em] text-muted-foreground">SELECT A LEVEL</p>
+                  <div className="grid max-h-[330px] grid-cols-1 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2">
+                    {LEVELS.map((level, index) => (
+                      <button
+                        key={level.boss.name}
+                        onClick={() => { setFreePlayLevel(index); setPanel("difficulty"); }}
+                        className="min-h-12 rounded-lg border border-border/70 bg-background/75 px-3 py-2 text-left transition hover:border-primary/70 hover:bg-background"
+                        aria-label={`Level ${index + 1} ${level.boss.name}`}
+                      >
+                        <span className="block font-mono text-[9px] text-primary">LEVEL {index + 1}</span>
+                        <span className="block font-heading text-xs font-black text-foreground">{level.boss.name}</span>
+                        <span className="block truncate text-[9px] text-muted-foreground">{level.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => setPanel("main")} className="w-full py-2 font-mono text-[11px] text-muted-foreground transition hover:text-primary">← BACK</button>
                 </motion.div>
               ) : (
                 <motion.div
@@ -208,7 +236,7 @@ export const TitleScreen: FC<TitleScreenProps> = ({
                   {DIFFICULTIES.map((d) => (
                     <button
                       key={d.id}
-                      onClick={() => onStart(d.id)}
+                      onClick={() => onStart(d.id, freePlayLevel ?? undefined, freePlayLevel !== null)}
                       className={`w-full rounded-lg border bg-background/50 backdrop-blur-sm px-5 py-3 text-left transition-all hover:translate-x-1 ${d.accent}`}
                     >
                       <span className="block font-heading text-sm font-bold text-foreground">{d.label}</span>
@@ -216,7 +244,7 @@ export const TitleScreen: FC<TitleScreenProps> = ({
                     </button>
                   ))}
                   <button
-                    onClick={() => setPanel("main")}
+                    onClick={() => setPanel(freePlayLevel === null ? "main" : "levels")}
                     className="w-full text-[11px] font-mono text-muted-foreground hover:text-primary transition py-2"
                   >
                     ← BACK
