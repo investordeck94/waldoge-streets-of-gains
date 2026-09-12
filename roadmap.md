@@ -60,7 +60,7 @@
 - [ ] Keep collision, ladders, combat, HUD and progression unchanged
 - [ ] Validate rendering, tests, typecheck and build
 ## Current — SUS’TER ACT advertisements
-- [ ] Use the exact uploaded Nun Frog and Nun Sus Dog in every movie advertisement
-- [ ] Keep REDACTED HOLLYWOOD and BAD ACTOR DISTRICT identity art isolated
+- [x] Use the exact uploaded Nun Frog and Nun Sus Dog in every movie advertisement
+- [x] Keep REDACTED HOLLYWOOD and BAD ACTOR DISTRICT identity art isolated
 - [ ] Verify assets, rendering, tests, typecheck and build
 
