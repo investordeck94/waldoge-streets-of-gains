@@ -34,6 +34,12 @@
 - [x] Keep Waldoge centered through mount, descent, and bottom dismount
 - [x] Verify DOWN + JUMP, repeated descent, normal jumps, enemy ladders, mobile, tests and build
 
+## Done — Ladder exit grounding
+- [x] Resolve every ladder endpoint through its actual collision surface
+- [x] Enter grounded idle after dismount instead of retaining an airborne pose
+- [x] Keep Waldoge's feet anchor fixed during idle breathing
+- [x] Cover every Level 2 ladder in upward and downward endpoint tests
+
 ## Current — Waldoge title-screen focus
 - [x] Feature Waldoge prominently in the title screen
 - [x] Add a looping live boxing animation without changing menu behavior
