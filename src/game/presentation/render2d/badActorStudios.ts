@@ -665,22 +665,27 @@ function drawSusterMarqueePanels(
   const dog = ready(SUSTER_CHARACTER_URLS.nunSusDog);
   if (!frog || !dog) return;
 
-  const panelXs = [0.302, 0.393, 0.484, 0.575, 0.666];
-  const panelY = TOP_Y + AREA_H * 0.39;
-  const panelW = AREA_W * 0.074;
-  const panelH = AREA_H * 0.37;
+  const panels = [
+    { x: 0.289, w: 0.068 },
+    { x: 0.374, w: 0.068 },
+    { x: 0.459, w: 0.068 },
+    { x: 0.544, w: 0.068 },
+    { x: 0.629, w: 0.068 },
+  ];
+  const panelY = TOP_Y + AREA_H * 0.395;
+  const panelH = AREA_H * 0.305;
 
   ctx.save();
   ctx.beginPath();
   ctx.rect(areaScreenX, TOP_Y, AREA_W, AREA_H);
   ctx.clip();
-  panelXs.forEach((panelX, index) => {
+  panels.forEach((panel, index) => {
     drawContainedImage(
       ctx,
       index % 2 === 0 ? frog : dog,
-      areaScreenX + AREA_W * panelX,
+      areaScreenX + AREA_W * panel.x,
       panelY,
-      panelW,
+      AREA_W * panel.w,
       panelH,
     );
   });
