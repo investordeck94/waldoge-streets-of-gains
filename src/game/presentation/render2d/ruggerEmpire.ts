@@ -15,6 +15,10 @@ export const RUGGER_LEVEL = 1;
 const PANEL_W = 1350;
 const PANEL_H = PANEL_W / 3;
 const PAVEMENT = 0.84;
+// Per-panel standing plane, measured from the artwork. Panel C (the service
+// level interior) paints its floor lower than the open street panels, which
+// made Waldoge read as levitating in that stretch.
+export const PANEL_PAVEMENT = [0.84, 0.84, 0.88, 0.84] as const;
 const TOP_Y = GROUND_Y - PANEL_H * PAVEMENT;
 const PANEL_ORDER = [0, 0, 1, 1, 2, 2, 3, 3] as const;
 
