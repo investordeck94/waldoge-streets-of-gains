@@ -20,7 +20,7 @@
 import { GROUND_Y } from "@/game/config";
 import { getLevelWidth } from "@/game/config/world";
 import { flicker, renderNow } from "./clock";
-import { drawFilmDistrict, filmSectionLabelAt, hasFilmDistrict } from "./filmDistrict";
+
 import {
   badActorSectionLabelAt,
   drawBadActorStudios,
@@ -329,7 +329,7 @@ export function districtFor(level: number): District | null {
 }
 
 export function hasDistrict(level: number): boolean {
-  return level === 0 || level === 1 || hasFilmDistrict(level);
+  return level === 0 || level === 1 || level === 2;
 }
 
 

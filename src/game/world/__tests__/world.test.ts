@@ -7,7 +7,6 @@ import {
 } from "@/game/config/world";
 import { mount, dismount, stepClimb, climbDirectionFor, ladderExitSurfaceY, type Climber } from "../climb";
 import { districtFor, hasDistrict, sectionLabelAt } from "@/game/presentation/render2d/districts";
-import { filmDistrictFor } from "@/game/presentation/render2d/filmDistrict";
 import { RUGGER_LANDMARKS, RUGGER_SECTIONS, ruggerSectionLabelAt, ruggerWorldFor } from "@/game/presentation/render2d/ruggerEmpire";
 
 const fighter = (x: number, y: number): Climber => ({ x, y, state: "idle" });
