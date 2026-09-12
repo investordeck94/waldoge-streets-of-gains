@@ -1,5 +1,10 @@
 # Waldoge: Streets of Gains — combat pass
 
+## Current — Cross-level Waldoge grounding
+- [x] Trace collision surfaces, camera transforms, and active sprite origin
+- [x] Align every atlas pose to its painted shoe sole instead of transparent cell bounds
+- [x] Verify Level 1–3 standing, movement, jump/landing, combat, and Level 7 regression
+
 ## P1 — Level 7 freeze / disappearing entities
 - [ ] Frame-loop crash containment (no permanent rAF death)
 - [ ] Player motion sanitizer (NaN/Infinity repair) reusing shared movement module
