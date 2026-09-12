@@ -335,3 +335,26 @@ describe("ladder landing decks", () => {
     expect(groundYAt(1, mid, GROUND_Y)).toBe(pit.y);
   });
 });
+
+describe("connectingLadder", () => {
+  it("only returns ladders joining the two given floors", () => {
+    const pit = pitsFor(2)[0];
+    const lad = connectingLadder(2, pit.x0 + 40, pit.y, 320);
+    expect(lad).not.toBeNull();
+    expect(lad!.x).toBeGreaterThan(pit.x0);
+    expect(lad!.x).toBeLessThan(pit.x1);
+  });
+
+  it("never routes a fighter inside a pit to a ladder outside that pit", () => {
+    const pit = pitsFor(2)[0];
+    const lad = connectingLadder(2, pit.x0 + 10, pit.y, 320);
+    if (lad) {
+      expect(lad.x).toBeGreaterThan(pit.x0);
+      expect(lad.x).toBeLessThan(pit.x1);
+    }
+  });
+
+  it("returns null when both fighters share a floor with no joining ladder", () => {
+    expect(connectingLadder(2, 100, 320, 320)).toBeNull();
+  });
+});
