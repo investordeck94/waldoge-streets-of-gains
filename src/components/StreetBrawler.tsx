@@ -114,7 +114,7 @@ import { setRenderClock, renderNow } from "@/game/presentation/render2d/clock";
 // --- New world / environment system (per-level size, pits, ladders) ---
 import {
   getLevelWidth, groundYAt, clampToPitWalls, hasVerticalTraversal,
-  ladderAt, nearestLadder, encounterX, bossArenaX, BOSS_WAKE_DISTANCE,
+  ladderAt, nearestLadder, connectingLadder, encounterX, bossArenaX, BOSS_WAKE_DISTANCE,
   maxPitDepthFor, LADDER_GRAB_X,
 } from "@/game/config/world";
 import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/districts";
