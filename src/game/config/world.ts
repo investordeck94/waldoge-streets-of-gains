@@ -29,7 +29,7 @@ export const DEFAULT_LEVEL_WIDTH = LEVEL_WIDTH;
 export const LEVEL_WORLD_WIDTHS: readonly number[] = [
   5600, // L1 Jeet's Fast Food District
   10800, // L2 Rugger's Financial / Casino Empire
-  10400, // L3 Bad Actors Studios — long 13-area Hollywood production district
+  15600, // L3 Bad Actors Studios — 13 authored areas x 1200 units each
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
@@ -78,10 +78,12 @@ export const LEVEL_PITS: Record<number, GroundPit[]> = {
   ],
   // Level 3 backstage service floors. These are broad production basements,
   // not hazards: each has connected ladders and a clear lower combat lane.
+  // Level 3 backstage service floors, one per blueprint area that has a lower
+  // technical level: projector service pit, Stage 1 underfloor, backstage.
   2: [
-    { x0: 2920, x1: 3780, y: GROUND_Y + 92, kind: "service" },
-    { x0: 5520, x1: 6420, y: GROUND_Y + 112, kind: "underpass" },
-    { x0: 7440, x1: 8260, y: GROUND_Y + 92, kind: "service" },
+    { x0: 4980, x1: 5820, y: GROUND_Y + 92, kind: "service" },
+    { x0: 7380, x1: 8220, y: GROUND_Y + 92, kind: "service" },
+    { x0: 13340, x1: 14260, y: GROUND_Y + 112, kind: "underpass" },
   ],
 };
 
