@@ -141,8 +141,12 @@ export function drawRuggerEmpire(
   const pulse = 0.035 + flicker(camX, 0.002) * 0.035;
   ctx.fillStyle = `rgba(42,205,255,${pulse})`;
   ctx.fillRect(0, GROUND_Y - 2, canvasW, 2);
+  // Start the understructure at the highest panel bottom so a deeper-anchored
+  // panel never leaves a gap above the fill.
+  const deepest = Math.max(...PANEL_PAVEMENT);
+  const fillTop = GROUND_Y - PANEL_H * deepest + PANEL_H - 1;
   ctx.fillStyle = "#080b13";
-  ctx.fillRect(0, TOP_Y + PANEL_H - 1, canvasW, GROUND_Y + 400 - (TOP_Y + PANEL_H));
+  ctx.fillRect(0, fillTop, canvasW, GROUND_Y + 400 - fillTop);
 }
 
 export function ruggerSectionLabelAt(level: number, x: number): string | null {
