@@ -271,7 +271,7 @@ describe("districts", () => {
 
 describe("level 3 — Bad Actor's film district", () => {
   it("is a large dedicated world, far bigger than the legacy arena", () => {
-    expect(getLevelWidth(2)).toBe(10400);
+    expect(getLevelWidth(2)).toBe(15600);
     expect(getLevelWidth(2)).toBeGreaterThan(3200 * 3);
   });
 
@@ -323,7 +323,7 @@ describe("level 3 — Bad Actor's film district", () => {
   it("adds connected vertical production routes without touching other levels", () => {
     expect(hasVerticalTraversal(2)).toBe(true);
     expect(pitsFor(2).length).toBe(3);
-    expect(laddersFor(2).length).toBe(12);
+    expect(laddersFor(2).length).toBe(18);
     expect(pitsFor(0).length).toBe(0);
     for (const ladder of laddersFor(2)) {
       expect(groundYAt(2, ladder.x, ladder.top)).toBe(ladder.top);
