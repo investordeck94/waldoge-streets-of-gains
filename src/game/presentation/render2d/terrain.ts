@@ -26,11 +26,11 @@ export function drawPits(
     const sx = pit.x0 - camX;
     const ex = pit.x1 - camX;
     if (ex < -80 || sx > canvasW + 80) continue;
-    drawPit(ctx, pit, sx, ex);
+    drawPit(ctx, level, pit, sx, ex);
   }
 }
 
-function drawPit(ctx: CanvasRenderingContext2D, pit: GroundPit, sx: number, ex: number) {
+function drawPit(ctx: CanvasRenderingContext2D, level: number, pit: GroundPit, sx: number, ex: number) {
   const w = ex - sx;
   // Cut the shaft out of the street
   const shaft = ctx.createLinearGradient(0, GROUND_Y, 0, pit.y);
@@ -93,7 +93,11 @@ function drawPit(ctx: CanvasRenderingContext2D, pit: GroundPit, sx: number, ex: 
   ctx.fillStyle = pit.kind === "vault" ? "rgba(232,195,66,0.75)" : "rgba(126,220,255,0.68)";
   ctx.font = "bold 9px monospace";
   ctx.textAlign = "center";
-  ctx.fillText(pit.kind === "vault" ? "RUGGER VAULTS • LIQUIDITY ACCESS" : pit.kind === "underpass" ? "EXCHANGE INFRASTRUCTURE" : "SERVICE & TRADING LEVEL", sx + w / 2, pit.y - 12);
+  const label = level === 2
+    ? pit.kind === "underpass" ? "BACKSTAGE INFRASTRUCTURE" : "STUDIO SERVICE LEVEL"
+    : pit.kind === "vault" ? "RUGGER VAULTS • LIQUIDITY ACCESS"
+    : pit.kind === "underpass" ? "EXCHANGE INFRASTRUCTURE" : "SERVICE & TRADING LEVEL";
+  ctx.fillText(label, sx + w / 2, pit.y - 12);
   ctx.textAlign = "left";
 }
 
@@ -115,9 +119,10 @@ export function drawLandingDecks(
     const w = d.x1 - d.x0;
     if (sx + w < -60 || sx > canvasW + 60) continue;
     // Deck slab
+    const film = level === 2;
     const slab = ctx.createLinearGradient(0, d.y - 8, 0, d.y + 14);
-    slab.addColorStop(0, "#6b7180");
-    slab.addColorStop(0.35, "#464c59");
+    slab.addColorStop(0, film ? "#7e697f" : "#6b7180");
+    slab.addColorStop(0.35, film ? "#4e4055" : "#464c59");
     slab.addColorStop(1, "#22262f");
     ctx.fillStyle = slab;
     ctx.fillRect(sx, d.y - 8, w, 20);
@@ -131,7 +136,7 @@ export function drawLandingDecks(
     }
     // Hazard edge stripes so the walkable ledge reads clearly
     for (let i = 0; i * 10 < w; i++) {
-      ctx.fillStyle = i % 2 === 0 ? "#e8c342" : "#1b1b22";
+      ctx.fillStyle = i % 2 === 0 ? (film ? "#d24858" : "#e8c342") : "#1b1b22";
       ctx.fillRect(sx + i * 10, d.y + 10, Math.min(10, w - i * 10), 3);
     }
     // Support brackets under the deck

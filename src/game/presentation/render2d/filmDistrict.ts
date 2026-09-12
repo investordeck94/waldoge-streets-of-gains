@@ -25,6 +25,8 @@ import { getLevelWidth } from "@/game/config/world";
 import { flicker, renderNow } from "./clock";
 import posterAsset from "@/assets/suster-act-poster.jpg.asset.json";
 import screenAsset from "@/assets/suster-act-screen.jpg.asset.json";
+import susDogUrl from "@/assets/susdog-original.jpg";
+import badActorHeadUrl from "@/assets/badactor-boss-head.png";
 
 export const FILM_LEVEL = 2;
 
@@ -41,9 +43,25 @@ function preload(src: string): HTMLImageElement | null {
 
 export const SUSTER_POSTER_IMG = preload(posterAsset.url);
 export const SUSTER_SCREEN_IMG = preload(screenAsset.url);
+export const SUS_DOG_IMG = preload(susDogUrl);
+export const BAD_ACTOR_HEAD_IMG = preload(badActorHeadUrl);
 
 function ready(img: HTMLImageElement | null): img is HTMLImageElement {
   return !!img && img.complete && img.naturalWidth > 0;
+}
+
+function drawImageContain(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): void {
+  const scale = Math.min(w / img.naturalWidth, h / img.naturalHeight);
+  const dw = img.naturalWidth * scale;
+  const dh = img.naturalHeight * scale;
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
 }
 
 // ---------------------------------------------------------------------------
@@ -65,8 +83,9 @@ function mulberry32(seed: number) {
 // ---------------------------------------------------------------------------
 
 export type FilmSection =
-  | "entrance" | "studioStreet" | "backlots" | "movieSets"
-  | "production" | "propDistrict" | "premiere" | "badActorStudio";
+  | "entrance" | "outdoorLot" | "redactedHollywood" | "directorsOffice"
+  | "projectorStage" | "susterSet" | "dressingRooms" | "propDistrict"
+  | "backstage" | "soundStage" | "stageTwo" | "rooftop" | "badActorStudio";
 
 export type BuildingKind =
   | "gate" | "soundStage" | "productionOffice" | "warehouse"
@@ -99,7 +118,7 @@ export interface MovieSet {
   hero?: boolean;
 }
 
-export type ScreenArt = "poster" | "still" | "text";
+export type ScreenArt = "poster" | "still" | "susDog" | "badActor" | "text";
 
 /** A giant screen / billboard, usually lit by a projector below it. */
 export interface GiantScreen {
@@ -140,38 +159,8 @@ export interface FilmDistrict {
 }
 
 // ---------------------------------------------------------------------------
-// Fictional naming pools
+// Authored set labels
 // ---------------------------------------------------------------------------
-
-const STUDIO_NAMES = [
-  "BAD ACTOR STUDIOS", "BAD ACTOR PICTURES", "BAD ACTOR PRODUCTIONS",
-  "BAD ACTOR FILMWORKS", "BAD ACTOR ENTERTAINMENT", "THE BAD ACTOR LOT",
-  "BAD ACTOR SOUND STAGE", "BAD ACTOR POST HOUSE",
-];
-const NEUTRAL_NAMES = [
-  "LOT SERVICES", "CAMERA RENTAL", "GRIP & LIGHTING", "CASTING OFFICE",
-  "SCRIPT DEPT", "CATERING TRUCK CO.",
-];
-const CINEMA_NAMES = [
-  "THE BAD ACTOR THEATRE", "PREMIERE PALACE", "THE GOLDEN SCREEN",
-  "BAD ACTOR CINEPLEX", "THE RED CARPET ROOM",
-];
-const WAREHOUSE_NAMES = [
-  "PROP WAREHOUSE 1", "PROP WAREHOUSE 2", "COSTUME DEPT", "SET STORAGE",
-  "WARDROBE HOUSE", "PROPS & FX", "BACKDROP STORE",
-];
-const JOKES = [
-  "100% REAL ACTING", "OSCAR NOMINEE*", "*PROBABLY", "NO CGI — TRUST ME",
-  "ACTING IS NOT FINANCIAL ADVICE", "COMING SOON", "COMING SOON FOR 4 YEARS",
-  "DIRECTOR'S CUT", "THE RUGGED CUT", "BAD ACTOR APPROVED", "10/10 ACTING",
-  "CRITICS HATED IT", "FLOP OR MOON?", "EARLY ACCESS PREMIERE",
-  "BASED ON A TRUE ROADMAP", "SEQUEL ALREADY GREENLIT",
-];
-const SUSTER_LINES = [
-  "SUS'TER ACT", "SUS'TER ACT — COMING SOON", "NOW PLAYING",
-  "BAD ACTOR PRESENTS: SUS'TER ACT", "SUS'TER ACT II — THE RUGGED CUT",
-  "SUS'TER ACT — PREMIERE TONIGHT",
-];
 const SET_LABELS: Record<SetKind, string> = {
   fakeCity: "SET 4 — FAKE CITY STREET",
   police: "SET 7 — PRECINCT",
@@ -196,7 +185,7 @@ function buildFilmDistrict(width: number): FilmDistrict {
   for (let x = -200; x < width + 400; x += 95 + Math.floor(rnd() * 80)) {
     far.push({ x, w: 70 + rnd() * 100, h: 90 + rnd() * 150, tone: rnd() });
   }
-  const hillLetters = { x: Math.round(width * 0.1), w: 520 };
+  const hillLetters = { x: 1380, w: 760 };
 
   // --- Mid: sound stages, towers, cranes ------------------------------------
   const mid: FilmDistrict["mid"] = [];
@@ -213,171 +202,74 @@ function buildFilmDistrict(width: number): FilmDistrict {
   const screens: GiantScreen[] = [];
   const props: FilmProp[] = [];
 
-  // --- Studio entrance gate --------------------------------------------------
-  buildings.push({
-    x: 90, w: 300, h: 210, kind: "gate",
-    name: "THE BAD ACTOR LOT", tagline: "CAST & CREW ONLY",
-    hue: "#5b4636", accent: "#ffd166", rooftopLetters: false, seed: 3,
-  });
-  props.push({ x: 420, kind: "barrier", seed: 4 });
-  props.push({ x: 470, kind: "clapper", seed: 5 });
+  const addBuilding = (x: number, w: number, h: number, kind: BuildingKind, name: string, tagline?: string, stageNo?: number) => {
+    buildings.push({ x, w, h, kind, name, tagline, hue: kind === "badActorStudio" ? "#241826" : "#403649", accent: "#ffd166", rooftopLetters: kind === "soundStage" || kind === "badActorStudio", stageNo, seed: Math.round(x) });
+  };
+  const addKit = (x: number, labels: string[] = ["GRIP", "PROPS"]) => {
+    const kinds: FilmPropKind[] = ["camera", "lightRig", "boomMic", "cableCoil", "crate", "directorChair", "spotlight"];
+    for (let i = 0; i < kinds.length; i++) props.push({ x: x + i * 62, kind: kinds[i], text: labels[i % labels.length], seed: Math.round(x + i) });
+  };
 
-  // --- Main generation pass --------------------------------------------------
-  const bossZone = width - 900;
-  let x = 470;
-  let i = 0;
-  let stageNo = 1;
-  let setIdx = 0;
-  let churchPlaced = false;
-  const setOrder: SetKind[] = [
-    "fakeCity", "police", "crime", "church", "mansion",
-    "western", "courtroom", "scifi", "horror",
-  ];
+  // 1–4: grand entrance, working outdoor lot, hillside landmark, director wing.
+  addBuilding(70, 560, 250, "gate", "BAD ACTORS STUDIOS", "CAST • CREW • TROUBLE");
+  addBuilding(690, 440, 230, "soundStage", "OUTDOOR LOT", "CAMERAS ROLLING", 1);
+  addBuilding(1170, 390, 210, "productionOffice", "LOCATION SERVICES", "BACKLOT ACCESS");
+  screens.push({ x: 1540, w: 600, h: 250, lift: 315, art: "susDog", text: "REDACTED HOLLYWOOD", sub: "REDACTED HOLLYWOOD", projector: "none", seed: 20 });
+  addBuilding(2190, 570, 250, "productionOffice", "DIRECTOR'S OFFICE", "FINAL CUT • NO REFUNDS");
+  addKit(760); addKit(2250, ["TAKES", "SCRIPT"]);
 
-  while (x < bossZone - 220) {
-    const t = x / width;                       // 0..1 progression
-    const badActorChance = 0.4 + t * 0.6;      // branding ramps toward the boss
-    const branded = rnd() < badActorChance;
+  // 5: the blueprint's main projector stage and exact Bad Actor identity.
+  addBuilding(2820, 980, 300, "soundStage", "BAD ACTOR DISTRICT", "MAIN PROJECTOR STAGE", 3);
+  screens.push({ x: 3060, w: 520, h: 270, lift: 320, art: "badActor", text: "BAD ACTOR DISTRICT", sub: "A BAD ACTOR PRODUCTION", projector: "ground", seed: 30 });
+  addKit(2870, ["REELS", "LIGHTS"]);
 
-    // Zone selection: backlot sets dominate the middle, cinemas the late level.
-    const roll = rnd();
-    const wantSet = t > 0.18 && t < 0.7 && roll < 0.45;
-    const wantCinema = t > 0.56 && roll > 0.5;
-    const wantWarehouse = t > 0.46 && t < 0.8 && roll > 0.3 && roll < 0.5;
+  // 6–9: movie set, dressing rooms, props and backstage storage.
+  sets.push({ x: 3860, w: 690, h: 270, kind: "church", label: "SET 1 — SUS'TER ACT", seed: 41, hero: true });
+  screens.push({ x: 3990, w: 390, h: 205, lift: 245, art: "still", text: "SUS'TER ACT", sub: "NOW SHOOTING — ORIGINAL DOG & FROG", projector: "ground", seed: 42 });
+  props.push({ x: 4470, kind: "standee", text: "SUS'TER ACT", seed: 43 });
+  addBuilding(4590, 520, 250, "costumeHouse", "DRESSING ROOMS", "MAKEUP • WARDROBE • TALENT");
+  addBuilding(5160, 560, 235, "warehouse", "PROP DEPARTMENT", "HANDLE WITH SUSPICION");
+  addBuilding(5780, 600, 245, "warehouse", "BACKSTAGE STORAGE", "REELS • CRATES • CURTAINS");
+  props.push({ x: 4700, kind: "costumeRack", seed: 51 });
+  props.push({ x: 4820, kind: "trailer", seed: 52 });
+  addKit(5220); addKit(5820, ["STAGE 2", "FX"]);
 
-    if (wantSet) {
-      // ---- OPEN-AIR MOVIE SET (backlot) -------------------------------------
-      let kind = setOrder[setIdx % setOrder.length];
-      setIdx++;
-      if (kind === "church" && churchPlaced) kind = setOrder[setIdx++ % setOrder.length];
-      const hero = kind === "church" && !churchPlaced;
-      if (hero) churchPlaced = true;
-      const w = hero ? 520 : 300 + rnd() * 180;
-      const h = hero ? 250 : 170 + rnd() * 70;
-      sets.push({ x, w, h, kind, label: SET_LABELS[kind], seed: Math.floor(rnd() * 1000), hero });
-      // Every set is a working set: crew kit in front of it.
-      props.push({ x: x + 24, kind: "camera", seed: Math.floor(rnd() * 1000) });
-      props.push({ x: x + w - 30, kind: "lightRig", seed: Math.floor(rnd() * 1000) });
-      if (rnd() < 0.7) props.push({ x: x + w * 0.35, kind: "directorChair", seed: Math.floor(rnd() * 1000) });
-      if (rnd() < 0.6) props.push({ x: x + w * 0.6, kind: "boomMic", seed: Math.floor(rnd() * 1000) });
-      if (rnd() < 0.5) props.push({ x: x + w * 0.8, kind: "cableCoil", seed: Math.floor(rnd() * 1000) });
-      if (rnd() < 0.5) props.push({ x: x + w * 0.15, kind: "crate", text: "PROPS", seed: Math.floor(rnd() * 1000) });
-      if (hero) {
-        // The standout SUS'TER ACT church set gets its own screen + projector.
-        screens.push({
-          x: x + 40, w: 300, h: 168, lift: 210, art: "still",
-          text: "SUS'TER ACT", sub: "SET 1 — NOW SHOOTING",
-          projector: "ground", seed: 42,
-        });
-        props.push({ x: x + w - 70, kind: "standee", text: "SUS'TER ACT", seed: 43 });
-        props.push({ x: x + w + 24, kind: "costumeRack", seed: 44 });
-      }
-      x += w + 46 + rnd() * 40;
-    } else if (wantCinema) {
-      // ---- CINEMA / PREMIERE HALL -------------------------------------------
-      const w = 340 + rnd() * 180;
-      const h = 250 + rnd() * 70 + t * 40;
-      const kind: BuildingKind = t > 0.78 ? "premiereHall" : "cinema";
-      buildings.push({
-        x, w, h, kind,
-        name: CINEMA_NAMES[i % CINEMA_NAMES.length],
-        tagline: SUSTER_LINES[i % SUSTER_LINES.length],
-        hue: "#2a1420", accent: "#ffcf4d", rooftopLetters: rnd() < 0.5,
-        seed: Math.floor(rnd() * 1000),
-      });
-      screens.push({
-        x: x + 30, w: w - 60, h: Math.min(180, (w - 60) * 0.42), lift: h - 30,
-        art: rnd() < 0.5 ? "still" : "poster",
-        text: SUSTER_LINES[(i + 2) % SUSTER_LINES.length],
-        sub: JOKES[(i * 3) % JOKES.length],
-        projector: "rooftop", seed: Math.floor(rnd() * 1000),
-      });
-      props.push({ x: x + w * 0.2, kind: "standee", text: "SUS'TER ACT", seed: Math.floor(rnd() * 1000) });
-      props.push({ x: x + w * 0.8, kind: "spotlight", seed: Math.floor(rnd() * 1000) });
-      if (rnd() < 0.6) props.push({ x: x + w + 30, kind: "barrier", seed: Math.floor(rnd() * 1000) });
-      x += w + 50 + rnd() * 40;
-    } else if (wantWarehouse) {
-      // ---- PROP / COSTUME DISTRICT -------------------------------------------
-      const w = 260 + rnd() * 160;
-      const h = 200 + rnd() * 60;
-      buildings.push({
-        x, w, h, kind: rnd() < 0.5 ? "warehouse" : "costumeHouse",
-        name: WAREHOUSE_NAMES[i % WAREHOUSE_NAMES.length],
-        tagline: rnd() < 0.6 ? JOKES[(i * 5) % JOKES.length] : undefined,
-        hue: "#3d4450", accent: "#e0a54a", rooftopLetters: false,
-        seed: Math.floor(rnd() * 1000),
-      });
-      props.push({ x: x + w * 0.3, kind: "crate", text: "SET 1", seed: Math.floor(rnd() * 1000) });
-      props.push({ x: x + w * 0.66, kind: "costumeRack", seed: Math.floor(rnd() * 1000) });
-      if (rnd() < 0.5) props.push({ x: x + w + 34, kind: "filmTruck", seed: Math.floor(rnd() * 1000) });
-      x += w + 40 + rnd() * 40;
-    } else {
-      // ---- SOUND STAGE / PRODUCTION OFFICE -----------------------------------
-      const big = rnd() < 0.3 + t * 0.5;
-      const w = big ? 340 + rnd() * 200 : 210 + rnd() * 140;
-      const h = (big ? 250 : 190) + rnd() * 70 + t * 50;
-      const kind: BuildingKind = rnd() < 0.55 ? "soundStage" : "productionOffice";
-      buildings.push({
-        x, w, h, kind,
-        name: branded ? STUDIO_NAMES[i % STUDIO_NAMES.length] : NEUTRAL_NAMES[i % NEUTRAL_NAMES.length],
-        tagline: rnd() < 0.3 + t * 0.5 ? JOKES[(i * 7) % JOKES.length] : undefined,
-        hue: branded ? "#4a3a52" : "#414a58",
-        accent: branded ? "#ffd166" : "#9fd0ff",
-        rooftopLetters: big && branded,
-        stageNo: kind === "soundStage" ? stageNo++ : undefined,
-        seed: Math.floor(rnd() * 1000),
-      });
-      // Giant screens appear more and more often as the level progresses.
-      if (rnd() < 0.15 + t * 0.5) {
-        screens.push({
-          x: x + w * 0.15, w: 260 + rnd() * 160, h: 150 + rnd() * 60,
-          lift: h + 20 + rnd() * 40,
-          art: rnd() < 0.45 ? "poster" : rnd() < 0.8 ? "still" : "text",
-          text: SUSTER_LINES[(i + 1) % SUSTER_LINES.length],
-          sub: JOKES[(i * 2) % JOKES.length],
-          projector: rnd() < 0.5 ? "ground" : "rooftop",
-          seed: Math.floor(rnd() * 1000),
-        });
-      }
-      props.push({ x: x + w + 12, kind: "spotlight", seed: Math.floor(rnd() * 1000) });
-      if (rnd() < 0.45) props.push({ x: x + w * 0.45, kind: "camera", seed: Math.floor(rnd() * 1000) });
-      if (rnd() < 0.4) props.push({ x: x + w * 0.72, kind: "cableCoil", seed: Math.floor(rnd() * 1000) });
-      if (rnd() < 0.35) props.push({ x: x + w + 44, kind: "trailer", seed: Math.floor(rnd() * 1000) });
-      if (rnd() < 0.3) props.push({ x: x + w * 0.25, kind: "crate", text: "GRIP", seed: Math.floor(rnd() * 1000) });
-      if (rnd() < 0.3) props.push({ x: x + w * 0.9, kind: "directorChair", seed: Math.floor(rnd() * 1000) });
-      x += w + 38 + rnd() * (t < 0.3 ? 60 : 34);
-    }
-    i++;
+  // 10–12: large stages and elevated rooftop/backlot progression.
+  addBuilding(6440, 650, 310, "soundStage", "BAD ACTOR SOUND STAGE", "QUIET — FILMING", 7);
+  addBuilding(7140, 690, 330, "soundStage", "BAD ACTOR STAGE 2", "NIGHT SHOOT IN PROGRESS", 2);
+  sets.push({ x: 7860, w: 420, h: 220, kind: "fakeCity", label: "ROOFTOP CITY SET", seed: 70 });
+  sets.push({ x: 8320, w: 390, h: 220, kind: "police", label: "BACKLOT PRECINCT", seed: 71 });
+  addBuilding(8760, 420, 250, "warehouse", "ROOFTOP / BACKLOT", "WATER TOWER ACCESS");
+  addKit(6500); addKit(7200); addKit(7960, ["ROOF", "BACKLOT"]);
+
+  // 13: stable, flat final arena with no traversal geometry through its lane.
+  const bossZone = Math.round(width * 0.925);
+  const arenaX = bossZone - 260;
+  addBuilding(arenaX, 1240, 350, "badActorStudio", "BAD ACTOR STUDIOS", "STAGE 13 — CLOSED SET");
+  screens.push({ x: arenaX + 230, w: 480, h: 230, lift: 330, art: "badActor", text: "BAD ACTOR", sub: "FINAL SCENE", projector: "ground", seed: 100 });
+  addKit(arenaX + 30, ["BOSS", "FINAL"]);
+
+  // Fill deliberate breathing spaces with production activity, never scenery characters.
+  for (let x = 560; x < arenaX - 120; x += 310) {
+    props.push({ x, kind: x % 620 === 0 ? "filmTruck" : "clapper", text: "BAD ACTOR", seed: x });
   }
-
-  // --- BAD ACTOR'S PERSONAL STUDIO / BOSS ARENA ------------------------------
-  const arenaX = bossZone + 40;
-  buildings.push({
-    x: arenaX, w: 780, h: 330, kind: "badActorStudio",
-    name: "BAD ACTOR STUDIOS", tagline: "STAGE 1 — CLOSED SET",
-    hue: "#241826", accent: "#ffcf4d", rooftopLetters: true, seed: 99,
-  });
-  screens.push({
-    x: arenaX + 120, w: 520, h: 250, lift: 300, art: "still",
-    text: "BAD ACTOR PRESENTS", sub: "SUS'TER ACT", projector: "ground", seed: 100,
-  });
-  props.push({ x: arenaX + 60, kind: "spotlight", seed: 101 });
-  props.push({ x: arenaX + 720, kind: "spotlight", seed: 102 });
-  props.push({ x: arenaX - 40, kind: "camera", seed: 103 });
-  props.push({ x: arenaX + 780, kind: "camera", seed: 104 });
-  props.push({ x: arenaX + 30, kind: "standee", text: "10/10 ACTING", seed: 105 });
 
   return {
     level: FILM_LEVEL, width, far, hillLetters, mid, buildings, sets, screens, props,
     sections: [
-      { x: 0, label: "STUDIO ENTRANCE", kind: "entrance" },
-      { x: width * 0.1, label: "FILM STUDIO STREET", kind: "studioStreet" },
-      { x: width * 0.22, label: "THE BACKLOTS", kind: "backlots" },
-      { x: width * 0.36, label: "MOVIE SETS", kind: "movieSets" },
-      { x: width * 0.5, label: "PRODUCTION STUDIOS", kind: "production" },
-      { x: width * 0.62, label: "PROP & COSTUME DISTRICT", kind: "propDistrict" },
-      { x: width * 0.74, label: "PREMIERE BOULEVARD", kind: "premiere" },
-      { x: bossZone, label: "BAD ACTOR'S STUDIO", kind: "badActorStudio" },
+      { x: 0, label: "BAD ACTORS STUDIOS", kind: "entrance" },
+      { x: 650, label: "OUTDOOR STUDIO LOT", kind: "outdoorLot" },
+      { x: 1450, label: "REDACTED HOLLYWOOD", kind: "redactedHollywood" },
+      { x: 2150, label: "DIRECTOR'S OFFICE", kind: "directorsOffice" },
+      { x: 2800, label: "BAD ACTOR DISTRICT", kind: "projectorStage" },
+      { x: 3820, label: "SUS'TER ACT MOVIE SET", kind: "susterSet" },
+      { x: 4560, label: "DRESSING ROOMS", kind: "dressingRooms" },
+      { x: 5120, label: "PROP DEPARTMENT", kind: "propDistrict" },
+      { x: 5740, label: "BACKSTAGE STORAGE", kind: "backstage" },
+      { x: 6400, label: "SOUND STAGE", kind: "soundStage" },
+      { x: 7100, label: "STAGE 2", kind: "stageTwo" },
+      { x: 7820, label: "ROOFTOP / BACKLOT", kind: "rooftop" },
+      { x: arenaX - 100, label: "BAD ACTOR BOSS ARENA", kind: "badActorStudio" },
     ],
   };
 }
@@ -526,18 +418,18 @@ function drawHillLetters(ctx: CanvasRenderingContext2D, sx: number, w: number) {
   if (sx + w < -80 || sx > 2000) return;
   const y = 138;
   ctx.save();
-  ctx.font = "bold 34px monospace";
+  ctx.font = "bold 30px monospace";
   ctx.textAlign = "left";
   ctx.fillStyle = "#efe6d6";
   ctx.shadowColor = "rgba(0,0,0,0.6)";
   ctx.shadowBlur = 6;
-  ctx.fillText("BAD ACTOR", sx, y);
+  ctx.fillText("REDACTED HOLLYWOOD", sx, y);
   ctx.shadowBlur = 0;
   // Support struts under the letters
   ctx.strokeStyle = "rgba(60,50,60,0.8)";
   ctx.lineWidth = 2;
-  for (let i = 0; i < 9; i++) {
-    const lx = sx + 10 + i * 21;
+  for (let i = 0; i < 19; i++) {
+    const lx = sx + 8 + i * 20;
     ctx.beginPath(); ctx.moveTo(lx, y + 4); ctx.lineTo(lx, y + 16); ctx.stroke();
   }
   ctx.restore();
@@ -1051,9 +943,14 @@ function drawGiantScreen(ctx: CanvasRenderingContext2D, s: GiantScreen, sx: numb
   ctx.strokeRect(sx - 8, top - 8, s.w + 16, s.h + 16);
 
   // Picture
-  const img = s.art === "poster" ? SUSTER_POSTER_IMG : SUSTER_SCREEN_IMG;
+  const img = s.art === "poster" ? SUSTER_POSTER_IMG
+    : s.art === "susDog" ? SUS_DOG_IMG
+    : s.art === "badActor" ? BAD_ACTOR_HEAD_IMG
+    : SUSTER_SCREEN_IMG;
   if (s.art !== "text" && ready(img)) {
-    ctx.drawImage(img, sx, top, s.w, s.h);
+    ctx.fillStyle = "#08070d";
+    ctx.fillRect(sx, top, s.w, s.h);
+    drawImageContain(ctx, img, sx, top, s.w, s.h);
     // Subtle projector shimmer over the picture
     ctx.fillStyle = `rgba(255,244,214,${0.05 + flicker(s.seed + 3, 0.02) * 0.05})`;
     ctx.fillRect(sx, top, s.w, s.h);

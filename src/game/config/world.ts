@@ -29,7 +29,7 @@ export const DEFAULT_LEVEL_WIDTH = LEVEL_WIDTH;
 export const LEVEL_WORLD_WIDTHS: readonly number[] = [
   5600, // L1 Jeet's Fast Food District
   10800, // L2 Rugger's Financial / Casino Empire
-  7400, // L3 Bad Actor's Hollywood Film District
+  10400, // L3 Bad Actors Studios — long 13-area Hollywood production district
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
@@ -76,6 +76,13 @@ export const LEVEL_PITS: Record<number, GroundPit[]> = {
     { x0: 6900, x1: 7860, y: L2_PIT_Y, kind: "service" },
     { x0: 8500, x1: 9460, y: L2_VAULT_PIT_Y, kind: "vault" },
   ],
+  // Level 3 backstage service floors. These are broad production basements,
+  // not hazards: each has connected ladders and a clear lower combat lane.
+  2: [
+    { x0: 2920, x1: 3780, y: GROUND_Y + 92, kind: "service" },
+    { x0: 5520, x1: 6420, y: GROUND_Y + 112, kind: "underpass" },
+    { x0: 7440, x1: 8260, y: GROUND_Y + 92, kind: "service" },
+  ],
 };
 
 /** Pits for a level (never undefined). */
@@ -92,8 +99,6 @@ export function pitsFor(level: number): GroundPit[] {
  */
 export function groundYAt(level: number, x: number, fromY?: number): number {
   if (!Number.isFinite(x)) return GROUND_Y;
-  const pit = pitAt(level, x);
-  if (!pit) return GROUND_Y;
   for (const deck of landingDecksFor(level)) {
     if (x >= deck.x0 && x <= deck.x1) {
       if (fromY === undefined || !Number.isFinite(fromY) || fromY <= deck.y + LANDING_CLEARANCE) {
@@ -101,6 +106,8 @@ export function groundYAt(level: number, x: number, fromY?: number): number {
       }
     }
   }
+  const pit = pitAt(level, x);
+  if (!pit) return GROUND_Y;
   return pit.y;
 }
 
@@ -186,6 +193,26 @@ export const LEVEL_LADDERS: Record<number, Ladder[]> = {
     { x: 9000, top: GROUND_Y, bottom: L2_VAULT_PIT_Y, style: "casinoService" },
     { x: 9420, top: GROUND_Y, bottom: L2_VAULT_PIT_Y, style: "maintenance" },
   ],
+  2: [
+    // REDACTED hill / director catwalk
+    { x: 2240, top: 188, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 2720, top: 188, bottom: GROUND_Y, style: "construction" },
+    // Main projector service floor
+    { x: 2960, top: GROUND_Y, bottom: GROUND_Y + 92, style: "maintenance" },
+    { x: 3740, top: GROUND_Y, bottom: GROUND_Y + 92, style: "construction" },
+    // Dressing rooms / prop-department catwalk
+    { x: 4300, top: 198, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 5020, top: 198, bottom: GROUND_Y, style: "maintenance" },
+    // Backstage and sound-stage lower route
+    { x: 5560, top: GROUND_Y, bottom: GROUND_Y + 112, style: "underground" },
+    { x: 6380, top: GROUND_Y, bottom: GROUND_Y + 112, style: "construction" },
+    // Stage 2 lighting gantry
+    { x: 6720, top: 178, bottom: GROUND_Y, style: "construction" },
+    { x: 7240, top: 178, bottom: GROUND_Y, style: "fireEscape" },
+    // Rooftop/backlot service floor
+    { x: 7480, top: GROUND_Y, bottom: GROUND_Y + 92, style: "maintenance" },
+    { x: 8220, top: GROUND_Y, bottom: GROUND_Y + 92, style: "fireEscape" },
+  ],
 };
 
 export function laddersFor(level: number): Ladder[] {
@@ -223,11 +250,20 @@ export const LANDING_CLEARANCE = 30;
 
 const deckCache = new Map<number, LandingDeck[]>();
 
+/** Long authored upper production decks; all use the same collision contract. */
+const LEVEL_AUTHORED_DECKS: Record<number, LandingDeck[]> = {
+  2: [
+    { x0: 2200, x1: 2760, y: 188, ladderX: 2240 },
+    { x0: 4260, x1: 5060, y: 198, ladderX: 4300 },
+    { x0: 6680, x1: 7280, y: 178, ladderX: 6720 },
+  ],
+};
+
 /** Solid landing decks for a level (never undefined; cached, no allocation). */
 export function landingDecksFor(level: number): LandingDeck[] {
   const cached = deckCache.get(level);
   if (cached) return cached;
-  const decks: LandingDeck[] = [];
+  const decks: LandingDeck[] = [...(LEVEL_AUTHORED_DECKS[level] ?? [])];
   for (const l of laddersFor(level)) {
     const pit = pitAt(level, l.x);
     if (!pit || l.top >= pit.y) continue;
@@ -263,7 +299,7 @@ export function nearestLadder(level: number, x: number): Ladder | null {
 
 /** True when the level has any vertical traversal at all. */
 export function hasVerticalTraversal(level: number): boolean {
-  return pitsFor(level).length > 0;
+  return pitsFor(level).length > 0 || laddersFor(level).length > 0;
 }
 
 /** Deepest authored floor below the main street for camera bounds. */
@@ -285,7 +321,7 @@ export function maxPitDepthFor(level: number): number {
 export const ENCOUNTER_ZONES: Record<number, { waves: number[]; boss: number }> = {
   0: { waves: [0.28, 0.58], boss: 0.9 },
   1: { waves: [0.24, 0.61], boss: 0.93 },
-  2: { waves: [0.24, 0.58], boss: 0.9 },
+  2: { waves: [0.29, 0.64], boss: 0.925 },
 };
 
 

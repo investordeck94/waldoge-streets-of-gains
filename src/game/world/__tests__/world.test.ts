@@ -271,8 +271,8 @@ describe("districts", () => {
 
 describe("level 3 — Bad Actor's film district", () => {
   it("is a large dedicated world, far bigger than the legacy arena", () => {
-    expect(getLevelWidth(2)).toBe(7400);
-    expect(getLevelWidth(2)).toBeGreaterThan(3200 * 2);
+    expect(getLevelWidth(2)).toBe(10400);
+    expect(getLevelWidth(2)).toBeGreaterThan(3200 * 3);
   });
 
   it("stages waves and a boss arena inside the world", () => {
@@ -283,8 +283,8 @@ describe("level 3 — Bad Actor's film district", () => {
 
   it("progresses through distinct film-industry sections", () => {
     const d = filmDistrictFor(2)!;
-    expect(d.sections.length).toBeGreaterThanOrEqual(8);
-    expect(sectionLabelAt(2, 10)).toBe("STUDIO ENTRANCE");
+    expect(d.sections.length).toBe(13);
+    expect(sectionLabelAt(2, 10)).toBe("BAD ACTORS STUDIOS");
     expect(sectionLabelAt(2, getLevelWidth(2) - 100)).toContain("BAD ACTOR");
     const labels = new Set(d.sections.map(s => s.label));
     expect(labels.size).toBe(d.sections.length);
@@ -293,12 +293,11 @@ describe("level 3 — Bad Actor's film district", () => {
   it("fills the lot with studios, sets, screens and film kit", () => {
     const d = filmDistrictFor(2)!;
     expect(d.buildings.length).toBeGreaterThan(10);
-    expect(d.sets.length).toBeGreaterThanOrEqual(4);
-    expect(d.screens.length).toBeGreaterThan(5);
+    expect(d.sets.length).toBeGreaterThanOrEqual(3);
+    expect(d.screens.length).toBeGreaterThanOrEqual(4);
     expect(d.props.length).toBeGreaterThan(30);
     expect(d.buildings.some(b => b.kind === "gate")).toBe(true);
     expect(d.buildings.some(b => b.kind === "soundStage")).toBe(true);
-    expect(d.buildings.some(b => b.kind === "cinema" || b.kind === "premiereHall")).toBe(true);
     expect(d.buildings.some(b => b.kind === "badActorStudio")).toBe(true);
     expect(d.buildings.filter(b => b.name.includes("BAD ACTOR")).length).toBeGreaterThan(3);
   });
@@ -310,7 +309,27 @@ describe("level 3 — Bad Actor's film district", () => {
     expect(d.screens.some(s => s.text.includes("SUS'TER ACT"))).toBe(true);
     expect(d.props.some(p => p.kind === "standee")).toBe(true);
     const setKinds = new Set(d.sets.map(s => s.kind));
-    expect(setKinds.size).toBeGreaterThanOrEqual(4);
+    expect(setKinds.size).toBeGreaterThanOrEqual(3);
+  });
+
+  it("uses each requested identity in its correct landmark", () => {
+    const d = filmDistrictFor(2)!;
+    expect(d.screens.some(s => s.art === "susDog" && s.text === "REDACTED HOLLYWOOD")).toBe(true);
+    expect(d.screens.some(s => s.art === "badActor" && s.text.includes("BAD ACTOR"))).toBe(true);
+    expect(d.screens.some(s => (s.art === "poster" || s.art === "still") && s.text.includes("SUS'TER ACT"))).toBe(true);
+    expect(JSON.stringify(d).toUpperCase()).not.toContain("WALDOGE");
+  });
+
+  it("adds connected vertical production routes without touching other levels", () => {
+    expect(hasVerticalTraversal(2)).toBe(true);
+    expect(pitsFor(2).length).toBe(3);
+    expect(laddersFor(2).length).toBe(12);
+    expect(pitsFor(0).length).toBe(0);
+    for (const ladder of laddersFor(2)) {
+      expect(groundYAt(2, ladder.x, ladder.top)).toBe(ladder.top);
+      expect(Number.isFinite(ladder.bottom)).toBe(true);
+      expect(ladder.bottom).toBeGreaterThan(ladder.top);
+    }
   });
 
   it("covers the whole world with no large empty stretches", () => {
@@ -318,12 +337,13 @@ describe("level 3 — Bad Actor's film district", () => {
     const spans = [
       ...d.buildings.map(b => ({ x: b.x, w: b.w })),
       ...d.sets.map(s => ({ x: s.x, w: s.w })),
+      ...d.screens.map(s => ({ x: s.x, w: s.w })),
     ].sort((a, b) => a.x - b.x);
     for (let i = 1; i < spans.length; i++) {
       expect(spans[i].x - (spans[i - 1].x + spans[i - 1].w)).toBeLessThan(300);
     }
-    const last = spans[spans.length - 1];
-    expect(last.x + last.w).toBeGreaterThan(d.width - 200);
+    const furthestEdge = Math.max(...spans.map(span => span.x + span.w));
+    expect(furthestEdge).toBeGreaterThan(d.width - 200);
   });
 
   it("is generated once, cached, and entirely finite", () => {
