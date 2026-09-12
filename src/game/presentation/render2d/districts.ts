@@ -22,9 +22,9 @@ import { getLevelWidth } from "@/game/config/world";
 import { flicker, renderNow } from "./clock";
 
 import {
+  BAD_ACTOR_LEVEL,
   badActorSectionLabelAt,
   drawBadActorStudios,
-  hasBadActorStudios,
 } from "./badActorStudios";
 import { drawJeetStreet, hasJeetStreet, jeetSectionLabelAt } from "./jeetStreet";
 import { drawRuggerEmpire, hasRuggerEmpire, ruggerSectionLabelAt } from "./ruggerEmpire";
