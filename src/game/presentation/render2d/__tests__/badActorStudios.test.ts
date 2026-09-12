@@ -53,7 +53,7 @@ describe("level 3 — Bad Actors Studios blueprint areas", () => {
     const projector = BAD_ACTOR_AREAS[4];
     expect(projector.overlays.some((o) => o.src.includes("badactor-boss-head"))).toBe(true);
     const suster = BAD_ACTOR_AREAS[5];
-    expect(suster.susterAds.length).toBe(3);
+    expect(suster.susterAds).toHaveLength(0);
     expect(SUSTER_CHARACTER_URLS.nunFrog).toContain("suster-act-nun-frog");
     expect(SUSTER_CHARACTER_URLS.nunSusDog).toContain("suster-act-nun-sus-dog");
     // Protected landmarks never receive the nun movie campaign.
@@ -67,13 +67,13 @@ describe("level 3 — Bad Actors Studios blueprint areas", () => {
     const advertisedAreas = BAD_ACTOR_AREAS
       .map((area, index) => ({ index, ads: area.susterAds.length }))
       .filter((area) => area.ads > 0);
-    expect(advertisedAreas.map((area) => area.index)).toEqual([0, 1, 3, 5, 6, 7, 8, 10, 11]);
-    expect(advertisedAreas.reduce((sum, area) => sum + area.ads, 0)).toBe(11);
+    expect(advertisedAreas.map((area) => area.index)).toEqual([0, 1, 3, 6, 7, 8, 10, 11]);
+    expect(advertisedAreas.reduce((sum, area) => sum + area.ads, 0)).toBe(8);
   });
 
   it("gives every advertisement a different design with a COMING SOON strap", () => {
     const ads = BAD_ACTOR_AREAS.flatMap((area) => area.susterAds);
-    expect(ads).toHaveLength(11);
+    expect(ads).toHaveLength(8);
     expect(new Set(ads.map((ad) => ad.style)).size).toBe(ads.length);
     for (const ad of ads) expect(ad.tagline ?? "COMING SOON").toBe("COMING SOON");
   });
