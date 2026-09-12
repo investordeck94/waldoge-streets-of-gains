@@ -259,9 +259,11 @@ const deckCache = new Map<number, LandingDeck[]>();
 /** Long authored upper production decks; all use the same collision contract. */
 const LEVEL_AUTHORED_DECKS: Record<number, LandingDeck[]> = {
   2: [
-    { x0: 2200, x1: 2760, y: 188, ladderX: 2240 },
-    { x0: 4260, x1: 5060, y: 198, ladderX: 4300 },
-    { x0: 6680, x1: 7280, y: 178, ladderX: 6720 },
+    { x0: 2500, x1: 3300, y: 188, ladderX: 2540 },
+    { x0: 7300, x1: 8300, y: 178, ladderX: 7340 },
+    { x0: 8500, x1: 9500, y: 182, ladderX: 8540 },
+    { x0: 10900, x1: 11900, y: 188, ladderX: 10940 },
+    { x0: 13300, x1: 14300, y: 170, ladderX: 13340 },
   ],
 };
 
