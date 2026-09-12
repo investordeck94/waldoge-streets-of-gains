@@ -3388,7 +3388,17 @@ export const StreetBrawler: FC = () => {
         .catch(() => {});
     }
     setGameState("playing");
+    if (import.meta.env.DEV) {
+      (window as unknown as { __sog?: unknown }).__sog = g;
+    }
   }, []);
+
+  // DEV-only debug handle: lets an automated browser session start a specific
+  // district and inspect live physics state. Never present in production.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    (window as unknown as { __sogStart?: unknown }).__sogStart = startGame;
+  }, [startGame]);
 
 
   // Input handling
