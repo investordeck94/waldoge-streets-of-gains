@@ -337,6 +337,7 @@ describe("level 3 — Bad Actor's film district", () => {
     const spans = [
       ...d.buildings.map(b => ({ x: b.x, w: b.w })),
       ...d.sets.map(s => ({ x: s.x, w: s.w })),
+      ...d.screens.map(s => ({ x: s.x, w: s.w })),
     ].sort((a, b) => a.x - b.x);
     for (let i = 1; i < spans.length; i++) {
       expect(spans[i].x - (spans[i - 1].x + spans[i - 1].w)).toBeLessThan(300);

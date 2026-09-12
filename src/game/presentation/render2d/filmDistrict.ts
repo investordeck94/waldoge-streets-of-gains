@@ -221,8 +221,8 @@ function buildFilmDistrict(width: number): FilmDistrict {
   addKit(5220); addKit(5820, ["STAGE 2", "FX"]);
 
   // 10–12: large stages and elevated rooftop/backlot progression.
-  addBuilding(6440, 650, 310, "soundStage", "SOUND STAGE", "QUIET — FILMING", 7);
-  addBuilding(7140, 690, 330, "soundStage", "STAGE 2", "NIGHT SHOOT IN PROGRESS", 2);
+  addBuilding(6440, 650, 310, "soundStage", "BAD ACTOR SOUND STAGE", "QUIET — FILMING", 7);
+  addBuilding(7140, 690, 330, "soundStage", "BAD ACTOR STAGE 2", "NIGHT SHOOT IN PROGRESS", 2);
   sets.push({ x: 7860, w: 420, h: 220, kind: "fakeCity", label: "ROOFTOP CITY SET", seed: 70 });
   sets.push({ x: 8320, w: 390, h: 220, kind: "police", label: "BACKLOT PRECINCT", seed: 71 });
   addBuilding(8760, 420, 250, "warehouse", "ROOFTOP / BACKLOT", "WATER TOWER ACCESS");
