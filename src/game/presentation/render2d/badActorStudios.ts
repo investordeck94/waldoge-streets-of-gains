@@ -163,11 +163,7 @@ export const BAD_ACTOR_AREAS: readonly StudioArea[] = [
     label: "SUS'TER ACT MOVIE SET",
     art: susterArt.url,
     overlays: [],
-    susterAds: [
-      { x: 0.07, y: 0.18, w: 0.2, h: 0.62, kind: "backlit", style: "neon", tagline: "COMING SOON" },
-      { x: 0.31, y: 0.12, w: 0.38, h: 0.59, kind: "billboard", style: "premiere", tagline: "COMING SOON" },
-      { x: 0.73, y: 0.18, w: 0.2, h: 0.62, kind: "backlit", style: "curtain", tagline: "COMING SOON" },
-    ],
+    susterAds: noAds,
   },
   {
     label: "STAGE 1",
@@ -660,6 +656,37 @@ function drawSusterAd(
   ctx.strokeRect(x - frame, y - frame, w + frame * 2, h + frame * 2);
 }
 
+/** Places the exact two stars inside the movie set's five existing poster frames. */
+function drawSusterMarqueePanels(
+  ctx: CanvasRenderingContext2D,
+  areaScreenX: number,
+) {
+  const frog = ready(SUSTER_CHARACTER_URLS.nunFrog);
+  const dog = ready(SUSTER_CHARACTER_URLS.nunSusDog);
+  if (!frog || !dog) return;
+
+  const panelXs = [0.302, 0.393, 0.484, 0.575, 0.666];
+  const panelY = TOP_Y + AREA_H * 0.39;
+  const panelW = AREA_W * 0.074;
+  const panelH = AREA_H * 0.37;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(areaScreenX, TOP_Y, AREA_W, AREA_H);
+  ctx.clip();
+  panelXs.forEach((panelX, index) => {
+    drawContainedImage(
+      ctx,
+      index % 2 === 0 ? frog : dog,
+      areaScreenX + AREA_W * panelX,
+      panelY,
+      panelW,
+      panelH,
+    );
+  });
+  ctx.restore();
+}
+
 
 export function drawBadActorStudios(
   ctx: CanvasRenderingContext2D,
@@ -681,6 +708,7 @@ export function drawBadActorStudios(
     const x = Math.round(i * AREA_W - camX);
     ctx.drawImage(image, x, TOP_Y, AREA_W + 1, AREA_H);
     for (const o of area.overlays) drawOverlay(ctx, o, x);
+    if (i === 5) drawSusterMarqueePanels(ctx, x);
     for (const ad of area.susterAds) drawSusterAd(ctx, ad, x);
   }
 
