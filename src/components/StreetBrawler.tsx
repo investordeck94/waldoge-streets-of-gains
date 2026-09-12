@@ -139,6 +139,7 @@ import {
   startAutosave,
   recordBestScore,
 } from "@/game/state";
+import { retryButtonLabel, retryLevelFor } from "@/game/logic/gameFlow";
 
 // Auto-load once at module import so the first render sees restored state.
 // Safe: `loadGameState()` swallows all errors and returns null on corruption,
@@ -3018,6 +3019,7 @@ export const StreetBrawler: FC = () => {
   const [sfxEnabled, setSfxEnabled] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const freePlayRef = useRef(false);
 
   // Title-screen CONTINUE data, read once from the persisted GameState (the
   // save was already restored at module import). Read-only — no gameplay use.
@@ -3133,7 +3135,7 @@ export const StreetBrawler: FC = () => {
         comboName,
         style: styleName,
       },
-      progression: {
+      progression: freePlayRef.current ? s.progression : {
         ...s.progression,
         level,
         wave,
@@ -3297,20 +3299,17 @@ export const StreetBrawler: FC = () => {
   // `startLevel` is used only by the title screen's CONTINUE entry, which
   // resumes at the furthest district reached in the save file. Omitted for a
   // fresh run, keeping the original level-0 / query-override behaviour.
-  const startGame = useCallback((diff: Difficulty = "normal", startLevel?: number) => {
+  const startGame = useCallback((diff: Difficulty = "normal", startLevel?: number, freePlay = false) => {
     const g = gameRef.current;
+    freePlayRef.current = freePlay;
     g.difficulty = diff;
     setDifficulty(diff);
     g.player = createPlayer();
     g.wave = 0;
-    g.level = (() => {
-      if (Number.isFinite(startLevel) && (startLevel as number) > 0) {
-        return Math.min(Math.floor(startLevel as number), TOTAL_LEVELS - 1);
-      }
-      const v = Number(new URLSearchParams(location.search).get("lvl"));
-      return Number.isFinite(v) && v > 0 ? Math.min(v, TOTAL_LEVELS - 1) : 0;
-    })();
-    g.wave = Number(new URLSearchParams(location.search).get("wv")) || 0;
+    g.level = Number.isFinite(startLevel)
+      ? Math.max(0, Math.min(Math.floor(startLevel as number), TOTAL_LEVELS - 1))
+      : 0;
+    g.wave = 0;
     g.score = 0;
     g.camX = 0;
     g.camY = 0;
@@ -3361,7 +3360,7 @@ export const StreetBrawler: FC = () => {
     }
     g.splashes = [];
     setWave(0);
-    setLevel(0);
+    setLevel(g.level);
     setScore(0);
     setPlayerHp(100);
     setComboCount(0);
@@ -3379,7 +3378,7 @@ export const StreetBrawler: FC = () => {
     // never blocks or delays gameplay; if it fails the run just will not count
     // towards the weekly competition.
     const diffIndex = diff === "blackMonday" ? 2 : diff === "normal" ? 1 : 0;
-    if (diffIndex === HARD_MODE_DIFFICULTY && addressRef.current) {
+    if (!freePlay && diffIndex === HARD_MODE_DIFFICULTY && addressRef.current) {
       void startWeeklyRunRef.current(diffIndex)
         .then((started) => {
           if (started) {
@@ -4735,7 +4734,7 @@ export const StreetBrawler: FC = () => {
                   difficulty: difficultyMap[g.difficulty],
                   startedAt: Math.floor(serverRun?.startedAtMs ?? runStartTimeRef.current),
                 };
-                if (run.difficulty === HARD_MODE_DIFFICULTY && run.runId) {
+                if (!freePlayRef.current && run.difficulty === HARD_MODE_DIFFICULTY && run.runId) {
                   void recordWeeklyRunRef.current(run).catch(() => {});
                 }
               }
@@ -5813,7 +5812,7 @@ export const StreetBrawler: FC = () => {
         {gameState === "menu" && (
           <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full">
             <TitleScreen
-              onStart={(diff, startLevel) => startGame(diff, startLevel)}
+              onStart={(diff, startLevel, freePlay) => startGame(diff, startLevel, freePlay)}
               continueInfo={continueInfo}
               sfxEnabled={sfxEnabled}
               onToggleSfx={() => setSfxEnabled((v) => !v)}
@@ -5872,10 +5871,10 @@ export const StreetBrawler: FC = () => {
 
 
             <button
-              onClick={() => startGame(difficulty)}
+              onClick={() => startGame(difficulty, retryLevelFor(difficulty, level), freePlayRef.current)}
               className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-bold flex items-center gap-2 mx-auto hover:opacity-90 transition"
             >
-              <RotateCcw className="w-5 h-5" /> PLAY AGAIN
+              <RotateCcw className="w-5 h-5" /> {gameState === "gameover" ? retryButtonLabel(difficulty, level) : "PLAY AGAIN"}
             </button>
           </motion.div>
         )}
