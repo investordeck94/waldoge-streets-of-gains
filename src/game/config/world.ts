@@ -99,8 +99,6 @@ export function pitsFor(level: number): GroundPit[] {
  */
 export function groundYAt(level: number, x: number, fromY?: number): number {
   if (!Number.isFinite(x)) return GROUND_Y;
-  const pit = pitAt(level, x);
-  if (!pit) return GROUND_Y;
   for (const deck of landingDecksFor(level)) {
     if (x >= deck.x0 && x <= deck.x1) {
       if (fromY === undefined || !Number.isFinite(fromY) || fromY <= deck.y + LANDING_CLEARANCE) {
@@ -108,6 +106,8 @@ export function groundYAt(level: number, x: number, fromY?: number): number {
       }
     }
   }
+  const pit = pitAt(level, x);
+  if (!pit) return GROUND_Y;
   return pit.y;
 }
 

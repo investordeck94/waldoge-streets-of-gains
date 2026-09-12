@@ -25,6 +25,8 @@ import { getLevelWidth } from "@/game/config/world";
 import { flicker, renderNow } from "./clock";
 import posterAsset from "@/assets/suster-act-poster.jpg.asset.json";
 import screenAsset from "@/assets/suster-act-screen.jpg.asset.json";
+import susDogUrl from "@/assets/susdog-original.jpg";
+import badActorHeadUrl from "@/assets/badactor-boss-head.png";
 
 export const FILM_LEVEL = 2;
 
@@ -41,6 +43,8 @@ function preload(src: string): HTMLImageElement | null {
 
 export const SUSTER_POSTER_IMG = preload(posterAsset.url);
 export const SUSTER_SCREEN_IMG = preload(screenAsset.url);
+export const SUS_DOG_IMG = preload(susDogUrl);
+export const BAD_ACTOR_HEAD_IMG = preload(badActorHeadUrl);
 
 function ready(img: HTMLImageElement | null): img is HTMLImageElement {
   return !!img && img.complete && img.naturalWidth > 0;
@@ -65,8 +69,9 @@ function mulberry32(seed: number) {
 // ---------------------------------------------------------------------------
 
 export type FilmSection =
-  | "entrance" | "studioStreet" | "backlots" | "movieSets"
-  | "production" | "propDistrict" | "premiere" | "badActorStudio";
+  | "entrance" | "outdoorLot" | "redactedHollywood" | "directorsOffice"
+  | "projectorStage" | "susterSet" | "dressingRooms" | "propDistrict"
+  | "backstage" | "soundStage" | "stageTwo" | "rooftop" | "badActorStudio";
 
 export type BuildingKind =
   | "gate" | "soundStage" | "productionOffice" | "warehouse"
@@ -99,7 +104,7 @@ export interface MovieSet {
   hero?: boolean;
 }
 
-export type ScreenArt = "poster" | "still" | "text";
+export type ScreenArt = "poster" | "still" | "susDog" | "badActor" | "text";
 
 /** A giant screen / billboard, usually lit by a projector below it. */
 export interface GiantScreen {
