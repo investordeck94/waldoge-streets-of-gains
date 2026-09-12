@@ -329,7 +329,7 @@ export function maxPitDepthFor(level: number): number {
 export const ENCOUNTER_ZONES: Record<number, { waves: number[]; boss: number }> = {
   0: { waves: [0.28, 0.58], boss: 0.9 },
   1: { waves: [0.24, 0.61], boss: 0.93 },
-  2: { waves: [0.29, 0.64], boss: 0.925 },
+  2: { waves: [0.16, 0.55], boss: 0.945 },
 };
 
 
