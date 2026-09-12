@@ -322,9 +322,9 @@ export function connectingLadder(
   let best: Ladder | null = null;
   let bestD = Infinity;
   for (const l of laddersFor(level)) {
-    const spansFrom = Math.abs(l.top - fromGroundY) <= TOL || Math.abs(l.bottom - fromGroundY) <= TOL;
-    const spansTo = Math.abs(l.top - toGroundY) <= TOL || Math.abs(l.bottom - toGroundY) <= TOL;
-    if (!spansFrom || !spansTo) continue;
+    const topToBottom = Math.abs(l.top - fromGroundY) <= TOL && Math.abs(l.bottom - toGroundY) <= TOL;
+    const bottomToTop = Math.abs(l.bottom - fromGroundY) <= TOL && Math.abs(l.top - toGroundY) <= TOL;
+    if (!topToBottom && !bottomToTop) continue;
     // A fighter standing inside a pit can only reach ladders inside that pit.
     if (pit && (l.x <= pit.x0 || l.x >= pit.x1)) continue;
     const d = Math.abs(l.x - x);
