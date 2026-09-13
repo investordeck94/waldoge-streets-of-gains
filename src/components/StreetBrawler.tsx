@@ -84,6 +84,7 @@ import { drawFudderSprite, preloadFudderSprites, type FudderView, type FudderFor
 import { drawExitLiquiditySprite, preloadExitLiquiditySprites, type ExitLiquidityView, type ExitLiquidityForm } from "@/game/presentation/render2d/exitLiquiditySprites";
 import { drawMrMarketerSprite, drawMarketerLeaflet, preloadMrMarketerSprites, type MrMarketerView, type MrMarketerForm } from "@/game/presentation/render2d/mrMarketerSprites";
 import { drawTickerTakerSprite, drawTickerTakerShot, preloadTickerTakerSprites, type TickerTakerView, type TickerTakerForm } from "@/game/presentation/render2d/tickerTakerSprites";
+import { preloadFudderTerritory } from "@/game/presentation/render2d/fudderTerritory";
 
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
@@ -3285,6 +3286,7 @@ export const StreetBrawler: FC = () => {
     preloadExitLiquiditySprites();
     preloadMrMarketerSprites();
     preloadTickerTakerSprites();
+    preloadFudderTerritory();
 
     const img = new Image();
     img.src = waldogeHead;

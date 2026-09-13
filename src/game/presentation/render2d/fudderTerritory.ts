@@ -213,7 +213,7 @@ function fudderDisplay(ctx: CanvasRenderingContext2D, x: number, y: number, w: n
     ctx.font = `900 ${Math.min(22, Math.max(13, h / (lines.length + 2)))}px Impact, sans-serif`;
     lines.forEach((line, i) => ctx.fillText(line, x + textW / 2, y + h * ((i + 1) / (lines.length + 1)), textW - 10));
   }
-  if (!fudderReady || !fudderImage) return;
+  if (!fudderImage || (!fudderReady && (!fudderImage.complete || fudderImage.naturalWidth === 0))) return;
   const f = FUDDER_FRAMES[pose]; const areaW = w - textW - 8;
   const scale = Math.min(areaW / f.w, (h - 8) / f.h);
   ctx.drawImage(fudderImage, f.x, f.y, f.w, f.h, x + textW + (areaW - f.w * scale) / 2, y + h - f.h * scale - 4, f.w * scale, f.h * scale);
@@ -387,4 +387,5 @@ export const __fudderTerritoryTest = {
   posterText: FUDDER_POSTER_TEXT,
   visualDeckIds: FUDDER_VISUAL_DECK_IDS,
   atlasUrl: fudderAtlas.url,
+  atlasReady: () => Boolean(fudderImage?.complete && fudderImage.naturalWidth > 0),
 };
