@@ -3787,7 +3787,6 @@ export const StreetBrawler: FC = () => {
             pJump.airJumps = (pJump.airJumps ?? 0) + 1;
             p.vy = JUMP_FORCE * 0.88;
             p.state = "jump";
-            sfx(() => SFX.jump?.());
           }
         }
 
@@ -5574,7 +5573,7 @@ export const StreetBrawler: FC = () => {
     const g = gameRef.current;
     if (action === "punch") { g.keyJustPressed.add("j"); g.keys.add("j"); setTimeout(() => g.keys.delete("j"), 100); }
     else if (action === "kick") { g.keyJustPressed.add("k"); g.keys.add("k"); setTimeout(() => g.keys.delete("k"), 100); }
-    else if (action === "jump") { g.keys.add("w"); setTimeout(() => g.keys.delete("w"), 150); }
+    else if (action === "jump") { g.keyJustPressed.add("w"); g.keys.add("w"); setTimeout(() => g.keys.delete("w"), 150); }
     else if (action === "special") { g.keyJustPressed.add("l"); g.keys.add("l"); setTimeout(() => g.keys.delete("l"), 100); }
   }, []);
 
