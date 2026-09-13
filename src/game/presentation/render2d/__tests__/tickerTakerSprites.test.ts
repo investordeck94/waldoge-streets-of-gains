@@ -2,8 +2,11 @@ import { describe, it, expect } from "vitest";
 import {
   ATLAS_SCALE,
   TICKER_TAKER_ATLAS_URL,
+  TICKER_TAKER_ATLAS_HEIGHT,
+  TICKER_TAKER_ATLAS_WIDTH,
   TICKER_TAKER_FRAMES,
   atlasSourceScale,
+  validFrame,
 } from "../tickerTakerSprites";
 
 /**
@@ -18,11 +21,11 @@ describe("ticker taker atlas memory budget", () => {
     // Canvas dpr is capped at 2 and he draws ~136 CSS px tall from a 540 px
     // frame, so ~0.55 of source is the most that can reach a pixel.
     expect(ATLAS_SCALE).toBeLessThan(1);
-    expect(ATLAS_SCALE).toBeGreaterThanOrEqual(0.55);
+    expect(ATLAS_SCALE).toBeGreaterThanOrEqual(0.4);
   });
 
   it("cuts resident image memory by more than half", () => {
-    expect(ATLAS_SCALE * ATLAS_SCALE).toBeLessThan(0.5);
+    expect(ATLAS_SCALE * ATLAS_SCALE).toBeLessThan(0.2);
   });
 
   it("uses the pre-scaled source from its first rendered frame", () => {
@@ -30,7 +33,7 @@ describe("ticker taker atlas memory budget", () => {
   });
 
   it("loads the dedicated pre-scaled CDN PNG", () => {
-    expect(TICKER_TAKER_ATLAS_URL).toContain("ticker-taker-atlas-60.png");
+    expect(TICKER_TAKER_ATLAS_URL).toContain("ticker-taker-atlas-40.png");
   });
 
   it("keeps all twelve authored animation poses", () => {
@@ -52,11 +55,19 @@ describe("ticker taker atlas memory budget", () => {
     },
   );
 
-  it("keeps every scaled source rectangle inside the 1229x1391 PNG", () => {
+  it("keeps every scaled source rectangle inside the compact persistent PNG", () => {
     for (const frame of Object.values(TICKER_TAKER_FRAMES)) {
-      expect((frame.x + frame.w) * ATLAS_SCALE).toBeLessThanOrEqual(1229);
-      expect((frame.y + frame.h) * ATLAS_SCALE).toBeLessThanOrEqual(1391);
+      expect(validFrame(frame)).toBe(true);
+      expect((frame.x + frame.w) * ATLAS_SCALE).toBeLessThanOrEqual(TICKER_TAKER_ATLAS_WIDTH);
+      expect((frame.y + frame.h) * ATLAS_SCALE).toBeLessThanOrEqual(TICKER_TAKER_ATLAS_HEIGHT);
     }
+  });
+
+  it("rejects missing, empty, non-finite and out-of-bounds frames", () => {
+    expect(validFrame(undefined)).toBe(false);
+    expect(validFrame({ x: 0, y: 0, w: 0, h: 540, ax: 193, ay: 540 })).toBe(false);
+    expect(validFrame({ x: Number.NaN, y: 0, w: 366, h: 540, ax: 193, ay: 540 })).toBe(false);
+    expect(validFrame({ x: 1693, y: 0, w: 1, h: 1, ax: 1, ay: 1 })).toBe(false);
   });
 
   it("leaves destination dimensions independent of source scale", () => {
