@@ -111,7 +111,7 @@ export interface GroundSection {
  * than snapping between two independently painted heights.
  */
 const LEVEL_3_PAINTED_FLOORS = [
-  324, 344, 361, 350, 351, 330, 358, 348, 324, 348, 332, 350, 357,
+  320, 320, 320, 320, 351, 320, 320, 320, 320, 320, 320, 320, 320,
 ] as const;
 
 const LEVEL_3_AREA_WIDTH = 1200;

@@ -300,9 +300,9 @@ describe("level 3 — Bad Actors Studios", () => {
   });
 
   it("registers the independently painted floors with shared collision", () => {
-    expect(baseGroundYAt(2, 4200)).toBe(350); // Production Office
+    expect(baseGroundYAt(2, 4200)).toBe(GROUND_Y); // Production Office remains level
     expect(baseGroundYAt(2, 4860)).toBe(351); // Bad Actor District approach
-    expect(baseGroundYAt(2, 6060)).toBe(330); // SUS'TER ACT plaza
+    expect(baseGroundYAt(2, 6060)).toBe(GROUND_Y); // SUS'TER ACT plaza remains level
     expect(groundYAt(2, 4200)).toBe(baseGroundYAt(2, 4200));
     expect(groundYAt(2, 5200)).toBe(412); // Projector service-level dip
   });
