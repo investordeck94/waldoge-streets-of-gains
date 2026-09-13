@@ -96,6 +96,7 @@ type Sheet = HTMLImageElement | HTMLCanvasElement;
 
 let atlas: HTMLImageElement | null = null;
 let sheet: Sheet | null = null;
+let srcScale = 1;
 let ready = false;
 
 /** Resample the loaded atlas down to ATLAS_SCALE and release the original. */
@@ -124,8 +125,11 @@ function getAtlas(): Sheet | null {
   }
   if (!(ready && atlas.complete && atlas.naturalWidth > 0)) return null;
   sheet = buildSheet(atlas);
-  // Drop the full-resolution reference so the browser can reclaim it.
-  if (sheet !== atlas) atlas = null;
+  if (sheet !== atlas) {
+    srcScale = ATLAS_SCALE;
+    // Drop the full-resolution reference so the browser can reclaim it.
+    atlas = null;
+  }
   return sheet;
 }
 
