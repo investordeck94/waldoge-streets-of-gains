@@ -9,7 +9,7 @@
  */
 
 import { GROUND_Y } from "@/game/config";
-import { laddersFor, landingDecksFor, pitsFor, type Ladder, type GroundPit } from "@/game/config/world";
+import { baseGroundYAt, laddersFor, landingDecksFor, pitsFor, type Ladder, type GroundPit } from "@/game/config/world";
 import { flicker } from "./clock";
 
 const WALL_DARK = "#0b0c11";
@@ -32,20 +32,21 @@ export function drawPits(
 
 function drawPit(ctx: CanvasRenderingContext2D, level: number, pit: GroundPit, sx: number, ex: number) {
   const w = ex - sx;
+  const streetY = Math.max(baseGroundYAt(level, pit.x0), baseGroundYAt(level, pit.x1));
   // Cut the shaft out of the street
-  const shaft = ctx.createLinearGradient(0, GROUND_Y, 0, pit.y);
+  const shaft = ctx.createLinearGradient(0, streetY, 0, pit.y);
   shaft.addColorStop(0, "#05060a");
   shaft.addColorStop(1, "#12141c");
   ctx.fillStyle = shaft;
-  ctx.fillRect(sx, GROUND_Y, w, pit.y - GROUND_Y + 60);
+  ctx.fillRect(sx, streetY, w, pit.y - streetY + 60);
 
   // Side walls with brick/tile courses
   ctx.fillStyle = "#1b1e28";
-  ctx.fillRect(sx - 10, GROUND_Y, 12, pit.y - GROUND_Y + 60);
-  ctx.fillRect(ex - 2, GROUND_Y, 12, pit.y - GROUND_Y + 60);
+  ctx.fillRect(sx - 10, streetY, 12, pit.y - streetY + 60);
+  ctx.fillRect(ex - 2, streetY, 12, pit.y - streetY + 60);
   ctx.strokeStyle = "rgba(255,255,255,0.05)";
   ctx.lineWidth = 1;
-  for (let y = GROUND_Y + 10; y < pit.y; y += 14) {
+  for (let y = streetY + 10; y < pit.y; y += 14) {
     ctx.beginPath(); ctx.moveTo(sx - 10, y); ctx.lineTo(sx + 2, y);
     ctx.moveTo(ex - 2, y); ctx.lineTo(ex + 10, y); ctx.stroke();
   }
@@ -61,13 +62,13 @@ function drawPit(ctx: CanvasRenderingContext2D, level: number, pit: GroundPit, s
 
   // Kerb lips at street level
   ctx.fillStyle = "#585c68";
-  ctx.fillRect(sx - 14, GROUND_Y - 6, 18, 7);
-  ctx.fillRect(ex - 4, GROUND_Y - 6, 18, 7);
+  ctx.fillRect(sx - 14, streetY - 6, 18, 7);
+  ctx.fillRect(ex - 4, streetY - 6, 18, 7);
   // Hazard stripes on the lips
   for (let i = 0; i < 3; i++) {
     ctx.fillStyle = i % 2 === 0 ? "#e8c342" : "#1b1b22";
-    ctx.fillRect(sx - 14 + i * 6, GROUND_Y - 6, 6, 3);
-    ctx.fillRect(ex - 4 + i * 6, GROUND_Y - 6, 6, 3);
+    ctx.fillRect(sx - 14 + i * 6, streetY - 6, 6, 3);
+    ctx.fillRect(ex - 4 + i * 6, streetY - 6, 6, 3);
   }
 
   // Service lighting along the lower street (deterministic flicker)
@@ -75,18 +76,18 @@ function drawPit(ctx: CanvasRenderingContext2D, level: number, pit: GroundPit, s
     const a = 0.5 + flicker(lx, 0.004) * 0.5;
     ctx.fillStyle = `rgba(120,190,255,${0.16 * a})`;
     ctx.beginPath();
-    ctx.moveTo(lx, GROUND_Y + 24);
+    ctx.moveTo(lx, streetY + 24);
     ctx.lineTo(lx - 40, pit.y + 4);
     ctx.lineTo(lx + 40, pit.y + 4);
     ctx.closePath(); ctx.fill();
     ctx.fillStyle = `rgba(190,225,255,${a})`;
-    ctx.fillRect(lx - 8, GROUND_Y + 18, 16, 4);
+    ctx.fillRect(lx - 8, streetY + 18, 16, 4);
   }
 
   // Pipework along the back wall
   ctx.strokeStyle = "#2f3440"; ctx.lineWidth = 5;
   ctx.beginPath();
-  ctx.moveTo(sx + 4, GROUND_Y + 40); ctx.lineTo(ex - 4, GROUND_Y + 40);
+  ctx.moveTo(sx + 4, streetY + 40); ctx.lineTo(ex - 4, streetY + 40);
   ctx.stroke();
 
   // Zone identity remains decorative; all collision still comes from world.ts.
