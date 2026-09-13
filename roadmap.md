@@ -109,3 +109,7 @@
 - [x] Retry the defeated level on Easy/Normal and restart Level 1 on Hard
 - [ ] Verify menu navigation, retry rules, mobile/desktop, tests and build
 
+
+## Level 4 QA pass (2026-09-13)
+- [ ] Full Level 4 playthrough audit: grounding, collision, camera, rendering, enemies/combat, ladders/decks, progression, runtime errors
+- [ ] Fix root causes found; re-run regression playthrough
