@@ -1,5 +1,11 @@
 # Waldoge: Streets of Gains — combat pass
 
+## Current — Level 3 split-level grounding
+- [ ] Preserve the Stage 2 elevated platform, artwork, collision and ladders
+- [ ] Keep Waldoge on the lower studio floor unless he climbs or lands onto the platform
+- [ ] Verify lower-floor movement/jumping and elevated traversal on desktop/mobile
+- [ ] Run focused/full tests, typecheck and production build
+
 ## Current — Level 3 Stage 2 lower-floor grounding
 - [x] Remove the invisible Y=182 collision deck beneath the SUS'TER ACT billboard
 - [x] Verify feet remain on the authoritative Y=320 studio floor through idle, movement, combat and jump/landing

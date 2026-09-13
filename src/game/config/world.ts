@@ -125,18 +125,34 @@ export function baseGroundYAt(level: number, x: number): number {
  * ladder landing deck spans a pit: a fighter at or above deck height stands on
  * the deck, while a fighter already down on the pit floor walks underneath it.
  */
-export function groundYAt(level: number, x: number, fromY?: number): number {
+export function groundYAt(
+  level: number,
+  x: number,
+  fromY?: number,
+  includeElevatedDecks = true,
+): number {
   if (!Number.isFinite(x)) return GROUND_Y;
-  for (const deck of landingDecksFor(level)) {
-    if (x >= deck.x0 && x <= deck.x1) {
-      if (fromY === undefined || !Number.isFinite(fromY) || fromY <= deck.y + LANDING_CLEARANCE) {
-        return deck.y;
+  if (includeElevatedDecks) {
+    for (const deck of landingDecksFor(level)) {
+      if (x >= deck.x0 && x <= deck.x1) {
+        if (fromY === undefined || !Number.isFinite(fromY) || fromY <= deck.y + LANDING_CLEARANCE) {
+          return deck.y;
+        }
       }
     }
   }
   const pit = pitAt(level, x);
   if (!pit) return baseGroundYAt(level, x);
   return pit.y;
+}
+
+/** The elevated authored deck beneath x, if one exists. */
+export function landingDeckAt(level: number, x: number): LandingDeck | null {
+  if (!Number.isFinite(x)) return null;
+  for (const deck of landingDecksFor(level)) {
+    if (x >= deck.x0 && x <= deck.x1) return deck;
+  }
+  return null;
 }
 
 
