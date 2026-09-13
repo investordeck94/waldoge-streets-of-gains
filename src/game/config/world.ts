@@ -439,7 +439,10 @@ export const ENCOUNTER_ZONES: Record<number, { waves: number[]; boss: number }> 
   0: { waves: [0.28, 0.58], boss: 0.9 },
   1: { waves: [0.24, 0.61], boss: 0.93 },
   2: { waves: [0.16, 0.55], boss: 0.945 },
-  3: { waves: [0.24, 0.63], boss: 0.93 },
+  // Level 4: one encounter staged in the centre of each authored section
+  // (Entrance, Media, Industrial, Factory) with FUDDER waiting in the arena.
+  3: { waves: [0.1, 0.3, 0.5, 0.72], boss: 0.93 },
+
 };
 
 
