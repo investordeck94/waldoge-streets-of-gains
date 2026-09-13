@@ -414,7 +414,10 @@ export function drawTickerTakerSprite(
   if (e.state === "dead") ctx.globalAlpha = 0.88;
 
   ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(img, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h);
+  // Source rect follows the resampled sheet; destination rect is unchanged so
+  // the on-screen pose, anchor and size are identical to the full-res sheet.
+  const s = srcScale;
+  ctx.drawImage(img, f.x * s, f.y * s, f.w * s, f.h * s, -f.ax, -f.ay, f.w, f.h);
 
   ctx.restore();
   return true;
