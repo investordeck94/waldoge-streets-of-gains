@@ -97,18 +97,19 @@ export function pitsFor(level: number): GroundPit[] {
 // ---------------------------------------------------------------------------
 
 /**
- * Level 3 panel five paints its visible pavement below the legacy collision
- * floor. Register that one measured section with collision and blend at its
- * edges so entering it is a walkable dip rather than a hard wall.
+ * The production-office tyres and the projector district pavement share this
+ * painted contact plane. Keep one continuous authored surface beneath both
+ * panels; the projector service pit is then the only deeper floor in this
+ * span. This is collision data, not a sprite/render offset.
  */
-const LEVEL_3_PROJECTOR_FLOOR = { x0: 4800, x1: 6000, y: 351 } as const;
+const LEVEL_3_OFFICE_PROJECTOR_FLOOR = { x0: 3600, x1: 6000, y: 351 } as const;
 const GROUND_BLEND_WIDTH = 96;
 
 /** Main painted floor beneath x, before pits and elevated decks are applied. */
 export function baseGroundYAt(level: number, x: number): number {
   if (!Number.isFinite(x)) return GROUND_Y;
   if (level !== 2) return GROUND_Y;
-  const floor = LEVEL_3_PROJECTOR_FLOOR;
+  const floor = LEVEL_3_OFFICE_PROJECTOR_FLOOR;
   if (x < floor.x0 || x > floor.x1) return GROUND_Y;
   const depth = floor.y - GROUND_Y;
   if (x < floor.x0 + GROUND_BLEND_WIDTH) {
@@ -228,8 +229,8 @@ export const LEVEL_LADDERS: Record<number, Ladder[]> = {
     { x: 2540, top: 188, bottom: GROUND_Y, style: "fireEscape" },
     { x: 3260, top: 188, bottom: GROUND_Y, style: "construction" },
     // BAD ACTOR DISTRICT projector service floor (area 5)
-    { x: 5020, top: GROUND_Y, bottom: GROUND_Y + 92, style: "maintenance" },
-    { x: 5780, top: GROUND_Y, bottom: GROUND_Y + 92, style: "construction" },
+    { x: 5020, top: 351, bottom: GROUND_Y + 92, style: "maintenance" },
+    { x: 5780, top: 351, bottom: GROUND_Y + 92, style: "construction" },
     // Stage 1 lighting catwalk + underfloor (area 7)
     { x: 7340, top: 178, bottom: GROUND_Y, style: "construction" },
     { x: 8260, top: 178, bottom: GROUND_Y, style: "fireEscape" },

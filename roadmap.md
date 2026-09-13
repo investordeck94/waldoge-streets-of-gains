@@ -1,7 +1,7 @@
 # Waldoge: Streets of Gains — combat pass
 
 ## Current — Level 3 visible-floor grounding
-- [x] Register the painted Level 3 projector floor with shared collision
+- [x] Align the Production Office tyre-contact plane and projector dip with shared collision
 - [x] Verify Production Office, projector dip, SUS'TER ACT exit, and reverse traversal
 - [x] Regression-test untouched levels, jumping, landing, combat, camera and ladders
 

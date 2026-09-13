@@ -299,19 +299,35 @@ describe("level 3 — Bad Actors Studios", () => {
     }
   });
 
-  it("registers the independently painted floors with shared collision", () => {
-    expect(baseGroundYAt(2, 4200)).toBe(GROUND_Y); // Production Office remains level
+  it("registers the office tyres and projector pavement with shared collision", () => {
+    expect(baseGroundYAt(2, 3504)).toBe(GROUND_Y); // Previous area remains level
+    expect(baseGroundYAt(2, 3696)).toBe(351); // Production Office tyre-contact plane
+    expect(baseGroundYAt(2, 4700)).toBe(351); // Golf-cart end of the office
     expect(baseGroundYAt(2, 4896)).toBe(351); // Bad Actor District approach
     expect(baseGroundYAt(2, 6060)).toBe(GROUND_Y); // SUS'TER ACT plaza remains level
-    expect(groundYAt(2, 4200)).toBe(baseGroundYAt(2, 4200));
+    expect(groundYAt(2, 4200)).toBe(351);
     expect(groundYAt(2, 5200)).toBe(412); // Projector service-level dip
   });
 
-  it("blends adjoining painted floor heights without a hard vertical snap", () => {
-    const samples = [4800, 4824, 4848, 4872, 4896].map((x) => baseGroundYAt(2, x));
-    for (let index = 1; index < samples.length; index++) {
-      expect(Math.abs(samples[index] - samples[index - 1])).toBeLessThanOrEqual(8);
+  it("blends into and out of the office plane without accumulated drift", () => {
+    for (const samples of [
+      [3600, 3624, 3648, 3672, 3696],
+      [5904, 5928, 5952, 5976, 6000],
+    ].map((xs) => xs.map((x) => baseGroundYAt(2, x)))) {
+      for (let index = 1; index < samples.length; index++) {
+        expect(Math.abs(samples[index] - samples[index - 1])).toBeLessThanOrEqual(8);
+      }
     }
+  });
+
+  it("uses one high-to-low-to-high route through the projector service dip", () => {
+    expect(groundYAt(2, 4970, 351)).toBe(351);
+    expect(groundYAt(2, 5100, 351)).toBe(412);
+    expect(groundYAt(2, 5400, 412)).toBe(412);
+    expect(groundYAt(2, 5700, 412)).toBe(412);
+    expect(groundYAt(2, 5835, 412)).toBe(351);
+    expect(groundYAt(2, 5100, 351)).toBe(groundYAt(2, 5100, 412));
+    expect(Number.isFinite(groundYAt(2, NaN))).toBe(true);
   });
 
   it("does not change the shared main floor in Levels 1, 2 or 7", () => {
@@ -360,7 +376,7 @@ describe("ladder landing decks", () => {
 describe("connectingLadder", () => {
   it("only returns ladders joining the two given floors", () => {
     const pit = pitsFor(2)[0];
-    const lad = connectingLadder(2, pit.x0 + 40, pit.y, 320);
+    const lad = connectingLadder(2, pit.x0 + 40, pit.y, 351);
     expect(lad).not.toBeNull();
     expect(lad!.x).toBeGreaterThan(pit.x0);
     expect(lad!.x).toBeLessThan(pit.x1);
