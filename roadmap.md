@@ -7,8 +7,8 @@
 
 ## Current — Level 3 projector lower-floor grounding
 - [x] Remove the conflicting upper-floor collision across the projector area
-- [ ] Verify idle, walking, jump/landing and entry/exit beneath the projector on desktop and mobile
-- [ ] Run focused tests, full suite, typecheck and production build
+- [x] Verify idle, walking, jump/landing and entry/exit beneath the projector on desktop and mobile
+- [x] Run focused tests, full suite, typecheck and production build
 
 ## Current — Cross-level Waldoge grounding
 - [x] Trace collision surfaces, camera transforms, and active sprite origin
