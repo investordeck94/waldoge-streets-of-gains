@@ -282,6 +282,9 @@ export function drawTickerTakerSprite(
 
   const sx = e.x - camX;
   const sy = e.y;
+  // A non-finite coordinate would throw inside canvas calls and abort the whole
+  // frame (taking every other entity with it) — skip this sprite instead.
+  if (!Number.isFinite(sx) || !Number.isFinite(sy) || !Number.isFinite(e.height)) return true;
   const clock = renderNow();
   const pose = poseFor(e, form, prog, telegraphing, clock);
   const f = pose.f;
