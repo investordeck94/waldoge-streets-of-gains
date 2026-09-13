@@ -376,7 +376,7 @@ describe("ladder landing decks", () => {
 describe("connectingLadder", () => {
   it("only returns ladders joining the two given floors", () => {
     const pit = pitsFor(2)[0];
-    const lad = connectingLadder(2, pit.x0 + 40, pit.y, 320);
+    const lad = connectingLadder(2, pit.x0 + 40, pit.y, 351);
     expect(lad).not.toBeNull();
     expect(lad!.x).toBeGreaterThan(pit.x0);
     expect(lad!.x).toBeLessThan(pit.x1);
