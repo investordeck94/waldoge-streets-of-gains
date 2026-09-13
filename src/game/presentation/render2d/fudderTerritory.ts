@@ -6,6 +6,7 @@
 import { GROUND_Y } from "@/game/config";
 import { getLevelWidth, landingDecksFor } from "@/game/config/world";
 import fudderAtlas from "@/assets/fudder-atlas.png.asset.json";
+import fudderAtlasLocal from "@/assets/fudder-atlas-local.png";
 import waldogeHeadUrl from "@/assets/waldoge-head.png";
 import { flicker } from "./clock";
 
@@ -70,7 +71,7 @@ function loadImage(src: string, onReady: () => void): HTMLImageElement | null {
 }
 
 export function preloadFudderTerritory(): void {
-  if (!fudderImage) fudderImage = loadImage(fudderAtlas.url, () => { fudderReady = true; });
+  if (!fudderImage) fudderImage = loadImage(fudderAtlasLocal, () => { fudderReady = true; });
   if (!headImage) headImage = loadImage(waldogeHeadUrl, () => { headReady = true; });
 }
 
@@ -387,5 +388,6 @@ export const __fudderTerritoryTest = {
   posterText: FUDDER_POSTER_TEXT,
   visualDeckIds: FUDDER_VISUAL_DECK_IDS,
   atlasUrl: fudderAtlas.url,
+  bundledAtlasUrl: fudderAtlasLocal,
   atlasReady: () => Boolean(fudderImage?.complete && fudderImage.naturalWidth > 0),
 };
