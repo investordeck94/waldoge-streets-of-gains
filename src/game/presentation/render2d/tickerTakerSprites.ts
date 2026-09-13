@@ -30,7 +30,7 @@
  */
 
 import { renderNow, flicker } from "./clock";
-import atlasAsset from "@/assets/ticker-taker-atlas.png.asset.json";
+import atlasAsset from "@/assets/ticker-taker-atlas-60.png.asset.json";
 
 export interface TickerTakerView {
   x: number;
@@ -50,7 +50,7 @@ export type TickerTakerForm =
 
 interface Frame { x: number; y: number; w: number; h: number; ax: number; ay: number }
 
-const F: Record<string, Frame> = {
+export const TICKER_TAKER_FRAMES: Record<string, Frame> = {
   idle: { x: 0, y: 0, w: 366, h: 540, ax: 193, ay: 540 },
   walk: { x: 372, y: 0, w: 333, h: 546, ax: 169.6, ay: 546 },
   punch: { x: 711, y: 0, w: 449, h: 541, ax: 187.8, ay: 541 },
@@ -65,6 +65,8 @@ const F: Record<string, Frame> = {
   dash: { x: 592, y: 1758, w: 485, h: 560, ax: 240.8, ay: 560 },
 };
 
+const F = TICKER_TAKER_FRAMES;
+
 /** Reference height of the idle pose — every frame scales against this. */
 const REF_H = 540;
 // Draw scale is pinned to Waldoge's combat scale (he renders at
@@ -73,7 +75,7 @@ const REF_H = 540;
 const SIZE = 1.95;
 
 /**
- * MEMORY BUDGET — why this atlas is resampled once on load.
+ * MEMORY BUDGET — why this atlas is pre-scaled.
  *
  * The Ticker Taker sheet is authored at roughly 1700x2330 px: ~4 MP, which a
  * browser keeps as ~16 MB of decoded RGBA — about four times any other
@@ -84,39 +86,18 @@ const SIZE = 1.95;
  *
  * The game canvas is capped at devicePixelRatio 2 and Ticker Taker is drawn at
  * roughly 136 CSS px tall from a 540 px source frame, so no more than ~55% of
- * the authored resolution can ever reach a pixel. Downsampling once to
- * ATLAS_SCALE therefore costs nothing visible and cuts the resident cost by
- * ~64%. Frame rects are scaled by the same factor at draw time; every
- * DESTINATION rect is untouched, so pose, anchor, size, hitbox, timing and
- * combat behaviour are bit-for-bit what they were.
+ * the authored resolution can ever reach a pixel. The checked-in CDN asset is
+ * pre-scaled to ATLAS_SCALE, cutting decoded memory by ~64% without allocating
+ * an off-screen canvas during Level 7. Frame SOURCE rects use the same scale;
+ * every DESTINATION rect stays untouched, preserving pose, anchor, size,
+ * hitbox, timing and combat behaviour.
  */
 export const ATLAS_SCALE = 0.6;
 
-type Sheet = HTMLImageElement | HTMLCanvasElement;
-
 let atlas: HTMLImageElement | null = null;
-let sheet: Sheet | null = null;
-let srcScale = 1;
 let ready = false;
 
-/** Resample the loaded atlas down to ATLAS_SCALE and release the original. */
-function buildSheet(img: HTMLImageElement): Sheet {
-  if (typeof document === "undefined" || ATLAS_SCALE >= 1) return img;
-  const w = Math.max(1, Math.round(img.naturalWidth * ATLAS_SCALE));
-  const h = Math.max(1, Math.round(img.naturalHeight * ATLAS_SCALE));
-  const c = document.createElement("canvas");
-  c.width = w;
-  c.height = h;
-  const cx = c.getContext("2d");
-  if (!cx) return img;
-  cx.imageSmoothingEnabled = true;
-  cx.imageSmoothingQuality = "high";
-  cx.drawImage(img, 0, 0, w, h);
-  return c;
-}
-
-function getAtlas(): Sheet | null {
-  if (sheet) return sheet;
+function getAtlas(): HTMLImageElement | null {
   if (typeof Image === "undefined") return null;
   if (!atlas) {
     atlas = new Image();
@@ -124,22 +105,18 @@ function getAtlas(): Sheet | null {
     atlas.src = atlasAsset.url;
   }
   if (!(ready && atlas.complete && atlas.naturalWidth > 0)) return null;
-  sheet = buildSheet(atlas);
-  if (sheet !== atlas) {
-    srcScale = ATLAS_SCALE;
-    // Drop the full-resolution reference so the browser can reclaim it.
-    atlas = null;
-  }
-  return sheet;
+  return atlas;
 }
 
 /** Kick off the download early (called once from the game bootstrap). */
 export function preloadTickerTakerSprites() { getAtlas(); }
 
-/** Source-rect scale currently in use (1 when the sheet is not resampled). */
+/** Source-rect scale of the pre-scaled CDN atlas. */
 export function atlasSourceScale(): number {
-  return srcScale;
+  return ATLAS_SCALE;
 }
+
+export const TICKER_TAKER_ATLAS_URL = atlasAsset.url;
 
 interface Pose {
   f: Frame;
@@ -417,9 +394,9 @@ export function drawTickerTakerSprite(
   if (e.state === "dead") ctx.globalAlpha = 0.88;
 
   ctx.imageSmoothingEnabled = true;
-  // Source rect follows the resampled sheet; destination rect is unchanged so
-  // the on-screen pose, anchor and size are identical to the full-res sheet.
-  const s = srcScale;
+  // Source rect follows the pre-scaled PNG; destination rect is unchanged so
+  // the on-screen pose, anchor and size are identical to the authored sheet.
+  const s = ATLAS_SCALE;
   ctx.drawImage(img, f.x * s, f.y * s, f.w * s, f.h * s, -f.ax, -f.ay, f.w, f.h);
 
   ctx.restore();
