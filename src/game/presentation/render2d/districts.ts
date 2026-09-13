@@ -28,6 +28,12 @@ import {
 } from "./badActorStudios";
 import { drawJeetStreet, hasJeetStreet, jeetSectionLabelAt } from "./jeetStreet";
 import { drawRuggerEmpire, hasRuggerEmpire, ruggerSectionLabelAt } from "./ruggerEmpire";
+import {
+  FUDDER_TERRITORY_LEVEL,
+  drawFudderTerritory,
+  fudderSectionLabelAt,
+  hasFudderTerritory,
+} from "./fudderTerritory";
 
 
 // ---------------------------------------------------------------------------
@@ -329,7 +335,7 @@ export function districtFor(level: number): District | null {
 }
 
 export function hasDistrict(level: number): boolean {
-  return level === 0 || level === 1 || level === 2;
+  return level === 0 || level === 1 || level === 2 || hasFudderTerritory(level);
 }
 
 
@@ -365,6 +371,10 @@ export function drawDistrict(
   }
   if (hasRuggerEmpire(level)) {
     drawRuggerEmpire(ctx, level, camX, canvasW);
+    return;
+  }
+  if (level === FUDDER_TERRITORY_LEVEL) {
+    drawFudderTerritory(ctx, level, camX, canvasW);
     return;
   }
   const d = districtFor(level);
@@ -772,6 +782,7 @@ export function sectionLabelAt(level: number, x: number): string | null {
   if (level === 0) return jeetSectionLabelAt(level, x);
   if (level === 1) return ruggerSectionLabelAt(level, x);
   if (level === BAD_ACTOR_LEVEL) return badActorSectionLabelAt(level, x);
+  if (level === FUDDER_TERRITORY_LEVEL) return fudderSectionLabelAt(level, x);
 
   const d = districtFor(level);
   if (!d) return null;

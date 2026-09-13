@@ -121,9 +121,10 @@ export function drawLandingDecks(
     if (sx + w < -60 || sx > canvasW + 60) continue;
     // Deck slab
     const film = level === 2;
+    const fudder = level === 3;
     const slab = ctx.createLinearGradient(0, d.y - 8, 0, d.y + 14);
-    slab.addColorStop(0, film ? "#7e697f" : "#6b7180");
-    slab.addColorStop(0.35, film ? "#4e4055" : "#464c59");
+    slab.addColorStop(0, film ? "#7e697f" : fudder ? "#8b6430" : "#6b7180");
+    slab.addColorStop(0.35, film ? "#4e4055" : fudder ? "#423622" : "#464c59");
     slab.addColorStop(1, "#22262f");
     ctx.fillStyle = slab;
     ctx.fillRect(sx, d.y - 8, w, 20);
@@ -137,7 +138,7 @@ export function drawLandingDecks(
     }
     // Hazard edge stripes so the walkable ledge reads clearly
     for (let i = 0; i * 10 < w; i++) {
-      ctx.fillStyle = i % 2 === 0 ? (film ? "#d24858" : "#e8c342") : "#1b1b22";
+      ctx.fillStyle = i % 2 === 0 ? (film ? "#d24858" : fudder ? "#bd332e" : "#e8c342") : "#1b1b22";
       ctx.fillRect(sx + i * 10, d.y + 10, Math.min(10, w - i * 10), 3);
     }
     // Support brackets under the deck

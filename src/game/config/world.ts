@@ -24,13 +24,14 @@ export const DEFAULT_LEVEL_WIDTH = LEVEL_WIDTH;
  *   0 — JEET'S FAST FOOD DISTRICT   (long urban restaurant strip)
  *   1 — RUGGER'S FINANCIAL EMPIRE   (offices → casino strip, with lower streets)
  *   2 — BAD ACTOR'S FILM DISTRICT   (studio lot → backlots → premiere boulevard)
- * Levels 3-6 keep the legacy width until they get the same treatment.
+ * Level 4 is Fudder's five-section industrial propaganda territory.
+ * Levels 5-7 keep the legacy width until they get the same treatment.
  */
 export const LEVEL_WORLD_WIDTHS: readonly number[] = [
   5600, // L1 Jeet's Fast Food District
   10800, // L2 Rugger's Financial / Casino Empire
   15600, // L3 Bad Actors Studios — 13 authored areas x 1200 units each
-  DEFAULT_LEVEL_WIDTH,
+  9000, // L4 Fudder Territory — five 1800-unit blueprint sections
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
@@ -85,6 +86,8 @@ export const LEVEL_PITS: Record<number, GroundPit[]> = {
     { x0: 7380, x1: 8220, y: GROUND_Y + 92, kind: "service" },
     { x0: 13340, x1: 14260, y: GROUND_Y + 112, kind: "underpass" },
   ],
+  // Level 4's blueprint explicitly requires one continuous flat main floor.
+  3: [],
 };
 
 /** Pits for a level (never undefined). */
@@ -261,6 +264,16 @@ export const LEVEL_LADDERS: Record<number, Ladder[]> = {
     { x: 13420, top: GROUND_Y, bottom: GROUND_Y + 112, style: "underground" },
     { x: 14180, top: GROUND_Y, bottom: GROUND_Y + 112, style: "maintenance" },
   ],
+  3: [
+    { x: 700, top: 190, bottom: GROUND_Y, style: "construction" },
+    { x: 1510, top: 190, bottom: GROUND_Y, style: "maintenance" },
+    { x: 2240, top: 178, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 3180, top: 178, bottom: GROUND_Y, style: "construction" },
+    { x: 3970, top: 184, bottom: GROUND_Y, style: "maintenance" },
+    { x: 5050, top: 184, bottom: GROUND_Y, style: "construction" },
+    { x: 6040, top: 176, bottom: GROUND_Y, style: "construction" },
+    { x: 6900, top: 176, bottom: GROUND_Y, style: "maintenance" },
+  ],
 };
 
 export function laddersFor(level: number): Ladder[] {
@@ -312,6 +325,16 @@ const LEVEL_AUTHORED_DECKS: Record<number, LandingDeck[]> = {
     { x0: 8500, x1: 9500, y: 182, ladderX: 8540 },
     { x0: 10900, x1: 11900, y: 188, ladderX: 10940 },
     { x0: 13300, x1: 14300, y: 170, ladderX: 13340 },
+  ],
+  3: [
+    { x0: 660, x1: 1120, y: 190, ladderX: 700 },
+    { x0: 1320, x1: 1700, y: 190, ladderX: 1510 },
+    { x0: 2200, x1: 2700, y: 178, ladderX: 2240 },
+    { x0: 2920, x1: 3220, y: 178, ladderX: 3180 },
+    { x0: 3930, x1: 4520, y: 184, ladderX: 3970 },
+    { x0: 4700, x1: 5090, y: 184, ladderX: 5050 },
+    { x0: 6000, x1: 6450, y: 176, ladderX: 6040 },
+    { x0: 6660, x1: 6940, y: 176, ladderX: 6900 },
   ],
 };
 
@@ -412,6 +435,7 @@ export const ENCOUNTER_ZONES: Record<number, { waves: number[]; boss: number }> 
   0: { waves: [0.28, 0.58], boss: 0.9 },
   1: { waves: [0.24, 0.61], boss: 0.93 },
   2: { waves: [0.16, 0.55], boss: 0.945 },
+  3: { waves: [0.24, 0.63], boss: 0.93 },
 };
 
 
