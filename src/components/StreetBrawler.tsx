@@ -4016,11 +4016,15 @@ export const StreetBrawler: FC = () => {
           p.y = plat.y;
         }
       }
+      // A climber is held by the ladder, not by the deck it stepped off, so the
+      // deck snap must not fight the climb (that froze Waldoge on the ladder).
+      if (pAny.worldDeck && pClimb.climbing) pAny.worldDeck = undefined;
       if (pAny.worldDeck) {
         const deck = pAny.worldDeck;
         if (p.x < deck.x0 || p.x > deck.x1) pAny.worldDeck = undefined;
         else p.y = deck.y;
       }
+
 
       p.stateTimer = Math.max(-1, p.stateTimer - 1);
       p.attackCooldown = Math.max(-1, p.attackCooldown - 1);
