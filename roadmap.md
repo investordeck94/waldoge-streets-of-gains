@@ -5,6 +5,11 @@
 - [x] Verify Production Office, projector dip, SUS'TER ACT exit, and reverse traversal
 - [x] Regression-test untouched levels, jumping, landing, combat, camera and ladders
 
+## Current — Level 3 projector lower-floor grounding
+- [x] Remove the conflicting upper-floor collision across the projector area
+- [ ] Verify idle, walking, jump/landing and entry/exit beneath the projector on desktop and mobile
+- [ ] Run focused tests, full suite, typecheck and production build
+
 ## Current — Cross-level Waldoge grounding
 - [x] Trace collision surfaces, camera transforms, and active sprite origin
 - [x] Align every atlas pose to its painted shoe sole instead of transparent cell bounds
