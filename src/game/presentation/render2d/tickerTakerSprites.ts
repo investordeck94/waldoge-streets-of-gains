@@ -72,21 +72,70 @@ const REF_H = 540;
 // essentially the same height. The blueprint is a design reference only.
 const SIZE = 1.95;
 
+/**
+ * MEMORY BUDGET — why this atlas is resampled once on load.
+ *
+ * The Ticker Taker sheet is authored at roughly 1700x2330 px: ~4 MP, which a
+ * browser keeps as ~16 MB of decoded RGBA — about four times any other
+ * character sheet in the game. On a mobile browser that extra pressure makes
+ * the engine drop decoded image data (and, on iOS, whole canvas backing
+ * stores) mid-fight, which is what made Waldoge, Ticker Taker and the minions
+ * all blink out and return together during Level 7 only.
+ *
+ * The game canvas is capped at devicePixelRatio 2 and Ticker Taker is drawn at
+ * roughly 136 CSS px tall from a 540 px source frame, so no more than ~55% of
+ * the authored resolution can ever reach a pixel. Downsampling once to
+ * ATLAS_SCALE therefore costs nothing visible and cuts the resident cost by
+ * ~64%. Frame rects are scaled by the same factor at draw time; every
+ * DESTINATION rect is untouched, so pose, anchor, size, hitbox, timing and
+ * combat behaviour are bit-for-bit what they were.
+ */
+export const ATLAS_SCALE = 0.6;
+
+type Sheet = HTMLImageElement | HTMLCanvasElement;
+
 let atlas: HTMLImageElement | null = null;
+let sheet: Sheet | null = null;
 let ready = false;
 
-function getAtlas(): HTMLImageElement | null {
+/** Resample the loaded atlas down to ATLAS_SCALE and release the original. */
+function buildSheet(img: HTMLImageElement): Sheet {
+  if (typeof document === "undefined" || ATLAS_SCALE >= 1) return img;
+  const w = Math.max(1, Math.round(img.naturalWidth * ATLAS_SCALE));
+  const h = Math.max(1, Math.round(img.naturalHeight * ATLAS_SCALE));
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  const cx = c.getContext("2d");
+  if (!cx) return img;
+  cx.imageSmoothingEnabled = true;
+  cx.imageSmoothingQuality = "high";
+  cx.drawImage(img, 0, 0, w, h);
+  return c;
+}
+
+function getAtlas(): Sheet | null {
+  if (sheet) return sheet;
   if (typeof Image === "undefined") return null;
   if (!atlas) {
     atlas = new Image();
     atlas.onload = () => { ready = true; };
     atlas.src = atlasAsset.url;
   }
-  return ready && atlas.complete && atlas.naturalWidth > 0 ? atlas : null;
+  if (!(ready && atlas.complete && atlas.naturalWidth > 0)) return null;
+  sheet = buildSheet(atlas);
+  // Drop the full-resolution reference so the browser can reclaim it.
+  if (sheet !== atlas) atlas = null;
+  return sheet;
 }
 
 /** Kick off the download early (called once from the game bootstrap). */
 export function preloadTickerTakerSprites() { getAtlas(); }
+
+/** Source-rect scale currently in use (1 when the sheet is not resampled). */
+export function atlasSourceScale(): number {
+  return sheet && sheet !== (atlas as unknown as Sheet) && ATLAS_SCALE < 1 ? ATLAS_SCALE : 1;
+}
 
 interface Pose {
   f: Frame;
