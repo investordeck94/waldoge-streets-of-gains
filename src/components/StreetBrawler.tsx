@@ -3919,7 +3919,7 @@ export const StreetBrawler: FC = () => {
             pClimb.climbAuto = undefined;
             pClimb.climbRearm = false;
           }
-        } else if (grounded && jumpHeld && pClimb.climbRearm !== false) {
+        } else if (grounded && climbHeld && pClimb.climbRearm !== false) {
           const lad = ladderAt(g.level, p.x);
           if (lad) {
             const atTop = p.y <= lad.top + 3;
