@@ -3,8 +3,8 @@
 ## Current — Level 7 sprite continuity
 - [x] Verify live entity state and isolate failure to Level 7 bitmap rendering
 - [x] Replace Ticker Taker's runtime canvas with a pre-scaled CDN atlas
-- [ ] Validate every special move and continuous visibility on desktop/mobile
-- [ ] Run focused/full tests, typecheck and production build
+- [x] Validate every special move and continuous visibility on desktop/mobile
+- [x] Run focused/full tests, typecheck and production build
 
 ## Current — Level 3 split-level grounding
 - [x] Preserve the Stage 2 elevated platform, artwork, collision and ladders
