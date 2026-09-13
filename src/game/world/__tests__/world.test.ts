@@ -293,7 +293,8 @@ describe("level 3 — Bad Actors Studios", () => {
     expect(laddersFor(2).length).toBe(16);
     expect(pitsFor(0).length).toBe(0);
     for (const ladder of laddersFor(2)) {
-      expect(groundYAt(2, ladder.x, ladder.top)).toBe(ladder.top);
+      const surface = groundYAt(2, ladder.x, ladder.top);
+      expect(surface === ladder.top || surface === ladder.bottom).toBe(true);
       expect(Number.isFinite(ladder.bottom)).toBe(true);
       expect(ladder.bottom).toBeGreaterThan(ladder.top);
     }

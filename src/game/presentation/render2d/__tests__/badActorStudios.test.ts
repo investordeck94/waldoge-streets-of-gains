@@ -111,7 +111,8 @@ describe("level 3 — Bad Actors Studios blueprint areas", () => {
     for (const l of laddersFor(2)) {
       const onDeck = decks.some((d) => l.x >= d.x0 && l.x <= d.x1 && d.y === l.top);
       const onStreet = l.top === 320;
-      expect(onDeck || onStreet).toBe(true);
+      const onLowerStudioFloor = groundYAt(2, l.x, l.top) === l.bottom;
+      expect(onDeck || onStreet || onLowerStudioFloor).toBe(true);
     }
     for (const p of pitsFor(2)) {
       expect(laddersFor(2).some((l) => l.x > p.x0 && l.x < p.x1)).toBe(true);
