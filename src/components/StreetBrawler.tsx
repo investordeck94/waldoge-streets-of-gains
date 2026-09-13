@@ -3869,11 +3869,20 @@ export const StreetBrawler: FC = () => {
       // is not standing on. A short input lock stops the JUMP tap's own "w"
       // from immediately reversing an auto-descent.
       let climbedThisFrame = false;
-      const pClimb = pAny as Climber & { climbAuto?: -1 | 1; climbLock?: number };
+      const pClimb = pAny as Climber & { climbAuto?: -1 | 1; climbLock?: number; climbRearm?: boolean };
       if (hasVerticalTraversal(g.level) && p.state !== "dead") {
         const upHeld = g.keys.has("w") || g.keys.has("arrowup");
         const downHeld = g.keys.has("s") || g.keys.has("arrowdown");
         const jumpHeld = upHeld || g.keys.has(" ");
+        // DOWN also grabs a ladder, so stepping off a landing back down is the
+        // obvious control rather than a jump-plus-direction combination.
+        const climbHeld = jumpHeld || downHeld;
+        // A ladder may only be (re)mounted on a FRESH press of the climb
+        // control. Without this latch, holding JUMP through a full climb makes
+        // the fighter instantly re-grab at the exit and auto-travel back the
+        // other way — the "stuck on the ladder" yo-yo.
+        if (!climbHeld) pClimb.climbRearm = true;
+
         const feetY = pAny.worldDeck
           ? pAny.worldDeck.y
           : groundYAt(g.level, p.x, p.y, false);
@@ -3901,14 +3910,16 @@ export const StreetBrawler: FC = () => {
               pAny.worldDeck = exitDir < 0 ? landingDeckAt(g.level, lad.x) ?? undefined : undefined;
               pClimb.climbAuto = undefined;
               pClimb.climbLock = 0;
+              pClimb.climbRearm = false;
             } else if (p.state !== "hit") {
               p.state = "jump";
             }
           } else {
             dismountLadder(pAny);
             pClimb.climbAuto = undefined;
+            pClimb.climbRearm = false;
           }
-        } else if (grounded && jumpHeld) {
+        } else if (grounded && climbHeld && pClimb.climbRearm !== false) {
           const lad = ladderAt(g.level, p.x);
           if (lad) {
             const atTop = p.y <= lad.top + 3;
@@ -3922,6 +3933,7 @@ export const StreetBrawler: FC = () => {
               p.y = dir === 1 ? lad.top + 2 : lad.bottom - 2;
               pClimb.climbAuto = dir;
               pClimb.climbLock = 16;
+              pClimb.climbRearm = false;
               climbedThisFrame = true;
             }
           }
@@ -3930,6 +3942,7 @@ export const StreetBrawler: FC = () => {
         dismountLadder(pAny);
         pClimb.climbAuto = undefined;
       }
+
 
       if (!climbedThisFrame) {
       p.vy += GRAVITY;
@@ -4003,11 +4016,15 @@ export const StreetBrawler: FC = () => {
           p.y = plat.y;
         }
       }
+      // A climber is held by the ladder, not by the deck it stepped off, so the
+      // deck snap must not fight the climb (that froze Waldoge on the ladder).
+      if (pAny.worldDeck && pClimb.climbing) pAny.worldDeck = undefined;
       if (pAny.worldDeck) {
         const deck = pAny.worldDeck;
         if (p.x < deck.x0 || p.x > deck.x1) pAny.worldDeck = undefined;
         else p.y = deck.y;
       }
+
 
       p.stateTimer = Math.max(-1, p.stateTimer - 1);
       p.attackCooldown = Math.max(-1, p.attackCooldown - 1);

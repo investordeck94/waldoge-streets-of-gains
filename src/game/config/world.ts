@@ -302,12 +302,19 @@ const deckCache = new Map<number, LandingDeck[]>();
 const LEVEL_AUTHORED_DECKS: Record<number, LandingDeck[]> = {
   2: [
     { x0: 2500, x1: 3300, y: 188, ladderX: 2540 },
+    // Projector service floor: the two maintenance ladders inside the lower
+    // studio area end at y = 351, so each needs a solid walkable landing —
+    // without it a climber reaching the top resolves straight back to the pit
+    // floor and can never leave the ladder.
+    { x0: 4960, x1: 5080, y: 351, ladderX: 5020 },
+    { x0: 5720, x1: 5840, y: 351, ladderX: 5780 },
     { x0: 7300, x1: 8300, y: 178, ladderX: 7340 },
     { x0: 8500, x1: 9500, y: 182, ladderX: 8540 },
     { x0: 10900, x1: 11900, y: 188, ladderX: 10940 },
     { x0: 13300, x1: 14300, y: 170, ladderX: 13340 },
   ],
 };
+
 
 /** Solid landing decks for a level (never undefined; cached, no allocation). */
 export function landingDecksFor(level: number): LandingDeck[] {
