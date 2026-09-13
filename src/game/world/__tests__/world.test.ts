@@ -293,39 +293,43 @@ describe("level 3 — Bad Actors Studios", () => {
     expect(laddersFor(2).length).toBe(16);
     expect(pitsFor(0).length).toBe(0);
     for (const ladder of laddersFor(2)) {
-      expect(groundYAt(2, ladder.x, ladder.top)).toBe(ladder.top);
+      const surface = groundYAt(2, ladder.x, ladder.top);
+      expect(surface === ladder.top || surface === ladder.bottom).toBe(true);
       expect(Number.isFinite(ladder.bottom)).toBe(true);
       expect(ladder.bottom).toBeGreaterThan(ladder.top);
     }
   });
 
-  it("registers the office tyres and projector pavement with shared collision", () => {
+  it("keeps the office tyres grounded and puts the entire projector area on its lower floor", () => {
     expect(baseGroundYAt(2, 3504)).toBe(GROUND_Y); // Previous area remains level
     expect(baseGroundYAt(2, 3696)).toBe(351); // Production Office tyre-contact plane
     expect(baseGroundYAt(2, 4700)).toBe(351); // Golf-cart end of the office
-    expect(baseGroundYAt(2, 4896)).toBe(351); // Bad Actor District approach
+    expect(groundYAt(2, 4801, 351)).toBe(412); // Projector-area lower studio floor
+    expect(groundYAt(2, 4896, 412)).toBe(412); // Beneath the projector headlight
+    expect(groundYAt(2, 5020, 351)).toBe(412); // No obsolete ladder-top landing
+    expect(groundYAt(2, 5780, 351)).toBe(412); // No obsolete ladder-top landing
+    expect(groundYAt(2, 5999, 412)).toBe(412); // Lower floor continues to the far wall
     expect(baseGroundYAt(2, 6060)).toBe(GROUND_Y); // SUS'TER ACT plaza remains level
     expect(groundYAt(2, 4200)).toBe(351);
     expect(groundYAt(2, 5200)).toBe(412); // Projector service-level dip
   });
 
-  it("blends into and out of the office plane without accumulated drift", () => {
-    for (const samples of [
-      [3600, 3624, 3648, 3672, 3696],
-      [5904, 5928, 5952, 5976, 6000],
-    ].map((xs) => xs.map((x) => baseGroundYAt(2, x)))) {
-      for (let index = 1; index < samples.length; index++) {
-        expect(Math.abs(samples[index] - samples[index - 1])).toBeLessThanOrEqual(8);
-      }
+  it("blends onto the office plane without accumulated drift", () => {
+    const samples = [3600, 3624, 3648, 3672, 3696].map((x) => baseGroundYAt(2, x));
+    for (let index = 1; index < samples.length; index++) {
+      expect(Math.abs(samples[index] - samples[index - 1])).toBeLessThanOrEqual(8);
     }
+    expect(baseGroundYAt(2, 4700)).toBe(351);
   });
 
-  it("uses one high-to-low-to-high route through the projector service dip", () => {
-    expect(groundYAt(2, 4970, 351)).toBe(351);
+  it("uses one upper-to-lower route through the full projector service floor", () => {
+    expect(groundYAt(2, 4799, 351)).toBe(351);
+    expect(groundYAt(2, 4801, 351)).toBe(412);
     expect(groundYAt(2, 5100, 351)).toBe(412);
     expect(groundYAt(2, 5400, 412)).toBe(412);
     expect(groundYAt(2, 5700, 412)).toBe(412);
-    expect(groundYAt(2, 5835, 412)).toBe(351);
+    expect(groundYAt(2, 5999, 412)).toBe(412);
+    expect(groundYAt(2, 6001, 412)).toBe(GROUND_Y);
     expect(groundYAt(2, 5100, 351)).toBe(groundYAt(2, 5100, 412));
     expect(Number.isFinite(groundYAt(2, NaN))).toBe(true);
   });
@@ -376,7 +380,7 @@ describe("ladder landing decks", () => {
 describe("connectingLadder", () => {
   it("only returns ladders joining the two given floors", () => {
     const pit = pitsFor(2)[0];
-    const lad = connectingLadder(2, pit.x0 + 40, pit.y, 351);
+    const lad = connectingLadder(2, pit.x0 + 220, pit.y, 351);
     expect(lad).not.toBeNull();
     expect(lad!.x).toBeGreaterThan(pit.x0);
     expect(lad!.x).toBeLessThan(pit.x1);

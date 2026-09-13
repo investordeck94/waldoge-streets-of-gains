@@ -750,7 +750,7 @@ export function drawBadActorStudios(
   const pulse = 0.04 + flicker(camX, 0.0018) * 0.04;
   ctx.fillStyle = `rgba(255,178,64,${pulse})`;
   for (let screenX = 0; screenX < canvasW; screenX += 8) {
-    ctx.fillRect(screenX, groundYAt(level, camX + screenX) - 3, 8, 3);
+    ctx.fillRect(screenX, groundYAt(level, camX + screenX, Number.POSITIVE_INFINITY) - 3, 8, 3);
   }
 
   // Solid understructure so a lowered camera never sees past the artwork.

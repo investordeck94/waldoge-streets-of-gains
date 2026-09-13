@@ -81,7 +81,7 @@ export const LEVEL_PITS: Record<number, GroundPit[]> = {
   // Level 3 backstage service floors, one per blueprint area that has a lower
   // technical level: projector service pit, Stage 1 underfloor, backstage.
   2: [
-    { x0: 4980, x1: 5820, y: GROUND_Y + 92, kind: "service" },
+    { x0: 4800, x1: 6000, y: GROUND_Y + 92, kind: "service" },
     { x0: 7380, x1: 8220, y: GROUND_Y + 92, kind: "service" },
     { x0: 13340, x1: 14260, y: GROUND_Y + 112, kind: "underpass" },
   ],
@@ -97,26 +97,23 @@ export function pitsFor(level: number): GroundPit[] {
 // ---------------------------------------------------------------------------
 
 /**
- * The production-office tyres and the projector district pavement share this
- * painted contact plane. Keep one continuous authored surface beneath both
- * panels; the projector service pit is then the only deeper floor in this
- * span. This is collision data, not a sprite/render offset.
+ * The production-office tyres use this painted contact plane. It ends where
+ * the projector service floor begins, so the projector area is resolved by
+ * its real lower-floor pit rather than an invisible upper collision plane.
+ * This is collision data, not a sprite/render offset.
  */
-const LEVEL_3_OFFICE_PROJECTOR_FLOOR = { x0: 3600, x1: 6000, y: 351 } as const;
+const LEVEL_3_OFFICE_FLOOR = { x0: 3600, x1: 4800, y: 351 } as const;
 const GROUND_BLEND_WIDTH = 96;
 
 /** Main painted floor beneath x, before pits and elevated decks are applied. */
 export function baseGroundYAt(level: number, x: number): number {
   if (!Number.isFinite(x)) return GROUND_Y;
   if (level !== 2) return GROUND_Y;
-  const floor = LEVEL_3_OFFICE_PROJECTOR_FLOOR;
+  const floor = LEVEL_3_OFFICE_FLOOR;
   if (x < floor.x0 || x > floor.x1) return GROUND_Y;
   const depth = floor.y - GROUND_Y;
   if (x < floor.x0 + GROUND_BLEND_WIDTH) {
     return GROUND_Y + depth * ((x - floor.x0) / GROUND_BLEND_WIDTH);
-  }
-  if (x > floor.x1 - GROUND_BLEND_WIDTH) {
-    return GROUND_Y + depth * ((floor.x1 - x) / GROUND_BLEND_WIDTH);
   }
   return floor.y;
 }
@@ -304,6 +301,11 @@ export function landingDecksFor(level: number): LandingDeck[] {
   for (const l of laddersFor(level)) {
     const pit = pitAt(level, l.x);
     if (!pit || l.top >= pit.y) continue;
+    // A ladder top is only a landing when it meets the surrounding authored
+    // upper floor. Projector service ladders sit wholly inside the lower studio
+    // area, so inventing decks at their old intermediate y would make fighters
+    // levitate above the authoritative pit floor.
+    if (Math.abs(l.top - baseGroundYAt(level, l.x)) > 1) continue;
     decks.push({ x0: l.x - LANDING_HALF_W, x1: l.x + LANDING_HALF_W, y: l.top, ladderX: l.x });
   }
   deckCache.set(level, decks);
