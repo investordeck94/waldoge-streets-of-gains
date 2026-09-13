@@ -8,6 +8,13 @@ import {
 import { mount, dismount, stepClimb, climbDirectionFor, ladderExitSurfaceY, type Climber } from "../climb";
 import { districtFor, hasDistrict, sectionLabelAt } from "@/game/presentation/render2d/districts";
 import { RUGGER_LANDMARKS, RUGGER_SECTIONS, ruggerSectionLabelAt, ruggerWorldFor } from "@/game/presentation/render2d/ruggerEmpire";
+import {
+  FUDDER_LANDMARKS,
+  FUDDER_SECTIONS,
+  FUDDER_SECTION_WIDTH,
+  fudderSectionLabelAt,
+  fudderTerritoryFor,
+} from "@/game/presentation/render2d/fudderTerritory";
 
 const fighter = (x: number, y: number): Climber => ({ x, y, state: "idle" });
 
@@ -18,7 +25,8 @@ describe("per-level world width", () => {
     expect(getLevelWidth(1)).toBe(10800);
     expect(getLevelWidth(1)).toBeGreaterThan(3200 * 3);
   });
-  it("falls back to the legacy width for untouched levels", () => {
+  it("gives Level 4 a five-section long world and preserves untouched levels", () => {
+    expect(getLevelWidth(3)).toBe(FUDDER_SECTION_WIDTH * 5);
     expect(getLevelWidth(6)).toBe(DEFAULT_LEVEL_WIDTH);
     expect(getLevelWidth(99)).toBe(DEFAULT_LEVEL_WIDTH);
     expect(getLevelWidth(NaN)).toBe(DEFAULT_LEVEL_WIDTH);
@@ -199,10 +207,11 @@ describe("encounters", () => {
 });
 
 describe("districts", () => {
-  it("levels 1, 2 and 3 have the new art", () => {
+  it("levels 1 through 4 have dedicated district art", () => {
     expect(hasDistrict(0)).toBe(true);
     expect(hasDistrict(1)).toBe(true);
     expect(hasDistrict(2)).toBe(true);
+    expect(hasDistrict(3)).toBe(true);
     expect(hasDistrict(4)).toBe(false);
     expect(districtFor(4)).toBeNull();
   });
@@ -254,6 +263,7 @@ describe("districts", () => {
     expect(sectionLabelAt(0, 10)).toContain("JEET");
     expect(sectionLabelAt(0, getLevelWidth(0) - 100)).toContain("JEET");
     expect(sectionLabelAt(1, getLevelWidth(1) - 100)).toContain("RUGGER");
+    expect(sectionLabelAt(3, 100)).toBe("ENTRANCE — PROPAGANDA STREET");
     expect(sectionLabelAt(4, 100)).toBeNull();
   });
 
@@ -405,6 +415,115 @@ describe("ladder landing decks", () => {
     const pit = pitsFor(1)[0];
     const mid = (pit.x0 + pit.x1) / 2;
     expect(groundYAt(1, mid, GROUND_Y)).toBe(pit.y);
+  });
+});
+
+describe("level 4 — Fudder Territory blueprint", () => {
+  it("preserves the five approved sections in exact left-to-right order", () => {
+    expect(FUDDER_SECTIONS).toEqual([
+      "ENTRANCE — PROPAGANDA STREET",
+      "MEDIA DISTRICT",
+      "INDUSTRIAL COMPLEX",
+      "PROPAGANDA FACTORY",
+      "BOSS ARENA — FUDDER",
+    ]);
+    FUDDER_SECTIONS.forEach((label, index) => {
+      expect(fudderSectionLabelAt(3, index * FUDDER_SECTION_WIDTH + 10)).toBe(label);
+    });
+  });
+
+  it("keeps one flat continuous authoritative main floor with no dips", () => {
+    expect(pitsFor(3)).toHaveLength(0);
+    for (let x = 0; x <= getLevelWidth(3); x += 25) {
+      expect(baseGroundYAt(3, x)).toBe(GROUND_Y);
+      expect(groundYAt(3, x, GROUND_Y, false)).toBe(GROUND_Y);
+    }
+  });
+
+  it("has no hidden ground changes outside explicit elevated decks", () => {
+    const decks = landingDecksFor(3);
+    for (let x = 0; x <= getLevelWidth(3); x += 20) {
+      const onDeck = decks.some((deck) => x >= deck.x0 && x <= deck.x1);
+      expect(groundYAt(3, x, GROUND_Y)).toBe(onDeck ? GROUND_Y : GROUND_Y);
+    }
+  });
+
+  it("authors every elevated deck explicitly with finite bounds and height", () => {
+    const decks = landingDecksFor(3);
+    expect(decks).toHaveLength(8);
+    for (const deck of decks) {
+      expect(Number.isFinite(deck.x0 + deck.x1 + deck.y + deck.ladderX)).toBe(true);
+      expect(deck.x0).toBeLessThan(deck.x1);
+      expect(deck.y).toBeLessThan(GROUND_Y);
+      expect(deck.ladderX).toBeGreaterThanOrEqual(deck.x0);
+      expect(deck.ladderX).toBeLessThanOrEqual(deck.x1);
+    }
+  });
+
+  it("connects every ladder bottom to the flat floor and top to a real deck", () => {
+    expect(laddersFor(3)).toHaveLength(8);
+    for (const ladder of laddersFor(3)) {
+      expect(ladder.bottom).toBe(GROUND_Y);
+      expect(landingDeckAt(3, ladder.x)?.y).toBe(ladder.top);
+      expect(groundYAt(3, ladder.x, ladder.top)).toBe(ladder.top);
+      expect(groundYAt(3, ladder.x, ladder.bottom)).toBe(GROUND_Y);
+    }
+  });
+
+  it("grounds upward and downward exits on exact connected surfaces", () => {
+    for (const ladder of laddersFor(3)) {
+      expect(ladderExitSurfaceY(3, ladder, -1)).toBe(ladder.top);
+      expect(ladderExitSurfaceY(3, ladder, 1)).toBe(GROUND_Y);
+    }
+  });
+
+  it("climbs every ladder fully in both directions without leaving its bounds", () => {
+    for (const ladder of laddersFor(3)) {
+      const up = fighter(ladder.x, ladder.bottom); mount(up, ladder);
+      let upGuard = 0;
+      while (up.climbing && upGuard++ < 200) stepClimb(up, ladder, -1);
+      expect(up.y).toBe(ladder.top);
+      const down = fighter(ladder.x, ladder.top); mount(down, ladder);
+      let downGuard = 0;
+      while (down.climbing && downGuard++ < 200) stepClimb(down, ladder, 1);
+      expect(down.y).toBe(GROUND_Y);
+    }
+  });
+
+  it("stages both waves before the boss arena in progression order", () => {
+    const first = encounterX(3, 0);
+    const second = encounterX(3, 1);
+    const boss = bossArenaX(3);
+    expect(first).not.toBeNull(); expect(second).not.toBeNull(); expect(boss).not.toBeNull();
+    expect(first as number).toBeLessThan(second as number);
+    expect(second as number).toBeLessThan(boss as number);
+    expect(boss as number).toBeGreaterThan(FUDDER_SECTION_WIDTH * 4);
+    expect(boss as number).toBeLessThan(getLevelWidth(3));
+  });
+
+  it("contains every major propaganda landmark from the approved blueprint", () => {
+    expect(FUDDER_LANDMARKS).toHaveLength(13);
+    expect(FUDDER_LANDMARKS).toContain("FUDDER NEWS ALWAYS RIGHT");
+    expect(FUDDER_LANDMARKS).toContain("PROPAGANDA CONVEYOR");
+    expect(FUDDER_LANDMARKS).toContain("FUDDER STORAGE TANKS");
+    expect(FUDDER_LANDMARKS).toContain("INFORMATION IS A PRODUCT");
+  });
+
+  it("caches one finite world spanning all five continuous sections", () => {
+    const world = fudderTerritoryFor(3);
+    expect(world).toBe(fudderTerritoryFor(3));
+    expect(world?.width).toBe(FUDDER_SECTION_WIDTH * FUDDER_SECTIONS.length);
+    expect(world?.skyline.length).toBeGreaterThan(40);
+    for (const block of world?.skyline ?? []) {
+      expect(Number.isFinite(block.x + block.w + block.h)).toBe(true);
+    }
+  });
+
+  it("does not alter neighbouring level world definitions", () => {
+    expect(getLevelWidth(2)).toBe(15600);
+    expect(getLevelWidth(4)).toBe(DEFAULT_LEVEL_WIDTH);
+    expect(pitsFor(4)).toHaveLength(0);
+    expect(laddersFor(4)).toHaveLength(0);
   });
 });
 
