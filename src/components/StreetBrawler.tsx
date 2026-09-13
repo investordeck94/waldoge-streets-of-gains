@@ -3874,11 +3874,15 @@ export const StreetBrawler: FC = () => {
         const upHeld = g.keys.has("w") || g.keys.has("arrowup");
         const downHeld = g.keys.has("s") || g.keys.has("arrowdown");
         const jumpHeld = upHeld || g.keys.has(" ");
+        // DOWN also grabs a ladder, so stepping off a landing back down is the
+        // obvious control rather than a jump-plus-direction combination.
+        const climbHeld = jumpHeld || downHeld;
         // A ladder may only be (re)mounted on a FRESH press of the climb
         // control. Without this latch, holding JUMP through a full climb makes
         // the fighter instantly re-grab at the exit and auto-travel back the
         // other way — the "stuck on the ladder" yo-yo.
-        if (!jumpHeld) pClimb.climbRearm = true;
+        if (!climbHeld) pClimb.climbRearm = true;
+
         const feetY = pAny.worldDeck
           ? pAny.worldDeck.y
           : groundYAt(g.level, p.x, p.y, false);
