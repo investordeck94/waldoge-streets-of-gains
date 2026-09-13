@@ -3771,6 +3771,7 @@ export const StreetBrawler: FC = () => {
           if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && canJump && !wantsLadder) {
             p.vy = JUMP_FORCE;
             (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
+            p.worldDeck = undefined;
           }
         }
 

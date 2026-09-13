@@ -3,7 +3,7 @@ import { GROUND_Y } from "@/game/config";
 import {
   getLevelWidth, DEFAULT_LEVEL_WIDTH, baseGroundYAt, groundYAt, pitsFor, laddersFor,
   ladderAt, nearestLadder, clampToPitWalls, hasVerticalTraversal,
-  encounterX, bossArenaX, PIT_DEPTH, LADDER_GRAB_X, maxPitDepthFor, landingDecksFor, pitAt, connectingLadder,
+  encounterX, bossArenaX, PIT_DEPTH, LADDER_GRAB_X, maxPitDepthFor, landingDeckAt, landingDecksFor, pitAt, connectingLadder,
 } from "@/game/config/world";
 import { mount, dismount, stepClimb, climbDirectionFor, ladderExitSurfaceY, type Climber } from "../climb";
 import { districtFor, hasDistrict, sectionLabelAt } from "@/game/presentation/render2d/districts";
