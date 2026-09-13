@@ -421,14 +421,19 @@ export function drawWaldogeSprite(
 
   ctx.save();
 
-  // Ground shadow (world-anchored).
-  ctx.save();
-  ctx.globalAlpha = 0.3;
-  ctx.beginPath();
-  ctx.ellipse(sx, sy + 2, 26, 6.5, 0, 0, Math.PI * 2);
-  ctx.fillStyle = "#000";
-  ctx.fill();
-  ctx.restore();
+  // Ground shadow (world-anchored). Airborne frames are skipped: the game
+  // already draws a shadow on the real floor, and this feet-anchored one rode
+  // up with the jump, reading as a second, doubled Waldoge in mid-air.
+  if (!airborne(e)) {
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.beginPath();
+    ctx.ellipse(sx, sy + 2, 26, 6.5, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "#000";
+    ctx.fill();
+    ctx.restore();
+  }
+
 
   // Style aura under the fighter (non-default styles only).
   if (style !== "brawler") {
