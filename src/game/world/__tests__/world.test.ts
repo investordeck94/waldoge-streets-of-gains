@@ -334,6 +334,15 @@ describe("level 3 — Bad Actors Studios", () => {
     expect(Number.isFinite(groundYAt(2, NaN))).toBe(true);
   });
 
+  it("grounds Stage 2 beneath the SUS'TER ACT billboard on the lower studio floor", () => {
+    for (const x of [8401, 8500, 8540, 9000, 9460, 9500, 9599]) {
+      expect(baseGroundYAt(2, x)).toBe(GROUND_Y);
+      expect(groundYAt(2, x, 182)).toBe(GROUND_Y);
+      expect(groundYAt(2, x, GROUND_Y)).toBe(GROUND_Y);
+    }
+    expect(landingDecksFor(2).some((deck) => deck.x0 <= 9000 && deck.x1 >= 9000)).toBe(false);
+  });
+
   it("does not change the shared main floor in Levels 1, 2 or 7", () => {
     expect(baseGroundYAt(0, 1000)).toBe(GROUND_Y);
     expect(baseGroundYAt(1, 1000)).toBe(GROUND_Y);
