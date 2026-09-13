@@ -134,7 +134,7 @@ export function preloadTickerTakerSprites() { getAtlas(); }
 
 /** Source-rect scale currently in use (1 when the sheet is not resampled). */
 export function atlasSourceScale(): number {
-  return sheet && sheet !== (atlas as unknown as Sheet) && ATLAS_SCALE < 1 ? ATLAS_SCALE : 1;
+  return srcScale;
 }
 
 interface Pose {
