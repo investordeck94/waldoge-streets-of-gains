@@ -1,5 +1,11 @@
 # Waldoge: Streets of Gains — combat pass
 
+## Current — Level 4 Fudder Territory
+- [ ] Author one flat continuous main floor, explicit elevated decks, and fully connected ladders
+- [ ] Build the five blueprint sections as a modular layered industrial propaganda environment
+- [ ] Use the definitive Fudder atlas and head-only Waldoge wanted posters
+- [ ] Validate full desktop/mobile traversal, every ladder/deck, combat, camera, tests, typecheck, and build
+
 ## Current — Level 7 sprite continuity
 - [x] Verify live entity state and isolate failure to Level 7 bitmap rendering
 - [x] Reduce the persistent Ticker Taker PNG texture to the smallest stable mobile size
