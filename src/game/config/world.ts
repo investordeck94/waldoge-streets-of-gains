@@ -273,6 +273,8 @@ export const LEVEL_LADDERS: Record<number, Ladder[]> = {
     { x: 5050, top: 184, bottom: GROUND_Y, style: "construction" },
     { x: 6040, top: 176, bottom: GROUND_Y, style: "construction" },
     { x: 6900, top: 176, bottom: GROUND_Y, style: "maintenance" },
+    { x: 7550, top: 184, bottom: GROUND_Y, style: "construction" },
+    { x: 8650, top: 184, bottom: GROUND_Y, style: "maintenance" },
   ],
 };
 
@@ -335,6 +337,8 @@ const LEVEL_AUTHORED_DECKS: Record<number, LandingDeck[]> = {
     { x0: 4700, x1: 5090, y: 184, ladderX: 5050 },
     { x0: 6000, x1: 6450, y: 176, ladderX: 6040 },
     { x0: 6660, x1: 6940, y: 176, ladderX: 6900 },
+    { x0: 7480, x1: 7900, y: 184, ladderX: 7550 },
+    { x0: 8380, x1: 8720, y: 184, ladderX: 8650 },
   ],
 };
 
