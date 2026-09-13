@@ -92,6 +92,34 @@ export function pitsFor(level: number): GroundPit[] {
   return LEVEL_PITS[level] ?? [];
 }
 
+// ---------------------------------------------------------------------------
+// Authored main-floor profiles
+// ---------------------------------------------------------------------------
+
+/**
+ * Level 3 panel five paints its visible pavement below the legacy collision
+ * floor. Register that one measured section with collision and blend at its
+ * edges so entering it is a walkable dip rather than a hard wall.
+ */
+const LEVEL_3_PROJECTOR_FLOOR = { x0: 4800, x1: 6000, y: 351 } as const;
+const GROUND_BLEND_WIDTH = 96;
+
+/** Main painted floor beneath x, before pits and elevated decks are applied. */
+export function baseGroundYAt(level: number, x: number): number {
+  if (!Number.isFinite(x)) return GROUND_Y;
+  if (level !== 2) return GROUND_Y;
+  const floor = LEVEL_3_PROJECTOR_FLOOR;
+  if (x < floor.x0 || x > floor.x1) return GROUND_Y;
+  const depth = floor.y - GROUND_Y;
+  if (x < floor.x0 + GROUND_BLEND_WIDTH) {
+    return GROUND_Y + depth * ((x - floor.x0) / GROUND_BLEND_WIDTH);
+  }
+  if (x > floor.x1 - GROUND_BLEND_WIDTH) {
+    return GROUND_Y + depth * ((floor.x1 - x) / GROUND_BLEND_WIDTH);
+  }
+  return floor.y;
+}
+
 /**
  * Ground (foot) y at a world x for a level.
  *
@@ -109,7 +137,7 @@ export function groundYAt(level: number, x: number, fromY?: number): number {
     }
   }
   const pit = pitAt(level, x);
-  if (!pit) return GROUND_Y;
+  if (!pit) return baseGroundYAt(level, x);
   return pit.y;
 }
 
