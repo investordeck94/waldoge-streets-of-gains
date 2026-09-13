@@ -8,7 +8,7 @@ import {
   badActorSectionLabelAt,
   badActorWorldFor,
 } from "../badActorStudios";
-import { getLevelWidth, laddersFor, landingDecksFor, pitsFor } from "@/game/config/world";
+import { getLevelWidth, groundYAt, laddersFor, landingDecksFor, pitsFor } from "@/game/config/world";
 
 describe("level 3 — Bad Actors Studios blueprint areas", () => {
   it("has the 13 blueprint areas in the approved order", () => {
