@@ -305,6 +305,8 @@ describe("level 3 — Bad Actors Studios", () => {
     expect(baseGroundYAt(2, 4700)).toBe(351); // Golf-cart end of the office
     expect(groundYAt(2, 4801, 351)).toBe(412); // Projector-area lower studio floor
     expect(groundYAt(2, 4896, 412)).toBe(412); // Beneath the projector headlight
+    expect(groundYAt(2, 5020, 351)).toBe(412); // No obsolete ladder-top landing
+    expect(groundYAt(2, 5780, 351)).toBe(412); // No obsolete ladder-top landing
     expect(groundYAt(2, 5999, 412)).toBe(412); // Lower floor continues to the far wall
     expect(baseGroundYAt(2, 6060)).toBe(GROUND_Y); // SUS'TER ACT plaza remains level
     expect(groundYAt(2, 4200)).toBe(351);

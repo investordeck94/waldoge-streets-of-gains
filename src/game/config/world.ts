@@ -301,6 +301,11 @@ export function landingDecksFor(level: number): LandingDeck[] {
   for (const l of laddersFor(level)) {
     const pit = pitAt(level, l.x);
     if (!pit || l.top >= pit.y) continue;
+    // A ladder top is only a landing when it meets the surrounding authored
+    // upper floor. Projector service ladders sit wholly inside the lower studio
+    // area, so inventing decks at their old intermediate y would make fighters
+    // levitate above the authoritative pit floor.
+    if (Math.abs(l.top - baseGroundYAt(level, l.x)) > 1) continue;
     decks.push({ x0: l.x - LANDING_HALF_W, x1: l.x + LANDING_HALF_W, y: l.top, ladderX: l.x });
   }
   deckCache.set(level, decks);
