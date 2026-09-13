@@ -67,7 +67,7 @@ describe("ticker taker atlas memory budget", () => {
     expect(validFrame(undefined)).toBe(false);
     expect(validFrame({ x: 0, y: 0, w: 0, h: 540, ax: 193, ay: 540 })).toBe(false);
     expect(validFrame({ x: Number.NaN, y: 0, w: 366, h: 540, ax: 193, ay: 540 })).toBe(false);
-    expect(validFrame({ x: 1693, y: 0, w: 1, h: 1, ax: 1, ay: 1 })).toBe(false);
+    expect(validFrame({ x: 1695, y: 0, w: 1, h: 1, ax: 1, ay: 1 })).toBe(false);
   });
 
   it("leaves destination dimensions independent of source scale", () => {

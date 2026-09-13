@@ -103,6 +103,11 @@ function getAtlas(): HTMLImageElement | null {
   if (typeof Image === "undefined") return null;
   if (!atlas) {
     atlas = new Image();
+    // Keep one browser-decoded image for the entire session. This is the same
+    // direct Image path as the stable boss atlases: no canvas copy, bitmap
+    // conversion, per-frame allocation or combat-state replacement.
+    atlas.decoding = "sync";
+    atlas.fetchPriority = "high";
     atlas.onload = () => { ready = true; };
     atlas.src = atlasAsset.url;
   }
