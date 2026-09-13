@@ -3762,18 +3762,35 @@ export const StreetBrawler: FC = () => {
           const feetY = p.worldDeck
             ? p.worldDeck.y
             : groundYAt(g.level, p.x, p.y, false);
-          const canJump = !pClimbing && (p.y >= feetY || (p as Entity & { onPlatform?: Platform | null }).onPlatform);
+          const pJump = p as Entity & { onPlatform?: Platform | null; airJumps?: number };
+          const grounded = p.y >= feetY || pJump.onPlatform;
+          const canJump = !pClimbing && grounded;
+          // Landing (or grabbing a ladder) refills the mid-air jump.
+          if (grounded || pClimbing) pJump.airJumps = 0;
           // Inside a ladder's grab zone the JUMP button becomes the ladder
           // control (handled in the physics step below); everywhere else JUMP
           // is exactly the normal jump it has always been.
           const wantsLadder = !pClimbing && p.y >= feetY - 1
             && hasVerticalTraversal(g.level) && ladderAt(g.level, p.x) !== null;
+          const jumpPressed = g.keyJustPressed.has("w")
+            || g.keyJustPressed.has("arrowup")
+            || g.keyJustPressed.has(" ");
           if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && canJump && !wantsLadder) {
             p.vy = JUMP_FORCE;
-            (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
+            pJump.onPlatform = null;
             p.worldDeck = undefined;
+          } else if (
+            // Double jump: one extra leap per airtime, on a FRESH press only, so
+            // holding jump still behaves exactly as before.
+            jumpPressed && !pClimbing && !grounded && (pJump.airJumps ?? 0) < 1
+          ) {
+            pJump.airJumps = (pJump.airJumps ?? 0) + 1;
+            p.vy = JUMP_FORCE * 0.88;
+            p.state = "jump";
+            sfx(() => SFX.jump?.());
           }
         }
+
 
 
         // Reset light-chain index after CHAIN_RESET_MS of inactivity
