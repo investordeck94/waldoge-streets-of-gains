@@ -41,10 +41,16 @@ export const LEVELS: LevelConfig[] = [
   {
     name: "NEON KINGPIN",
     theme: "mall",
+    // Level 4 is five authored sections wide (Entrance, Media, Industrial,
+    // Factory, Arena). One staged minion wave per non-boss section so no
+    // playable stretch of FUDDER TERRITORY is empty of enemies.
     waves: [
-      { count: 4, hp: 50, speed: 1.7 },
-      { count: 4, hp: 55, speed: 1.9 },
+      { count: 3, hp: 45, speed: 1.6 }, // Entrance / Propaganda Street
+      { count: 4, hp: 50, speed: 1.7 }, // Media District
+      { count: 5, hp: 55, speed: 1.8 }, // Industrial Complex (ambush)
+      { count: 5, hp: 60, speed: 1.9 }, // Propaganda Factory
     ],
+
     // FUDDER is a heavy sumo boss: tankier and hits harder, but slower on his
     // feet than the other bosses — his readable wind-ups are the counterplay.
     boss: { hp: 520, chargeSpeed: 5.5, aiSpeed: 1.6, dmgMult: 1.0, name: "FUDDER" },
