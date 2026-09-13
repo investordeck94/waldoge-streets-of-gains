@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { GROUND_Y } from "@/game/config";
 import {
-  getLevelWidth, DEFAULT_LEVEL_WIDTH, groundYAt, pitsFor, laddersFor,
+  getLevelWidth, DEFAULT_LEVEL_WIDTH, baseGroundYAt, groundYAt, pitsFor, laddersFor,
   ladderAt, nearestLadder, clampToPitWalls, hasVerticalTraversal,
   encounterX, bossArenaX, PIT_DEPTH, LADDER_GRAB_X, maxPitDepthFor, landingDecksFor, pitAt, connectingLadder,
 } from "@/game/config/world";
@@ -297,6 +297,27 @@ describe("level 3 — Bad Actors Studios", () => {
       expect(Number.isFinite(ladder.bottom)).toBe(true);
       expect(ladder.bottom).toBeGreaterThan(ladder.top);
     }
+  });
+
+  it("registers the independently painted floors with shared collision", () => {
+    expect(baseGroundYAt(2, 4200)).toBe(350); // Production Office
+    expect(baseGroundYAt(2, 4860)).toBe(351); // Bad Actor District approach
+    expect(baseGroundYAt(2, 6060)).toBe(330); // SUS'TER ACT plaza
+    expect(groundYAt(2, 4200)).toBe(baseGroundYAt(2, 4200));
+    expect(groundYAt(2, 5200)).toBe(412); // Projector service-level dip
+  });
+
+  it("blends adjoining painted floor heights without a hard vertical snap", () => {
+    const samples = [4752, 4776, 4800, 4824, 4848].map((x) => baseGroundYAt(2, x));
+    for (let index = 1; index < samples.length; index++) {
+      expect(Math.abs(samples[index] - samples[index - 1])).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("does not change the shared main floor in Levels 1, 2 or 7", () => {
+    expect(baseGroundYAt(0, 1000)).toBe(GROUND_Y);
+    expect(baseGroundYAt(1, 1000)).toBe(GROUND_Y);
+    expect(baseGroundYAt(6, 1000)).toBe(GROUND_Y);
   });
 });
 

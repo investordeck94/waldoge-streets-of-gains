@@ -1,5 +1,10 @@
 # Waldoge: Streets of Gains — combat pass
 
+## Current — Level 3 visible-floor grounding
+- [ ] Register the painted Level 3 floor profile with shared collision
+- [ ] Verify Production Office, projector dip, billboard dip, and reverse traversal
+- [ ] Regression-test Levels 1, 2, 3 and 7, jumping, landing, combat, camera and ladders
+
 ## Current — Cross-level Waldoge grounding
 - [x] Trace collision surfaces, camera transforms, and active sprite origin
 - [x] Align every atlas pose to its painted shoe sole instead of transparent cell bounds

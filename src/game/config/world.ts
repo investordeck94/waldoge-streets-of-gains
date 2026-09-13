@@ -92,6 +92,65 @@ export function pitsFor(level: number): GroundPit[] {
   return LEVEL_PITS[level] ?? [];
 }
 
+// ---------------------------------------------------------------------------
+// Authored main-floor profiles
+// ---------------------------------------------------------------------------
+
+/** One painted section whose visible walk surface is not the legacy y=320. */
+export interface GroundSection {
+  x0: number;
+  x1: number;
+  y: number;
+}
+
+/**
+ * Level 3's thirteen panels were painted independently, so their visible
+ * pavement rows do not share one vertical horizon. These feet-space values
+ * register each panel's painted walk surface with collision. Short blends at
+ * panel seams make the physical floor follow the visible transition rather
+ * than snapping between two independently painted heights.
+ */
+const LEVEL_3_PAINTED_FLOORS = [
+  324, 344, 361, 350, 351, 330, 358, 348, 324, 348, 332, 350, 357,
+] as const;
+
+const LEVEL_3_AREA_WIDTH = 1200;
+const GROUND_BLEND_HALF_WIDTH = 48;
+
+export const LEVEL_GROUND_SECTIONS: Record<number, readonly GroundSection[]> = {
+  2: LEVEL_3_PAINTED_FLOORS.map((y, index) => ({
+    x0: index * LEVEL_3_AREA_WIDTH,
+    x1: (index + 1) * LEVEL_3_AREA_WIDTH,
+    y,
+  })),
+};
+
+/** Main painted floor beneath x, before pits and elevated decks are applied. */
+export function baseGroundYAt(level: number, x: number): number {
+  if (!Number.isFinite(x)) return GROUND_Y;
+  const sections = LEVEL_GROUND_SECTIONS[level];
+  if (!sections || sections.length === 0) return GROUND_Y;
+
+  for (let index = 0; index < sections.length; index++) {
+    const section = sections[index];
+    if (x < section.x0 || x > section.x1) continue;
+    const next = sections[index + 1];
+    if (next && x > section.x1 - GROUND_BLEND_HALF_WIDTH) {
+      const span = GROUND_BLEND_HALF_WIDTH * 2;
+      const t = (x - (section.x1 - GROUND_BLEND_HALF_WIDTH)) / span;
+      return section.y + (next.y - section.y) * Math.max(0, Math.min(1, t));
+    }
+    const previous = sections[index - 1];
+    if (previous && x < section.x0 + GROUND_BLEND_HALF_WIDTH) {
+      const span = GROUND_BLEND_HALF_WIDTH * 2;
+      const t = (x - (section.x0 - GROUND_BLEND_HALF_WIDTH)) / span;
+      return previous.y + (section.y - previous.y) * Math.max(0, Math.min(1, t));
+    }
+    return section.y;
+  }
+  return GROUND_Y;
+}
+
 /**
  * Ground (foot) y at a world x for a level.
  *
@@ -109,7 +168,7 @@ export function groundYAt(level: number, x: number, fromY?: number): number {
     }
   }
   const pit = pitAt(level, x);
-  if (!pit) return GROUND_Y;
+  if (!pit) return baseGroundYAt(level, x);
   return pit.y;
 }
 

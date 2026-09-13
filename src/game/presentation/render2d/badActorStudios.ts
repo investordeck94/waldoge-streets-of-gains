@@ -31,7 +31,7 @@
  */
 
 import { GROUND_Y } from "@/game/config";
-import { getLevelWidth } from "@/game/config/world";
+import { baseGroundYAt, getLevelWidth } from "@/game/config/world";
 import { flicker } from "./clock";
 
 import entranceArt from "@/assets/l3-01-entrance.jpg.asset.json";
@@ -745,10 +745,13 @@ export function drawBadActorStudios(
     ctx.fillRect(x - 26, TOP_Y, 52, AREA_H * FLOOR_FRACTION);
   }
 
-  // Stage-light bloom along the working floor.
+  // Stage-light bloom follows the same authored painted-floor profile used by
+  // collision, rather than implying one legacy y=320 floor across every panel.
   const pulse = 0.04 + flicker(camX, 0.0018) * 0.04;
   ctx.fillStyle = `rgba(255,178,64,${pulse})`;
-  ctx.fillRect(0, GROUND_Y - 3, canvasW, 3);
+  for (let screenX = 0; screenX < canvasW; screenX += 8) {
+    ctx.fillRect(screenX, baseGroundYAt(level, camX + screenX) - 3, 8, 3);
+  }
 
   // Solid understructure so a lowered camera never sees past the artwork.
   const floorTop = TOP_Y + AREA_H - 1;
