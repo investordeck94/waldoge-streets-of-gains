@@ -3869,11 +3869,16 @@ export const StreetBrawler: FC = () => {
       // is not standing on. A short input lock stops the JUMP tap's own "w"
       // from immediately reversing an auto-descent.
       let climbedThisFrame = false;
-      const pClimb = pAny as Climber & { climbAuto?: -1 | 1; climbLock?: number };
+      const pClimb = pAny as Climber & { climbAuto?: -1 | 1; climbLock?: number; climbRearm?: boolean };
       if (hasVerticalTraversal(g.level) && p.state !== "dead") {
         const upHeld = g.keys.has("w") || g.keys.has("arrowup");
         const downHeld = g.keys.has("s") || g.keys.has("arrowdown");
         const jumpHeld = upHeld || g.keys.has(" ");
+        // A ladder may only be (re)mounted on a FRESH press of the climb
+        // control. Without this latch, holding JUMP through a full climb makes
+        // the fighter instantly re-grab at the exit and auto-travel back the
+        // other way — the "stuck on the ladder" yo-yo.
+        if (!jumpHeld) pClimb.climbRearm = true;
         const feetY = pAny.worldDeck
           ? pAny.worldDeck.y
           : groundYAt(g.level, p.x, p.y, false);
@@ -3901,14 +3906,16 @@ export const StreetBrawler: FC = () => {
               pAny.worldDeck = exitDir < 0 ? landingDeckAt(g.level, lad.x) ?? undefined : undefined;
               pClimb.climbAuto = undefined;
               pClimb.climbLock = 0;
+              pClimb.climbRearm = false;
             } else if (p.state !== "hit") {
               p.state = "jump";
             }
           } else {
             dismountLadder(pAny);
             pClimb.climbAuto = undefined;
+            pClimb.climbRearm = false;
           }
-        } else if (grounded && jumpHeld) {
+        } else if (grounded && jumpHeld && pClimb.climbRearm) {
           const lad = ladderAt(g.level, p.x);
           if (lad) {
             const atTop = p.y <= lad.top + 3;
@@ -3922,6 +3929,7 @@ export const StreetBrawler: FC = () => {
               p.y = dir === 1 ? lad.top + 2 : lad.bottom - 2;
               pClimb.climbAuto = dir;
               pClimb.climbLock = 16;
+              pClimb.climbRearm = false;
               climbedThisFrame = true;
             }
           }
@@ -3930,6 +3938,7 @@ export const StreetBrawler: FC = () => {
         dismountLadder(pAny);
         pClimb.climbAuto = undefined;
       }
+
 
       if (!climbedThisFrame) {
       p.vy += GRAVITY;
