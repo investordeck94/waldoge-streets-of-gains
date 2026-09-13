@@ -87,7 +87,7 @@ const SIZE = 1.95;
  * The game canvas is capped at devicePixelRatio 2 and Ticker Taker is drawn at
  * roughly 136 CSS px tall from a 540 px source frame, so no more than ~55% of
  * the authored resolution can ever reach a pixel. The checked-in CDN asset is
- * pre-scaled to ATLAS_SCALE, cutting decoded memory by ~64% without allocating
+ * pre-scaled to ATLAS_SCALE, cutting decoded memory by ~84% without allocating
  * an off-screen canvas during Level 7. Frame SOURCE rects use the same scale;
  * every DESTINATION rect stays untouched, preserving pose, anchor, size,
  * hitbox, timing and combat behaviour.

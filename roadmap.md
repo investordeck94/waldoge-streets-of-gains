@@ -2,9 +2,9 @@
 
 ## Current — Level 7 sprite continuity
 - [x] Verify live entity state and isolate failure to Level 7 bitmap rendering
-- [ ] Reduce the persistent Ticker Taker PNG texture to the smallest stable mobile size
-- [ ] Validate every pose, special move, and continuous visibility through an extended fight
-- [ ] Run focused/full tests, typecheck and production build
+- [x] Reduce the persistent Ticker Taker PNG texture to the smallest stable mobile size
+- [x] Validate every pose, special move, and continuous visibility through an extended fight
+- [x] Run focused/full tests, typecheck and production build
 
 ## Current — Level 3 split-level grounding
 - [x] Preserve the Stage 2 elevated platform, artwork, collision and ladders
