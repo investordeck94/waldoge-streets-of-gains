@@ -92,8 +92,11 @@ export function spawnEnemies(
   const w = lvl?.waves[waveIndex];
   if (!w) return [];
   const count = Math.max(1, Math.round(w.count * DIFFICULTY_ENEMY_MULT[diff]));
+  // Enemies are staged as a patrol line rather than one tight cluster, so the
+  // long redesigned worlds keep throwing fights at the player as they advance
+  // instead of leaving empty stretches of street.
   return Array.from({ length: count }, (_, i) => ({
-    x: playerX + 400 + i * 130 + Math.random() * 200,
+    x: playerX + 400 + i * 320 + Math.random() * 200,
     y: GROUND_Y,
     vy: 0,
     vx: 0,
