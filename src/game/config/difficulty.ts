@@ -13,9 +13,9 @@ import type { Difficulty } from "./types";
 
 /** Multiplier applied to per-wave minion `count`. */
 export const DIFFICULTY_ENEMY_MULT: Record<Difficulty, number> = {
-  easy: 1,
-  normal: 1.7,
-  blackMonday: 3.0,
+  easy: 1.6,
+  normal: 2.6,
+  blackMonday: 4.5,
 };
 
 /** Multiplier applied to boss attack cooldown (lower = more aggressive). */
@@ -34,7 +34,7 @@ export const DIFFICULTY_BOSS_DMG: Record<Difficulty, number> = {
 
 /** Extra minions that join the boss encounter. */
 export const BOSS_WAVE_MINIONS: Record<Difficulty, number> = {
-  easy: 0,
-  normal: 2,
-  blackMonday: 4,
+  easy: 2,
+  normal: 4,
+  blackMonday: 7,
 };
