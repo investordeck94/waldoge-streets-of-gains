@@ -107,6 +107,13 @@ export interface PlayerEntity {
    */
   attackLanded?: boolean;
 
+  /**
+   * Authored elevated world deck currently supporting the player's feet.
+   * Undefined means normal lower-floor grounding; it is set only by a ladder
+   * exit or a genuine downward landing, never merely by horizontal overlap.
+   */
+  worldDeck?: { x0: number; x1: number; y: number };
+
 }
 
 // ---------------------------------------------------------------------------

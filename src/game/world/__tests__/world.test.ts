@@ -3,7 +3,7 @@ import { GROUND_Y } from "@/game/config";
 import {
   getLevelWidth, DEFAULT_LEVEL_WIDTH, baseGroundYAt, groundYAt, pitsFor, laddersFor,
   ladderAt, nearestLadder, clampToPitWalls, hasVerticalTraversal,
-  encounterX, bossArenaX, PIT_DEPTH, LADDER_GRAB_X, maxPitDepthFor, landingDecksFor, pitAt, connectingLadder,
+  encounterX, bossArenaX, PIT_DEPTH, LADDER_GRAB_X, maxPitDepthFor, landingDeckAt, landingDecksFor, pitAt, connectingLadder,
 } from "@/game/config/world";
 import { mount, dismount, stepClimb, climbDirectionFor, ladderExitSurfaceY, type Climber } from "../climb";
 import { districtFor, hasDistrict, sectionLabelAt } from "@/game/presentation/render2d/districts";
@@ -337,6 +337,24 @@ describe("level 3 — Bad Actors Studios", () => {
   it("keeps the Stage 2 gantry deck walkable at its authored height", () => {
     expect(groundYAt(2, 9000, 182)).toBe(182);
     expect(landingDecksFor(2).some((deck) => deck.x0 <= 9000 && deck.x1 >= 9000)).toBe(true);
+  });
+
+  it("separates the Stage 2 lower-floor lane from its preserved overhead gantry", () => {
+    const gantry = landingDeckAt(2, 9000);
+    expect(gantry).toMatchObject({ x0: 8500, x1: 9500, y: 182 });
+    expect(groundYAt(2, 9000, GROUND_Y, false)).toBe(GROUND_Y);
+    expect(groundYAt(2, 9000, 210, false)).toBe(GROUND_Y);
+    expect(groundYAt(2, 9000, gantry?.y)).toBe(182);
+  });
+
+  it("keeps both Stage 2 ladder endpoints connected to the preserved gantry", () => {
+    const ladders = laddersFor(2).filter((ladder) => ladder.x === 8540 || ladder.x === 9460);
+    expect(ladders).toHaveLength(2);
+    for (const ladder of ladders) {
+      expect(ladder.top).toBe(182);
+      expect(ladder.bottom).toBe(GROUND_Y);
+      expect(landingDeckAt(2, ladder.x)?.y).toBe(ladder.top);
+    }
   });
 
 

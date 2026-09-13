@@ -115,7 +115,7 @@ import { setRenderClock, renderNow } from "@/game/presentation/render2d/clock";
 import {
   getLevelWidth, groundYAt, clampToPitWalls, hasVerticalTraversal,
   ladderAt, nearestLadder, connectingLadder, encounterX, bossArenaX, BOSS_WAKE_DISTANCE,
-  maxPitDepthFor, LADDER_GRAB_X,
+  maxPitDepthFor, LADDER_GRAB_X, landingDeckAt, landingDecksFor, type LandingDeck,
 } from "@/game/config/world";
 import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/districts";
 import { drawPits, drawLadders, drawLandingDecks } from "@/game/presentation/render2d/terrain";
@@ -3759,7 +3759,9 @@ export const StreetBrawler: FC = () => {
         if (dir !== 0) { p.x += dir * speed; p.facing = dir as 1 | -1; moving = true; }
         {
           const pClimbing = (p as unknown as Climber).climbing === true;
-          const feetY = groundYAt(g.level, p.x, p.y);
+          const feetY = p.worldDeck
+            ? p.worldDeck.y
+            : groundYAt(g.level, p.x, p.y, false);
           const canJump = !pClimbing && (p.y >= feetY || (p as Entity & { onPlatform?: Platform | null }).onPlatform);
           // Inside a ladder's grab zone the JUMP button becomes the ladder
           // control (handled in the physics step below); everywhere else JUMP
@@ -3769,6 +3771,7 @@ export const StreetBrawler: FC = () => {
           if ((g.keys.has("w") || g.keys.has("arrowup") || g.keys.has(" ")) && canJump && !wantsLadder) {
             p.vy = JUMP_FORCE;
             (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
+            p.worldDeck = undefined;
           }
         }
 
@@ -3824,7 +3827,10 @@ export const StreetBrawler: FC = () => {
         } else if (p.stateTimer <= 0) {
           // NOTE: don't null currentMove here — it's cleared after damage applies
           // (or when a new attack overwrites it). Nulling here can race the hit-frame check.
-          p.state = moving ? "walk" : p.y < groundYAt(g.level, p.x, p.y) ? "jump" : "idle";
+          const stateGroundY = p.worldDeck
+            ? p.worldDeck.y
+            : groundYAt(g.level, p.x, p.y, false);
+          p.state = moving ? "walk" : p.y < stateGroundY ? "jump" : "idle";
         }
       } else if (p.state !== "hit" && p.state !== "dead" && !isAttacking && didSpecial) {
         // Special move was triggered, movement already handled by the special
@@ -3848,7 +3854,7 @@ export const StreetBrawler: FC = () => {
       // non-finite p.x poisons the camera (see the camX guard below), which
       // makes every sprite draw at NaN — i.e. the whole arena "disappears".
       sanitizeFighterMotion(p as MovingEnemy, GROUND_Y);
-      const pAny = p as Entity & { onPlatform?: Platform | null } & Climber;
+      const pAny = p as Entity & { onPlatform?: Platform | null; worldDeck?: LandingDeck } & Climber;
       const levelWidth = getLevelWidth(g.level);
       const prevFootY = p.y;
 
@@ -3868,7 +3874,9 @@ export const StreetBrawler: FC = () => {
         const upHeld = g.keys.has("w") || g.keys.has("arrowup");
         const downHeld = g.keys.has("s") || g.keys.has("arrowdown");
         const jumpHeld = upHeld || g.keys.has(" ");
-        const feetY = groundYAt(g.level, p.x, p.y);
+        const feetY = pAny.worldDeck
+          ? pAny.worldDeck.y
+          : groundYAt(g.level, p.x, p.y, false);
         const grounded = p.y >= feetY - 1 && !pAny.onPlatform;
         if (pAny.climbing) {
           const lad = ladderAt(g.level, p.x) ?? nearestLadder(g.level, p.x);
@@ -3890,6 +3898,7 @@ export const StreetBrawler: FC = () => {
               p.vy = 0;
               p.state = "idle";
               pAny.onPlatform = null;
+              pAny.worldDeck = exitDir < 0 ? landingDeckAt(g.level, lad.x) ?? undefined : undefined;
               pClimb.climbAuto = undefined;
               pClimb.climbLock = 0;
             } else if (p.state !== "hit") {
@@ -3928,7 +3937,29 @@ export const StreetBrawler: FC = () => {
       // Ground collision — level-aware (main street, ladder landing deck or
       // lower street floor). `prevFootY` keeps a fighter already below a deck
       // from being popped back up on to it.
-      const footGroundY = groundYAt(g.level, p.x, prevFootY);
+      let activeWorldDeck = pAny.worldDeck;
+      if (activeWorldDeck && (p.x < activeWorldDeck.x0 || p.x > activeWorldDeck.x1)) {
+        activeWorldDeck = undefined;
+        pAny.worldDeck = undefined;
+      }
+      let footGroundY = activeWorldDeck
+        ? activeWorldDeck.y
+        : groundYAt(g.level, p.x, prevFootY, false);
+      // Elevated production decks are one-way surfaces. Waldoge may stand on
+      // one after climbing onto it or after genuinely crossing it while
+      // descending, but horizontal overlap or an upward jump from the lower
+      // studio floor can never snap him onto the deck.
+      if (!activeWorldDeck && p.vy >= 0) {
+        for (const deck of landingDecksFor(g.level)) {
+          if (p.x < deck.x0 || p.x > deck.x1) continue;
+          if (prevFootY <= deck.y + 1 && p.y >= deck.y) {
+            activeWorldDeck = deck;
+            pAny.worldDeck = deck;
+            footGroundY = deck.y;
+            break;
+          }
+        }
+      }
 
       if (p.y >= footGroundY) {
         if (p.state === "groundpound" && p.vy > 5) {
@@ -3972,6 +4003,11 @@ export const StreetBrawler: FC = () => {
           p.y = plat.y;
         }
       }
+      if (pAny.worldDeck) {
+        const deck = pAny.worldDeck;
+        if (p.x < deck.x0 || p.x > deck.x1) pAny.worldDeck = undefined;
+        else p.y = deck.y;
+      }
 
       p.stateTimer = Math.max(-1, p.stateTimer - 1);
       p.attackCooldown = Math.max(-1, p.attackCooldown - 1);
@@ -3989,7 +4025,7 @@ export const StreetBrawler: FC = () => {
         (p.state === "uppercut" && p.stateTimer === 12) ||
         (p.state === "spinkick" && (p.stateTimer === 14 || p.stateTimer === 8)) ||
         (p.state === "dashpunch" && p.stateTimer === 8) ||
-        (p.state === "groundpound" && p.y >= groundYAt(g.level, p.x, p.y) - 5 && p.stateTimer > 5)
+        (p.state === "groundpound" && p.y >= (p.worldDeck?.y ?? groundYAt(g.level, p.x, p.y, false)) - 5 && p.stateTimer > 5)
       );
       // Data-driven J/K/L basics: percentage-based active window from attackCooldown.
       // Window opens at ~50% through the animation and lasts a few frames; hitApplied
@@ -4997,7 +5033,7 @@ export const StreetBrawler: FC = () => {
         if (p && p.hp > 0) {
           const sx = p.x - g.camX;
           // Shadow shrinks/fades as the player rises above the ground.
-          const localGround = groundYAt(g.level, p.x, p.y);
+          const localGround = p.worldDeck?.y ?? groundYAt(g.level, p.x, p.y, false);
           const heightAboveGround = Math.max(0, localGround - p.y);
           const t = Math.min(1, heightAboveGround / 140);
           const rx = 14 * (1 - t * 0.55);
