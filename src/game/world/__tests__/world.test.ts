@@ -12,6 +12,9 @@ import {
   FUDDER_LANDMARKS,
   FUDDER_SECTIONS,
   FUDDER_SECTION_WIDTH,
+  FUDDER_POSTER_TEXT,
+  FUDDER_VISUAL_DECK_IDS,
+  __fudderTerritoryTest,
   fudderSectionLabelAt,
   fudderTerritoryFor,
 } from "@/game/presentation/render2d/fudderTerritory";
@@ -450,7 +453,7 @@ describe("level 4 — Fudder Territory blueprint", () => {
 
   it("authors every elevated deck explicitly with finite bounds and height", () => {
     const decks = landingDecksFor(3);
-    expect(decks).toHaveLength(8);
+    expect(decks).toHaveLength(10);
     for (const deck of decks) {
       expect(Number.isFinite(deck.x0 + deck.x1 + deck.y + deck.ladderX)).toBe(true);
       expect(deck.x0).toBeLessThan(deck.x1);
@@ -461,7 +464,7 @@ describe("level 4 — Fudder Territory blueprint", () => {
   });
 
   it("connects every ladder bottom to the flat floor and top to a real deck", () => {
-    expect(laddersFor(3)).toHaveLength(8);
+    expect(laddersFor(3)).toHaveLength(10);
     for (const ladder of laddersFor(3)) {
       expect(ladder.bottom).toBe(GROUND_Y);
       expect(landingDeckAt(3, ladder.x)?.y).toBe(ladder.top);
@@ -502,11 +505,25 @@ describe("level 4 — Fudder Territory blueprint", () => {
   });
 
   it("contains every major propaganda landmark from the approved blueprint", () => {
-    expect(FUDDER_LANDMARKS).toHaveLength(13);
+    expect(FUDDER_LANDMARKS).toHaveLength(16);
     expect(FUDDER_LANDMARKS).toContain("FUDDER NEWS ALWAYS RIGHT");
     expect(FUDDER_LANDMARKS).toContain("PROPAGANDA CONVEYOR");
     expect(FUDDER_LANDMARKS).toContain("FUDDER STORAGE TANKS");
     expect(FUDDER_LANDMARKS).toContain("INFORMATION IS A PRODUCT");
+    expect(FUDDER_LANDMARKS).toContain("FUDDER FREIGHT");
+    expect(FUDDER_LANDMARKS).toContain("LOADING BAYS 01 AND 02");
+    expect(FUDDER_LANDMARKS).toContain("FUDDER PRESENTATION CHAMBER");
+  });
+
+  it("binds all ten blueprint decks to visual structures", () => {
+    expect(FUDDER_VISUAL_DECK_IDS).toHaveLength(10);
+    expect(FUDDER_VISUAL_DECK_IDS).toHaveLength(landingDecksFor(3).length);
+    expect(new Set(FUDDER_VISUAL_DECK_IDS).size).toBe(10);
+  });
+
+  it("locks poster wording and definitive Fudder atlas usage", () => {
+    expect(FUDDER_POSTER_TEXT).toEqual(["WANTED BY FUDDER", "DON'T BUY"]);
+    expect(__fudderTerritoryTest.atlasUrl).toContain("fudder-atlas.png");
   });
 
   it("caches one finite world spanning all five continuous sections", () => {
