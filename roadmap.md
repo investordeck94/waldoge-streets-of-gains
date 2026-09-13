@@ -2,8 +2,8 @@
 
 ## Current — Level 3 Stage 2 lower-floor grounding
 - [x] Remove the invisible Y=182 collision deck beneath the SUS'TER ACT billboard
-- [ ] Verify feet remain on the authoritative Y=320 studio floor through idle, movement, combat and jump/landing
-- [ ] Validate desktop/mobile gameplay, focused/full tests, typecheck and production build
+- [x] Verify feet remain on the authoritative Y=320 studio floor through idle, movement, combat and jump/landing
+- [x] Validate desktop/mobile gameplay, focused/full tests, typecheck and production build
 
 ## Current — Level 3 visible-floor grounding
 - [x] Align the Production Office tyre-contact plane and projector dip with shared collision
