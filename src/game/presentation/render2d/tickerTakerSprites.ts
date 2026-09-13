@@ -30,7 +30,7 @@
  */
 
 import { renderNow, flicker } from "./clock";
-import atlasAsset from "@/assets/ticker-taker-atlas-60.png.asset.json";
+import atlasAsset from "@/assets/ticker-taker-atlas-40.png.asset.json";
 
 export interface TickerTakerView {
   x: number;
@@ -48,9 +48,9 @@ export type TickerTakerForm =
   | "jab" | "straight" | "combo" | "roundhouse" | "flying_kick" | "sweep"
   | "spin" | "slam" | "lunge" | "throw" | "dodge" | "counter" | null;
 
-interface Frame { x: number; y: number; w: number; h: number; ax: number; ay: number }
+export interface TickerTakerFrame { x: number; y: number; w: number; h: number; ax: number; ay: number }
 
-export const TICKER_TAKER_FRAMES: Record<string, Frame> = {
+export const TICKER_TAKER_FRAMES: Record<string, TickerTakerFrame> = {
   idle: { x: 0, y: 0, w: 366, h: 540, ax: 193, ay: 540 },
   walk: { x: 372, y: 0, w: 333, h: 546, ax: 169.6, ay: 546 },
   punch: { x: 711, y: 0, w: 449, h: 541, ax: 187.8, ay: 541 },
@@ -87,12 +87,14 @@ const SIZE = 1.95;
  * The game canvas is capped at devicePixelRatio 2 and Ticker Taker is drawn at
  * roughly 136 CSS px tall from a 540 px source frame, so no more than ~55% of
  * the authored resolution can ever reach a pixel. The checked-in CDN asset is
- * pre-scaled to ATLAS_SCALE, cutting decoded memory by ~64% without allocating
+ * pre-scaled to ATLAS_SCALE, cutting decoded memory by ~84% without allocating
  * an off-screen canvas during Level 7. Frame SOURCE rects use the same scale;
  * every DESTINATION rect stays untouched, preserving pose, anchor, size,
  * hitbox, timing and combat behaviour.
  */
-export const ATLAS_SCALE = 0.6;
+export const ATLAS_SCALE = 0.4;
+export const TICKER_TAKER_ATLAS_WIDTH = 678;
+export const TICKER_TAKER_ATLAS_HEIGHT = 928;
 
 let atlas: HTMLImageElement | null = null;
 let ready = false;
@@ -101,10 +103,15 @@ function getAtlas(): HTMLImageElement | null {
   if (typeof Image === "undefined") return null;
   if (!atlas) {
     atlas = new Image();
+    // Keep one browser-decoded image for the entire session. This is the same
+    // direct Image path as the stable boss atlases: no canvas copy, bitmap
+    // conversion, per-frame allocation or combat-state replacement.
+    atlas.decoding = "sync";
+    atlas.fetchPriority = "high";
     atlas.onload = () => { ready = true; };
     atlas.src = atlasAsset.url;
   }
-  if (!(ready && atlas.complete && atlas.naturalWidth > 0)) return null;
+  if (!(ready && atlas.complete && atlas.naturalWidth === TICKER_TAKER_ATLAS_WIDTH && atlas.naturalHeight === TICKER_TAKER_ATLAS_HEIGHT)) return null;
   return atlas;
 }
 
@@ -119,7 +126,7 @@ export function atlasSourceScale(): number {
 export const TICKER_TAKER_ATLAS_URL = atlasAsset.url;
 
 interface Pose {
-  f: Frame;
+  f: TickerTakerFrame;
   striking: boolean;
   draining: boolean;
   firing: boolean;
@@ -128,13 +135,23 @@ interface Pose {
 }
 
 const P = (
-  f: Frame,
+  f: TickerTakerFrame,
   o: Partial<Omit<Pose, "f">> = {},
 ): Pose => ({
-  f,
+  f: validFrame(f) ? f : F.idle,
   striking: false, draining: false, firing: false, reaping: false, shouting: false,
   ...o,
 });
+
+/** Reject malformed animation data without ever dropping the live boss draw. */
+export function validFrame(frame: TickerTakerFrame | undefined): frame is TickerTakerFrame {
+  if (!frame) return false;
+  const values = [frame.x, frame.y, frame.w, frame.h, frame.ax, frame.ay];
+  return values.every(Number.isFinite) &&
+    frame.x >= 0 && frame.y >= 0 && frame.w > 0 && frame.h > 0 &&
+    (frame.x + frame.w) * ATLAS_SCALE <= TICKER_TAKER_ATLAS_WIDTH &&
+    (frame.y + frame.h) * ATLAS_SCALE <= TICKER_TAKER_ATLAS_HEIGHT;
+}
 
 /** Weapon specials are identified by move id so each weapon poses correctly. */
 function weaponOf(id?: string): "gun" | "scythe" | "mega" | "drain" | null {
@@ -264,7 +281,7 @@ export function drawTickerTakerSprite(
   if (!Number.isFinite(sx) || !Number.isFinite(sy) || !Number.isFinite(e.height)) return true;
   const clock = renderNow();
   const pose = poseFor(e, form, prog, telegraphing, clock);
-  const f = pose.f;
+  const f = validFrame(pose.f) ? pose.f : F.idle;
   const base = (e.height * SIZE) / REF_H;
 
   // Ground shadow (world-anchored).
@@ -397,7 +414,11 @@ export function drawTickerTakerSprite(
   // Source rect follows the pre-scaled PNG; destination rect is unchanged so
   // the on-screen pose, anchor and size are identical to the authored sheet.
   const s = ATLAS_SCALE;
-  ctx.drawImage(img, f.x * s, f.y * s, f.w * s, f.h * s, -f.ax, -f.ay, f.w, f.h);
+  ctx.drawImage(
+    img,
+    Math.round(f.x * s), Math.round(f.y * s), Math.ceil(f.w * s), Math.ceil(f.h * s),
+    -f.ax, -f.ay, f.w, f.h,
+  );
 
   ctx.restore();
   return true;
