@@ -189,7 +189,7 @@ function drawLandmarks(ctx: CanvasRenderingContext2D, index: number, x: number):
     plaque(ctx, x + 1060, 54, 260, 52, ["LIQUIDITY OUT"], true);
     plaque(ctx, x + 100, 218, 230, 50, ["NO REFUNDS"], true);
     plaque(ctx, x + 1010, 205, 340, 66, ["THANK YOU FOR", "YOUR CONTRIBUTION"], true);
-    plaque(ctx, x + 1390, 164, 250, 54, ["MONKO'S BANANAS"], true);
+    plaque(ctx, x + 1390, 96, 250, 54, ["MONKO'S BANANAS"], true);
     monkoPoster(ctx, x + 1645, 105, 202);
   } else {
     plaque(ctx, x + 70, 126, 260, 72, ["WELCOME TO", "YOUR EXIT"]);
