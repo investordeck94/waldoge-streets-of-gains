@@ -121,7 +121,7 @@
 - [ ] Fix root causes found; re-run regression playthrough
 
 ## Current — Level 5 visual blueprint fidelity rebuild
-- [ ] Map each approved blueprint section to dedicated modular environment artwork
-- [ ] Rebuild Level 5 presentation only; preserve all collision, encounters, physics, and progression
-- [ ] Compare live views at X 900, 2700, 4500, 6300, and 8100 against the blueprint
-- [ ] Verify exact Monko poster, Exit Liquidity art, desktop/mobile rendering, tests, and build
+- [x] Map each approved blueprint section to dedicated modular environment artwork
+- [x] Rebuild Level 5 presentation only; preserve all collision, encounters, physics, and progression
+- [x] Compare live views at X 900, 2700, 4500, 6300, and 8100 against the blueprint
+- [x] Verify exact Monko poster, Exit Liquidity art, desktop/mobile rendering, tests, and build
