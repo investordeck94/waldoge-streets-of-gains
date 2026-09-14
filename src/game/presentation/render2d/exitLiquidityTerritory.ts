@@ -1,33 +1,29 @@
 /**
  * LEVEL 5 — THE GRAVEYARD OF GAINS.
- * Deterministic reconstruction of the approved five-section blueprint.
- * Presentation only: collision and encounters remain in config/world.ts.
+ * Painted visual reconstruction of the approved five-section blueprint.
+ * Presentation only: collision, encounters, ladders and progression remain in config/world.ts.
  */
 import { GROUND_Y } from "@/game/config";
-import { getLevelWidth, landingDecksFor } from "@/game/config/world";
+import { getLevelWidth, landingDecksFor, laddersFor } from "@/game/config/world";
 import monkoPosterAsset from "@/assets/monko-lost-bananas-poster.png.asset.json";
 import monkoPosterLocal from "@/assets/monko-lost-bananas-poster-local.png";
 import exitAtlasAsset from "@/assets/exit-liquidity-atlas.png.asset.json";
 import exitAtlasLocal from "@/assets/exit-liquidity-atlas-local.png";
+import cemeteryAsset from "@/assets/level5-cemetery.jpg.asset.json";
+import liquidationAsset from "@/assets/level5-liquidation-street.jpg.asset.json";
+import exchangeAsset from "@/assets/level5-dead-exchange.jpg.asset.json";
+import vaultAsset from "@/assets/level5-liquidity-vault.jpg.asset.json";
+import domainAsset from "@/assets/level5-exit-domain.jpg.asset.json";
 import { flicker, renderNow } from "./clock";
 
 export const EXIT_LIQUIDITY_LEVEL = 4;
 export const EXIT_SECTION_WIDTH = 1800;
 export const EXIT_SECTIONS = [
-  "DEAD COIN CEMETERY",
-  "LIQUIDATION STREET",
-  "THE DEAD EXCHANGE",
-  "THE LIQUIDITY VAULT",
-  "EXIT LIQUIDITY'S DOMAIN",
+  "DEAD COIN CEMETERY", "LIQUIDATION STREET", "THE DEAD EXCHANGE",
+  "THE LIQUIDITY VAULT", "EXIT LIQUIDITY'S DOMAIN",
 ] as const;
 
-export const MONKO_POSTER_WORDING = [
-  "LOST BANANAS",
-  "MONKO",
-  "IF FOUND CONTACT",
-  "ADDRESS ENDS IN DOGE",
-] as const;
-
+export const MONKO_POSTER_WORDING = ["LOST BANANAS", "MONKO", "IF FOUND CONTACT", "ADDRESS ENDS IN DOGE"] as const;
 export const EXIT_LANDMARKS = [
   "CEMETERY GATE", "RIP 99.9%", "BROKEN ATM", "PROJECT DEAD",
   "LIQUIDATED", "POSITION CLOSED", "ACCOUNT BALANCE £0.00", "MARGIN CALL",
@@ -36,26 +32,17 @@ export const EXIT_LANDMARKS = [
   "THANK YOU FOR YOUR CONTRIBUTION", "MONKO'S BANANAS", "LOST BANANAS POSTER",
   "WELCOME TO YOUR EXIT", "ALL TRADERS END HERE", "EXIT LIQUIDITY CATHEDRAL",
 ] as const;
-
 export const EXIT_VISUAL_DECK_IDS = [
-  "cemetery-west", "cemetery-east",
-  "liquidation-west", "liquidation-east",
+  "cemetery-west", "cemetery-east", "liquidation-west", "liquidation-east",
   "exchange-lower-west", "exchange-upper-west", "exchange-lower-east", "exchange-upper-east",
-  "vault-west", "vault-upper", "vault-east",
-  "domain-west", "domain-east",
+  "vault-west", "vault-upper", "vault-east", "domain-west", "domain-east",
 ] as const;
 
 export interface BlueprintLandmark {
-  id: string;
-  section: number;
-  x0: number;
-  x1: number;
-  layer: "background" | "gameplay" | "foreground";
-  collision: boolean;
-  ladderConnection?: string;
-  encounter?: number;
+  id: string; section: number; x0: number; x1: number;
+  layer: "background" | "gameplay" | "foreground"; collision: boolean;
+  ladderConnection?: string; encounter?: number;
 }
-
 export const EXIT_BLUEPRINT_MAP: readonly BlueprintLandmark[] = [
   { id: "cemetery-gate", section: 0, x0: 30, x1: 260, layer: "gameplay", collision: false },
   { id: "crypto-tombs", section: 0, x0: 250, x1: 1050, layer: "gameplay", collision: false, encounter: 900 },
@@ -73,18 +60,20 @@ export const EXIT_BLUEPRINT_MAP: readonly BlueprintLandmark[] = [
   { id: "boss-arena", section: 4, x0: 8100, x1: 9000, layer: "gameplay", collision: false },
 ] as const;
 
-interface SkylineBlock { x: number; w: number; h: number; spire: boolean }
-interface ExitWorld { width: number; skyline: SkylineBlock[] }
-
+interface ExitWorld { width: number }
+const sectionAssets = [cemeteryAsset, liquidationAsset, exchangeAsset, vaultAsset, domainAsset] as const;
 let worldCache: ExitWorld | null = null;
 let posterImage: HTMLImageElement | null = null;
-let posterReady = false;
 let exitImage: HTMLImageElement | null = null;
+let posterReady = false;
 let exitReady = false;
+const sectionImages: Array<HTMLImageElement | null> = [null, null, null, null, null];
+const sectionReady = [false, false, false, false, false];
 
 function loadImage(src: string, ready: () => void): HTMLImageElement | null {
   if (typeof Image === "undefined") return null;
   const image = new Image();
+  image.decoding = "sync";
   image.onload = ready;
   image.src = src;
   return image;
@@ -93,221 +82,150 @@ function loadImage(src: string, ready: () => void): HTMLImageElement | null {
 export function preloadExitLiquidityTerritory(): void {
   if (!posterImage) posterImage = loadImage(monkoPosterLocal, () => { posterReady = true; });
   if (!exitImage) exitImage = loadImage(exitAtlasLocal, () => { exitReady = true; });
+  sectionAssets.forEach((asset, index) => {
+    if (!sectionImages[index]) sectionImages[index] = loadImage(asset.url, () => { sectionReady[index] = true; });
+  });
 }
-
 preloadExitLiquidityTerritory();
 
 export function exitLiquidityTerritoryFor(level: number): ExitWorld | null {
   if (level !== EXIT_LIQUIDITY_LEVEL) return null;
   const width = getLevelWidth(level);
   if (worldCache?.width === width) return worldCache;
-  const skyline: SkylineBlock[] = [];
-  for (let x = -220, i = 0; x < width + 420; i += 1) {
-    const w = 88 + ((i * 53) % 120);
-    skyline.push({ x, w, h: 155 + ((i * 79) % 190), spire: i % 3 === 0 });
-    x += w + 10 + ((i * 19) % 24);
-  }
-  worldCache = { width, skyline };
+  worldCache = { width };
   return worldCache;
 }
+export function hasExitLiquidityTerritory(level: number): boolean { return level === EXIT_LIQUIDITY_LEVEL; }
 
-export function hasExitLiquidityTerritory(level: number): boolean {
-  return level === EXIT_LIQUIDITY_LEVEL;
+function drawPaintedSection(ctx: CanvasRenderingContext2D, index: number, x: number): void {
+  const image = sectionImages[index];
+  if (!image || (!sectionReady[index] && (!image.complete || image.naturalWidth === 0))) return;
+  // The source's painted street line is aligned exactly to the canonical floor.
+  ctx.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight * 0.88, x, -18, EXIT_SECTION_WIDTH, GROUND_Y + 18);
 }
 
-function panel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill = "#101923", stroke = "#566677") {
-  ctx.fillStyle = "#05080d"; ctx.fillRect(x - 5, y - 5, w + 10, h + 10);
-  ctx.fillStyle = fill; ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+function plaque(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, lines: readonly string[], gold = false): void {
+  ctx.save();
+  ctx.shadowColor = gold ? "rgba(224,191,64,.7)" : "rgba(239,43,58,.75)";
+  ctx.shadowBlur = 14;
+  ctx.fillStyle = gold ? "#cfbb36" : "#6f111c";
+  ctx.fillRect(x, y, w, h);
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = gold ? "#f4df63" : "#ef3c49";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(x, y, w, h);
+  ctx.fillStyle = gold ? "#11170e" : "#ffe0cf";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const size = Math.max(12, Math.min(34, Math.floor(h / (lines.length + 0.7))));
+  ctx.font = `900 ${size}px Impact, sans-serif`;
+  lines.forEach((line, i) => ctx.fillText(line, x + w / 2, y + h * ((i + 1) / (lines.length + 1)), w - 16));
+  ctx.restore();
 }
 
-function sign(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, lines: readonly string[], yellow = false) {
-  panel(ctx, x, y, w, h, yellow ? "#c7b92a" : "#711b25", yellow ? "#f6e653" : "#ef4352");
-  ctx.fillStyle = yellow ? "#12150d" : "#ffd8c6"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  const fs = Math.max(10, Math.min(25, Math.floor(h / (lines.length + 1))));
-  ctx.font = `900 ${fs}px Impact, sans-serif`;
-  lines.forEach((line, i) => ctx.fillText(line, x + w / 2, y + h * ((i + 1) / (lines.length + 1)), w - 12));
+function candle(ctx: CanvasRenderingContext2D, x: number, y = GROUND_Y): void {
+  ctx.fillStyle = "#e5d3ad"; ctx.fillRect(x - 3, y - 14, 6, 14);
+  const a = 0.62 + flicker(x, 0.004) * 0.34;
+  ctx.shadowColor = `rgba(255,126,35,${a})`; ctx.shadowBlur = 12;
+  ctx.fillStyle = `rgba(255,158,49,${a})`; ctx.beginPath(); ctx.ellipse(x, y - 19, 3, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
 }
 
-function gothicBuilding(ctx: CanvasRenderingContext2D, x: number, w: number, h: number, red = false) {
-  const top = GROUND_Y - h;
-  panel(ctx, x, top, w, h, red ? "#251119" : "#101a27", red ? "#782532" : "#40566b");
-  ctx.fillStyle = red ? "#481522" : "#16283a";
-  for (let wx = x + 20; wx < x + w - 14; wx += 52) {
-    ctx.beginPath(); ctx.moveTo(wx, top + 62); ctx.lineTo(wx + 13, top + 42); ctx.lineTo(wx + 26, top + 62); ctx.lineTo(wx + 26, top + 104); ctx.lineTo(wx, top + 104); ctx.closePath(); ctx.fill();
-  }
-  ctx.strokeStyle = red ? "#9b3340" : "#344d64"; ctx.lineWidth = 5;
-  for (let bx = x + 12; bx < x + w; bx += 74) { ctx.beginPath(); ctx.moveTo(bx, top); ctx.lineTo(bx, GROUND_Y); ctx.stroke(); }
-}
-
-function scaffold(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, red = false) {
-  ctx.strokeStyle = red ? "#71242c" : "#455460"; ctx.lineWidth = 4;
-  for (let xx = x; xx <= x + w; xx += 56) { ctx.beginPath(); ctx.moveTo(xx, y); ctx.lineTo(xx, y + h); ctx.stroke(); }
-  ctx.lineWidth = 2;
-  for (let yy = y; yy <= y + h; yy += 40) { ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x + w, yy); ctx.stroke(); }
-  for (let xx = x; xx < x + w; xx += 56) { ctx.beginPath(); ctx.moveTo(xx, y); ctx.lineTo(Math.min(x + w, xx + 56), y + 40); ctx.stroke(); }
-}
-
-function deckArchitecture(ctx: CanvasRenderingContext2D, section: number) {
+function drawIntegratedDecks(ctx: CanvasRenderingContext2D, section: number): void {
   const start = section * EXIT_SECTION_WIDTH;
+  const accent = section === 3 ? "#82a35c" : section === 4 ? "#963141" : "#9a814d";
   for (const deck of landingDecksFor(EXIT_LIQUIDITY_LEVEL)) {
     if (deck.x1 < start || deck.x0 > start + EXIT_SECTION_WIDTH) continue;
-    ctx.fillStyle = "#7b6031"; ctx.fillRect(deck.x0, deck.y - 5, deck.x1 - deck.x0, 10);
-    ctx.strokeStyle = "#b08b45"; ctx.lineWidth = 2; ctx.strokeRect(deck.x0, deck.y - 5, deck.x1 - deck.x0, 10);
-    scaffold(ctx, deck.x0, deck.y + 6, deck.x1 - deck.x0, GROUND_Y - deck.y - 6, section === 4);
-    ctx.strokeStyle = "#71808a"; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(deck.x0, deck.y - 32); ctx.lineTo(deck.x1, deck.y - 32); ctx.stroke();
-    for (let px = deck.x0; px <= deck.x1; px += 42) { ctx.beginPath(); ctx.moveTo(px, deck.y - 32); ctx.lineTo(px, deck.y - 7); ctx.stroke(); }
+    const w = deck.x1 - deck.x0;
+    ctx.fillStyle = "#15191d"; ctx.fillRect(deck.x0, deck.y - 9, w, 12);
+    ctx.fillStyle = accent; ctx.fillRect(deck.x0, deck.y - 9, w, 3);
+    ctx.strokeStyle = "#4b4f50"; ctx.lineWidth = 4;
+    for (let px = deck.x0 + 12; px < deck.x1; px += 48) {
+      ctx.beginPath(); ctx.moveTo(px, deck.y + 3); ctx.lineTo(px + 22, Math.min(GROUND_Y - 2, deck.y + 34)); ctx.stroke();
+    }
+  }
+  ctx.strokeStyle = section === 3 ? "#b9a747" : "#bb7638"; ctx.lineWidth = 5;
+  for (const ladder of laddersFor(EXIT_LIQUIDITY_LEVEL)) {
+    if (ladder.x < start || ladder.x >= start + EXIT_SECTION_WIDTH) continue;
+    const top = ladder.deckY; const lx = ladder.x;
+    ctx.beginPath(); ctx.moveTo(lx - 10, top); ctx.lineTo(lx - 10, GROUND_Y); ctx.moveTo(lx + 10, top); ctx.lineTo(lx + 10, GROUND_Y); ctx.stroke();
+    ctx.lineWidth = 3;
+    for (let y = top + 8; y < GROUND_Y; y += 16) { ctx.beginPath(); ctx.moveTo(lx - 10, y); ctx.lineTo(lx + 10, y); ctx.stroke(); }
+    ctx.lineWidth = 5;
   }
 }
 
-function candle(ctx: CanvasRenderingContext2D, x: number, y = GROUND_Y) {
-  ctx.fillStyle = "#e0cda4"; ctx.fillRect(x - 3, y - 15, 6, 15);
-  const a = 0.6 + flicker(x, 0.004) * 0.35;
-  ctx.fillStyle = `rgba(255,151,45,${a})`; ctx.beginPath(); ctx.ellipse(x, y - 19, 3, 6, 0, 0, Math.PI * 2); ctx.fill();
-}
-
-function tomb(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, label: string) {
-  ctx.fillStyle = "#434b54"; ctx.beginPath(); ctx.roundRect(x, y, w, h, [w / 2, w / 2, 3, 3]); ctx.fill();
-  ctx.strokeStyle = "#7b8790"; ctx.lineWidth = 3; ctx.stroke();
-  ctx.fillStyle = "#c7cbd0"; ctx.font = `900 ${Math.min(22, w / 4)}px Impact`; ctx.textAlign = "center";
-  label.split("|").forEach((line, i) => ctx.fillText(line, x + w / 2, y + 40 + i * 24, w - 12));
-}
-
-function atm(ctx: CanvasRenderingContext2D, x: number) {
-  panel(ctx, x, 202, 76, 118, "#293a46", "#708694");
-  ctx.fillStyle = "#07151d"; ctx.fillRect(x + 12, 218, 52, 31); ctx.fillStyle = "#29c6c2"; ctx.fillRect(x + 19, 228, 36, 3);
-  ctx.fillStyle = "#10161b"; ctx.fillRect(x + 18, 271, 40, 6); ctx.strokeStyle = "#a14a3b"; ctx.beginPath(); ctx.moveTo(x + 4, 214); ctx.lineTo(x + 68, 302); ctx.stroke();
-}
-
-function monitorBank(ctx: CanvasRenderingContext2D, x: number, count: number) {
-  for (let i = 0; i < count; i += 1) {
-    const mx = x + i * 62; panel(ctx, mx, 245, 54, 40, "#071018", "#3b5565");
-    ctx.strokeStyle = i % 2 ? "#e93445" : "#2ad1d0"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(mx + 6, 268); ctx.lineTo(mx + 18, 256); ctx.lineTo(mx + 29, 273); ctx.lineTo(mx + 47, 251); ctx.stroke();
-    ctx.fillStyle = "#38434a"; ctx.fillRect(mx + 24, 285, 6, 14);
-  }
-  ctx.fillStyle = "#354049"; ctx.fillRect(x - 8, 298, count * 62, 10);
-}
-
-function pipes(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, green = false) {
-  ctx.strokeStyle = green ? "#496c55" : "#4b5962"; ctx.lineWidth = 8;
-  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.stroke();
-  ctx.strokeStyle = green ? "#a5ba55" : "#9b6b31"; ctx.lineWidth = 2;
-  for (let px = x + 28; px < x + w; px += 76) ctx.strokeRect(px, y - 6, 10, 12);
-}
-
-function vaultDoor(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
-  ctx.fillStyle = "#283f38"; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = "#78946f"; ctx.lineWidth = 9; ctx.stroke(); ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(x, y, r * 0.68, 0, Math.PI * 2); ctx.stroke();
-  for (let i = 0; i < 8; i += 1) { const a = i * Math.PI / 4; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * 18, y + Math.sin(a) * 18); ctx.lineTo(x + Math.cos(a) * r * 0.58, y + Math.sin(a) * r * 0.58); ctx.stroke(); }
-  ctx.fillStyle = "#b5a42b"; ctx.font = "900 25px Impact"; ctx.textAlign = "center"; ctx.fillText("LQ", x, y + 8);
-}
-
-function bananaVault(ctx: CanvasRenderingContext2D, x: number) {
-  panel(ctx, x, 190, 300, 130, "#203f36", "#90a835"); sign(ctx, x + 48, 199, 204, 34, ["MONKO'S BANANAS"], true);
-  ctx.fillStyle = "#f2cf2f";
-  for (let row = 0; row < 2; row += 1) for (let i = 0; i < 7; i += 1) {
-    const bx = x + 44 + i * 31 + (row % 2) * 8; const by = 258 + row * 27;
-    ctx.beginPath(); ctx.arc(bx, by, 13, 0.15, Math.PI * 1.1); ctx.lineWidth = 6; ctx.strokeStyle = "#f2cf2f"; ctx.stroke();
-  }
-  ctx.strokeStyle = "#758f79"; ctx.lineWidth = 4; for (let bx = x + 18; bx < x + 290; bx += 38) { ctx.beginPath(); ctx.moveTo(bx, 238); ctx.lineTo(bx, 316); ctx.stroke(); }
-}
-
-function monkoPoster(ctx: CanvasRenderingContext2D, x: number, y: number, h: number) {
+function monkoPoster(ctx: CanvasRenderingContext2D, x: number, y: number, h: number): void {
   if (!posterImage || (!posterReady && (!posterImage.complete || posterImage.naturalWidth === 0))) return;
   const w = h * (2 / 3);
-  ctx.save(); ctx.shadowColor = "rgba(0,0,0,.8)"; ctx.shadowBlur = 9; ctx.drawImage(posterImage, x, y, w, h); ctx.restore();
+  ctx.save(); ctx.shadowColor = "rgba(0,0,0,.9)"; ctx.shadowBlur = 10; ctx.drawImage(posterImage, x, y, w, h); ctx.restore();
 }
-
-function exitPresentation(ctx: CanvasRenderingContext2D, x: number, y: number, h: number) {
-  panel(ctx, x - 116, y - 18, 232, h + 30, "#250e18", "#882b39");
+function exitPresentation(ctx: CanvasRenderingContext2D, x: number, y: number, h: number): void {
   if (!exitImage || (!exitReady && (!exitImage.complete || exitImage.naturalWidth === 0))) return;
-  const f = { x: 66, y: 0, w: 168, h: 267 };
-  const scale = h / f.h;
-  ctx.drawImage(exitImage, f.x, f.y, f.w, f.h, x - f.w * scale / 2, y, f.w * scale, h);
+  const f = { x: 66, y: 0, w: 168, h: 267 }; const scale = h / f.h;
+  ctx.save(); ctx.shadowColor = "rgba(35,225,229,.65)"; ctx.shadowBlur = 24;
+  ctx.drawImage(exitImage, f.x, f.y, f.w, f.h, x - f.w * scale / 2, y, f.w * scale, h); ctx.restore();
 }
 
-function drawCemetery(ctx: CanvasRenderingContext2D, x: number) {
-  gothicBuilding(ctx, x + 20, 210, 266); sign(ctx, x + 35, 80, 176, 52, ["DEAD COIN", "CEMETERY"]);
-  ctx.strokeStyle = "#65717a"; ctx.lineWidth = 8; ctx.strokeRect(x + 20, 105, 210, 215);
-  tomb(ctx, x + 270, 142, 150, 178, "RIP|99.9%"); tomb(ctx, x + 460, 194, 100, 126, "PROJECT|DEAD"); atm(ctx, x + 590);
-  gothicBuilding(ctx, x + 720, 310, 228); scaffold(ctx, x + 680, 86, 420, 234);
-  tomb(ctx, x + 1130, 166, 128, 154, "LIQUIDITY|REMOVED"); monitorBank(ctx, x + 1285, 5);
-  tomb(ctx, x + 1590, 202, 92, 118, "DEAD|DREAMS");
-  for (const cx of [250, 440, 575, 1085, 1270, 1530, 1720]) candle(ctx, x + cx);
-}
-
-function drawLiquidation(ctx: CanvasRenderingContext2D, x: number) {
-  gothicBuilding(ctx, x + 20, 510, 285); sign(ctx, x + 105, 94, 350, 142, ["LIQUIDATED", "POSITION CLOSED", "ACCOUNT BALANCE: £0.00", "MARGIN CALL"]);
-  monitorBank(ctx, x + 560, 7); scaffold(ctx, x + 520, 70, 520, 250);
-  gothicBuilding(ctx, x + 1080, 360, 235); monitorBank(ctx, x + 1130, 5); sign(ctx, x + 1450, 112, 300, 92, ["MARGIN CALL", "FINAL NOTICE"]);
-  pipes(ctx, x + 30, 78, 1710);
-}
-
-function drawExchange(ctx: CanvasRenderingContext2D, x: number) {
-  gothicBuilding(ctx, x + 10, 520, 292); sign(ctx, x + 130, 88, 330, 116, ["DEAD", "EXCHANGE"]);
-  monitorBank(ctx, x + 560, 8); gothicBuilding(ctx, x + 1020, 420, 250);
-  for (let rx = x + 1050; rx < x + 1400; rx += 72) { panel(ctx, rx, 172, 58, 142, "#121d26"); for (let yy = 185; yy < 300; yy += 18) { ctx.fillStyle = yy % 36 ? "#b83240" : "#2b8990"; ctx.fillRect(rx + 9, yy, 40, 5); } }
-  scaffold(ctx, x + 520, 48, 930, 272); vaultDoor(ctx, x + 1610, 225, 94);
-}
-
-function drawVault(ctx: CanvasRenderingContext2D, x: number) {
-  gothicBuilding(ctx, x + 10, 1780, 286); pipes(ctx, x + 10, 74, 1770, true); pipes(ctx, x + 10, 105, 1770, true);
-  sign(ctx, x + 50, 118, 230, 52, ["LIQUIDITY IN"], true); vaultDoor(ctx, x + 700, 207, 112); sign(ctx, x + 1100, 118, 230, 52, ["LIQUIDITY OUT"], true);
-  sign(ctx, x + 90, 246, 230, 48, ["NO REFUNDS"], true); sign(ctx, x + 1000, 238, 330, 60, ["THANK YOU FOR", "YOUR CONTRIBUTION"], true);
-  bananaVault(ctx, x + 1370); monkoPoster(ctx, x + 1680, 112, 188);
-}
-
-function drawDomain(ctx: CanvasRenderingContext2D, x: number) {
-  gothicBuilding(ctx, x + 10, 390, 274, true); sign(ctx, x + 60, 120, 280, 92, ["WELCOME TO", "YOUR EXIT"]);
-  scaffold(ctx, x + 390, 62, 350, 258, true); gothicBuilding(ctx, x + 730, 1020, 305, true);
-  for (const px of [760, 940, 1370, 1550]) { ctx.strokeStyle = "#762632"; ctx.lineWidth = 13; ctx.beginPath(); ctx.moveTo(x + px, 48); ctx.lineTo(x + px, GROUND_Y); ctx.stroke(); }
-  sign(ctx, x + 780, 214, 210, 72, ["ALL TRADERS", "END HERE"]); sign(ctx, x + 1490, 214, 220, 72, ["EVERY EXIT", "WAS PLANNED"]);
-  exitPresentation(ctx, x + 1240, 55, 248);
-  for (const cx of [780, 900, 1570, 1700]) candle(ctx, x + cx);
-}
-
-function drawSky(ctx: CanvasRenderingContext2D, camX: number, canvasW: number, world: ExitWorld) {
-  const grad = ctx.createLinearGradient(0, -220, 0, GROUND_Y);
-  grad.addColorStop(0, "#020711"); grad.addColorStop(0.55, "#0a1830"); grad.addColorStop(1, "#34202b");
-  ctx.fillStyle = grad; ctx.fillRect(0, -240, canvasW, GROUND_Y + 560);
-  const moonX = 126 - ((camX * 0.03) % 1000); ctx.fillStyle = "rgba(213,226,236,.78)"; ctx.beginPath(); ctx.arc(moonX, 62, 35, 0, Math.PI * 2); ctx.fill();
-  const off = camX * 0.13;
-  for (const b of world.skyline) {
-    const bx = b.x - off; if (bx + b.w < -40 || bx > canvasW + 40) continue;
-    ctx.fillStyle = b.spire ? "#070d17" : "#0b1421"; ctx.fillRect(bx, GROUND_Y - b.h, b.w, b.h);
-    if (b.spire) { ctx.beginPath(); ctx.moveTo(bx, GROUND_Y - b.h); ctx.lineTo(bx + b.w / 2, GROUND_Y - b.h - 68); ctx.lineTo(bx + b.w, GROUND_Y - b.h); ctx.fill(); }
-    ctx.fillStyle = "rgba(184,48,55,.25)"; for (let wx = bx + 16; wx < bx + b.w - 8; wx += 28) ctx.fillRect(wx, GROUND_Y - b.h + 28, 7, 4);
+function drawLandmarks(ctx: CanvasRenderingContext2D, index: number, x: number): void {
+  if (index === 0) {
+    plaque(ctx, x + 42, 54, 230, 54, ["DEAD COIN CEMETERY"]);
+    plaque(ctx, x + 435, 160, 160, 112, ["RIP", "99.9%"]);
+    plaque(ctx, x + 1440, 202, 140, 78, ["PROJECT", "DEAD"]);
+    for (const p of [320, 410, 610, 740, 990, 1210, 1480, 1700]) candle(ctx, x + p);
+  } else if (index === 1) {
+    plaque(ctx, x + 110, 50, 590, 165, ["LIQUIDATED", "POSITION CLOSED", "ACCOUNT BALANCE: £0.00", "MARGIN CALL"]);
+    plaque(ctx, x + 1390, 92, 330, 82, ["MARGIN CALL", "FINAL NOTICE"]);
+  } else if (index === 2) {
+    plaque(ctx, x + 650, 48, 500, 126, ["DEAD", "EXCHANGE"]);
+    for (const p of [90, 360, 690, 1110, 1460, 1710]) candle(ctx, x + p);
+  } else if (index === 3) {
+    plaque(ctx, x + 85, 54, 250, 52, ["LIQUIDITY IN"], true);
+    plaque(ctx, x + 1060, 54, 260, 52, ["LIQUIDITY OUT"], true);
+    plaque(ctx, x + 100, 218, 230, 50, ["NO REFUNDS"], true);
+    plaque(ctx, x + 1010, 205, 340, 66, ["THANK YOU FOR", "YOUR CONTRIBUTION"], true);
+    plaque(ctx, x + 1390, 164, 250, 54, ["MONKO'S BANANAS"], true);
+    monkoPoster(ctx, x + 1645, 105, 202);
+  } else {
+    plaque(ctx, x + 70, 126, 260, 72, ["WELCOME TO", "YOUR EXIT"]);
+    plaque(ctx, x + 1430, 180, 270, 72, ["ALL TRADERS", "END HERE"]);
+    exitPresentation(ctx, x + 900, 42, 268);
+    for (const p of [520, 630, 745, 1055, 1170, 1280]) candle(ctx, x + p);
   }
-  const fog = 0.055 + Math.sin(renderNow() / 1600) * 0.015; ctx.fillStyle = `rgba(130,185,191,${fog})`; ctx.fillRect(0, 210, canvasW, 110);
 }
 
-function drawSection(ctx: CanvasRenderingContext2D, index: number, x: number) {
-  deckArchitecture(ctx, index);
-  if (index === 0) drawCemetery(ctx, x);
-  else if (index === 1) drawLiquidation(ctx, x);
-  else if (index === 2) drawExchange(ctx, x);
-  else if (index === 3) drawVault(ctx, x);
-  else drawDomain(ctx, x);
+function drawAtmosphere(ctx: CanvasRenderingContext2D, index: number, x: number): void {
+  const glow = ctx.createLinearGradient(x, 0, x + EXIT_SECTION_WIDTH, GROUND_Y);
+  const tint = index === 0 ? "rgba(68,112,170,.11)" : index === 3 ? "rgba(39,198,145,.09)" : "rgba(172,23,37,.09)";
+  glow.addColorStop(0, "rgba(0,0,0,.05)"); glow.addColorStop(.5, tint); glow.addColorStop(1, "rgba(0,0,0,.12)");
+  ctx.fillStyle = glow; ctx.fillRect(x, -20, EXIT_SECTION_WIDTH, GROUND_Y + 20);
+  const fog = 0.04 + Math.sin(renderNow() / 1700 + index) * 0.014;
+  ctx.fillStyle = `rgba(170,202,207,${fog})`; ctx.fillRect(x, GROUND_Y - 70, EXIT_SECTION_WIDTH, 70);
+}
+
+function drawSection(ctx: CanvasRenderingContext2D, index: number, x: number): void {
+  drawPaintedSection(ctx, index, x);
+  drawAtmosphere(ctx, index, x);
+  drawIntegratedDecks(ctx, index);
+  drawLandmarks(ctx, index, x);
 }
 
 export function drawExitLiquidityTerritory(ctx: CanvasRenderingContext2D, level: number, camX: number, canvasW: number): void {
   const world = exitLiquidityTerritoryFor(level); if (!world) return;
-  drawSky(ctx, camX, canvasW, world);
+  ctx.fillStyle = "#03070d"; ctx.fillRect(0, -260, canvasW, GROUND_Y + 580);
   ctx.save(); ctx.translate(-camX, 0);
   const first = Math.max(0, Math.floor(camX / EXIT_SECTION_WIDTH));
   const last = Math.min(EXIT_SECTIONS.length - 1, Math.floor((camX + canvasW) / EXIT_SECTION_WIDTH));
   for (let i = first; i <= last; i += 1) drawSection(ctx, i, i * EXIT_SECTION_WIDTH);
   ctx.restore();
-  const floor = ctx.createLinearGradient(0, GROUND_Y, 0, GROUND_Y + 300); floor.addColorStop(0, "#18212a"); floor.addColorStop(1, "#030509");
-  ctx.fillStyle = floor; ctx.fillRect(0, GROUND_Y, canvasW, 300); ctx.fillStyle = "#59636a"; ctx.fillRect(0, GROUND_Y - 4, canvasW, 4);
+  const floor = ctx.createLinearGradient(0, GROUND_Y, 0, GROUND_Y + 300);
+  floor.addColorStop(0, "#151a1e"); floor.addColorStop(1, "#020407");
+  ctx.fillStyle = floor; ctx.fillRect(0, GROUND_Y, canvasW, 300);
+  ctx.fillStyle = "#666c6d"; ctx.fillRect(0, GROUND_Y - 3, canvasW, 3);
 }
 
 export function exitLiquiditySectionLabelAt(level: number, x: number): string | null {
   if (level !== EXIT_LIQUIDITY_LEVEL) return null;
-  const i = Math.max(0, Math.min(EXIT_SECTIONS.length - 1, Math.floor(x / EXIT_SECTION_WIDTH)));
-  return EXIT_SECTIONS[i];
+  return EXIT_SECTIONS[Math.max(0, Math.min(EXIT_SECTIONS.length - 1, Math.floor(x / EXIT_SECTION_WIDTH)))];
 }
 
 export const __exitLiquidityTerritoryTest = {
@@ -315,8 +233,10 @@ export const __exitLiquidityTerritoryTest = {
   bundledPosterUrl: monkoPosterLocal,
   atlasUrl: exitAtlasAsset.url,
   bundledAtlasUrl: exitAtlasLocal,
+  sectionArtUrls: sectionAssets.map((asset) => asset.url),
   posterWording: MONKO_POSTER_WORDING,
   visualDeckIds: EXIT_VISUAL_DECK_IDS,
   blueprintMap: EXIT_BLUEPRINT_MAP,
   posterReady: () => Boolean(posterImage?.complete && posterImage.naturalWidth > 0),
+  sectionArtReady: () => sectionReady.every(Boolean),
 };
