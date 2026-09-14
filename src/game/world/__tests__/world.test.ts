@@ -9,6 +9,7 @@ import { mount, dismount, stepClimb, climbDirectionFor, ladderExitSurfaceY, type
 import { districtFor, hasDistrict, sectionLabelAt } from "@/game/presentation/render2d/districts";
 import { RUGGER_LANDMARKS, RUGGER_SECTIONS, ruggerSectionLabelAt, ruggerWorldFor } from "@/game/presentation/render2d/ruggerEmpire";
 import {
+  FUDDER_BLUEPRINT_MAP,
   FUDDER_LANDMARKS,
   FUDDER_SECTIONS,
   FUDDER_SECTION_WIDTH,
@@ -536,16 +537,25 @@ describe("level 4 — Fudder Territory blueprint", () => {
   it("locks poster wording and definitive Fudder atlas usage", () => {
     expect(FUDDER_POSTER_TEXT).toEqual(["WANTED BY FUDDER", "DON'T BUY"]);
     expect(__fudderTerritoryTest.atlasUrl).toContain("fudder-atlas.png");
+    expect(__fudderTerritoryTest.sectionArtUrls).toHaveLength(5);
+    expect(__fudderTerritoryTest.bundledSectionArtUrls).toHaveLength(5);
+  });
+
+  it("maps dominant blueprint landmarks to deterministic authored bounds", () => {
+    expect(FUDDER_BLUEPRINT_MAP).toHaveLength(15);
+    for (const landmark of FUDDER_BLUEPRINT_MAP) {
+      expect(landmark.section).toBeGreaterThanOrEqual(0);
+      expect(landmark.section).toBeLessThan(5);
+      expect(landmark.x0).toBeLessThan(landmark.x1);
+      expect(landmark.y0).toBeLessThan(landmark.y1);
+      expect(["background", "gameplay", "foreground"]).toContain(landmark.layer);
+    }
   });
 
   it("caches one finite world spanning all five continuous sections", () => {
     const world = fudderTerritoryFor(3);
     expect(world).toBe(fudderTerritoryFor(3));
     expect(world?.width).toBe(FUDDER_SECTION_WIDTH * FUDDER_SECTIONS.length);
-    expect(world?.skyline.length).toBeGreaterThan(40);
-    for (const block of world?.skyline ?? []) {
-      expect(Number.isFinite(block.x + block.w + block.h)).toBe(true);
-    }
   });
 
   it("does not alter neighbouring level world definitions", () => {

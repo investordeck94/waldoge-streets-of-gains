@@ -7,11 +7,11 @@
 - [x] Validate all five sections, every ladder, full combat/progression, desktop/mobile, tests, and build
 
 ## Current — Level 4 blueprint fidelity rebuild
-- [ ] Replace the sparse generic Level 4 presentation with the approved five-section composition
-- [ ] Re-author deterministic blueprint landmarks, visual decks, and matching ladder/collision records
-- [ ] Preserve the flat floor, definitive Fudder atlas, and head-only Waldoge wanted posters
-- [ ] Compare all five running sections against the blueprint on desktop and mobile
-- [ ] Validate traversal, combat, camera, full tests, typecheck, and production build
+- [x] Replace the sparse generic Level 4 presentation with the approved five-section composition
+- [x] Re-author deterministic blueprint landmarks and integrate the unchanged authoritative decks/ladders
+- [x] Preserve the flat floor, definitive Fudder atlas, and head-only Waldoge wanted posters
+- [x] Compare all five running sections against the blueprint on desktop and mobile
+- [x] Validate traversal, combat, camera, full tests, typecheck, and production build
 
 ## Current — Level 7 sprite continuity
 - [x] Verify live entity state and isolate failure to Level 7 bitmap rendering
