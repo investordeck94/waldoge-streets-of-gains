@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="screen-orientation" content="portrait" />
+    <meta name="x5-orientation" content="portrait" />
+    <title>WALDOGE AI Terminal | Cosmic Doge Explorer</title>
+    <meta name="description" content="Your cosmic companion for meme creation, raid generation, and NFT minting. Connect your Solana wallet to unlock the full WALDOGE experience." />
+    <meta name="theme-color" content="#0a0a12" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="WALDOGE AI Terminal" />
+    <meta property="og:description" content="Your cosmic companion for meme creation, raid generation, and NFT minting." />
+    <meta property="og:type" content="website" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="WALDOGE AI Terminal" />
+    <meta name="twitter:description" content="Your cosmic companion for meme creation, raid generation, and NFT minting." />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
