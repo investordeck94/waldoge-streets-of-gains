@@ -18,6 +18,17 @@ import {
   fudderSectionLabelAt,
   fudderTerritoryFor,
 } from "@/game/presentation/render2d/fudderTerritory";
+import {
+  EXIT_BLUEPRINT_MAP,
+  EXIT_LANDMARKS,
+  EXIT_SECTIONS,
+  EXIT_SECTION_WIDTH,
+  EXIT_VISUAL_DECK_IDS,
+  MONKO_POSTER_WORDING,
+  __exitLiquidityTerritoryTest,
+  exitLiquiditySectionLabelAt,
+  exitLiquidityTerritoryFor,
+} from "@/game/presentation/render2d/exitLiquidityTerritory";
 
 const fighter = (x: number, y: number): Climber => ({ x, y, state: "idle" });
 
@@ -28,8 +39,9 @@ describe("per-level world width", () => {
     expect(getLevelWidth(1)).toBe(10800);
     expect(getLevelWidth(1)).toBeGreaterThan(3200 * 3);
   });
-  it("gives Level 4 a five-section long world and preserves untouched levels", () => {
+  it("gives Levels 4 and 5 five-section worlds and preserves untouched levels", () => {
     expect(getLevelWidth(3)).toBe(FUDDER_SECTION_WIDTH * 5);
+    expect(getLevelWidth(4)).toBe(EXIT_SECTION_WIDTH * 5);
     expect(getLevelWidth(6)).toBe(DEFAULT_LEVEL_WIDTH);
     expect(getLevelWidth(99)).toBe(DEFAULT_LEVEL_WIDTH);
     expect(getLevelWidth(NaN)).toBe(DEFAULT_LEVEL_WIDTH);
@@ -210,12 +222,12 @@ describe("encounters", () => {
 });
 
 describe("districts", () => {
-  it("levels 1 through 4 have dedicated district art", () => {
+  it("levels 1 through 5 have dedicated district art", () => {
     expect(hasDistrict(0)).toBe(true);
     expect(hasDistrict(1)).toBe(true);
     expect(hasDistrict(2)).toBe(true);
     expect(hasDistrict(3)).toBe(true);
-    expect(hasDistrict(4)).toBe(false);
+    expect(hasDistrict(4)).toBe(true);
     expect(districtFor(4)).toBeNull();
   });
 
@@ -267,7 +279,7 @@ describe("districts", () => {
     expect(sectionLabelAt(0, getLevelWidth(0) - 100)).toContain("JEET");
     expect(sectionLabelAt(1, getLevelWidth(1) - 100)).toContain("RUGGER");
     expect(sectionLabelAt(3, 100)).toBe("ENTRANCE — PROPAGANDA STREET");
-    expect(sectionLabelAt(4, 100)).toBeNull();
+    expect(sectionLabelAt(4, 100)).toBe("DEAD COIN CEMETERY");
   });
 
   it("every generated coordinate is finite", () => {
@@ -538,9 +550,97 @@ describe("level 4 — Fudder Territory blueprint", () => {
 
   it("does not alter neighbouring level world definitions", () => {
     expect(getLevelWidth(2)).toBe(15600);
-    expect(getLevelWidth(4)).toBe(DEFAULT_LEVEL_WIDTH);
+    expect(getLevelWidth(5)).toBe(DEFAULT_LEVEL_WIDTH);
+    expect(pitsFor(5)).toHaveLength(0);
+    expect(laddersFor(5)).toHaveLength(0);
+  });
+});
+
+describe("level 5 — Graveyard of Gains blueprint", () => {
+  it("preserves five exact sections across 9,000 units", () => {
+    expect(getLevelWidth(4)).toBe(9000);
+    expect(EXIT_SECTIONS).toEqual([
+      "DEAD COIN CEMETERY", "LIQUIDATION STREET", "THE DEAD EXCHANGE",
+      "THE LIQUIDITY VAULT", "EXIT LIQUIDITY'S DOMAIN",
+    ]);
+    EXIT_SECTIONS.forEach((label, index) => {
+      expect(exitLiquiditySectionLabelAt(4, index * EXIT_SECTION_WIDTH + 10)).toBe(label);
+    });
+  });
+
+  it("keeps the full primary floor flat with no pits or hidden profiles", () => {
     expect(pitsFor(4)).toHaveLength(0);
-    expect(laddersFor(4)).toHaveLength(0);
+    for (let x = 0; x <= 9000; x += 25) {
+      expect(baseGroundYAt(4, x)).toBe(GROUND_Y);
+      expect(groundYAt(4, x, GROUND_Y, false)).toBe(GROUND_Y);
+    }
+  });
+
+  it("binds every visual deck to finite explicit collision", () => {
+    const decks = landingDecksFor(4);
+    expect(decks).toHaveLength(EXIT_VISUAL_DECK_IDS.length);
+    expect(new Set(EXIT_VISUAL_DECK_IDS).size).toBe(EXIT_VISUAL_DECK_IDS.length);
+    for (const deck of decks) {
+      expect(Number.isFinite(deck.x0 + deck.x1 + deck.y + deck.ladderX)).toBe(true);
+      expect(deck.x0).toBeLessThan(deck.x1);
+      expect(deck.y).toBeLessThan(GROUND_Y);
+      expect(deck.ladderX).toBeGreaterThanOrEqual(deck.x0);
+      expect(deck.ladderX).toBeLessThanOrEqual(deck.x1);
+    }
+  });
+
+  it("connects every ladder endpoint to its exact main-floor or deck surface", () => {
+    expect(laddersFor(4)).toHaveLength(13);
+    for (const ladder of laddersFor(4)) {
+      expect(landingDecksFor(4).some((deck) => deck.y === ladder.top && ladder.x >= deck.x0 && ladder.x <= deck.x1)).toBe(true);
+      if (ladder.bottom === GROUND_Y) {
+        expect(groundYAt(4, ladder.x, ladder.bottom, false)).toBe(GROUND_Y);
+      } else {
+        expect(landingDecksFor(4).some((deck) => deck.y === ladder.bottom && ladder.x >= deck.x0 && ladder.x <= deck.x1)).toBe(true);
+      }
+      expect(ladderExitSurfaceY(4, ladder, -1)).toBe(ladder.top);
+      expect(ladderExitSurfaceY(4, ladder, 1)).toBe(ladder.bottom);
+    }
+  });
+
+  it("stages one normal encounter per section before the boss", () => {
+    const encounters = EXIT_SECTIONS.map((_, index) => encounterX(4, index));
+    expect(encounters.every((x) => x !== null)).toBe(true);
+    for (let i = 0; i < encounters.length; i += 1) {
+      const x = encounters[i] as number;
+      expect(x).toBeGreaterThanOrEqual(i * EXIT_SECTION_WIDTH);
+      expect(x).toBeLessThan((i + 1) * EXIT_SECTION_WIDTH);
+      if (i > 0) expect(x).toBeGreaterThan(encounters[i - 1] as number);
+    }
+    expect(bossArenaX(4)).toBeGreaterThan(4 * EXIT_SECTION_WIDTH);
+    expect(bossArenaX(4)).toBeLessThan(9000);
+  });
+
+  it("locks the exact Monko poster and approved Exit Liquidity atlas", () => {
+    expect(MONKO_POSTER_WORDING).toEqual(["LOST BANANAS", "MONKO", "IF FOUND CONTACT", "ADDRESS ENDS IN DOGE"]);
+    expect(__exitLiquidityTerritoryTest.posterUrl).toContain("monko-lost-bananas-poster.png");
+    expect(__exitLiquidityTerritoryTest.atlasUrl).toContain("exit-liquidity-atlas.png");
+    expect(EXIT_LANDMARKS).toContain("MONKO'S BANANAS");
+    expect(EXIT_LANDMARKS).toContain("LOST BANANAS POSTER");
+  });
+
+  it("uses deterministic finite blueprint records and one poster landmark", () => {
+    expect(EXIT_BLUEPRINT_MAP.filter((landmark) => landmark.id === "monko-poster")).toHaveLength(1);
+    for (const landmark of EXIT_BLUEPRINT_MAP) {
+      expect(Number.isFinite(landmark.x0 + landmark.x1 + landmark.section)).toBe(true);
+      expect(landmark.x0).toBeLessThan(landmark.x1);
+      expect(landmark.section).toBeGreaterThanOrEqual(0);
+      expect(landmark.section).toBeLessThan(5);
+    }
+    const world = exitLiquidityTerritoryFor(4);
+    expect(world).toBe(exitLiquidityTerritoryFor(4));
+    expect(world?.width).toBe(9000);
+  });
+
+  it("leaves neighbouring levels unchanged", () => {
+    expect(getLevelWidth(3)).toBe(9000);
+    expect(getLevelWidth(5)).toBe(DEFAULT_LEVEL_WIDTH);
+    expect(getLevelWidth(6)).toBe(DEFAULT_LEVEL_WIDTH);
   });
 });
 

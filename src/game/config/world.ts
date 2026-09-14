@@ -25,14 +25,15 @@ export const DEFAULT_LEVEL_WIDTH = LEVEL_WIDTH;
  *   1 — RUGGER'S FINANCIAL EMPIRE   (offices → casino strip, with lower streets)
  *   2 — BAD ACTOR'S FILM DISTRICT   (studio lot → backlots → premiere boulevard)
  * Level 4 is Fudder's five-section industrial propaganda territory.
- * Levels 5-7 keep the legacy width until they get the same treatment.
+ * Level 5 is Exit Liquidity's five-section Graveyard of Gains.
+ * Levels 6-7 keep the legacy width until they get the same treatment.
  */
 export const LEVEL_WORLD_WIDTHS: readonly number[] = [
   5600, // L1 Jeet's Fast Food District
   10800, // L2 Rugger's Financial / Casino Empire
   15600, // L3 Bad Actors Studios — 13 authored areas x 1200 units each
   9000, // L4 Fudder Territory — five 1800-unit blueprint sections
-  DEFAULT_LEVEL_WIDTH,
+  9000, // L5 Graveyard of Gains — five 1800-unit blueprint sections
   DEFAULT_LEVEL_WIDTH,
   DEFAULT_LEVEL_WIDTH,
 ];
@@ -88,6 +89,8 @@ export const LEVEL_PITS: Record<number, GroundPit[]> = {
   ],
   // Level 4's blueprint explicitly requires one continuous flat main floor.
   3: [],
+  // Level 5's blueprint also requires one continuous flat main floor.
+  4: [],
 };
 
 /** Pits for a level (never undefined). */
@@ -276,6 +279,21 @@ export const LEVEL_LADDERS: Record<number, Ladder[]> = {
     { x: 7550, top: 184, bottom: GROUND_Y, style: "construction" },
     { x: 8650, top: 184, bottom: GROUND_Y, style: "maintenance" },
   ],
+  4: [
+    { x: 660, top: 194, bottom: GROUND_Y, style: "construction" },
+    { x: 1530, top: 194, bottom: GROUND_Y, style: "maintenance" },
+    { x: 2240, top: 190, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 3320, top: 190, bottom: GROUND_Y, style: "maintenance" },
+    { x: 3980, top: 204, bottom: GROUND_Y, style: "construction" },
+    { x: 4410, top: 112, bottom: 204, style: "maintenance" },
+    { x: 4920, top: 204, bottom: GROUND_Y, style: "construction" },
+    { x: 5260, top: 112, bottom: 204, style: "maintenance" },
+    { x: 5660, top: 194, bottom: GROUND_Y, style: "underground" },
+    { x: 6240, top: 108, bottom: 194, style: "maintenance" },
+    { x: 7020, top: 194, bottom: GROUND_Y, style: "underground" },
+    { x: 7580, top: 190, bottom: GROUND_Y, style: "construction" },
+    { x: 8720, top: 190, bottom: GROUND_Y, style: "maintenance" },
+  ],
 };
 
 export function laddersFor(level: number): Ladder[] {
@@ -339,6 +357,23 @@ const LEVEL_AUTHORED_DECKS: Record<number, LandingDeck[]> = {
     { x0: 6660, x1: 6940, y: 176, ladderX: 6900 },
     { x0: 7480, x1: 7900, y: 184, ladderX: 7550 },
     { x0: 8380, x1: 8720, y: 184, ladderX: 8650 },
+  ],
+  4: [
+    { x0: 620, x1: 1120, y: 194, ladderX: 660 },
+    { x0: 1320, x1: 1710, y: 194, ladderX: 1530 },
+    { x0: 2200, x1: 2740, y: 190, ladderX: 2240 },
+    { x0: 3000, x1: 3420, y: 190, ladderX: 3320 },
+    // Upper decks precede overlapping lower decks so feet already near the
+    // upper surface resolve there; fighters on the lower deck pass beneath.
+    { x0: 4080, x1: 4620, y: 112, ladderX: 4410 },
+    { x0: 3940, x1: 4540, y: 204, ladderX: 3980 },
+    { x0: 4940, x1: 5360, y: 112, ladderX: 5260 },
+    { x0: 4780, x1: 5320, y: 204, ladderX: 4920 },
+    { x0: 5980, x1: 6500, y: 108, ladderX: 6240 },
+    { x0: 5620, x1: 6280, y: 194, ladderX: 5660 },
+    { x0: 6720, x1: 7060, y: 194, ladderX: 7020 },
+    { x0: 7540, x1: 7900, y: 190, ladderX: 7580 },
+    { x0: 8500, x1: 8780, y: 190, ladderX: 8720 },
   ],
 };
 
@@ -442,6 +477,8 @@ export const ENCOUNTER_ZONES: Record<number, { waves: number[]; boss: number }> 
   // Level 4: one encounter staged in the centre of each authored section
   // (Entrance, Media, Industrial, Factory) with FUDDER waiting in the arena.
   3: { waves: [0.1, 0.3, 0.5, 0.72], boss: 0.93 },
+  // Level 5: one authored fight in each blueprint section, then the boss.
+  4: { waves: [0.1, 0.3, 0.5, 0.7, 0.85], boss: 0.94 },
 
 };
 
