@@ -146,10 +146,10 @@ function drawIntegratedDecks(ctx: CanvasRenderingContext2D, section: number): vo
   ctx.strokeStyle = section === 3 ? "#b9a747" : "#bb7638"; ctx.lineWidth = 5;
   for (const ladder of laddersFor(EXIT_LIQUIDITY_LEVEL)) {
     if (ladder.x < start || ladder.x >= start + EXIT_SECTION_WIDTH) continue;
-    const top = ladder.deckY; const lx = ladder.x;
-    ctx.beginPath(); ctx.moveTo(lx - 10, top); ctx.lineTo(lx - 10, GROUND_Y); ctx.moveTo(lx + 10, top); ctx.lineTo(lx + 10, GROUND_Y); ctx.stroke();
+    const top = Math.min(ladder.top, ladder.bottom); const bottom = Math.max(ladder.top, ladder.bottom); const lx = ladder.x;
+    ctx.beginPath(); ctx.moveTo(lx - 10, top); ctx.lineTo(lx - 10, bottom); ctx.moveTo(lx + 10, top); ctx.lineTo(lx + 10, bottom); ctx.stroke();
     ctx.lineWidth = 3;
-    for (let y = top + 8; y < GROUND_Y; y += 16) { ctx.beginPath(); ctx.moveTo(lx - 10, y); ctx.lineTo(lx + 10, y); ctx.stroke(); }
+    for (let y = top + 8; y < bottom; y += 16) { ctx.beginPath(); ctx.moveTo(lx - 10, y); ctx.lineTo(lx + 10, y); ctx.stroke(); }
     ctx.lineWidth = 5;
   }
 }
