@@ -34,6 +34,12 @@ import {
   fudderSectionLabelAt,
   hasFudderTerritory,
 } from "./fudderTerritory";
+import {
+  EXIT_LIQUIDITY_LEVEL,
+  drawExitLiquidityTerritory,
+  exitLiquiditySectionLabelAt,
+  hasExitLiquidityTerritory,
+} from "./exitLiquidityTerritory";
 
 
 // ---------------------------------------------------------------------------
@@ -335,7 +341,7 @@ export function districtFor(level: number): District | null {
 }
 
 export function hasDistrict(level: number): boolean {
-  return level === 0 || level === 1 || level === 2 || hasFudderTerritory(level);
+  return level === 0 || level === 1 || level === 2 || hasFudderTerritory(level) || hasExitLiquidityTerritory(level);
 }
 
 
@@ -375,6 +381,10 @@ export function drawDistrict(
   }
   if (level === FUDDER_TERRITORY_LEVEL) {
     drawFudderTerritory(ctx, level, camX, canvasW);
+    return;
+  }
+  if (level === EXIT_LIQUIDITY_LEVEL) {
+    drawExitLiquidityTerritory(ctx, level, camX, canvasW);
     return;
   }
   const d = districtFor(level);
@@ -783,6 +793,7 @@ export function sectionLabelAt(level: number, x: number): string | null {
   if (level === 1) return ruggerSectionLabelAt(level, x);
   if (level === BAD_ACTOR_LEVEL) return badActorSectionLabelAt(level, x);
   if (level === FUDDER_TERRITORY_LEVEL) return fudderSectionLabelAt(level, x);
+  if (level === EXIT_LIQUIDITY_LEVEL) return exitLiquiditySectionLabelAt(level, x);
 
   const d = districtFor(level);
   if (!d) return null;

@@ -60,8 +60,11 @@ export const LEVELS: LevelConfig[] = [
     name: "ROOFTOP REAPER",
     theme: "park",
     waves: [
-      { count: 4, hp: 60, speed: 1.9 },
-      { count: 5, hp: 65, speed: 2.1 },
+      { count: 3, hp: 56, speed: 1.8 }, // Dead Coin Cemetery
+      { count: 4, hp: 58, speed: 1.85 }, // Liquidation Street
+      { count: 4, hp: 60, speed: 1.9 }, // The Dead Exchange
+      { count: 5, hp: 62, speed: 2.0 }, // The Liquidity Vault
+      { count: 5, hp: 65, speed: 2.1 }, // Exit Liquidity's Domain
     ],
     boss: { hp: 560, chargeSpeed: 6, aiSpeed: 2.2, dmgMult: 1.15, name: "EXIT LIQUIDITY" },
   },
