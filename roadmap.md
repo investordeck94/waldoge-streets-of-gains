@@ -1,10 +1,10 @@
 # Waldoge: Streets of Gains — combat pass
 
 ## Current — Level 5 blueprint reconstruction
-- [ ] Rebuild Level 5 as the approved five-section, 9,000-unit Graveyard of Gains
-- [ ] Integrate the exact uploaded Monko LOST BANANAS poster at its authored vault landmark
-- [ ] Add blueprint-matched decks, stacked decks, ladders, encounters, and flat-floor collision
-- [ ] Validate all five sections, every ladder, full combat/progression, desktop/mobile, tests, and build
+- [x] Rebuild Level 5 as the approved five-section, 9,000-unit Graveyard of Gains
+- [x] Integrate the exact uploaded Monko LOST BANANAS poster at its authored vault landmark
+- [x] Add blueprint-matched decks, stacked decks, ladders, encounters, and flat-floor collision
+- [x] Validate all five sections, every ladder, full combat/progression, desktop/mobile, tests, and build
 
 ## Current — Level 4 blueprint fidelity rebuild
 - [ ] Replace the sparse generic Level 4 presentation with the approved five-section composition
