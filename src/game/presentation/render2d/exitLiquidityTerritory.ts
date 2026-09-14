@@ -14,6 +14,11 @@ import liquidationAsset from "@/assets/level5-liquidation-street.jpg.asset.json"
 import exchangeAsset from "@/assets/level5-dead-exchange.jpg.asset.json";
 import vaultAsset from "@/assets/level5-liquidity-vault.jpg.asset.json";
 import domainAsset from "@/assets/level5-exit-domain.jpg.asset.json";
+import cemeteryLocal from "@/assets/level5-cemetery.jpg-local.jpg";
+import liquidationLocal from "@/assets/level5-liquidation-street.jpg-local.jpg";
+import exchangeLocal from "@/assets/level5-dead-exchange.jpg-local.jpg";
+import vaultLocal from "@/assets/level5-liquidity-vault.jpg-local.jpg";
+import domainLocal from "@/assets/level5-exit-domain.jpg-local.jpg";
 import { flicker, renderNow } from "./clock";
 
 export const EXIT_LIQUIDITY_LEVEL = 4;
@@ -62,6 +67,7 @@ export const EXIT_BLUEPRINT_MAP: readonly BlueprintLandmark[] = [
 
 interface ExitWorld { width: number }
 const sectionAssets = [cemeteryAsset, liquidationAsset, exchangeAsset, vaultAsset, domainAsset] as const;
+const sectionSources = [cemeteryLocal, liquidationLocal, exchangeLocal, vaultLocal, domainLocal] as const;
 let worldCache: ExitWorld | null = null;
 let posterImage: HTMLImageElement | null = null;
 let exitImage: HTMLImageElement | null = null;
@@ -82,8 +88,8 @@ function loadImage(src: string, ready: () => void): HTMLImageElement | null {
 export function preloadExitLiquidityTerritory(): void {
   if (!posterImage) posterImage = loadImage(monkoPosterLocal, () => { posterReady = true; });
   if (!exitImage) exitImage = loadImage(exitAtlasLocal, () => { exitReady = true; });
-  sectionAssets.forEach((asset, index) => {
-    if (!sectionImages[index]) sectionImages[index] = loadImage(asset.url, () => { sectionReady[index] = true; });
+  sectionSources.forEach((source, index) => {
+    if (!sectionImages[index]) sectionImages[index] = loadImage(source, () => { sectionReady[index] = true; });
   });
 }
 preloadExitLiquidityTerritory();
@@ -234,6 +240,7 @@ export const __exitLiquidityTerritoryTest = {
   atlasUrl: exitAtlasAsset.url,
   bundledAtlasUrl: exitAtlasLocal,
   sectionArtUrls: sectionAssets.map((asset) => asset.url),
+  bundledSectionArtUrls: sectionSources,
   posterWording: MONKO_POSTER_WORDING,
   visualDeckIds: EXIT_VISUAL_DECK_IDS,
   blueprintMap: EXIT_BLUEPRINT_MAP,
