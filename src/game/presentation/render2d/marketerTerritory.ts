@@ -437,7 +437,7 @@ function drawManipulation(ctx: CanvasRenderingContext2D, x: number): void {
 function drawHq(ctx: CanvasRenderingContext2D, x: number): void {
   sign(ctx, x + 110, 126, 320, 82, ["THE DEAL", "OF YOUR LIFE"], "red");
   sign(ctx, x + 560, 40, 540, 160, ["MR. MARKETER", "BOOSTS", "THE WORLD"], "red");
-  sign(ctx, x + 880, 44, 280, 68, ["SQUIRREL IS", "NOT FOR SALE"], "white");
+  sign(ctx, x + 470, 60, 280, 68, ["SQUIRREL IS", "NOT FOR SALE"], "white");
   sign(ctx, x + 1420, 116, 330, 78, ["YOU CAN'T AFFORD", "TO SAY NO"], "gold");
   for (const p of [380, 500, 1240, 1360]) statue(ctx, x + p, GROUND_Y, 104);
   for (const p of [180, 760, 1120, 1660]) lamp(ctx, x + p, 132, "#ff5a5a");
