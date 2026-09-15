@@ -45,7 +45,7 @@ export const RAIDER_FRAMES: Record<string, Frame> = {
   // bleeds in and reads as a second body. The kick anchor is the planted foot,
   // not the rect centre, so the extended leg does not shift him off the floor.
   punch: mk(648, 17, 97, 100),
-  { ...mk(767, 12, 107, 105), ax: 25.5 } as never,
+  kick: { ...mk(767, 12, 107, 105), ax: 25.5 },
   hit: mk(903, 6, 100, 111),
   dead: mk(1009, 11, 115, 106),
 };
