@@ -217,8 +217,8 @@ describe("encounters", () => {
     expect(boss).toBeLessThan(getLevelWidth(0));
   });
   it("returns null for levels without a designed district", () => {
-    expect(encounterX(5, 0)).toBeNull();
-    expect(bossArenaX(5)).toBeNull();
+    expect(encounterX(6, 0)).toBeNull();
+    expect(bossArenaX(6)).toBeNull();
   });
 });
 
@@ -560,9 +560,9 @@ describe("level 4 — Fudder Territory blueprint", () => {
 
   it("does not alter neighbouring level world definitions", () => {
     expect(getLevelWidth(2)).toBe(15600);
-    expect(getLevelWidth(5)).toBe(DEFAULT_LEVEL_WIDTH);
-    expect(pitsFor(5)).toHaveLength(0);
-    expect(laddersFor(5)).toHaveLength(0);
+    expect(getLevelWidth(6)).toBe(DEFAULT_LEVEL_WIDTH);
+    expect(pitsFor(6)).toHaveLength(0);
+    expect(laddersFor(6)).toHaveLength(0);
   });
 });
 
@@ -649,7 +649,8 @@ describe("level 5 — Graveyard of Gains blueprint", () => {
 
   it("leaves neighbouring levels unchanged", () => {
     expect(getLevelWidth(3)).toBe(9000);
-    expect(getLevelWidth(5)).toBe(DEFAULT_LEVEL_WIDTH);
+    // Level 6 is now the authored Mr. Marketer blueprint world.
+    expect(getLevelWidth(5)).toBe(9000);
     expect(getLevelWidth(6)).toBe(DEFAULT_LEVEL_WIDTH);
   });
 });

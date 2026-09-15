@@ -71,9 +71,14 @@ export const LEVELS: LevelConfig[] = [
   {
     name: "UNDERGROUND WARLORD",
     theme: "office",
+    // Level 6 is five authored blueprint sections wide, so every section gets
+    // its own staged encounter of Candle Minions + Mr. Marketer's Raiding Team.
     waves: [
-      { count: 5, hp: 70, speed: 2.1 },
-      { count: 5, hp: 80, speed: 2.3 },
+      { count: 4, hp: 70, speed: 2.1 }, // Advertising Street
+      { count: 5, hp: 72, speed: 2.15 }, // Cold Call District
+      { count: 5, hp: 75, speed: 2.2 }, // Funnel Factory — KEY GUARD
+      { count: 5, hp: 78, speed: 2.25 }, // Manipulation District
+      { count: 5, hp: 80, speed: 2.3 }, // Mr. Marketer HQ elite guards
     ],
     boss: { hp: 680, chargeSpeed: 6.5, aiSpeed: 2.5, dmgMult: 1.3, name: "MR MARKETER" },
   },
