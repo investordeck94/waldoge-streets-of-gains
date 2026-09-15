@@ -86,6 +86,24 @@ import { drawMrMarketerSprite, drawMarketerLeaflet, preloadMrMarketerSprites, ty
 import { drawTickerTakerSprite, drawTickerTakerShot, preloadTickerTakerSprites, type TickerTakerView, type TickerTakerForm } from "@/game/presentation/render2d/tickerTakerSprites";
 import { preloadFudderTerritory } from "@/game/presentation/render2d/fudderTerritory";
 import { preloadExitLiquidityTerritory } from "@/game/presentation/render2d/exitLiquidityTerritory";
+import {
+  CAGE_POSITION,
+  KEY_POSITION,
+  preloadMarketerTerritory,
+  setMarketerQuestState,
+} from "@/game/presentation/render2d/marketerTerritory";
+import {
+  drawRaidingTeamSprite,
+  preloadRaidingTeamSprites,
+} from "@/game/presentation/render2d/raidingTeamSprites";
+import {
+  KEY_GUARD_WAVE,
+  MARKETER_LEVEL,
+  applyRaidingTeamRoster,
+  isRaider,
+  stepRaiderRanged,
+  type RaiderState,
+} from "@/game/enemy/raidingTeam";
 
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
@@ -3002,7 +3020,12 @@ function createPlayer(): Entity {
 // inline literal (same spacing, HP, aiTimer randomisation, difficulty
 // scaling, and Math.random() call cadence).
 function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, diff: Difficulty = "normal"): Entity[] {
-  return spawnEnemiesModule(levelIndex, waveIndex, playerX, diff);
+  const wave = spawnEnemiesModule(levelIndex, waveIndex, playerX, diff);
+  // Level 6 only: tag part of the wave as Mr. Marketer's Raiding Team and
+  // stage some of them on the authored decks. Candle Minions keep every other
+  // slot and are never removed or converted.
+  applyRaidingTeamRoster(wave as unknown as RaiderState[], levelIndex, waveIndex);
+  return wave;
 }
 
 // SPECIAL_ATTACKS is imported from src/game/config/combat.ts
@@ -3233,6 +3256,9 @@ export const StreetBrawler: FC = () => {
       vx: number;
     };
     specialFx: { style: StyleName; timer: number; total: number } | null;
+    /** LEVEL 6 story progression: key guard → key → cage → rescue. */
+    marketerQuest: { keyAvailable: boolean; keyTaken: boolean; rescued: boolean };
+    marketerHintTimer: number;
   }>({
     player: createPlayer(),
     enemies: [],
@@ -3268,6 +3294,8 @@ export const StreetBrawler: FC = () => {
     camAnchor: 0.5,
     camLookAhead: 0,
     specialFx: null,
+    marketerQuest: { keyAvailable: false, keyTaken: false, rescued: false },
+    marketerHintTimer: 0,
     camPreset: "snappy",
     vxAvg: 0,
     vxHistory: [],
@@ -3289,6 +3317,8 @@ export const StreetBrawler: FC = () => {
     preloadTickerTakerSprites();
     preloadFudderTerritory();
     preloadExitLiquidityTerritory();
+    preloadMarketerTerritory();
+    preloadRaidingTeamSprites();
 
     const img = new Image();
     img.src = waldogeHead;
@@ -3331,6 +3361,8 @@ export const StreetBrawler: FC = () => {
     g.speedBoostTimer = 0;
     g.dmgBoostTimer = 0;
     g.bossIntro = { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" };
+    g.marketerQuest = { keyAvailable: false, keyTaken: false, rescued: false };
+    setMarketerQuestState(g.marketerQuest);
     g.healFlash = 0;
     g.vxHistory = [];
     g.camLookAhead = 0;
@@ -4281,6 +4313,23 @@ export const StreetBrawler: FC = () => {
         // their exit frame, so movement can never be locked out.
         sanitizeEnemyMotion(e, GROUND_Y);
 
+        // LEVEL 6 ONLY — Raiding Team MP40 burst. Melee, movement, navigation
+        // and hit detection are untouched; this only adds a telegraphed shot
+        // through the existing projectile pipeline.
+        if (g.level === MARKETER_LEVEL && !e.isBoss && isRaider(e as unknown as RaiderState)) {
+          const shot = stepRaiderRanged(e as unknown as RaiderState, {
+            x: p.x, y: p.y, hp: p.hp, state: p.state,
+          });
+          if (shot === "fire" && g.projectiles.length < MAX_LIVE_PROJECTILES) {
+            sfx(() => SFX.bossThrow());
+            g.projectiles.push({
+              x: e.x + e.facing * 28, y: e.y - 42,
+              vx: e.facing * 11, vy: -1.3,
+              timer: 70, tracer: true,
+            });
+          }
+        }
+
         // ---- ENEMY LADDER NAVIGATION -----------------------------------
         // Minions understand "which street level am I on vs the player" and
         // route to the nearest ladder to pursue across the vertical gap.
@@ -4784,6 +4833,31 @@ export const StreetBrawler: FC = () => {
         // Speed boost handled by multiplying movement in the movement section
       }
 
+      // LEVEL 6 STORY — key guard → key → cage → rescue. Deterministic and
+      // one-way: the key only exists once, only becomes obtainable after the
+      // Raiding Team key-guard wave is cleared, and the cage cannot open
+      // without it.
+      if (g.level === MARKETER_LEVEL) {
+        const q = g.marketerQuest;
+        if (g.wave > KEY_GUARD_WAVE) q.keyAvailable = true;
+        if (q.keyAvailable && !q.keyTaken
+          && Math.abs(p.x - KEY_POSITION.x) < 46 && Math.abs(p.y - KEY_POSITION.y) < 70) {
+          q.keyTaken = true;
+          sfx(() => SFX.waveStart());
+          g.effects.push({ x: p.x, y: p.y - 110, timer: 130, text: "🔑 KEY OBTAINED", color: "#ffd23f", size: 20 });
+        }
+        if (q.keyTaken && !q.rescued
+          && Math.abs(p.x - CAGE_POSITION.x) < 80 && Math.abs(p.y - GROUND_Y) < 90) {
+          q.rescued = true;
+          sfx(() => SFX.victory());
+          g.effects.push({ x: p.x, y: p.y - 110, timer: 160, text: "SQUIRREL RESCUED!", color: "#54ff9f", size: 22 });
+        }
+        setMarketerQuestState(q);
+      } else if (g.marketerQuest.keyAvailable || g.marketerQuest.keyTaken || g.marketerQuest.rescued) {
+        g.marketerQuest = { keyAvailable: false, keyTaken: false, rescued: false };
+        setMarketerQuestState(g.marketerQuest);
+      }
+
       // Wave / Level progression
       const alive = g.enemies.filter(e => e.state !== "dead");
       if (alive.length === 0) {
@@ -4867,6 +4941,26 @@ export const StreetBrawler: FC = () => {
               : spawnStreetPickups(g.level, g.difficulty)));
             (p as Entity & { onPlatform?: Platform | null }).onPlatform = null;
           } else {
+            // LEVEL 6 GATE — Mr. Marketer only shows himself once the Squirrel
+            // is free. The key-guard wave, the key and the cage must all be
+            // resolved first; until then the arena stays closed.
+            if (
+              g.level === MARKETER_LEVEL
+              && g.wave + 1 === LEVELS[g.level].waves.length
+              && !g.marketerQuest.rescued
+            ) {
+              g.marketerHintTimer = (g.marketerHintTimer ?? 0) - 1;
+              if (g.marketerHintTimer <= 0) {
+                g.marketerHintTimer = 150;
+                g.effects.push({
+                  x: p.x, y: p.y - 120, timer: 120,
+                  text: g.marketerQuest.keyTaken
+                    ? "FREE THE SQUIRREL →"
+                    : "FIND THE KEY ON THE FUNNEL DECK",
+                  color: "#ffd23f", size: 18,
+                });
+              }
+            } else {
             // Next wave within current level
             g.wave++;
             setWave(g.wave);
@@ -4888,6 +4982,9 @@ export const StreetBrawler: FC = () => {
                 state: "idle" as AttackState, stateTimer: 0, attackCooldown: 0,
                 aiTimer: Math.random() * 60,
               }));
+              // HQ elite guards: Mr. Marketer's boss wave keeps its Candle
+              // Minions and adds Raiding Team escorts (Level 6 only).
+              applyRaidingTeamRoster(minions as unknown as RaiderState[], g.level, LEVELS[g.level].waves.length - 1);
               g.enemies = [boss, ...minions];
               g.projectiles = [];
               // Trigger animated boss intro banner
@@ -4908,6 +5005,7 @@ export const StreetBrawler: FC = () => {
                 exN === null ? p.x : Math.max(p.x, exN - 400),
                 g.difficulty,
               );
+            }
             }
           }
         }
@@ -5327,7 +5425,14 @@ export const StreetBrawler: FC = () => {
           drawBoss(ctx, e, g.camX);
         } else {
           // Full-body candle-boxer artwork; procedural draw is the pre-load fallback.
-          if (!drawCandleMinionSprite(ctx, e, g.camX)) drawCandleMinion(ctx, e, g.camX);
+          if (isRaider(e as unknown as RaiderState)) {
+            // Mr. Marketer's Raiding Team (Level 6 elite henchmen).
+            if (!drawRaidingTeamSprite(ctx, e as Parameters<typeof drawRaidingTeamSprite>[1], g.camX)) {
+              drawCandleMinion(ctx, e, g.camX);
+            }
+          } else if (!drawCandleMinionSprite(ctx, e, g.camX)) {
+            drawCandleMinion(ctx, e, g.camX);
+          }
         }
       }
 

@@ -40,6 +40,12 @@ import {
   exitLiquiditySectionLabelAt,
   hasExitLiquidityTerritory,
 } from "./exitLiquidityTerritory";
+import {
+  MARKETER_TERRITORY_LEVEL,
+  drawMarketerTerritory,
+  hasMarketerTerritory,
+  marketerSectionLabelAt,
+} from "./marketerTerritory";
 
 
 // ---------------------------------------------------------------------------
@@ -341,7 +347,8 @@ export function districtFor(level: number): District | null {
 }
 
 export function hasDistrict(level: number): boolean {
-  return level === 0 || level === 1 || level === 2 || hasFudderTerritory(level) || hasExitLiquidityTerritory(level);
+  return level === 0 || level === 1 || level === 2 || hasFudderTerritory(level)
+    || hasExitLiquidityTerritory(level) || hasMarketerTerritory(level);
 }
 
 
@@ -385,6 +392,10 @@ export function drawDistrict(
   }
   if (level === EXIT_LIQUIDITY_LEVEL) {
     drawExitLiquidityTerritory(ctx, level, camX, canvasW);
+    return;
+  }
+  if (level === MARKETER_TERRITORY_LEVEL) {
+    drawMarketerTerritory(ctx, level, camX, canvasW);
     return;
   }
   const d = districtFor(level);
@@ -794,6 +805,7 @@ export function sectionLabelAt(level: number, x: number): string | null {
   if (level === BAD_ACTOR_LEVEL) return badActorSectionLabelAt(level, x);
   if (level === FUDDER_TERRITORY_LEVEL) return fudderSectionLabelAt(level, x);
   if (level === EXIT_LIQUIDITY_LEVEL) return exitLiquiditySectionLabelAt(level, x);
+  if (level === MARKETER_TERRITORY_LEVEL) return marketerSectionLabelAt(level, x);
 
   const d = districtFor(level);
   if (!d) return null;

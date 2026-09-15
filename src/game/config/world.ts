@@ -34,7 +34,7 @@ export const LEVEL_WORLD_WIDTHS: readonly number[] = [
   15600, // L3 Bad Actors Studios — 13 authored areas x 1200 units each
   9000, // L4 Fudder Territory — five 1800-unit blueprint sections
   9000, // L5 Graveyard of Gains — five 1800-unit blueprint sections
-  DEFAULT_LEVEL_WIDTH,
+  9000, // L6 Mr. Marketer's Territory — five 1800-unit blueprint sections
   DEFAULT_LEVEL_WIDTH,
 ];
 
@@ -91,6 +91,8 @@ export const LEVEL_PITS: Record<number, GroundPit[]> = {
   3: [],
   // Level 5's blueprint also requires one continuous flat main floor.
   4: [],
+  // Level 6's blueprint requires one continuous flat main floor throughout.
+  5: [],
 };
 
 /** Pits for a level (never undefined). */
@@ -294,6 +296,33 @@ export const LEVEL_LADDERS: Record<number, Ladder[]> = {
     { x: 7580, top: 190, bottom: GROUND_Y, style: "construction" },
     { x: 8720, top: 190, bottom: GROUND_Y, style: "maintenance" },
   ],
+  // LEVEL 6 — MR. MARKETER'S TERRITORY. Flat main floor at GROUND_Y with ten
+  // authored decks; every ladder joins the main floor to a real deck (or the
+  // funnel factory's lower deck to its upper key platform).
+  5: [
+    // 6.1 ADVERTISING STREET
+    { x: 560, top: 196, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 1040, top: 196, bottom: GROUND_Y, style: "construction" },
+    { x: 1340, top: 186, bottom: GROUND_Y, style: "maintenance" },
+    { x: 1660, top: 186, bottom: GROUND_Y, style: "fireEscape" },
+    // 6.2 COLD CALL DISTRICT
+    { x: 2090, top: 192, bottom: GROUND_Y, style: "maintenance" },
+    { x: 2580, top: 192, bottom: GROUND_Y, style: "construction" },
+    { x: 2940, top: 180, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 3380, top: 180, bottom: GROUND_Y, style: "maintenance" },
+    // 6.3 THE FUNNEL FACTORY — key guard arena
+    { x: 4220, top: 190, bottom: GROUND_Y, style: "construction" },
+    { x: 4500, top: 108, bottom: 190, style: "maintenance" },
+    { x: 4780, top: 190, bottom: GROUND_Y, style: "fireEscape" },
+    // 6.4 MANIPULATION DISTRICT
+    { x: 5740, top: 188, bottom: GROUND_Y, style: "maintenance" },
+    { x: 6220, top: 188, bottom: GROUND_Y, style: "construction" },
+    { x: 6640, top: 182, bottom: GROUND_Y, style: "fireEscape" },
+    { x: 7000, top: 182, bottom: GROUND_Y, style: "maintenance" },
+    // 6.5 MR. MARKETER HQ
+    { x: 7540, top: 190, bottom: GROUND_Y, style: "construction" },
+    { x: 8540, top: 190, bottom: GROUND_Y, style: "maintenance" },
+  ],
 };
 
 export function laddersFor(level: number): Ladder[] {
@@ -374,6 +403,22 @@ const LEVEL_AUTHORED_DECKS: Record<number, LandingDeck[]> = {
     { x0: 6720, x1: 7060, y: 194, ladderX: 7020 },
     { x0: 7540, x1: 7900, y: 190, ladderX: 7580 },
     { x0: 8500, x1: 8780, y: 190, ladderX: 8720 },
+  ],
+  // LEVEL 6 — ten authored decks. Each deck spans the two ladders that serve
+  // it, so a climber always arrives on a real walkable surface.
+  5: [
+    { x0: 520, x1: 1080, y: 196, ladderX: 560 },
+    { x0: 1300, x1: 1700, y: 186, ladderX: 1340 },
+    { x0: 2050, x1: 2620, y: 192, ladderX: 2090 },
+    { x0: 2900, x1: 3420, y: 180, ladderX: 2940 },
+    // Upper key platform precedes the lower deck it overlaps so feet near the
+    // top surface resolve there; fighters on the lower deck pass beneath.
+    { x0: 4380, x1: 4700, y: 108, ladderX: 4500 },
+    { x0: 4180, x1: 4820, y: 190, ladderX: 4220 },
+    { x0: 5700, x1: 6260, y: 188, ladderX: 5740 },
+    { x0: 6600, x1: 7040, y: 182, ladderX: 6640 },
+    { x0: 7500, x1: 7860, y: 190, ladderX: 7540 },
+    { x0: 8500, x1: 8860, y: 190, ladderX: 8540 },
   ],
 };
 
@@ -479,6 +524,9 @@ export const ENCOUNTER_ZONES: Record<number, { waves: number[]; boss: number }> 
   3: { waves: [0.1, 0.3, 0.5, 0.72], boss: 0.93 },
   // Level 5: one authored fight in each blueprint section, then the boss.
   4: { waves: [0.1, 0.3, 0.5, 0.7, 0.85], boss: 0.94 },
+  // Level 6: one authored encounter per blueprint section. Wave index 2 (the
+  // funnel factory, x ≈ 4500) is the KEY GUARD encounter.
+  5: { waves: [0.09, 0.28, 0.5, 0.71, 0.86], boss: 0.94 },
 
 };
 
