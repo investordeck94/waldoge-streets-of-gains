@@ -23,6 +23,9 @@
 
 import { renderNow } from "./clock";
 import atlasAsset from "@/assets/mr-marketer-atlas.png.asset.json";
+// Bundled copy: the dev server does not serve the CDN pointer URL as an image,
+// so the boss would silently fall back to the procedural renderer.
+import atlasLocal from "@/assets/mr-marketer-atlas-local.png";
 
 export interface MrMarketerView {
   x: number;
@@ -71,7 +74,8 @@ function getAtlas(): HTMLImageElement | null {
   if (!atlas) {
     atlas = new Image();
     atlas.onload = () => { ready = true; };
-    atlas.src = atlasAsset.url;
+    atlas.onerror = () => { if (atlas && atlas.src !== atlasLocal) atlas.src = atlasLocal; };
+    atlas.src = atlasLocal || atlasAsset.url;
   }
   return ready && atlas.complete && atlas.naturalWidth > 0 ? atlas : null;
 }

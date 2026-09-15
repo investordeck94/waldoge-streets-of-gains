@@ -101,6 +101,7 @@ import {
   MARKETER_LEVEL,
   applyRaidingTeamRoster,
   isRaider,
+  recycleStragglers,
   stepRaiderRanged,
   type RaiderState,
 } from "@/game/enemy/raidingTeam";
@@ -4838,6 +4839,8 @@ export const StreetBrawler: FC = () => {
       // Raiding Team key-guard wave is cleared, and the cage cannot open
       // without it.
       if (g.level === MARKETER_LEVEL) {
+        // Keep the wave reachable in the 9000-wide district.
+        recycleStragglers(g.enemies.filter(e => !e.isBoss), g.level, p.x, GROUND_Y, getLevelWidth(g.level));
         const q = g.marketerQuest;
         if (g.wave > KEY_GUARD_WAVE) q.keyAvailable = true;
         if (q.keyAvailable && !q.keyTaken
