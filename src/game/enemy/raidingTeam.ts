@@ -134,3 +134,35 @@ export function stepRaiderRanged(e: RaiderState, target: RaiderTargetView): "fir
   e.facing = dx > 0 ? 1 : -1;
   return null;
 }
+
+/**
+ * Level 6 straggler recycling.
+ *
+ * Mr. Marketer's district is 9000 units wide, so a player who sprints past a
+ * wave can leave its survivors minutes behind and the wave can never clear.
+ * This re-stages any fighter that has fallen far off-screen just outside the
+ * camera on the side the player is heading towards. It never changes hp,
+ * state, hitboxes, damage or AI — only the staging x/y of an enemy that is
+ * already alive and already out of sight.
+ *
+ * @returns how many fighters were re-staged.
+ */
+export function recycleStragglers<
+  T extends { x: number; y: number; state: string; hp: number; climbing?: boolean; vx?: number; vy?: number },
+>(enemies: T[], level: number, playerX: number, groundY: number, levelWidth: number): number {
+  if (level !== MARKETER_LEVEL) return 0;
+  const LOST = 1200;
+  let moved = 0;
+  for (const e of enemies) {
+    if (e.state === "dead" || e.hp <= 0 || e.climbing) continue;
+    if (Math.abs(e.x - playerX) <= LOST) continue;
+    const ahead = e.x < playerX ? 1 : -1;
+    const staged = playerX + ahead * 620;
+    e.x = Math.max(60, Math.min(levelWidth - 60, staged));
+    e.y = groundY;
+    e.vx = 0;
+    e.vy = 0;
+    moved++;
+  }
+  return moved;
+}
