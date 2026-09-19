@@ -228,6 +228,11 @@ function spawnBoss(playerX: number, levelIndex: number, levelWidth?: number): En
   return spawnBossModule(playerX, levelIndex, levelWidth);
 }
 
+/** Apply the shared player-difficulty HP modifier to a freshly spawned boss. */
+function scaleBossForDifficulty(boss: Entity, diff: Difficulty, levelIndex: number): Entity {
+  return scaleBossForDifficultyModule(boss as never, diff, levelIndex) as unknown as Entity;
+}
+
 function drawBoss(ctx: CanvasRenderingContext2D, e: Entity, camX: number) {
   const sx = e.x - camX;
   const sy = e.y;
