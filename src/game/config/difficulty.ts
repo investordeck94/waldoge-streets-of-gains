@@ -138,12 +138,17 @@ export interface DifficultyModifiers {
  * THE authoritative resolver. Every enemy, boss, projectile and encounter in
  * every level derives its difficulty from this one function.
  */
+const MOD_CACHE = new Map<string, DifficultyModifiers>();
+
 export function difficultyModifiers(diff: Difficulty, levelIndex = 0): DifficultyModifiers {
+  const key = `${diff}:${Math.max(0, Math.min(Math.floor(levelIndex || 0), EASY_TAPER.length - 1))}`;
+  const cached = MOD_CACHE.get(key);
+  if (cached) return cached;
   const tier = TIER_BEHAVIOUR[diff] ?? TIER_BEHAVIOUR.normal;
   const t = diff === "easy" ? easyTaper(levelIndex) : 1;
   const soften = 1 - t; // 0 on medium/hard, grows with level on easy
 
-  return {
+  const mods: DifficultyModifiers = {
     enemyCount: (DIFFICULTY_ENEMY_MULT[diff] ?? 1) * t,
     enemyHp: 1 - soften * 0.5,
     enemyDamage: tier.enemyDamage * (1 - soften * 0.35),
@@ -156,6 +161,9 @@ export function difficultyModifiers(diff: Difficulty, levelIndex = 0): Difficult
     bossDmg: (DIFFICULTY_BOSS_DMG[diff] ?? 1) * (1 - soften * 0.6),
     bossMinions: Math.max(0, Math.round((BOSS_WAVE_MINIONS[diff] ?? 0) * t)),
   };
+  Object.freeze(mods);
+  MOD_CACHE.set(key, mods);
+  return mods;
 }
 
 // ---------------------------------------------------------------------------
