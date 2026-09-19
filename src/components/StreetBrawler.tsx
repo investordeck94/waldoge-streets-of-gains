@@ -121,6 +121,7 @@ import {
 import {
   spawnEnemies as spawnEnemiesModule,
   spawnBoss as spawnBossModule,
+  scaleBossForDifficulty as scaleBossForDifficultyModule,
 } from "@/game/enemy/Enemy";
 import {
   sanitizeEnemyMotion,
