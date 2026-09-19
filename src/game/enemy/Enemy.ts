@@ -58,7 +58,7 @@
 import type { PlayerEntity, PlayerAttackState } from "@/game/player/Player";
 import { GROUND_Y, LEVEL_WIDTH } from "@/game/config";
 import { LEVELS } from "@/game/config/levels";
-import { DIFFICULTY_ENEMY_MULT } from "@/game/config/difficulty";
+import { DIFFICULTY_ENEMY_MULT, easyRelief } from "@/game/config/difficulty";
 import type { Difficulty } from "@/game/config/types";
 
 // ---------------------------------------------------------------------------
@@ -91,7 +91,9 @@ export function spawnEnemies(
   const lvl = LEVELS[Math.min(levelIndex, LEVELS.length - 1)];
   const w = lvl?.waves[waveIndex];
   if (!w) return [];
-  const count = Math.max(1, Math.round(w.count * DIFFICULTY_ENEMY_MULT[diff]));
+  const relief = easyRelief(levelIndex, diff);
+  const count = Math.max(1, Math.round(w.count * DIFFICULTY_ENEMY_MULT[diff] * relief.count));
+  const hp = Math.max(8, Math.round(w.hp * relief.hp));
   // Enemies are staged as a patrol line rather than one tight cluster, so the
   // long redesigned worlds keep throwing fights at the player as they advance
   // instead of leaving empty stretches of street.
@@ -103,8 +105,8 @@ export function spawnEnemies(
     width: 30,
     height: 70,
     facing: -1 as const,
-    hp: w.hp,
-    maxHp: w.hp,
+    hp,
+    maxHp: hp,
     state: "idle" as EnemyAttackState,
     stateTimer: 0,
     attackCooldown: 0,

@@ -186,7 +186,7 @@ import {
   LEVELS, WAVES_PER_LEVEL, TOTAL_LEVELS, type LevelConfig, type SceneTheme,
   // difficulty
   type Difficulty,
-  DIFFICULTY_ENEMY_MULT, DIFFICULTY_BOSS_CD, DIFFICULTY_BOSS_DMG, BOSS_WAVE_MINIONS,
+  DIFFICULTY_ENEMY_MULT, DIFFICULTY_BOSS_CD, DIFFICULTY_BOSS_DMG, BOSS_WAVE_MINIONS, easyRelief,
 } from "@/game/config";
 
 // Preloaded boss head images now live in src/game/assets/index.ts and
@@ -4607,7 +4607,7 @@ export const StreetBrawler: FC = () => {
 
           // Melee hit frames declared by the active move.
           if (activeMove && activeMove.hitFrames.includes(e.stateTimer)) {
-            const dmg = Math.max(2, Math.round(activeMove.damage * bossCfg.dmgMult * (DIFFICULTY_BOSS_DMG[g.difficulty] || 1)));
+            const dmg = Math.max(2, Math.round(activeMove.damage * bossCfg.dmgMult * (DIFFICULTY_BOSS_DMG[g.difficulty] || 1) * easyRelief(g.level, g.difficulty).bossDmg));
             const edx = p.x - e.x;
             const inRange = activeMove.omni
               ? Math.abs(edx) < activeMove.range && Math.abs(p.y - e.y) < activeMove.vertRange
@@ -4970,18 +4970,27 @@ export const StreetBrawler: FC = () => {
             const isBossWave = g.wave === LEVELS[g.level].waves.length;
             if (isBossWave) {
               const arenaX = bossArenaX(g.level);
+              const relief = easyRelief(g.level, g.difficulty);
               const boss = spawnBoss(
                 arenaX === null ? p.x : Math.max(p.x, arenaX - 500),
                 g.level,
                 getLevelWidth(g.level),
               );
-              const minionCount = BOSS_WAVE_MINIONS[g.difficulty] || 0;
+              if (relief.bossHp !== 1) {
+                boss.maxHp = Math.max(60, Math.round(boss.maxHp * relief.bossHp));
+                boss.hp = boss.maxHp;
+              }
+              const minionCount = Math.max(
+                0,
+                Math.round((BOSS_WAVE_MINIONS[g.difficulty] || 0) * relief.bossMinions),
+              );
               const minionWave = LEVELS[g.level].waves[LEVELS[g.level].waves.length - 1];
+              const minionHp = Math.max(8, Math.round(minionWave.hp * relief.hp));
               const minions: Entity[] = Array.from({ length: minionCount }, (_, i) => ({
                 x: Math.min(getLevelWidth(g.level) - 60, p.x + 350 + i * 110 + Math.random() * 120),
                 y: GROUND_Y, vy: 0, vx: 0,
                 width: 30, height: 70, facing: -1 as const,
-                hp: minionWave.hp, maxHp: minionWave.hp,
+                hp: minionHp, maxHp: minionHp,
                 state: "idle" as AttackState, stateTimer: 0, attackCooldown: 0,
                 aiTimer: Math.random() * 60,
               }));
