@@ -186,7 +186,7 @@ import {
   LEVELS, WAVES_PER_LEVEL, TOTAL_LEVELS, type LevelConfig, type SceneTheme,
   // difficulty
   type Difficulty,
-  DIFFICULTY_ENEMY_MULT, DIFFICULTY_BOSS_CD, DIFFICULTY_BOSS_DMG, BOSS_WAVE_MINIONS, easyRelief,
+  DIFFICULTY_ENEMY_MULT, DIFFICULTY_BOSS_CD, DIFFICULTY_BOSS_DMG, BOSS_WAVE_MINIONS, difficultyModifiers,
 } from "@/game/config";
 
 // Preloaded boss head images now live in src/game/assets/index.ts and
@@ -3352,7 +3352,10 @@ export const StreetBrawler: FC = () => {
       const arena0 = bossArenaX(g.level);
       const enc0 = encounterX(g.level, g.wave);
       g.enemies = g.wave >= LEVELS[g.level].waves.length
-        ? [spawnBoss(arena0 === null ? 200 : Math.max(200, arena0 - 500), g.level, getLevelWidth(g.level))]
+        ? [scaleBossForDifficulty(
+            spawnBoss(arena0 === null ? 200 : Math.max(200, arena0 - 500), g.level, getLevelWidth(g.level)),
+            diff, g.level,
+          )]
         : spawnEnemies(g.level, g.wave, enc0 === null ? 200 : Math.max(200, enc0 - 400), diff);
     }
     g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
@@ -4318,9 +4321,11 @@ export const StreetBrawler: FC = () => {
         // and hit detection are untouched; this only adds a telegraphed shot
         // through the existing projectile pipeline.
         if (g.level === MARKETER_LEVEL && !e.isBoss && isRaider(e as unknown as RaiderState)) {
-          const shot = stepRaiderRanged(e as unknown as RaiderState, {
-            x: p.x, y: p.y, hp: p.hp, state: p.state,
-          });
+          const shot = stepRaiderRanged(
+            e as unknown as RaiderState,
+            { x: p.x, y: p.y, hp: p.hp, state: p.state },
+            difficultyModifiers(g.difficulty, g.level).rangedCooldown,
+          );
           if (shot === "fire" && g.projectiles.length < MAX_LIVE_PROJECTILES) {
             sfx(() => SFX.bossThrow());
             g.projectiles.push({
@@ -4499,7 +4504,8 @@ export const StreetBrawler: FC = () => {
                 e.state = move.anim;
                 e.stateTimer = move.duration;
                 e.attackCooldown = bossCooldownFrames(
-                  e.bossName, move, phase, DIFFICULTY_BOSS_CD[g.difficulty] || 1, pPassive,
+                  e.bossName, move, phase,
+                  difficultyModifiers(g.difficulty, g.level).bossCd || 1, pPassive,
                 );
                 // Jumping/aerial attacks leave the ground; gravity + the
                 // ground snap above always bring the boss back down.
@@ -4607,7 +4613,9 @@ export const StreetBrawler: FC = () => {
 
           // Melee hit frames declared by the active move.
           if (activeMove && activeMove.hitFrames.includes(e.stateTimer)) {
-            const dmg = Math.max(2, Math.round(activeMove.damage * bossCfg.dmgMult * (DIFFICULTY_BOSS_DMG[g.difficulty] || 1) * easyRelief(g.level, g.difficulty).bossDmg));
+            const dmg = Math.max(2, Math.round(
+              activeMove.damage * bossCfg.dmgMult * difficultyModifiers(g.difficulty, g.level).bossDmg,
+            ));
             const edx = p.x - e.x;
             const inRange = activeMove.omni
               ? Math.abs(edx) < activeMove.range && Math.abs(p.y - e.y) < activeMove.vertRange
@@ -4694,14 +4702,15 @@ export const StreetBrawler: FC = () => {
           const dist = Math.abs(dx);
           e.facing = dx > 0 ? 1 : -1;
 
+          const gMods = difficultyModifiers(g.difficulty, g.level);
           if (dist > 50) {
-            e.x += e.facing * (LEVELS[g.level]?.waves[g.wave]?.speed || 1.5);
+            e.x += e.facing * (LEVELS[g.level]?.waves[g.wave]?.speed || 1.5) * gMods.enemySpeed;
             e.state = "walk";
           } else if (e.attackCooldown <= 0) {
             const atk = Math.random() > 0.5 ? "punch" : "kick";
             e.state = atk;
             e.stateTimer = GRUNT_STRIKES[atk].duration;
-            e.attackCooldown = 30 + Math.random() * 20;
+            e.attackCooldown = (30 + Math.random() * 20) * gMods.enemyCooldown;
             // New swing: clear the per-attack damage latch.
             e.attackLanded = false;
           }
@@ -4723,7 +4732,9 @@ export const StreetBrawler: FC = () => {
           if (strike.hit) {
             e.attackLanded = true;
             sfx(() => SFX.hit());
-            p.hp -= strike.damage;
+            p.hp -= Math.max(1, Math.round(
+              strike.damage * difficultyModifiers(g.difficulty, g.level).enemyDamage,
+            ));
             p.state = "hit";
             p.stateTimer = 8;
             p.vx = e.facing * 3;
@@ -4756,7 +4767,10 @@ export const StreetBrawler: FC = () => {
           const dy = Math.abs(p.y - proj.y);
           if (dx < 25 && dy < 35 && p.state !== "dead") {
             sfx(() => SFX.hit());
-            p.hp -= 4;
+            const projDmg = Math.max(1, Math.round(
+              4 * difficultyModifiers(g.difficulty, g.level).projectileDamage,
+            ));
+            p.hp -= projDmg;
             p.state = "hit";
             p.stateTimer = 10;
             p.vx = proj.vx > 0 ? 4 : -4;
@@ -4764,7 +4778,7 @@ export const StreetBrawler: FC = () => {
             c.multiplier = 1;
             setComboCount(0);
             setPlayerHp(Math.max(0, p.hp));
-            g.effects.push({ x: proj.x, y: proj.y - 20, timer: 20, text: "4", color: "#ff4444", size: 14 });
+            g.effects.push({ x: proj.x, y: proj.y - 20, timer: 20, text: `${projDmg}`, color: "#ff4444", size: 14 });
             if (p.hp <= 0) {
               p.state = "dead";
               g.running = false;
@@ -4970,22 +4984,19 @@ export const StreetBrawler: FC = () => {
             const isBossWave = g.wave === LEVELS[g.level].waves.length;
             if (isBossWave) {
               const arenaX = bossArenaX(g.level);
-              const relief = easyRelief(g.level, g.difficulty);
-              const boss = spawnBoss(
-                arenaX === null ? p.x : Math.max(p.x, arenaX - 500),
+              const bMods = difficultyModifiers(g.difficulty, g.level);
+              const boss = scaleBossForDifficulty(
+                spawnBoss(
+                  arenaX === null ? p.x : Math.max(p.x, arenaX - 500),
+                  g.level,
+                  getLevelWidth(g.level),
+                ),
+                g.difficulty,
                 g.level,
-                getLevelWidth(g.level),
               );
-              if (relief.bossHp !== 1) {
-                boss.maxHp = Math.max(60, Math.round(boss.maxHp * relief.bossHp));
-                boss.hp = boss.maxHp;
-              }
-              const minionCount = Math.max(
-                0,
-                Math.round((BOSS_WAVE_MINIONS[g.difficulty] || 0) * relief.bossMinions),
-              );
+              const minionCount = bMods.bossMinions;
               const minionWave = LEVELS[g.level].waves[LEVELS[g.level].waves.length - 1];
-              const minionHp = Math.max(8, Math.round(minionWave.hp * relief.hp));
+              const minionHp = Math.max(8, Math.round(minionWave.hp * bMods.enemyHp));
               const minions: Entity[] = Array.from({ length: minionCount }, (_, i) => ({
                 x: Math.min(getLevelWidth(g.level) - 60, p.x + 350 + i * 110 + Math.random() * 120),
                 y: GROUND_Y, vy: 0, vx: 0,
