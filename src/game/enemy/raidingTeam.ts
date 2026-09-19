@@ -111,7 +111,12 @@ export interface RaiderState extends RaiderFields {
  * null. The caller owns projectile creation, damage and audio — nothing here
  * touches global combat.
  */
-export function stepRaiderRanged(e: RaiderState, target: RaiderTargetView): "fire" | null {
+export function stepRaiderRanged(
+  e: RaiderState,
+  target: RaiderTargetView,
+  /** Shared difficulty modifier on burst cooldown (>1 = less ranged pressure). */
+  cooldownMult = 1,
+): "fire" | null {
   if (!isRaider(e) || e.state === "dead" || e.hp <= 0) { e.raiderAim = 0; return null; }
   if ((e.raiderCooldown ?? 0) > 0) e.raiderCooldown = (e.raiderCooldown ?? 0) - 1;
 
@@ -130,7 +135,10 @@ export function stepRaiderRanged(e: RaiderState, target: RaiderTargetView): "fir
   if (dist < RAIDER_MIN_RANGE || dist > RAIDER_MAX_RANGE) return null;
   if ((e.raiderCooldown ?? 0) > 0) return null;
   e.raiderAim = RAIDER_AIM_FRAMES;
-  e.raiderCooldown = RAIDER_COOLDOWN;
+  e.raiderCooldown = Math.max(
+    30,
+    Math.round(RAIDER_COOLDOWN * (Number.isFinite(cooldownMult) && cooldownMult > 0 ? cooldownMult : 1)),
+  );
   e.facing = dx > 0 ? 1 : -1;
   return null;
 }
