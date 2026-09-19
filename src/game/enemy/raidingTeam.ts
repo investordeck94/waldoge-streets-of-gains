@@ -155,9 +155,11 @@ export function recycleStragglers<
   let moved = 0;
   for (const e of enemies) {
     if (e.state === "dead" || e.hp <= 0 || e.climbing) continue;
-    if (Math.abs(e.x - playerX) <= LOST) continue;
-    const ahead = e.x < playerX ? 1 : -1;
-    const staged = playerX + ahead * 620;
+    // Only enemies LEFT BEHIND are re-staged. Fighters still ahead of the
+    // player are never pulled backwards — that made them appear right behind
+    // the player at the start of the district.
+    if (e.x >= playerX - LOST) continue;
+    const staged = playerX + 620;
     e.x = Math.max(60, Math.min(levelWidth - 60, staged));
     e.y = groundY;
     e.vx = 0;
@@ -165,4 +167,5 @@ export function recycleStragglers<
     moved++;
   }
   return moved;
+
 }
