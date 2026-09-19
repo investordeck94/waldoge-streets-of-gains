@@ -58,7 +58,7 @@
 import type { PlayerEntity, PlayerAttackState } from "@/game/player/Player";
 import { GROUND_Y, LEVEL_WIDTH } from "@/game/config";
 import { LEVELS } from "@/game/config/levels";
-import { DIFFICULTY_ENEMY_MULT, easyRelief } from "@/game/config/difficulty";
+import { difficultyModifiers } from "@/game/config/difficulty";
 import type { Difficulty } from "@/game/config/types";
 
 // ---------------------------------------------------------------------------
@@ -91,9 +91,9 @@ export function spawnEnemies(
   const lvl = LEVELS[Math.min(levelIndex, LEVELS.length - 1)];
   const w = lvl?.waves[waveIndex];
   if (!w) return [];
-  const relief = easyRelief(levelIndex, diff);
-  const count = Math.max(1, Math.round(w.count * DIFFICULTY_ENEMY_MULT[diff] * relief.count));
-  const hp = Math.max(8, Math.round(w.hp * relief.hp));
+  const mods = difficultyModifiers(diff, levelIndex);
+  const count = Math.max(1, Math.round(w.count * mods.enemyCount));
+  const hp = Math.max(8, Math.round(w.hp * mods.enemyHp));
   // Enemies are staged as a patrol line rather than one tight cluster, so the
   // long redesigned worlds keep throwing fights at the player as they advance
   // instead of leaving empty stretches of street.
@@ -166,6 +166,22 @@ export function spawnBoss(playerX: number, levelIndex: number, levelWidth?: numb
 // Provided so future refactor passes can migrate call sites one at a time
 // while verifying byte parity.
 // ---------------------------------------------------------------------------
+
+/**
+ * Apply the shared player-difficulty modifiers to a freshly spawned boss.
+ *
+ * Only HP is touched here — a boss's aggression, cooldowns and damage are
+ * scaled at their own call sites through the same `difficultyModifiers()`
+ * record, and its moveset is never altered.
+ */
+export function scaleBossForDifficulty(boss: Enemy, diff: Difficulty, levelIndex: number): Enemy {
+  const mods = difficultyModifiers(diff, levelIndex);
+  if (mods.bossHp !== 1) {
+    boss.maxHp = Math.max(60, Math.round(boss.maxHp * mods.bossHp));
+    boss.hp = boss.maxHp;
+  }
+  return boss;
+}
 
 export function isBoss(e: Enemy): boolean {
   return e.isBoss === true;
