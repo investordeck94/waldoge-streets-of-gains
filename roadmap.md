@@ -148,13 +148,10 @@
 - [x] Compare live views at X 900, 2700, 4500, 6300, and 8100 against the blueprint
 - [x] Verify exact Monko poster, Exit Liquidity art, desktop/mobile rendering, tests, and build
 
-## Level 7 definitive bug fix + blueprint fidelity pass
-- [x] Phase 1: audit Cat Guard sprites, state, movement, ladders, geometry, sections, spawns, rendering, camera, and references before edits
-- [x] Phase 2: fix deterministic Cat Guard frame extraction and continuous visibility
-- [x] Phase 3: enforce collision-based Cat Guard movement and explicit validated ladder transitions
-- [x] Phase 4: validate/correct the continuous 0–9000 Level 7 collision world
-- [x] Phase 5: match visible decks and ladders to canonical blueprint geometry
-- [x] Phase 6: place enemies deterministically on valid surfaces
-- [x] Phase 7: validate/correct physical key → ladders → cage → rescue progression
-- [x] Phase 8: complete the section-by-section blueprint visual-density pass while preserving geometry and route
-- [x] Phase 9: complete desktop/mobile START → victory validation and full regression checks
+## Current — Level 7 final bug fix + reference-pack fidelity pass
+- [x] Phase 1: inspect the original blueprint, all eleven reference-pack images, live desktop/mobile midpoints, Cat Guard systems, geometry, rendering, and camera paths
+- [ ] Phase 2: harden Cat Guard frame validation, image readiness, grounding fallback, and deterministic spacing without changing combat or artwork
+- [ ] Phase 3: implement section-specific scenery matching the enlarged 7.1–7.5 compositions around the locked 20 decks and 23 ladders
+- [ ] Phase 4: compare live midpoint captures against every section reference and correct remaining evidence-backed visual discrepancies
+- [ ] Phase 5: replay START → key → cage → rescue → Ticker Taker → victory on desktop and mobile
+- [ ] Phase 6: run focused tests, complete test suite, typecheck, and build validation
