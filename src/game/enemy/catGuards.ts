@@ -18,6 +18,9 @@ export interface CatGuardFields {
   catRunning?: boolean;
   /** Last AI-authored horizontal intent; rendering never reads or mutates it. */
   catMoveSpeed?: number;
+  /** Exact authored ladder selected by the Level-7 navigation graph. */
+  climbLadderId?: string;
+  catClimbIntent?: "up" | "down";
 }
 
 export type CatGuardState = PlayerEntity & CatGuardFields & { climbing?: boolean };
@@ -47,17 +50,17 @@ export const CARTWHEEL_PHASES = [
 const AUTHORED_GUARDS: ReadonlyArray<ReadonlyArray<{
   variant: CatGuardVariant; x: number; y: number;
 }>> = [
-  [{ variant: "catBlack", x: 1480, y: 184 }],
-  [{ variant: "catOrange", x: 2820, y: 118 }, { variant: "catBlack", x: 3380, y: 184 }],
-  [{ variant: "catBlack", x: 4620, y: 122 }, { variant: "catOrange", x: 5160, y: 184 }],
+  [{ variant: "catBlack", x: 1480, y: 262 }],
+  [{ variant: "catOrange", x: 2820, y: 204 }, { variant: "catBlack", x: 3380, y: 262 }],
+  [{ variant: "catBlack", x: 4620, y: 204 }, { variant: "catOrange", x: 5160, y: 262 }],
   [
-    { variant: "catBlack", x: 6100, y: 156 },
-    { variant: "catOrange", x: 6330, y: 88 },
-    { variant: "catBlack", x: 6760, y: 232 },
-    { variant: "catOrange", x: 6880, y: 144 },
+    { variant: "catBlack", x: 6200, y: 262 },
+    { variant: "catOrange", x: 6380, y: 262 },
+    { variant: "catBlack", x: 6620, y: 204 },
+    { variant: "catOrange", x: 6760, y: 146 },
   ],
   [
-    { variant: "catBlack", x: 7460, y: 190 },
+    { variant: "catBlack", x: 7460, y: 262 },
     { variant: "catOrange", x: 7820, y: 320 },
     { variant: "catBlack", x: 8140, y: 320 },
   ],

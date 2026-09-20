@@ -57,4 +57,11 @@ describe("Cat Guard production sprite registration", () => {
     expect(CAT_GUARD_GROUPS.catBlack.walk.frames[0].x).toBeGreaterThan(382);
     expect(CAT_GUARD_GROUPS.catBlack.run.frames[0].x).toBeGreaterThan(944);
   });
+
+  it("uses clean character-only cells for climbing instead of baked ladder cells", () => {
+    expect(CAT_GUARD_GROUPS.catBlack.climb.frames.every((frame) => frame.y === 34)).toBe(true);
+    expect(CAT_GUARD_GROUPS.catOrange.climb.frames.every((frame) => frame.y === 128)).toBe(true);
+    expect(CAT_GUARD_GROUPS.catBlack.climb.frames.every((frame) => frame.x < 945)).toBe(true);
+    expect(CAT_GUARD_GROUPS.catOrange.climb.frames.every((frame) => frame.x < 1036)).toBe(true);
+  });
 });

@@ -118,6 +118,8 @@ export interface PlayerEntity {
   /** Shared enemy ladder fields (optional for player and floor-only actors). */
   climbing?: boolean;
   climbLadderX?: number;
+  climbLadderId?: string;
+  catClimbIntent?: "up" | "down";
 
   /**
    * Authored elevated world deck currently supporting the player's feet.

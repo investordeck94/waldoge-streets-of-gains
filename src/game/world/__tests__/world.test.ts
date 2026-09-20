@@ -562,7 +562,7 @@ describe("level 4 — Fudder Territory blueprint", () => {
     expect(getLevelWidth(2)).toBe(15600);
     expect(getLevelWidth(6)).toBe(9000);
     expect(pitsFor(6)).toHaveLength(0);
-    expect(laddersFor(6)).toHaveLength(24);
+    expect(laddersFor(6)).toHaveLength(23);
   });
 });
 

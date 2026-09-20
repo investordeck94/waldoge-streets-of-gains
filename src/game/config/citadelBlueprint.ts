@@ -8,14 +8,23 @@ export const CITADEL_BLUEPRINT_LEVEL = 6;
 export const CITADEL_WORLD_BOUNDS = { x0: 0, x1: 9000 } as const;
 export const CITADEL_SECTION_BOUNDS = [0, 1800, 3600, 5400, 7200, 9000] as const;
 export const CITADEL_ELEVATION_BANDS = [
-  { id: "main", y: GROUND_Y },
-  { id: "deck-1", y: 238 },
-  { id: "deck-2", y: 190 },
-  { id: "deck-3", y: 144 },
-  { id: "deck-4", y: 88 },
+  { id: "main", blueprintY: 0, y: GROUND_Y },
+  { id: "deck-1", blueprintY: 150, y: 262 },
+  { id: "deck-2", blueprintY: 300, y: 204 },
+  { id: "deck-3", blueprintY: 450, y: 146 },
+  { id: "deck-4", blueprintY: 600, y: 88 },
+] as const;
+export const CITADEL_INNER_RANGES = [
+  { id: "entry", x0: 5400, x1: 5600 },
+  { id: "lower-decks", x0: 5600, x1: 5850 },
+  { id: "key-ladders", x0: 5850, x1: 6100 },
+  { id: "key-deck", x0: 6100, x1: 6500 },
+  { id: "upper-ladders", x0: 6500, x1: 6750 },
+  { id: "anon-cage", x0: 6750, x1: 7000 },
+  { id: "exit", x0: 7000, x1: 7200 },
 ] as const;
 export const CITADEL_OBJECTIVES = {
-  key: { x: 6360, y: 88, surfaceId: "key-deck" },
+  key: { x: 6360, y: 262, surfaceId: "key-deck" },
   cage: { x: 6900, y: 88, surfaceId: "cage-level" },
   bossArena: { x0: 7800, x1: 9000 },
 } as const;
@@ -77,7 +86,9 @@ export function validateCitadelBlueprint(): CitadelValidationReport {
     }
   }
   const zones = ENCOUNTER_ZONES[CITADEL_BLUEPRINT_LEVEL];
-  if (!zones || zones.waves.length !== 5 || zones.boss * width < CITADEL_OBJECTIVES.bossArena.x0) {
+  if (!zones || zones.waves.length !== 5
+    || zones.waves.some((wave, index) => Math.floor(wave * 5) !== index)
+    || zones.boss * width < CITADEL_OBJECTIVES.bossArena.x0) {
     issues.push({ code: "encounters", detail: "Five waves plus final arena required" });
   }
   return { valid: issues.length === 0, width, sections: 5, deckCount: decks.length, ladderCount: ladders.length, issues };

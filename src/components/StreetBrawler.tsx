@@ -129,6 +129,16 @@ import {
   type CatGuardState,
 } from "@/game/enemy/catGuards";
 import {
+  catGuardWaitingX,
+  catSurfaceIdAt,
+  clearCatGuardLadder,
+  nextCatGuardLadder,
+  occupyCatGuardLadder,
+  resolveCatGuardSpacing,
+  validCatGuardMount,
+  type CatGuardClimbState,
+} from "@/game/enemy/catGuardNavigation";
+import {
   collectCitadelKey,
   initialCitadelQuest,
   rescueAnon,
@@ -167,7 +177,7 @@ import { setRenderClock, renderNow } from "@/game/presentation/render2d/clock";
 import {
   getLevelWidth, groundYAt, clampToPitWalls, hasVerticalTraversal,
   ladderAt, nearestLadder, connectingLadder, encounterX, bossArenaX, BOSS_WAKE_DISTANCE,
-  landingDeckForLadder,
+  landingDeckForLadder, laddersFor,
   maxPitDepthFor, LADDER_GRAB_X, landingDeckAt, landingDecksFor, type LandingDeck,
 } from "@/game/config/world";
 import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/districts";
@@ -4399,15 +4409,21 @@ export const StreetBrawler: FC = () => {
           const myGround = groundYAt(g.level, e.x, e.y);
           const targetGround = groundYAt(g.level, p.x, p.y);
           const grounded = e.y >= myGround - 1;
+          const catClimb = isCatGuard(e) ? e as CatGuardClimbState : null;
           if (eClimb.climbing) {
-            const lad = ladderAt(g.level, e.x) ?? nearestLadder(g.level, e.x);
+            const lad = catClimb
+              ? laddersFor(g.level).find((candidate) => candidate.id === catClimb.climbLadderId) ?? null
+              : ladderAt(g.level, e.x) ?? nearestLadder(g.level, e.x);
             if (lad) {
-              const goalY = Math.min(Math.max(targetGround, lad.top), lad.bottom);
+              const goalY = catClimb
+                ? (catClimb.catClimbIntent === "up" ? lad.top : lad.bottom)
+                : Math.min(Math.max(targetGround, lad.top), lad.bottom);
               const dir = climbDirectionFor(e.y, goalY);
               if (dir === 0) {
                 // Arrived on the target floor: let go and re-ground, otherwise
                 // the climber hovers on the ladder and never chases again.
                 dismountLadder(eClimb);
+                if (catClimb) clearCatGuardLadder(catClimb);
                 e.y = groundYAt(g.level, e.x, e.y);
                 e.vy = 0;
               } else {
@@ -4419,20 +4435,34 @@ export const StreetBrawler: FC = () => {
               }
             }
             dismountLadder(eClimb);
+            if (catClimb) clearCatGuardLadder(catClimb);
           } else if (grounded && Math.abs(myGround - targetGround) > 10) {
             // Only route to a ladder that actually joins these two floors and
             // is reachable from this side of the pit wall; otherwise fall
             // through to the normal chase so the enemy never walks in place.
-            const lad = connectingLadder(g.level, e.x, myGround, targetGround);
+            const fromSurface = catClimb ? catSurfaceIdAt(e.x, e.y) : null;
+            const toSurface = catClimb ? catSurfaceIdAt(p.x, p.y) : null;
+            const lad = catClimb && fromSurface && toSurface
+              ? nextCatGuardLadder(fromSurface, toSurface, e.x)
+              : connectingLadder(g.level, e.x, myGround, targetGround);
             if (lad) {
               const dxl = lad.x - e.x;
-              if (Math.abs(dxl) <= LADDER_GRAB_X) {
+              const occupied = new Set(g.enemies
+                .filter((other) => other !== e && isCatGuard(other) && other.climbing)
+                .map((other) => (other as CatGuardClimbState).climbLadderId)
+                .filter((id): id is string => typeof id === "string"));
+              const canCatMount = !catClimb || (!!fromSurface && validCatGuardMount(catClimb, lad, fromSurface, occupied));
+              if (Math.abs(dxl) <= LADDER_GRAB_X && canCatMount) {
+                if (catClimb && fromSurface) occupyCatGuardLadder(catClimb, lad, fromSurface);
                 mountLadder(eClimb, lad);
                 e.y = myGround > targetGround ? lad.bottom - 2 : lad.top + 2;
               } else {
                 const spd = LEVELS[g.level]?.waves[Math.min(g.wave, 1)]?.speed || 1.5;
-                e.facing = dxl > 0 ? 1 : -1;
-                e.x += e.facing * spd;
+                const destination = catClimb && occupied.has(lad.id ?? "")
+                  ? catGuardWaitingX(lad, e.x)
+                  : lad.x;
+                e.facing = destination > e.x ? 1 : -1;
+                if (Math.abs(destination - e.x) > 2) e.x += e.facing * spd;
                 e.state = "walk";
               }
               e.x = clampToPitWalls(g.level, e.x, e.y, 15);
@@ -4949,6 +4979,7 @@ export const StreetBrawler: FC = () => {
       // LEVEL 7 STORY — the key and cage are both physically elevated. State
       // advances only when Waldoge reaches their real deck coordinates.
       if (g.level === CITADEL_LEVEL) {
+        resolveCatGuardSpacing(g.enemies.filter(isCatGuard) as CatGuardClimbState[]);
         recycleCitadelStragglers(g.enemies.filter((e) => !e.isBoss), g.level, p.x, getLevelWidth(g.level));
         const q = g.citadelQuest;
         unlockCitadelKey(q, g.wave, CITADEL_KEY_GUARD_WAVE);

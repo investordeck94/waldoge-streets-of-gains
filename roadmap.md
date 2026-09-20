@@ -2,11 +2,11 @@
 
 ## Current — Level 7 strict blueprint correction and enemy sprite fix
 - [x] Remove the ladder-like strip that appears during Cat Guard walking; verify normal walking never displays climb artwork
-- [ ] Audit live Cat Guard movement, atlas frames, render order, geometry, quest flow, camera, and five-section presentation
-- [ ] Replace uniform sprite-sheet slicing with exact source rectangles and stable feet anchors; preserve one authoritative world position
-- [ ] Correct Level 7 decks/ladders and section composition against the supplied 9,000-unit blueprint without changing global gameplay
-- [ ] Add Level-7 geometry/debug validation for floor, surfaces, ladder endpoints, reachability, quest coordinates, and bounds
-- [ ] Validate X=0→9000, key→cage→rescue→Ticker Taker→victory, Cat Guard movement/attacks, desktop/mobile, tests, and build
+- [x] Audit live Cat Guard movement, atlas frames, render order, geometry, quest flow, camera, and five-section presentation
+- [x] Replace uniform sprite-sheet slicing with exact source rectangles and stable feet anchors; preserve one authoritative world position
+- [x] Correct Level 7 decks/ladders and section composition against the supplied 9,000-unit blueprint without changing global gameplay
+- [x] Add Level-7 geometry/debug validation for floor, surfaces, ladder endpoints, reachability, quest coordinates, and bounds
+- [x] Validate X=0→9000, key→cage→rescue→Ticker Taker→victory, Cat Guard movement/attacks, desktop/mobile, tests, and build
 
 ## Current — Level 7 Ticker Taker Cat Guards
 - [x] Prepare cached Cat Guard sprite assets from the supplied black, orange/white, action, and blueprint references
@@ -150,11 +150,11 @@
 
 ## Level 7 definitive bug fix + blueprint fidelity pass
 - [x] Phase 1: audit Cat Guard sprites, state, movement, ladders, geometry, sections, spawns, rendering, camera, and references before edits
-- [ ] Phase 2: fix deterministic Cat Guard frame extraction and continuous visibility
-- [ ] Phase 3: enforce collision-based Cat Guard movement and explicit validated ladder transitions
-- [ ] Phase 4: validate/correct the continuous 0–9000 Level 7 collision world
-- [ ] Phase 5: match visible decks and ladders to canonical blueprint geometry
-- [ ] Phase 6: place enemies deterministically on valid surfaces
-- [ ] Phase 7: validate/correct physical key → ladders → cage → rescue progression
-- [ ] Phase 8: align Level 7 visuals with implemented geometry section-by-section
-- [ ] Phase 9: complete desktop/mobile START → victory validation and full regression checks
+- [x] Phase 2: fix deterministic Cat Guard frame extraction and continuous visibility
+- [x] Phase 3: enforce collision-based Cat Guard movement and explicit validated ladder transitions
+- [x] Phase 4: validate/correct the continuous 0–9000 Level 7 collision world
+- [x] Phase 5: match visible decks and ladders to canonical blueprint geometry
+- [x] Phase 6: place enemies deterministically on valid surfaces
+- [x] Phase 7: validate/correct physical key → ladders → cage → rescue progression
+- [ ] Phase 8: visual density still falls short of the supplied blueprint; geometry and route are aligned
+- [x] Phase 9: complete desktop/mobile START → victory validation and full regression checks

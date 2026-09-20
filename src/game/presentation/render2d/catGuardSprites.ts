@@ -63,7 +63,10 @@ export const CAT_GUARD_GROUPS: Record<CatGuardVariant, Record<Pose, Group>> = {
     cartwheel: group(frames(467, 153, [0, 160, 358, 565, 733, 949, 1095, 1404, 1536], 177 / 153)),
     hit: group(frames(661, 147, [0, 84, 168, 251, 335], 177 / 147)),
     defeat: group(frames(661, 147, [335, 437, 577, 681, 750], 177 / 147)),
-    climb: group(frames(661, 147, [750, 849, 1001, 1167, 1260, 1431, 1536], 177 / 147)),
+    // The supplied climb cells include a complete ladder in every frame.
+    // Reuse the clean authored walk bodies for climb motion; the world renderer
+    // draws the one real collision ladder behind the guard.
+    climb: group(frames(34, 177, [386, 479, 572, 665, 758, 851, 944])),
   },
   catOrange: {
     idle: group(frames(128, 163, [0, 99, 198, 297, 395])),
@@ -76,12 +79,13 @@ export const CAT_GUARD_GROUPS: Record<CatGuardVariant, Record<Pose, Group>> = {
     cartwheel: group(frames(558, 179, [390, 543, 683, 845, 965, 1063, 1246, 1382, 1536], 163 / 179)),
     hit: group(frames(775, 187, [0, 109, 212, 330, 470], 163 / 187)),
     defeat: group(frames(775, 187, [470, 556, 695, 844, 925, 1013, 1140], 163 / 187)),
-    climb: group(frames(775, 236, [1140, 1221, 1281, 1323, 1404, 1480, 1536], 163 / 236)),
+    climb: group(frames(128, 163, [395, 503, 611, 720, 827, 933, 1035])),
   },
 };
 
 const images: Partial<Record<CatGuardVariant, HTMLImageElement>> = {};
 const ready: Partial<Record<CatGuardVariant, boolean>> = {};
+const retries: Partial<Record<CatGuardVariant, number>> = {};
 
 function imageFor(variant: CatGuardVariant): HTMLImageElement | null {
   if (typeof Image === "undefined") return null;
@@ -89,6 +93,13 @@ function imageFor(variant: CatGuardVariant): HTMLImageElement | null {
     const image = new Image();
     image.decoding = "sync";
     image.onload = () => { ready[variant] = true; };
+    image.onerror = () => {
+      ready[variant] = false;
+      if ((retries[variant] ?? 0) >= 2) return;
+      retries[variant] = (retries[variant] ?? 0) + 1;
+      images[variant] = undefined;
+      window.setTimeout(() => imageFor(variant), 80 * (retries[variant] ?? 1));
+    };
     // Local bundled copies are the persistent runtime source. The CDN pointers
     // above retain immutable provenance for the exact user-supplied sheets.
     image.src = CAT_GUARD_RUNTIME_ASSETS[variant];

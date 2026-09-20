@@ -52,6 +52,10 @@ export function recycleCitadelStragglers<T extends Placeable>(
   let moved = 0;
   for (const enemy of enemies) {
     if (enemy.state === "dead" || (enemy.hp ?? 1) <= 0 || enemy.climbing) continue;
+    // Cat Guards are persistent authored elites. Never teleport them from a
+    // deck to the street; their route is resolved through real ladders.
+    if ((enemy as Placeable & { variant?: string }).variant === "catBlack"
+      || (enemy as Placeable & { variant?: string }).variant === "catOrange") continue;
     if (enemy.x >= playerX - 1200) continue;
     enemy.x = Math.min(levelWidth - 60, playerX + 620);
     enemy.y = GROUND_Y;
