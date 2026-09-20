@@ -150,8 +150,8 @@
 
 ## Current — Level 7 final bug fix + reference-pack fidelity pass
 - [x] Phase 1: inspect the original blueprint, all eleven reference-pack images, live desktop/mobile midpoints, Cat Guard systems, geometry, rendering, and camera paths
-- [ ] Phase 2: harden Cat Guard frame validation, image readiness, grounding fallback, and deterministic spacing without changing combat or artwork
-- [ ] Phase 3: implement section-specific scenery matching the enlarged 7.1–7.5 compositions around the locked 20 decks and 23 ladders
-- [ ] Phase 4: compare live midpoint captures against every section reference and correct remaining evidence-backed visual discrepancies
-- [ ] Phase 5: replay START → key → cage → rescue → Ticker Taker → victory on desktop and mobile
-- [ ] Phase 6: run focused tests, complete test suite, typecheck, and build validation
+- [x] Phase 2: harden Cat Guard frame validation, image readiness, grounding fallback, and deterministic spacing without changing combat or artwork
+- [x] Phase 3: implement section-specific scenery matching the enlarged 7.1–7.5 compositions around the locked 20 decks and 23 ladders
+- [x] Phase 4: compare live midpoint captures against every section reference and correct remaining evidence-backed visual discrepancies
+- [x] Phase 5: replay START → key → cage → rescue → Ticker Taker → victory on desktop and mobile
+- [x] Phase 6: run focused tests, complete test suite, typecheck, and build validation
