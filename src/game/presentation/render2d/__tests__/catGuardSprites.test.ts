@@ -52,4 +52,9 @@ describe("Cat Guard production sprite registration", () => {
       }
     }
   });
+
+  it("keeps Black Guard locomotion beyond the idle/walk divider", () => {
+    expect(CAT_GUARD_GROUPS.catBlack.walk.frames[0].x).toBeGreaterThan(382);
+    expect(CAT_GUARD_GROUPS.catBlack.run.frames[0].x).toBeGreaterThan(944);
+  });
 });

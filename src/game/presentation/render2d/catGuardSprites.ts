@@ -48,8 +48,11 @@ const group = (sourceFrames: readonly CatGuardFrame[]): Group => ({ frames: sour
 export const CAT_GUARD_GROUPS: Record<CatGuardVariant, Record<Pose, Group>> = {
   catBlack: {
     idle: group(frames(34, 177, [0, 72, 143, 215, 286])),
-    walk: group(frames(34, 177, [290, 360, 431, 501, 572, 642, 710])),
-    run: group(frames(34, 177, [710, 842, 970, 1101, 1237, 1381, 1536])),
+    // Locomotion begins after the red divider at x=382. Keeping these cells
+    // inside the labelled WALK/RUN regions prevents that divider from looking
+    // like a ladder attached to the guard during movement.
+    walk: group(frames(34, 177, [386, 479, 572, 665, 758, 851, 944])),
+    run: group(frames(34, 177, [947, 1045, 1143, 1241, 1339, 1437, 1536])),
     lightPunch: group(frames(260, 163, [0, 73, 147, 218, 290], 177 / 163)),
     heavyPunch: group(frames(260, 163, [290, 365, 440, 512, 585], 177 / 163)),
     frontKick: group(frames(260, 163, [585, 653, 724, 796, 865], 177 / 163)),
