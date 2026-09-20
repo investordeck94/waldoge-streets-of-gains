@@ -41,4 +41,11 @@ describe("Level 7 Cat Guard ladder navigation", () => {
     expect(right.x - left.x).toBeGreaterThanOrEqual(CAT_LADDER_SPACING);
     expect(climbing.x).toBe(6202);
   });
+
+  it("never repositions guards during active combat states", () => {
+    const attacker = { ...guard(6204, 262, "catOrange"), state: "kick", catMove: "frontKick" as const };
+    const idle = guard(6200, 262);
+    resolveCatGuardSpacing([idle, attacker]);
+    expect(attacker.x).toBe(6204);
+  });
 });

@@ -1,6 +1,6 @@
 /** Level-7-only Cat Guard ladder routing over authored collision objects. */
 import {
-  LADDER_GRAB_X, laddersFor, landingDecksFor, type Ladder,
+  GROUND_Y, LADDER_GRAB_X, laddersFor, landingDecksFor, type Ladder,
 } from "@/game/config/world";
 import type { CatGuardState } from "./catGuards";
 
@@ -14,7 +14,7 @@ export interface CatGuardClimbState extends CatGuardState {
 }
 
 export function catSurfaceIdAt(x: number, y: number): string | null {
-  if (Math.abs(y - 320) <= SURFACE_TOLERANCE) return "main";
+  if (Math.abs(y - GROUND_Y) <= SURFACE_TOLERANCE) return "main";
   const deck = landingDecksFor(LEVEL).find((candidate) =>
     candidate.id && x >= candidate.x0 && x <= candidate.x1
       && Math.abs(y - candidate.y) <= SURFACE_TOLERANCE,
@@ -83,7 +83,13 @@ export function catGuardWaitingX(ladder: Ladder, guardX: number): number {
 /** Deterministic same-surface separation; climbing guards retain ladder x. */
 export function resolveCatGuardSpacing(guards: CatGuardClimbState[]): void {
   const ordered = guards
-    .filter((guard) => guard.hp > 0 && guard.state !== "dead" && !guard.climbing)
+    .filter((guard) => guard.hp > 0
+      && guard.state !== "dead"
+      && guard.state !== "hit"
+      && guard.state !== "punch"
+      && guard.state !== "kick"
+      && !guard.catMove
+      && !guard.climbing)
     .sort((a, b) => a.x - b.x || (a.variant === "catBlack" ? -1 : 1));
   for (let index = 1; index < ordered.length; index++) {
     const left = ordered[index - 1];
