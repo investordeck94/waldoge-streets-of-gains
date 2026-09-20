@@ -84,11 +84,14 @@ export const LEVELS: LevelConfig[] = [
   },
   // Level 7 — final hardest boss
   {
-    name: "DARK DOGE OVERLORD",
+    name: "THE TAKER'S CITADEL",
     theme: "chart",
     waves: [
       { count: 5, hp: 90, speed: 2.3 },
       { count: 6, hp: 100, speed: 2.5 },
+      { count: 6, hp: 102, speed: 2.55 },
+      { count: 6, hp: 105, speed: 2.6 },
+      { count: 7, hp: 108, speed: 2.65 },
     ],
     boss: { hp: 850, chargeSpeed: 7.5, aiSpeed: 3.0, dmgMult: 1.5, name: "TICKER TAKER" },
   },

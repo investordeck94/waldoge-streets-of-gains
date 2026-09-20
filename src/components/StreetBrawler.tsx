@@ -105,6 +105,25 @@ import {
   stepRaiderRanged,
   type RaiderState,
 } from "@/game/enemy/raidingTeam";
+import {
+  ANON_CAGE_POSITION,
+  CITADEL_KEY_POSITION,
+  preloadTakerCitadel,
+  setCitadelQuestState,
+} from "@/game/presentation/render2d/takerCitadel";
+import {
+  CITADEL_KEY_GUARD_WAVE,
+  CITADEL_LEVEL,
+  applyCitadelRoster,
+  recycleCitadelStragglers,
+} from "@/game/enemy/citadelForces";
+import {
+  collectCitadelKey,
+  initialCitadelQuest,
+  rescueAnon,
+  unlockCitadelKey,
+  type CitadelQuestState,
+} from "@/game/logic/citadelQuest";
 
 import { STYLES, nextStyle, type StyleName } from "@/lib/fightStyles";
 import { MOVE_SETS, CHAIN_RESET_MS, msToFrames, type Move } from "@/lib/fightMoves";
@@ -1586,7 +1605,7 @@ function spawnPlatforms(level: number): Platform[] {
   // the stickman-era trestle corridor: Level 1 is a flat traversal street,
   // Level 2's verticality comes from lower streets + ladders (see world.ts),
   // and Level 3 is the open Bad Actor studio lot.
-  if (level === 0 || level === 1 || level === 2 || level === 3) return [];
+  if (level === 0 || level === 1 || level === 2 || level === 3 || level === 6) return [];
 
   // All levels share the wooden-plank-on-steel-trestle look from the reference;
   // mall uses a stair/balcony variant. Level-specific decorations (lamps,
@@ -3032,6 +3051,8 @@ function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, di
   // stage some of them on the authored decks. Candle Minions keep every other
   // slot and are never removed or converted.
   applyRaidingTeamRoster(wave as unknown as RaiderState[], levelIndex, waveIndex);
+  // Level 7 only: stage the same Candle Minions across the authored ascent.
+  applyCitadelRoster(wave, levelIndex, waveIndex);
   return wave;
 }
 
@@ -3266,6 +3287,9 @@ export const StreetBrawler: FC = () => {
     /** LEVEL 6 story progression: key guard → key → cage → rescue. */
     marketerQuest: { keyAvailable: boolean; keyTaken: boolean; rescued: boolean };
     marketerHintTimer: number;
+    /** LEVEL 7 story progression: elevated key → Anon prison tower → rescue. */
+    citadelQuest: CitadelQuestState;
+    citadelHintTimer: number;
   }>({
     player: createPlayer(),
     enemies: [],
@@ -3303,6 +3327,8 @@ export const StreetBrawler: FC = () => {
     specialFx: null,
     marketerQuest: { keyAvailable: false, keyTaken: false, rescued: false },
     marketerHintTimer: 0,
+    citadelQuest: initialCitadelQuest(),
+    citadelHintTimer: 0,
     camPreset: "snappy",
     vxAvg: 0,
     vxHistory: [],
@@ -3326,6 +3352,7 @@ export const StreetBrawler: FC = () => {
     preloadExitLiquidityTerritory();
     preloadMarketerTerritory();
     preloadRaidingTeamSprites();
+    preloadTakerCitadel();
 
     const img = new Image();
     img.src = waldogeHead;
@@ -3373,6 +3400,8 @@ export const StreetBrawler: FC = () => {
     g.bossIntro = { active: false, timer: 0, total: 0, level: 0, bossName: "", levelName: "" };
     g.marketerQuest = { keyAvailable: false, keyTaken: false, rescued: false };
     setMarketerQuestState(g.marketerQuest);
+    g.citadelQuest = initialCitadelQuest();
+    setCitadelQuestState(g.citadelQuest);
     g.healFlash = 0;
     g.vxHistory = [];
     g.camLookAhead = 0;
@@ -4881,6 +4910,26 @@ export const StreetBrawler: FC = () => {
         setMarketerQuestState(g.marketerQuest);
       }
 
+      // LEVEL 7 STORY — the key and cage are both physically elevated. State
+      // advances only when Waldoge reaches their real deck coordinates.
+      if (g.level === CITADEL_LEVEL) {
+        recycleCitadelStragglers(g.enemies.filter((e) => !e.isBoss), g.level, p.x, getLevelWidth(g.level));
+        const q = g.citadelQuest;
+        unlockCitadelKey(q, g.wave, CITADEL_KEY_GUARD_WAVE);
+        if (collectCitadelKey(q, p, CITADEL_KEY_POSITION)) {
+          sfx(() => SFX.waveStart());
+          g.effects.push({ x: p.x, y: p.y - 72, timer: 130, text: "KEY TO ANON'S CAGE", color: "#ffd23f", size: 20 });
+        }
+        if (rescueAnon(q, p, ANON_CAGE_POSITION)) {
+          sfx(() => SFX.victory());
+          g.effects.push({ x: p.x, y: p.y - 72, timer: 160, text: "ANON RESCUED!", color: "#c36bff", size: 22 });
+        }
+        setCitadelQuestState(q);
+      } else if (g.citadelQuest.keyAvailable || g.citadelQuest.keyTaken || g.citadelQuest.rescued) {
+        g.citadelQuest = initialCitadelQuest();
+        setCitadelQuestState(g.citadelQuest);
+      }
+
       // Wave / Level progression
       const alive = g.enemies.filter(e => e.state !== "dead");
       if (alive.length === 0) {
@@ -4980,6 +5029,20 @@ export const StreetBrawler: FC = () => {
                   text: g.marketerQuest.keyTaken
                     ? "FREE THE SQUIRREL →"
                     : "FIND THE KEY ON THE FUNNEL DECK",
+                  color: "#ffd23f", size: 18,
+                });
+              }
+            } else if (
+              g.level === CITADEL_LEVEL
+              && g.wave + 1 === LEVELS[g.level].waves.length
+              && !g.citadelQuest.rescued
+            ) {
+              g.citadelHintTimer = (g.citadelHintTimer ?? 0) - 1;
+              if (g.citadelHintTimer <= 0) {
+                g.citadelHintTimer = 150;
+                g.effects.push({
+                  x: p.x, y: p.y - 110, timer: 120,
+                  text: g.citadelQuest.keyTaken ? "CLIMB TO ANON'S CAGE →" : "TAKE THE KEY ABOVE",
                   color: "#ffd23f", size: 18,
                 });
               }
