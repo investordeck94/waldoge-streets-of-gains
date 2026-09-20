@@ -1,7 +1,7 @@
 # Waldoge: Streets of Gains — combat pass
 
 ## Current — Level 7 strict blueprint correction and enemy sprite fix
-- [ ] Remove the ladder-like strip that appears during Cat Guard walking; verify normal walking never displays climb artwork
+- [x] Remove the ladder-like strip that appears during Cat Guard walking; verify normal walking never displays climb artwork
 - [ ] Audit live Cat Guard movement, atlas frames, render order, geometry, quest flow, camera, and five-section presentation
 - [ ] Replace uniform sprite-sheet slicing with exact source rectangles and stable feet anchors; preserve one authoritative world position
 - [ ] Correct Level 7 decks/ladders and section composition against the supplied 9,000-unit blueprint without changing global gameplay
