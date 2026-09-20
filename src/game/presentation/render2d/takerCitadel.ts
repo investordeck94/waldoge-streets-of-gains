@@ -16,7 +16,7 @@ export const TAKER_SECTIONS = [
   "TICKER TAKER'S THRONE",
 ] as const;
 
-export const CITADEL_KEY_POSITION = { x: 6360, y: 88 } as const;
+export const CITADEL_KEY_POSITION = { x: 6360, y: 262 } as const;
 export const ANON_CAGE_POSITION = { x: 6900, y: 88 } as const;
 
 export interface CitadelLandmark {
