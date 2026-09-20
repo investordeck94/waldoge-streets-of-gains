@@ -5588,11 +5588,7 @@ export const StreetBrawler: FC = () => {
             // Ticker Taker's Level-7 elite faction uses the supplied production sheets.
             // Never substitute a second character while the production PNG is
             // decoding: each guard has one authoritative render dispatch.
-            if (!drawCatGuardSprite(ctx, e as Parameters<typeof drawCatGuardSprite>[1], g.camX)) {
-              // Keep a live guard visible if decoding is delayed; never let an
-              // invisible combatant continue attacking the player.
-              drawCandleMinion(ctx, e, g.camX);
-            }
+            drawCatGuardSprite(ctx, e as Parameters<typeof drawCatGuardSprite>[1], g.camX);
           } else if (isRaider(e as unknown as RaiderState)) {
             // Mr. Marketer's Raiding Team (Level 6 elite henchmen).
             if (!drawRaidingTeamSprite(ctx, e as Parameters<typeof drawRaidingTeamSprite>[1], g.camX)) {

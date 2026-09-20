@@ -60,7 +60,7 @@ const AUTHORED_GUARDS: ReadonlyArray<ReadonlyArray<{
     { variant: "catOrange", x: 6760, y: 146 },
   ],
   [
-    { variant: "catBlack", x: 7460, y: 190 },
+    { variant: "catBlack", x: 7460, y: 262 },
     { variant: "catOrange", x: 7820, y: 320 },
     { variant: "catBlack", x: 8140, y: 320 },
   ],
