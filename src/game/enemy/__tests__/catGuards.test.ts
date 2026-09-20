@@ -69,4 +69,12 @@ describe("Level 7 Cat Guards", () => {
     stepCatGuard(hard, { x: 130, y: 320, hp: 100, state: "idle" }, 2.5, difficultyModifiers("blackMonday", 6), () => 0.9);
     expect(easy.attackCooldown).toBeGreaterThan(hard.attackCooldown);
   });
+
+  it("authors velocity intent without translating the authoritative world position", () => {
+    const guard = { ...grunt(), variant: "catBlack" as const };
+    stepCatGuard(guard, { x: 500, y: 320, hp: 100, state: "idle" }, 2.5, difficultyModifiers("normal", 6), () => 0.9);
+    expect(guard.x).toBe(100);
+    expect(guard.vx).toBeGreaterThan(0);
+    expect(guard.state).toBe("walk");
+  });
 });

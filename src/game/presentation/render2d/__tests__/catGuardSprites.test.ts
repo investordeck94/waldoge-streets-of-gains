@@ -26,7 +26,7 @@ describe("Cat Guard production sprite registration", () => {
     expect(catGuardPoseFor({ ...view("catOrange"), state: "hit" })).toBe("hit");
     expect(catGuardPoseFor({ ...view("catBlack"), state: "dead" })).toBe("defeat");
     expect(catGuardPoseFor({ ...view("catBlack"), climbing: true })).toBe("climb");
-    expect(catGuardPoseFor({ ...view("catBlack"), state: "walk", vx: 3 })).toBe("run");
+    expect(catGuardPoseFor({ ...view("catBlack"), state: "walk", catRunning: true })).toBe("run");
     expect(catGuardPoseFor({ ...view("catOrange"), catMove: "roundhouse" })).toBe("roundhouse");
   });
 
@@ -35,5 +35,21 @@ describe("Cat Guard production sprite registration", () => {
       ...view("catBlack"), state: "kick", stateTimer: 48 - index * 6, catMove: "cartwheel" as const,
     }).index);
     expect(frames).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it("uses explicit in-bounds rectangles with a stable feet anchor", () => {
+    for (const variant of ["catBlack", "catOrange"] as const) {
+      for (const pose of Object.values(CAT_GUARD_GROUPS[variant])) {
+        expect(pose.frames).toHaveLength(pose.count);
+        for (const frame of pose.frames) {
+          expect(frame.w).toBeGreaterThan(0);
+          expect(frame.h).toBeGreaterThan(0);
+          expect(frame.x + frame.w).toBeLessThanOrEqual(1536);
+          expect(frame.y + frame.h).toBeLessThanOrEqual(1024);
+          expect(frame.anchorY).toBe(frame.h);
+          expect(frame.scale).toBeGreaterThan(0);
+        }
+      }
+    }
   });
 });
