@@ -1,6 +1,8 @@
 /** Cached, state-driven renderer for the supplied Cat Guard production sheets. */
 import blackSheet from "@/assets/cat-guard-black-production.png.asset.json";
 import orangeSheet from "@/assets/cat-guard-orange-production.png.asset.json";
+import blackRuntimeSheet from "@/assets/cat-guard-black-production-local.png";
+import orangeRuntimeSheet from "@/assets/cat-guard-orange-production-local.png";
 import { renderNow } from "./clock";
 import { CAT_GUARD_MOVES, type CatGuardMove, type CatGuardVariant } from "@/game/enemy/catGuards";
 
@@ -8,6 +10,11 @@ export const CAT_GUARD_ASSETS = {
   catBlack: blackSheet.url,
   catOrange: orangeSheet.url,
 } as const;
+
+const CAT_GUARD_RUNTIME_ASSETS: Record<CatGuardVariant, string> = {
+  catBlack: blackRuntimeSheet,
+  catOrange: orangeRuntimeSheet,
+};
 
 export const CAT_GUARD_OUTFITS = {
   catBlack: "BLACK TRACKSUIT + RED/GOLD DETAILS",
@@ -56,7 +63,9 @@ function imageFor(variant: CatGuardVariant): HTMLImageElement | null {
     const image = new Image();
     image.decoding = "sync";
     image.onload = () => { ready[variant] = true; };
-    image.src = CAT_GUARD_ASSETS[variant];
+    // Local bundled copies are the persistent runtime source. The CDN pointers
+    // above retain immutable provenance for the exact user-supplied sheets.
+    image.src = CAT_GUARD_RUNTIME_ASSETS[variant];
     images[variant] = image;
   }
   const image = images[variant];
