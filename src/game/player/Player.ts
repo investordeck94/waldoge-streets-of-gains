@@ -107,6 +107,18 @@ export interface PlayerEntity {
    */
   attackLanded?: boolean;
 
+  /** Level-7 Cat Guard identity and isolated martial-arts state. */
+  variant?: "raider" | "catBlack" | "catOrange";
+  catMove?: "lightPunch" | "heavyPunch" | "frontKick" | "roundhouse" | "cartwheel";
+  catCombo?: Array<"lightPunch" | "heavyPunch" | "frontKick" | "roundhouse" | "cartwheel">;
+  catDecision?: number;
+  catAttackLanded?: boolean;
+  catRunning?: boolean;
+
+  /** Shared enemy ladder fields (optional for player and floor-only actors). */
+  climbing?: boolean;
+  climbLadderX?: number;
+
   /**
    * Authored elevated world deck currently supporting the player's feet.
    * Undefined means normal lower-floor grounding; it is set only by a ladder

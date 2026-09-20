@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CAT_GUARD_ASSETS, CAT_GUARD_GROUPS, catGuardFrameFor, catGuardPoseFor } from "../catGuardSprites";
+import { CAT_GUARD_ASSETS, CAT_GUARD_GROUPS, CAT_GUARD_OUTFITS, catGuardFrameFor, catGuardPoseFor } from "../catGuardSprites";
 
 const view = (variant: "catBlack" | "catOrange") => ({
   x: 0, y: 320, height: 70, facing: 1, state: "idle", stateTimer: 0,
@@ -10,6 +10,8 @@ describe("Cat Guard production sprite registration", () => {
   it("registers the supplied Black and Orange/White sheets", () => {
     expect(CAT_GUARD_ASSETS.catBlack).toContain("cat-guard-black-production.png");
     expect(CAT_GUARD_ASSETS.catOrange).toContain("cat-guard-orange-production.png");
+    expect(CAT_GUARD_OUTFITS.catBlack).toBe("BLACK TRACKSUIT + RED/GOLD DETAILS");
+    expect(CAT_GUARD_OUTFITS.catOrange).toBe("WHITE TRACKSUIT + GOLD STRIPES");
   });
 
   it("preserves every production state and authored frame count", () => {

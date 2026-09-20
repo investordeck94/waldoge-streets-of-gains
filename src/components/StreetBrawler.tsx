@@ -97,6 +97,10 @@ import {
   preloadRaidingTeamSprites,
 } from "@/game/presentation/render2d/raidingTeamSprites";
 import {
+  drawCatGuardSprite,
+  preloadCatGuardSprites,
+} from "@/game/presentation/render2d/catGuardSprites";
+import {
   KEY_GUARD_WAVE,
   MARKETER_LEVEL,
   applyRaidingTeamRoster,
@@ -117,6 +121,13 @@ import {
   applyCitadelRoster,
   recycleCitadelStragglers,
 } from "@/game/enemy/citadelForces";
+import {
+  appendCatGuardRoster,
+  isCatGuard,
+  resolveCatGuardStrike,
+  stepCatGuard,
+  type CatGuardState,
+} from "@/game/enemy/catGuards";
 import {
   collectCitadelKey,
   initialCitadelQuest,
@@ -3054,6 +3065,9 @@ function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, di
   applyRaidingTeamRoster(wave as unknown as RaiderState[], levelIndex, waveIndex);
   // Level 7 only: stage the same Candle Minions across the authored ascent.
   applyCitadelRoster(wave, levelIndex, waveIndex);
+  // Level 7 only: append Ticker Taker's elite Cat Guards. Existing Candle
+  // Minions stay byte-for-byte intact and retain all authored slots.
+  appendCatGuardRoster(wave, levelIndex, waveIndex);
   return wave;
 }
 
@@ -3353,6 +3367,7 @@ export const StreetBrawler: FC = () => {
     preloadExitLiquidityTerritory();
     preloadMarketerTerritory();
     preloadRaidingTeamSprites();
+    preloadCatGuardSprites();
     preloadTakerCitadel();
 
     const img = new Image();
@@ -4441,7 +4456,7 @@ export const StreetBrawler: FC = () => {
         e.stateTimer = Math.max(-1, e.stateTimer - 1);
         e.attackCooldown = Math.max(-1, e.attackCooldown - 1);
         if (e.state === "hit" && e.stateTimer <= 0) e.state = "idle";
-        if ((e.state === "punch" || e.state === "kick") && e.stateTimer <= 0) e.state = "idle";
+        if ((e.state === "punch" || e.state === "kick") && e.stateTimer <= 0 && !isCatGuard(e)) e.state = "idle";
         if ((e.state === "boss_charge" || e.state === "boss_slam" || e.state === "boss_throw") && e.stateTimer <= 0) e.state = "idle";
 
 
@@ -4734,8 +4749,19 @@ export const StreetBrawler: FC = () => {
         }
 
 
-        // Normal enemy AI
-        if (e.state !== "hit" && e.state !== "punch" && e.state !== "kick") {
+        const catGuard = isCatGuard(e) ? e as CatGuardState : null;
+        if (catGuard) {
+          const gMods = difficultyModifiers(g.difficulty, g.level);
+          stepCatGuard(
+            catGuard,
+            { x: p.x, y: p.y, hp: p.hp, state: p.state },
+            LEVELS[g.level]?.waves[Math.min(g.wave, LEVELS[g.level].waves.length - 1)]?.speed || 1.5,
+            gMods,
+          );
+        }
+
+        // Normal Candle Minion / Raiding Team AI remains unchanged.
+        if (!catGuard && e.state !== "hit" && e.state !== "punch" && e.state !== "kick") {
           const dx = p.x - e.x;
           const dist = Math.abs(dx);
           e.facing = dx > 0 ? 1 : -1;
@@ -4766,16 +4792,19 @@ export const StreetBrawler: FC = () => {
         // Enemy attack hit — shared AABB solver over a 3-frame active window,
         // latched so one swing can only damage once.
         {
-          const strike = resolveGruntStrike(e, p, e.attackLanded === true);
+          const strike = catGuard
+            ? resolveCatGuardStrike(catGuard, p)
+            : resolveGruntStrike(e, p, e.attackLanded === true);
           if (strike.hit) {
-            e.attackLanded = true;
+            if (catGuard) catGuard.catAttackLanded = true;
+            else e.attackLanded = true;
             sfx(() => SFX.hit());
             p.hp -= Math.max(1, Math.round(
               strike.damage * difficultyModifiers(g.difficulty, g.level).enemyDamage,
             ));
             p.state = "hit";
             p.stateTimer = 8;
-            p.vx = e.facing * 3;
+            p.vx = e.facing * ("knockback" in strike ? strike.knockback : 3);
             c.hitCount = 0;
             c.multiplier = 1;
             setComboCount(0);
@@ -5520,7 +5549,12 @@ export const StreetBrawler: FC = () => {
           drawBoss(ctx, e, g.camX);
         } else {
           // Full-body candle-boxer artwork; procedural draw is the pre-load fallback.
-          if (isRaider(e as unknown as RaiderState)) {
+          if (isCatGuard(e)) {
+            // Ticker Taker's Level-7 elite faction uses the supplied production sheets.
+            if (!drawCatGuardSprite(ctx, e as CatGuardState, g.camX)) {
+              drawCandleMinion(ctx, e, g.camX);
+            }
+          } else if (isRaider(e as unknown as RaiderState)) {
             // Mr. Marketer's Raiding Team (Level 6 elite henchmen).
             if (!drawRaidingTeamSprite(ctx, e as Parameters<typeof drawRaidingTeamSprite>[1], g.camX)) {
               drawCandleMinion(ctx, e, g.camX);

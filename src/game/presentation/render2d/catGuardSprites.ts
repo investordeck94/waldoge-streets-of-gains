@@ -9,6 +9,11 @@ export const CAT_GUARD_ASSETS = {
   catOrange: orangeSheet.url,
 } as const;
 
+export const CAT_GUARD_OUTFITS = {
+  catBlack: "BLACK TRACKSUIT + RED/GOLD DETAILS",
+  catOrange: "WHITE TRACKSUIT + GOLD STRIPES",
+} as const;
+
 interface Group { x: number; y: number; w: number; h: number; count: number }
 interface Frame { x: number; y: number; w: number; h: number; index: number; count: number }
 type Pose = "idle" | "walk" | "run" | CatGuardMove | "hit" | "defeat" | "climb";
@@ -66,7 +71,7 @@ export function preloadCatGuardSprites(): void {
 export interface CatGuardSpriteView {
   x: number; y: number; height: number; facing: number; state: string;
   stateTimer: number; hp: number; maxHp: number; vx?: number; climbing?: boolean;
-  variant: CatGuardVariant; catMove?: CatGuardMove;
+  variant: CatGuardVariant; catMove?: CatGuardMove; catRunning?: boolean;
 }
 
 export function catGuardPoseFor(e: CatGuardSpriteView): Pose {
@@ -74,7 +79,7 @@ export function catGuardPoseFor(e: CatGuardSpriteView): Pose {
   if (e.state === "hit") return "hit";
   if (e.climbing) return "climb";
   if (e.catMove) return e.catMove;
-  if (e.state === "walk") return Math.abs(e.vx ?? 0) > 2.5 ? "run" : "walk";
+  if (e.state === "walk") return e.catRunning || Math.abs(e.vx ?? 0) > 2.5 ? "run" : "walk";
   return "idle";
 }
 

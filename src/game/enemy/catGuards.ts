@@ -15,6 +15,7 @@ export interface CatGuardFields {
   catCombo?: CatGuardMove[];
   catDecision?: number;
   catAttackLanded?: boolean;
+  catRunning?: boolean;
 }
 
 export type CatGuardState = PlayerEntity & CatGuardFields & { climbing?: boolean };
@@ -155,9 +156,11 @@ export function stepCatGuard(
 
   if (dist > 58) {
     e.x += e.facing * baseSpeed * chase;
+    e.catRunning = dist > 180;
     e.state = dist > 180 ? "walk" : "walk";
     return;
   }
+  e.catRunning = false;
   if (e.attackCooldown > 0 || (e.catDecision ?? 0) > 0 || target.hp <= 0 || target.state === "dead") {
     e.state = "idle";
     return;
