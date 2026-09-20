@@ -1,7 +1,8 @@
 /** Level-7-only Cat Guard ladder routing over authored collision objects. */
 import {
-  GROUND_Y, LADDER_GRAB_X, laddersFor, landingDecksFor, type Ladder,
+  LADDER_GRAB_X, laddersFor, landingDecksFor, type Ladder,
 } from "@/game/config/world";
+import { GROUND_Y } from "@/game/config";
 import type { CatGuardState } from "./catGuards";
 
 const LEVEL = 6;
