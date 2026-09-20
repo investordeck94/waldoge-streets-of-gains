@@ -35,7 +35,7 @@ export const LEVEL_WORLD_WIDTHS: readonly number[] = [
   9000, // L4 Fudder Territory — five 1800-unit blueprint sections
   9000, // L5 Graveyard of Gains — five 1800-unit blueprint sections
   9000, // L6 Mr. Marketer's Territory — five 1800-unit blueprint sections
-  DEFAULT_LEVEL_WIDTH,
+  9000, // L7 The Taker's Citadel — five 1800-unit blueprint sections
 ];
 
 
@@ -93,6 +93,8 @@ export const LEVEL_PITS: Record<number, GroundPit[]> = {
   4: [],
   // Level 6's blueprint requires one continuous flat main floor throughout.
   5: [],
+  // Level 7's blueprint requires one uninterrupted flat main combat lane.
+  6: [],
 };
 
 /** Pits for a level (never undefined). */
@@ -217,6 +219,8 @@ export type LadderStyle =
   | "construction";
 
 export interface Ladder {
+  /** Stable authored identity (present on blueprint-driven levels). */
+  id?: string;
   /** Centre x of the ladder in world units. */
   x: number;
   /** Upper end (usually GROUND_Y — the main street). */
@@ -224,6 +228,11 @@ export interface Ladder {
   /** Lower end (the pit floor). */
   bottom: number;
   style: LadderStyle;
+  /** Stable IDs of the two surfaces this ladder joins. */
+  bottomSurfaceId?: string;
+  topSurfaceId?: string;
+  /** Zero-based blueprint section. */
+  section?: number;
 }
 
 /** Horizontal distance within which a fighter may mount a ladder. */
@@ -323,6 +332,34 @@ export const LEVEL_LADDERS: Record<number, Ladder[]> = {
     { x: 7540, top: 190, bottom: GROUND_Y, style: "construction" },
     { x: 8540, top: 190, bottom: GROUND_Y, style: "maintenance" },
   ],
+  // LEVEL 7 — THE TAKER'S CITADEL. Every ladder joins two explicit playable
+  // surfaces. Multi-stage towers use adjacent deck-to-deck links only.
+  6: [
+    { id: "taken-west", x: 420, top: 190, bottom: GROUND_Y, style: "construction", bottomSurfaceId: "main", topSurfaceId: "taken-west", section: 0 },
+    { id: "taken-mid", x: 920, top: 190, bottom: GROUND_Y, style: "maintenance", bottomSurfaceId: "main", topSurfaceId: "taken-mid", section: 0 },
+    { id: "taken-east", x: 1520, top: 184, bottom: GROUND_Y, style: "fireEscape", bottomSurfaceId: "main", topSurfaceId: "taken-east", section: 0 },
+    { id: "ticker-west", x: 2050, top: 196, bottom: GROUND_Y, style: "maintenance", bottomSurfaceId: "main", topSurfaceId: "ticker-west", section: 1 },
+    { id: "ticker-mid-low", x: 2580, top: 214, bottom: GROUND_Y, style: "construction", bottomSurfaceId: "main", topSurfaceId: "ticker-mid-low", section: 1 },
+    { id: "ticker-mid-high", x: 2870, top: 118, bottom: 214, style: "maintenance", bottomSurfaceId: "ticker-mid-low", topSurfaceId: "ticker-mid-high", section: 1 },
+    { id: "ticker-east", x: 3400, top: 184, bottom: GROUND_Y, style: "fireEscape", bottomSurfaceId: "main", topSurfaceId: "ticker-east", section: 1 },
+    { id: "copy-west", x: 3820, top: 190, bottom: GROUND_Y, style: "construction", bottomSurfaceId: "main", topSurfaceId: "copy-west", section: 2 },
+    { id: "copy-scan-low", x: 4380, top: 218, bottom: GROUND_Y, style: "maintenance", bottomSurfaceId: "main", topSurfaceId: "copy-scan-low", section: 2 },
+    { id: "copy-scan-high", x: 4660, top: 122, bottom: 218, style: "construction", bottomSurfaceId: "copy-scan-low", topSurfaceId: "copy-scan-high", section: 2 },
+    { id: "copy-east", x: 5180, top: 184, bottom: GROUND_Y, style: "fireEscape", bottomSurfaceId: "main", topSurfaceId: "copy-east", section: 2 },
+    { id: "citadel-entry", x: 5560, top: 224, bottom: GROUND_Y, style: "construction", bottomSurfaceId: "main", topSurfaceId: "citadel-entry", section: 3 },
+    { id: "key-floor-to-d1", x: 5880, top: 238, bottom: GROUND_Y, style: "maintenance", bottomSurfaceId: "main", topSurfaceId: "key-deck-1", section: 3 },
+    { id: "key-d1-to-d2", x: 6120, top: 156, bottom: 238, style: "construction", bottomSurfaceId: "key-deck-1", topSurfaceId: "key-deck-2", section: 3 },
+    { id: "key-d2-to-key", x: 6360, top: 78, bottom: 156, style: "maintenance", bottomSurfaceId: "key-deck-2", topSurfaceId: "key-deck", section: 3 },
+    { id: "key-east-descent", x: 6540, top: 156, bottom: GROUND_Y, style: "fireEscape", bottomSurfaceId: "main", topSurfaceId: "key-deck-2", section: 3 },
+    { id: "prison-left-1", x: 6740, top: 232, bottom: GROUND_Y, style: "construction", bottomSurfaceId: "main", topSurfaceId: "prison-deck-1", section: 3 },
+    { id: "prison-right-1", x: 7060, top: 232, bottom: GROUND_Y, style: "construction", bottomSurfaceId: "main", topSurfaceId: "prison-deck-1", section: 3 },
+    { id: "prison-left-2", x: 6780, top: 144, bottom: 232, style: "maintenance", bottomSurfaceId: "prison-deck-1", topSurfaceId: "prison-deck-2", section: 3 },
+    { id: "prison-right-2", x: 7020, top: 144, bottom: 232, style: "maintenance", bottomSurfaceId: "prison-deck-1", topSurfaceId: "prison-deck-2", section: 3 },
+    { id: "prison-left-cage", x: 6820, top: 56, bottom: 144, style: "fireEscape", bottomSurfaceId: "prison-deck-2", topSurfaceId: "cage-level", section: 3 },
+    { id: "prison-right-cage", x: 6980, top: 56, bottom: 144, style: "fireEscape", bottomSurfaceId: "prison-deck-2", topSurfaceId: "cage-level", section: 3 },
+    { id: "throne-approach", x: 7480, top: 190, bottom: GROUND_Y, style: "construction", bottomSurfaceId: "main", topSurfaceId: "throne-west", section: 4 },
+    { id: "throne-exit", x: 8860, top: 190, bottom: GROUND_Y, style: "maintenance", bottomSurfaceId: "main", topSurfaceId: "throne-east", section: 4 },
+  ],
 };
 
 export function laddersFor(level: number): Ladder[] {
@@ -342,12 +379,17 @@ export function laddersFor(level: number): Ladder[] {
 
 /** A solid walkable surface bridging a pit at a ladder's top end. */
 export interface LandingDeck {
+  /** Stable authored identity (present on blueprint-driven levels). */
+  id?: string;
   x0: number;
   x1: number;
   /** Walkable surface y (the ladder's top). */
   y: number;
   /** Ladder centre this deck belongs to. */
   ladderX: number;
+  section?: number;
+  collisionEnabled?: boolean;
+  connectedLadderIds?: readonly string[];
 }
 
 /** Half-width of a landing deck, in world units. */
@@ -419,6 +461,28 @@ const LEVEL_AUTHORED_DECKS: Record<number, LandingDeck[]> = {
     { x0: 6600, x1: 7040, y: 182, ladderX: 6640 },
     { x0: 7500, x1: 7860, y: 190, ladderX: 7540 },
     { x0: 8500, x1: 8860, y: 190, ladderX: 8540 },
+  ],
+  6: [
+    { id: "cage-level", x0: 6790, x1: 7010, y: 56, ladderX: 6820, section: 3, collisionEnabled: true, connectedLadderIds: ["prison-left-cage", "prison-right-cage"] },
+    { id: "key-deck", x0: 6260, x1: 6460, y: 78, ladderX: 6360, section: 3, collisionEnabled: true, connectedLadderIds: ["key-d2-to-key"] },
+    { id: "ticker-mid-high", x0: 2760, x1: 3020, y: 118, ladderX: 2870, section: 1, collisionEnabled: true, connectedLadderIds: ["ticker-mid-high"] },
+    { id: "copy-scan-high", x0: 4560, x1: 4800, y: 122, ladderX: 4660, section: 2, collisionEnabled: true, connectedLadderIds: ["copy-scan-high"] },
+    { id: "prison-deck-2", x0: 6700, x1: 7100, y: 144, ladderX: 6780, section: 3, collisionEnabled: true, connectedLadderIds: ["prison-left-2", "prison-right-2", "prison-left-cage", "prison-right-cage"] },
+    { id: "key-deck-2", x0: 6040, x1: 6580, y: 156, ladderX: 6120, section: 3, collisionEnabled: true, connectedLadderIds: ["key-d1-to-d2", "key-d2-to-key", "key-east-descent"] },
+    { id: "taken-east", x0: 1420, x1: 1700, y: 184, ladderX: 1520, section: 0, collisionEnabled: true, connectedLadderIds: ["taken-east"] },
+    { id: "ticker-east", x0: 3260, x1: 3540, y: 184, ladderX: 3400, section: 1, collisionEnabled: true, connectedLadderIds: ["ticker-east"] },
+    { id: "copy-east", x0: 5040, x1: 5320, y: 184, ladderX: 5180, section: 2, collisionEnabled: true, connectedLadderIds: ["copy-east"] },
+    { id: "taken-west", x0: 300, x1: 620, y: 190, ladderX: 420, section: 0, collisionEnabled: true, connectedLadderIds: ["taken-west"] },
+    { id: "taken-mid", x0: 800, x1: 1120, y: 190, ladderX: 920, section: 0, collisionEnabled: true, connectedLadderIds: ["taken-mid"] },
+    { id: "copy-west", x0: 3700, x1: 4020, y: 190, ladderX: 3820, section: 2, collisionEnabled: true, connectedLadderIds: ["copy-west"] },
+    { id: "throne-west", x0: 7380, x1: 7660, y: 190, ladderX: 7480, section: 4, collisionEnabled: true, connectedLadderIds: ["throne-approach"] },
+    { id: "throne-east", x0: 8740, x1: 8940, y: 190, ladderX: 8860, section: 4, collisionEnabled: true, connectedLadderIds: ["throne-exit"] },
+    { id: "ticker-west", x0: 1940, x1: 2200, y: 196, ladderX: 2050, section: 1, collisionEnabled: true, connectedLadderIds: ["ticker-west"] },
+    { id: "ticker-mid-low", x0: 2460, x1: 3060, y: 214, ladderX: 2580, section: 1, collisionEnabled: true, connectedLadderIds: ["ticker-mid-low", "ticker-mid-high"] },
+    { id: "copy-scan-low", x0: 4260, x1: 4860, y: 218, ladderX: 4380, section: 2, collisionEnabled: true, connectedLadderIds: ["copy-scan-low", "copy-scan-high"] },
+    { id: "citadel-entry", x0: 5480, x1: 5700, y: 224, ladderX: 5560, section: 3, collisionEnabled: true, connectedLadderIds: ["citadel-entry"] },
+    { id: "prison-deck-1", x0: 6660, x1: 7140, y: 232, ladderX: 6740, section: 3, collisionEnabled: true, connectedLadderIds: ["prison-left-1", "prison-right-1", "prison-left-2", "prison-right-2"] },
+    { id: "key-deck-1", x0: 5800, x1: 6220, y: 238, ladderX: 5880, section: 3, collisionEnabled: true, connectedLadderIds: ["key-floor-to-d1", "key-d1-to-d2"] },
   ],
 };
 
@@ -527,6 +591,9 @@ export const ENCOUNTER_ZONES: Record<number, { waves: number[]; boss: number }> 
   // Level 6: one authored encounter per blueprint section. Wave index 2 (the
   // funnel factory, x ≈ 4500) is the KEY GUARD encounter.
   5: { waves: [0.09, 0.28, 0.5, 0.71, 0.86], boss: 0.94 },
+  // Level 7: one fight in every section; wave 3 guards the elevated key and
+  // wave 4 protects the prison tower. Ticker Taker waits at the throne.
+  6: { waves: [0.1, 0.3, 0.5, 0.7, 0.79], boss: 0.94 },
 
 };
 

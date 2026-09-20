@@ -1586,7 +1586,7 @@ function spawnPlatforms(level: number): Platform[] {
   // the stickman-era trestle corridor: Level 1 is a flat traversal street,
   // Level 2's verticality comes from lower streets + ladders (see world.ts),
   // and Level 3 is the open Bad Actor studio lot.
-  if (level === 0 || level === 1 || level === 2 || level === 3) return [];
+  if (level === 0 || level === 1 || level === 2 || level === 3 || level === 6) return [];
 
   // All levels share the wooden-plank-on-steel-trestle look from the reference;
   // mall uses a stair/balcony variant. Level-specific decorations (lamps,
