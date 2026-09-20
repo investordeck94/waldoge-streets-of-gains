@@ -76,3 +76,19 @@ export function clearCatGuardLadder(guard: CatGuardClimbState): void {
 export function catGuardWaitingX(ladder: Ladder, guardX: number): number {
   return ladder.x + (guardX <= ladder.x ? -CAT_LADDER_SPACING : CAT_LADDER_SPACING);
 }
+
+/** Deterministic same-surface separation; climbing guards retain ladder x. */
+export function resolveCatGuardSpacing(guards: CatGuardClimbState[]): void {
+  const ordered = guards
+    .filter((guard) => guard.hp > 0 && guard.state !== "dead" && !guard.climbing)
+    .sort((a, b) => a.x - b.x || (a.variant === "catBlack" ? -1 : 1));
+  for (let index = 1; index < ordered.length; index++) {
+    const left = ordered[index - 1];
+    const right = ordered[index];
+    if (catSurfaceIdAt(left.x, left.y) !== catSurfaceIdAt(right.x, right.y)) continue;
+    const gap = right.x - left.x;
+    if (gap >= CAT_LADDER_SPACING) continue;
+    right.x += CAT_LADDER_SPACING - gap;
+    right.vx = Math.max(0, right.vx);
+  }
+}

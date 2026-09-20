@@ -134,6 +134,7 @@ import {
   clearCatGuardLadder,
   nextCatGuardLadder,
   occupyCatGuardLadder,
+  resolveCatGuardSpacing,
   validCatGuardMount,
   type CatGuardClimbState,
 } from "@/game/enemy/catGuardNavigation";
@@ -176,7 +177,7 @@ import { setRenderClock, renderNow } from "@/game/presentation/render2d/clock";
 import {
   getLevelWidth, groundYAt, clampToPitWalls, hasVerticalTraversal,
   ladderAt, nearestLadder, connectingLadder, encounterX, bossArenaX, BOSS_WAKE_DISTANCE,
-  landingDeckForLadder,
+  landingDeckForLadder, laddersFor,
   maxPitDepthFor, LADDER_GRAB_X, landingDeckAt, landingDecksFor, type LandingDeck,
 } from "@/game/config/world";
 import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/districts";
@@ -4978,6 +4979,7 @@ export const StreetBrawler: FC = () => {
       // LEVEL 7 STORY — the key and cage are both physically elevated. State
       // advances only when Waldoge reaches their real deck coordinates.
       if (g.level === CITADEL_LEVEL) {
+        resolveCatGuardSpacing(g.enemies.filter(isCatGuard) as CatGuardClimbState[]);
         recycleCitadelStragglers(g.enemies.filter((e) => !e.isBoss), g.level, p.x, getLevelWidth(g.level));
         const q = g.citadelQuest;
         unlockCitadelKey(q, g.wave, CITADEL_KEY_GUARD_WAVE);

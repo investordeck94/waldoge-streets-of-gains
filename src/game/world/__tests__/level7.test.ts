@@ -4,9 +4,9 @@ import { ENCOUNTER_ZONES, getLevelWidth, groundYAt, laddersFor, landingDeckForLa
 import { LEVELS } from "@/game/config/levels";
 import { applyCitadelRoster, CITADEL_KEY_GUARD_WAVE, CITADEL_LEVEL } from "@/game/enemy/citadelForces";
 import { collectCitadelKey, initialCitadelQuest, rescueAnon, unlockCitadelKey } from "@/game/logic/citadelQuest";
-import { CITADEL_ELEVATION_BANDS, CITADEL_SECTION_BOUNDS, validateCitadelBlueprint } from "@/game/config/citadelBlueprint";
+import { CITADEL_ELEVATION_BANDS, CITADEL_INNER_RANGES, CITADEL_SECTION_BOUNDS, validateCitadelBlueprint } from "@/game/config/citadelBlueprint";
 
-const KEY = { x: 6360, y: 88 } as const;
+const KEY = { x: 6360, y: 262 } as const;
 const CAGE = { x: 6900, y: 88 } as const;
 
 describe("Level 7 final blueprint geometry", () => {
@@ -21,13 +21,14 @@ describe("Level 7 final blueprint geometry", () => {
 
   it("passes the deterministic blueprint validator and preserves all elevation bands", () => {
     expect(CITADEL_SECTION_BOUNDS).toEqual([0, 1800, 3600, 5400, 7200, 9000]);
-    expect(CITADEL_ELEVATION_BANDS.map((band) => band.y)).toEqual([GROUND_Y, 238, 190, 144, 88]);
-    expect(validateCitadelBlueprint()).toMatchObject({ valid: true, width: 9000, sections: 5, deckCount: 20, ladderCount: 24, issues: [] });
+    expect(CITADEL_ELEVATION_BANDS.map((band) => band.blueprintY)).toEqual([0, 150, 300, 450, 600]);
+    expect(CITADEL_ELEVATION_BANDS.map((band) => band.y)).toEqual([GROUND_Y, 262, 204, 146, 88]);
+    expect(validateCitadelBlueprint()).toMatchObject({ valid: true, width: 9000, sections: 5, deckCount: 20, ladderCount: 23, issues: [] });
   });
 
   it("has one encounter in every section and a final throne boss", () => {
     const zone = ENCOUNTER_ZONES[CITADEL_LEVEL];
-    expect(zone.waves.map((f) => Math.floor(f * 5))).toEqual([0, 1, 2, 3, 3]);
+    expect(zone.waves.map((f) => Math.floor(f * 5))).toEqual([0, 1, 2, 3, 4]);
     expect(LEVELS[CITADEL_LEVEL].waves).toHaveLength(5);
     expect(zone.boss * 9000).toBeGreaterThan(8400);
     expect(LEVELS[CITADEL_LEVEL].boss.name).toBe("TICKER TAKER");
@@ -45,7 +46,7 @@ describe("Level 7 final blueprint geometry", () => {
   });
 
   it("connects every ladder endpoint to real surfaces", () => {
-    expect(ladders).toHaveLength(24);
+    expect(ladders).toHaveLength(23);
     for (const ladder of ladders) {
       expect(ladder.id).toBeTruthy();
       expect(ladder.top).toBeLessThan(ladder.bottom);
@@ -62,7 +63,11 @@ describe("Level 7 final blueprint geometry", () => {
 
   it("places the key after three climbs and the cage above two prison decks", () => {
     expect(decks.find((d) => d.id === "key-deck" && d.y === KEY.y && KEY.x >= d.x0 && KEY.x <= d.x1)).toBeDefined();
-    expect(["key-floor-to-d1", "key-d1-to-d2", "key-d2-to-key"].every((id) => ladders.some((l) => l.id === id))).toBe(true);
+    expect(CITADEL_INNER_RANGES.map((range) => [range.x0, range.x1])).toEqual([
+      [5400, 5600], [5600, 5850], [5850, 6100], [6100, 6500],
+      [6500, 6750], [6750, 7000], [7000, 7200],
+    ]);
+    expect(["key-floor-to-d1", "key-guard-ladder"].every((id) => ladders.some((l) => l.id === id))).toBe(true);
     const prison = ["prison-deck-1", "prison-deck-2", "cage-level"].map((id) => decks.find((d) => d.id === id));
     expect(prison.every(Boolean)).toBe(true);
     expect(prison[2]?.y).toBeLessThan(prison[1]?.y ?? 0);
