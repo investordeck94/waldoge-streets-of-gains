@@ -21,36 +21,56 @@ export const CAT_GUARD_OUTFITS = {
   catOrange: "WHITE TRACKSUIT + GOLD STRIPES",
 } as const;
 
-interface Group { x: number; y: number; w: number; h: number; count: number }
-interface Frame { x: number; y: number; w: number; h: number; index: number; count: number }
+export interface CatGuardFrame {
+  x: number; y: number; w: number; h: number;
+  /** Feet location inside this source rectangle. */
+  anchorX: number; anchorY: number;
+  /** Authored destination scale relative to the variant's reference row. */
+  scale: number;
+}
+interface Group { frames: readonly CatGuardFrame[]; count: number }
+interface Frame extends CatGuardFrame { index: number; count: number }
 type Pose = "idle" | "walk" | "run" | CatGuardMove | "hit" | "defeat" | "climb";
+
+/**
+ * Explicit source cells measured from the supplied 1536×1024 sheets. The
+ * artwork has irregular horizontal spacing, so no region/count division is
+ * permitted here. Anchors are source-space feet positions and remain fixed at
+ * the entity's authoritative world x/y regardless of crop size or facing.
+ */
+const frames = (y: number, h: number, bounds: readonly number[], scale = 1): readonly CatGuardFrame[] =>
+  bounds.slice(0, -1).map((x, index) => {
+    const w = bounds[index + 1] - x;
+    return { x, y, w, h, anchorX: w / 2, anchorY: h, scale };
+  });
+const group = (sourceFrames: readonly CatGuardFrame[]): Group => ({ frames: sourceFrames, count: sourceFrames.length });
 
 export const CAT_GUARD_GROUPS: Record<CatGuardVariant, Record<Pose, Group>> = {
   catBlack: {
-    idle: { x: 0, y: 34, w: 286, h: 177, count: 4 },
-    walk: { x: 290, y: 34, w: 420, h: 177, count: 6 },
-    run: { x: 710, y: 34, w: 826, h: 177, count: 6 },
-    lightPunch: { x: 0, y: 260, w: 290, h: 163, count: 4 },
-    heavyPunch: { x: 290, y: 260, w: 295, h: 163, count: 4 },
-    frontKick: { x: 585, y: 260, w: 280, h: 163, count: 4 },
-    roundhouse: { x: 865, y: 260, w: 671, h: 163, count: 4 },
-    cartwheel: { x: 0, y: 467, w: 1536, h: 153, count: 8 },
-    hit: { x: 0, y: 661, w: 335, h: 147, count: 4 },
-    defeat: { x: 335, y: 661, w: 415, h: 147, count: 4 },
-    climb: { x: 750, y: 661, w: 786, h: 147, count: 6 },
+    idle: group(frames(34, 177, [0, 72, 143, 215, 286])),
+    walk: group(frames(34, 177, [290, 360, 431, 501, 572, 642, 710])),
+    run: group(frames(34, 177, [710, 842, 970, 1101, 1237, 1381, 1536])),
+    lightPunch: group(frames(260, 163, [0, 73, 147, 218, 290], 177 / 163)),
+    heavyPunch: group(frames(260, 163, [290, 365, 440, 512, 585], 177 / 163)),
+    frontKick: group(frames(260, 163, [585, 653, 724, 796, 865], 177 / 163)),
+    roundhouse: group(frames(260, 163, [865, 1014, 1180, 1360, 1536], 177 / 163)),
+    cartwheel: group(frames(467, 153, [0, 160, 358, 565, 733, 949, 1095, 1404, 1536], 177 / 153)),
+    hit: group(frames(661, 147, [0, 84, 168, 251, 335], 177 / 147)),
+    defeat: group(frames(661, 147, [335, 437, 577, 681, 750], 177 / 147)),
+    climb: group(frames(661, 147, [750, 849, 1001, 1167, 1260, 1431, 1536], 177 / 147)),
   },
   catOrange: {
-    idle: { x: 0, y: 128, w: 395, h: 163, count: 4 },
-    walk: { x: 395, y: 128, w: 640, h: 163, count: 6 },
-    run: { x: 1035, y: 128, w: 501, h: 163, count: 6 },
-    lightPunch: { x: 0, y: 345, w: 470, h: 167, count: 4 },
-    heavyPunch: { x: 470, y: 345, w: 570, h: 167, count: 5 },
-    frontKick: { x: 1040, y: 345, w: 496, h: 167, count: 4 },
-    roundhouse: { x: 0, y: 558, w: 390, h: 179, count: 5 },
-    cartwheel: { x: 390, y: 558, w: 1146, h: 179, count: 8 },
-    hit: { x: 0, y: 775, w: 470, h: 187, count: 4 },
-    defeat: { x: 470, y: 775, w: 670, h: 187, count: 6 },
-    climb: { x: 1140, y: 775, w: 396, h: 236, count: 6 },
+    idle: group(frames(128, 163, [0, 99, 198, 297, 395])),
+    walk: group(frames(128, 163, [395, 503, 611, 720, 827, 933, 1035])),
+    run: group(frames(128, 163, [1035, 1121, 1206, 1291, 1375, 1456, 1536])),
+    lightPunch: group(frames(345, 167, [0, 117, 235, 352, 470], 163 / 167)),
+    heavyPunch: group(frames(345, 167, [470, 584, 698, 812, 926, 1040], 163 / 167)),
+    frontKick: group(frames(345, 167, [1040, 1160, 1282, 1408, 1536], 163 / 167)),
+    roundhouse: group(frames(558, 179, [0, 105, 128, 251, 284, 390], 163 / 179)),
+    cartwheel: group(frames(558, 179, [390, 543, 683, 845, 965, 1063, 1246, 1382, 1536], 163 / 179)),
+    hit: group(frames(775, 187, [0, 109, 212, 330, 470], 163 / 187)),
+    defeat: group(frames(775, 187, [470, 556, 695, 844, 925, 1013, 1140], 163 / 187)),
+    climb: group(frames(775, 236, [1140, 1221, 1281, 1323, 1404, 1480, 1536], 163 / 236)),
   },
 };
 
@@ -88,7 +108,7 @@ export function catGuardPoseFor(e: CatGuardSpriteView): Pose {
   if (e.state === "hit") return "hit";
   if (e.climbing) return "climb";
   if (e.catMove) return e.catMove;
-  if (e.state === "walk") return e.catRunning || Math.abs(e.vx ?? 0) > 2.5 ? "run" : "walk";
+  if (e.state === "walk") return e.catRunning ? "run" : "walk";
   return "idle";
 }
 
@@ -105,8 +125,8 @@ export function catGuardFrameFor(e: CatGuardSpriteView, clock = renderNow()): Fr
   } else {
     index = Math.floor(clock / (pose === "run" ? 75 : 115)) % group.count;
   }
-  const width = group.w / group.count;
-  return { x: group.x + width * index, y: group.y, w: width, h: group.h, index, count: group.count };
+  const source = group.frames[index] ?? group.frames[0];
+  return { ...source, index, count: group.count };
 }
 
 export function drawCatGuardSprite(
@@ -119,9 +139,11 @@ export function drawCatGuardSprite(
   const frame = catGuardFrameFor(e);
   const sx = e.x - camX;
   const feetY = e.y;
+  const referenceHeight = e.variant === "catBlack" ? 177 : 163;
   const visualHeight = e.height * 1.9;
-  const scale = visualHeight / frame.h;
+  const scale = visualHeight / referenceHeight * frame.scale;
   const drawWidth = frame.w * scale;
+  const drawHeight = frame.h * scale;
 
   ctx.save();
   ctx.globalAlpha = 0.28;
@@ -136,7 +158,10 @@ export function drawCatGuardSprite(
   ctx.scale(e.facing, 1);
   if (e.state === "hit") ctx.globalAlpha = 0.88;
   ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(image, frame.x, frame.y, frame.w, frame.h, -drawWidth / 2, -visualHeight, drawWidth, visualHeight);
+  ctx.drawImage(
+    image, frame.x, frame.y, frame.w, frame.h,
+    -frame.anchorX * scale, -frame.anchorY * scale, drawWidth, drawHeight,
+  );
   ctx.restore();
 
   if (e.state !== "dead") {

@@ -16,6 +16,8 @@ export interface CatGuardFields {
   catDecision?: number;
   catAttackLanded?: boolean;
   catRunning?: boolean;
+  /** Last AI-authored horizontal intent; rendering never reads or mutates it. */
+  catMoveSpeed?: number;
 }
 
 export type CatGuardState = PlayerEntity & CatGuardFields & { climbing?: boolean };
@@ -155,11 +157,17 @@ export function stepCatGuard(
   const chase = mods.enemySpeed * (black ? 1.16 : 0.94);
 
   if (dist > 58) {
-    e.x += e.facing * baseSpeed * chase;
+    // The shared physics pass is the only code that applies velocity to world
+    // position. Cat Guard AI authors intent here; it never translates x itself.
+    const moveSpeed = baseSpeed * chase;
+    e.vx = e.facing * moveSpeed;
+    e.catMoveSpeed = moveSpeed;
     e.catRunning = dist > 180;
-    e.state = dist > 180 ? "walk" : "walk";
+    e.state = "walk";
     return;
   }
+  e.vx = 0;
+  e.catMoveSpeed = 0;
   e.catRunning = false;
   if (e.attackCooldown > 0 || (e.catDecision ?? 0) > 0 || target.hp <= 0 || target.state === "dead") {
     e.state = "idle";
