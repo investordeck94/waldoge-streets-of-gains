@@ -53,7 +53,10 @@ export const CAT_GUARD_GROUPS: Record<CatGuardVariant, Record<Pose, Group>> = {
     lightPunch: group(frames(260, 163, [0, 73, 147, 218, 290], 177 / 163)),
     heavyPunch: group(frames(260, 163, [290, 365, 440, 512, 585], 177 / 163)),
     frontKick: group(frames(260, 163, [585, 653, 724, 796, 865], 177 / 163)),
-    roundhouse: group(frames(260, 163, [865, 1014, 1180, 1360, 1536], 177 / 163)),
+    // The sheet's labelled roundhouse cells overlap adjacent full bodies in
+    // source space. Reuse its clean authored kick sequence so this move never
+    // renders a second Cat Guard emerging from the attacker.
+    roundhouse: group(frames(260, 163, [585, 653, 724, 796, 865], 177 / 163)),
     cartwheel: group(frames(467, 153, [0, 160, 358, 565, 733, 949, 1095, 1404, 1536], 177 / 153)),
     hit: group(frames(661, 147, [0, 84, 168, 251, 335], 177 / 147)),
     defeat: group(frames(661, 147, [335, 437, 577, 681, 750], 177 / 147)),
