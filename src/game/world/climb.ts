@@ -30,6 +30,8 @@ export interface Climber {
   climbing?: boolean;
   /** World x of the ladder currently held (for rendering + re-grounding). */
   climbLadderX?: number;
+  /** Stable identity prevents reacquiring an unrelated ladder mid-climb. */
+  climbLadderId?: string;
 }
 
 const BLOCKED_STATES = new Set(["dead", "hit"]);
@@ -45,6 +47,7 @@ export function canMount(c: Climber, level: number, grounded: boolean): Ladder |
 export function mount(c: Climber, ladder: Ladder): void {
   c.climbing = true;
   c.climbLadderX = ladder.x;
+  c.climbLadderId = ladder.id;
   c.x = ladder.x;
   c.vy = 0;
   c.vx = 0;
@@ -55,6 +58,7 @@ export function mount(c: Climber, ladder: Ladder): void {
 export function dismount(c: Climber): void {
   c.climbing = false;
   c.climbLadderX = undefined;
+  c.climbLadderId = undefined;
   c.vy = 0;
 }
 
