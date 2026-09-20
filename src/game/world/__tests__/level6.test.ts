@@ -242,7 +242,8 @@ describe("Raiding Team", () => {
 describe("neighbouring levels are unchanged", () => {
   it("keeps Level 5 and Level 7 geometry intact", () => {
     expect(getLevelWidth(4)).toBe(9000);
-    expect(laddersFor(6)).toHaveLength(0);
+    expect(getLevelWidth(6)).toBe(9000);
+    expect(laddersFor(6)).toHaveLength(24);
     expect(LEVELS[4].boss.name).toBe("EXIT LIQUIDITY");
     expect(LEVELS[6].boss.name).toBe("TICKER TAKER");
   });
