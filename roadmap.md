@@ -1,11 +1,11 @@
 # Waldoge: Streets of Gains — combat pass
 
 ## Current — Level 7 Ticker Taker Cat Guards
-- [ ] Prepare cached Cat Guard sprite assets from the supplied black, orange/white, action, and blueprint references
-- [ ] Add Level-7-only Black and Orange/White Cat Guard roster data without replacing Candle Minions
-- [ ] Implement readable punches, kicks, combinations, and frame-timed Capoeira Cartwheel Kicks through the existing combat loop
-- [ ] Validate authored key/prison/final-approach placement, grounding, decks, ladders, difficulty, and boss-arena clearance
-- [ ] Runtime-test both variants and every move on desktop/mobile; run focused/full regressions, typecheck, and build
+- [x] Prepare cached Cat Guard sprite assets from the supplied black, orange/white, action, and blueprint references
+- [x] Add Level-7-only Black and Orange/White Cat Guard roster data without replacing Candle Minions
+- [x] Implement readable punches, kicks, combinations, and frame-timed Capoeira Cartwheel Kicks through the existing combat loop
+- [x] Validate authored key/prison/final-approach placement, grounding, decks, ladders, difficulty, and boss-arena clearance
+- [x] Runtime-test both variants and every move on desktop/mobile; run focused/full regressions, typecheck, and build
 
 ## Current — Level 7 final blueprint fidelity rebuild
 - [x] Audit and preserve existing Level 7 traversal, combat, boss, camera, and sprite-stability systems
