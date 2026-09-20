@@ -23,7 +23,7 @@ export function catSurfaceIdAt(x: number, y: number): string | null {
 }
 
 /** Breadth-first first hop through real deck/ladder connectivity. */
-export function nextCatGuardLadder(fromSurface: string, toSurface: string): Ladder | null {
+export function nextCatGuardLadder(fromSurface: string, toSurface: string, fromX = 0): Ladder | null {
   if (fromSurface === toSurface) return null;
   const ladders = laddersFor(LEVEL).filter((ladder) =>
     ladder.id && ladder.bottomSurfaceId && ladder.topSurfaceId,
@@ -33,7 +33,10 @@ export function nextCatGuardLadder(fromSurface: string, toSurface: string): Ladd
   while (queue.length) {
     const current = queue.shift();
     if (!current) break;
-    for (const ladder of ladders) {
+    const candidates = current.first
+      ? ladders
+      : [...ladders].sort((a, b) => Math.abs(a.x - fromX) - Math.abs(b.x - fromX));
+    for (const ladder of candidates) {
       const next = ladder.bottomSurfaceId === current.surface ? ladder.topSurfaceId
         : ladder.topSurfaceId === current.surface ? ladder.bottomSurfaceId
         : null;

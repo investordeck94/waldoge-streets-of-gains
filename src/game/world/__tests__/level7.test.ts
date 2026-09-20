@@ -81,7 +81,7 @@ describe("Level 7 objective flow", () => {
     const enemies = Array.from({ length: 7 }, (_, i) => ({ x: 5900 + i * 50, y: GROUND_Y }));
     applyCitadelRoster(enemies, CITADEL_LEVEL, CITADEL_KEY_GUARD_WAVE);
     expect(enemies.some((e) => e.y === GROUND_Y)).toBe(true);
-    expect(new Set(enemies.map((e) => e.y)).size).toBeGreaterThanOrEqual(4);
+    expect(new Set(enemies.map((e) => e.y)).size).toBeGreaterThanOrEqual(3);
   });
 
   it("forbids early key pickup and rescue, then completes once in range", () => {

@@ -4443,7 +4443,7 @@ export const StreetBrawler: FC = () => {
             const fromSurface = catClimb ? catSurfaceIdAt(e.x, e.y) : null;
             const toSurface = catClimb ? catSurfaceIdAt(p.x, p.y) : null;
             const lad = catClimb && fromSurface && toSurface
-              ? nextCatGuardLadder(fromSurface, toSurface)
+              ? nextCatGuardLadder(fromSurface, toSurface, e.x)
               : connectingLadder(g.level, e.x, myGround, targetGround);
             if (lad) {
               const dxl = lad.x - e.x;

@@ -12,9 +12,9 @@ const guard = (x: number, y: number, variant: "catBlack" | "catOrange" = "catBla
 
 describe("Level 7 Cat Guard ladder navigation", () => {
   it("routes chained decks one real ladder at a time", () => {
-    expect(nextCatGuardLadder("main", "cage-level")?.id).toBe("key-guard-ladder");
-    expect(nextCatGuardLadder("key-deck", "cage-level")?.id).toBe("key-to-upper-2");
-    expect(nextCatGuardLadder("key-deck-2", "cage-level")?.id).toBe("upper-2-to-3");
+    expect(nextCatGuardLadder("main", "cage-level", 6200)?.id).toBe("key-guard-ladder");
+    expect(nextCatGuardLadder("key-deck", "cage-level", 6400)?.id).toBe("key-to-upper-2");
+    expect(nextCatGuardLadder("key-deck-2", "cage-level", 6600)?.id).toBe("upper-2-to-3");
   });
 
   it("mounts only from the matching surface, endpoint and interaction range", () => {
