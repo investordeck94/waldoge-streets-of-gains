@@ -34,6 +34,7 @@ export function nextCatGuardLadder(fromSurface: string, toSurface: string, fromX
     queue.sort((a, b) => a.cost - b.cost);
     const current = queue.shift();
     if (!current) break;
+    if (current.surface === toSurface) return current.first;
     for (const ladder of ladders) {
       const next = ladder.bottomSurfaceId === current.surface ? ladder.topSurfaceId
         : ladder.topSurfaceId === current.surface ? ladder.bottomSurfaceId
@@ -46,8 +47,7 @@ export function nextCatGuardLadder(fromSurface: string, toSurface: string, fromX
       queue.push({ surface: next, first, cost });
     }
   }
-  const target = queue.find((entry) => entry.surface === toSurface);
-  return target?.first ?? null;
+  return null;
 }
 
 export function validCatGuardMount(
