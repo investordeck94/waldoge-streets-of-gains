@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CAT_GUARD_ASSETS, CAT_GUARD_GROUPS, CAT_GUARD_OUTFITS, catGuardFrameFor, catGuardPoseFor } from "../catGuardSprites";
+import { CAT_GUARD_ASSETS, CAT_GUARD_GROUPS, CAT_GUARD_OUTFITS, catGuardFrameFor, catGuardPoseFor, validateCatGuardFrames } from "../catGuardSprites";
 
 const view = (variant: "catBlack" | "catOrange") => ({
   x: 0, y: 320, height: 70, facing: 1, state: "idle", stateTimer: 0,
@@ -38,6 +38,7 @@ describe("Cat Guard production sprite registration", () => {
   });
 
   it("uses explicit in-bounds rectangles with a stable feet anchor", () => {
+    expect(validateCatGuardFrames()).toEqual([]);
     for (const variant of ["catBlack", "catOrange"] as const) {
       for (const pose of Object.values(CAT_GUARD_GROUPS[variant])) {
         expect(pose.frames).toHaveLength(pose.count);

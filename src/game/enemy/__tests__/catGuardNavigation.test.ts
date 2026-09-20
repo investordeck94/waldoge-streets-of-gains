@@ -25,6 +25,8 @@ describe("Level 7 Cat Guard ladder navigation", () => {
     expect(validCatGuardMount(guard(ladder.x + 30, 320), ladder, "main", new Set())).toBe(false);
     expect(validCatGuardMount(guard(ladder.x, 204), ladder, "key-deck-2", new Set())).toBe(false);
     expect(validCatGuardMount(guard(ladder.x, 320), ladder, "main", new Set([ladder.id ?? ""]))).toBe(false);
+    expect(validCatGuardMount({ ...guard(ladder.x, 320), state: "hit" }, ladder, "main", new Set())).toBe(false);
+    expect(validCatGuardMount({ ...guard(ladder.x, 320), state: "kick", catMove: "frontKick" }, ladder, "main", new Set())).toBe(false);
   });
 
   it("recognizes only real collision surfaces", () => {
@@ -40,5 +42,12 @@ describe("Level 7 Cat Guard ladder navigation", () => {
     resolveCatGuardSpacing([right, climbing, left]);
     expect(right.x - left.x).toBeGreaterThanOrEqual(CAT_LADDER_SPACING);
     expect(climbing.x).toBe(6202);
+  });
+
+  it("never repositions guards during active combat states", () => {
+    const attacker: CatGuardClimbState = { ...guard(6204, 262, "catOrange"), state: "kick", catMove: "frontKick" };
+    const idle = guard(6200, 262);
+    resolveCatGuardSpacing([idle, attacker]);
+    expect(attacker.x).toBe(6204);
   });
 });

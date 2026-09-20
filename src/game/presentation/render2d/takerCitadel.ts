@@ -92,6 +92,52 @@ function panel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
   ctx.restore();
 }
 
+function takerMark(ctx: CanvasRenderingContext2D, x: number, y: number, size = 18, color = "#ff2848"): void {
+  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, size / 7); ctx.shadowColor = color; ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.moveTo(x - size, y - size * .7); ctx.lineTo(x + size, y - size * .7); ctx.lineTo(x, y + size); ctx.closePath(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x - size * .45, y - size * .35); ctx.lineTo(x + size * .45, y - size * .35); ctx.lineTo(x, y + size * .42); ctx.closePath(); ctx.stroke();
+  ctx.restore();
+}
+
+function windows(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string): void {
+  ctx.save(); ctx.globalAlpha = .5; ctx.fillStyle = color;
+  for (let py = y + 10; py < y + h - 5; py += 19) for (let px = x + 10; px < x + w - 5; px += 23) ctx.fillRect(px, py, 8, 5);
+  ctx.restore();
+}
+
+function sectionMasthead(ctx: CanvasRenderingContext2D, start: number, title: string, subtitle: string): void {
+  panel(ctx, start + 590, 5, 620, 42, [title], "red", 22);
+  ctx.save(); ctx.fillStyle = "#f4c542"; ctx.font = "900 11px monospace"; ctx.textAlign = "center";
+  ctx.fillText(subtitle, start + 900, 58, 580); ctx.restore();
+  takerMark(ctx, start + 552, 26, 15); takerMark(ctx, start + 1248, 26, 15);
+}
+
+function candles(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  ctx.save(); ctx.fillStyle = "#07131d"; ctx.fillRect(x, y, w, h); ctx.strokeStyle = "#28b8ff"; ctx.strokeRect(x, y, w, h);
+  const values = [42, 67, 34, 81, 56, 96, 72, 112, 86, 124, 103, 137];
+  const step = w / values.length;
+  values.forEach((value, index) => {
+    const px = x + step * index + step / 2; const up = index % 3 !== 1;
+    ctx.strokeStyle = up ? "#45f0a1" : "#ff3657"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(px, y + h - value - 13); ctx.lineTo(px, y + h - value + 17); ctx.stroke();
+    ctx.fillStyle = up ? "#45f0a1" : "#ff3657"; ctx.fillRect(px - 5, y + h - value, 10, 17);
+  }); ctx.restore();
+}
+
+function waldogeScan(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1): void {
+  ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale); ctx.fillStyle = "rgba(255,40,72,.78)"; ctx.strokeStyle = "#ff9aac"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(0, -67, 24, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-18, -87); ctx.lineTo(-32, -112); ctx.lineTo(-4, -98); ctx.lineTo(18, -88); ctx.lineTo(34, -111); ctx.lineTo(31, -74); ctx.closePath(); ctx.fill();
+  ctx.fillRect(-23, -44, 46, 68); ctx.fillRect(-39, -34, 18, 57); ctx.fillRect(21, -34, 18, 57); ctx.fillRect(-22, 22, 17, 54); ctx.fillRect(5, 22, 17, 54);
+  ctx.beginPath(); ctx.moveTo(-19, -67); ctx.lineTo(19, -67); ctx.stroke(); ctx.restore();
+}
+
+function copyBay(ctx: CanvasRenderingContext2D, x: number, y: number, accent: string): void {
+  ctx.fillStyle = "#080d17"; ctx.fillRect(x, y, 126, 88); ctx.strokeStyle = accent; ctx.lineWidth = 2; ctx.strokeRect(x, y, 126, 88);
+  ctx.beginPath(); ctx.arc(x + 63, y + 43, 25, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = accent; ctx.fillRect(x + 56, y + 20, 14, 44); ctx.fillRect(x + 42, y + 37, 42, 11);
+}
+
 function tower(ctx: CanvasRenderingContext2D, x: number, w: number, h: number, accent: string): void {
   const top = GROUND_Y - h;
   ctx.fillStyle = "#080d19"; ctx.fillRect(x, top, w, h);
@@ -104,6 +150,7 @@ function tower(ctx: CanvasRenderingContext2D, x: number, w: number, h: number, a
   }
   ctx.fillStyle = "#05070d"; ctx.fillRect(x - 8, top - 14, w + 16, 14);
   ctx.fillStyle = accent; ctx.fillRect(x - 8, top - 14, w + 16, 3);
+  if (w > 125) takerMark(ctx, x + w / 2, top + 24, 10, accent);
 }
 
 function skyline(ctx: CanvasRenderingContext2D, start: number, index: number): void {
@@ -240,19 +287,22 @@ function geometryArchitecture(ctx: CanvasRenderingContext2D, section: number): v
 }
 
 function drawTaken(ctx: CanvasRenderingContext2D, x: number): void {
-  industrialFrame(ctx, x + 20, 112, 280, 208);
-  industrialFrame(ctx, x + 1160, 118, 610, 202);
+  industrialFrame(ctx, x + 20, 104, 280, 216);
+  industrialFrame(ctx, x + 1160, 104, 610, 216);
+  windows(ctx, x + 34, 124, 250, 174, "#28b8ff"); windows(ctx, x + 1180, 124, 560, 174, "#ff2848");
   for (const off of [325, 785, 1120, 1325, 1710]) verticalCore(ctx, x + off, 66, 46, "#ff2848");
   girderBay(ctx, x + 300, 214, 320, 98, "#ff2848");
   girderBay(ctx, x + 800, 156, 320, 156, "#ff2848");
   girderBay(ctx, x + 1420, 214, 280, 98, "#ff2848");
-  panel(ctx, x + 360, 18, 720, 48, ["TICKER TAKER NETWORK"], "red", 27);
-  panel(ctx, x + 470, 76, 610, 150, [
+  sectionMasthead(ctx, x, "THE TAKEN DISTRICT", "EVERYTHING IS MINE");
+  panel(ctx, x + 360, 70, 720, 42, ["TICKER TAKER NETWORK"], "red", 24);
+  panel(ctx, x + 470, 120, 610, 120, [
     "JEET DISTRICT — ACQUIRED", "RUGGER EXCHANGE — ACQUIRED", "BAD ACTORS STUDIOS — ACQUIRED",
     "FUDDER MEDIA — ACQUIRED", "EXIT LIQUIDITY — ACQUIRED", "MR. MARKETER — ACQUIRED",
   ], "white", 15);
   panel(ctx, x + 36, 76, 250, 146, ["ALL", "EMPIRES", "NOW HIS"], "red", 25);
-  panel(ctx, x + 1260, 54, 430, 104, ["SAME COMMUNITY.", "STRONGER TOGETHER."], "red", 22);
+  panel(ctx, x + 1260, 58, 430, 72, ["CONQUERED EMPIRES"], "red", 19);
+  takerMark(ctx, x + 1420, 174, 31); takerMark(ctx, x + 1680, 174, 22);
   terminal(ctx, x + 650, 236, 116, 62, "red", "EMPIRE 01");
   terminal(ctx, x + 1140, 230, 108, 62, "white", "ACQUIRED");
   conduit(ctx, x + 30, 246, x + 1740, 246, "#ff2848");
@@ -265,10 +315,12 @@ function drawTicker(ctx: CanvasRenderingContext2D, x: number): void {
   industrialFrame(ctx, x + 1390, 88, 380, 232, "#ff2848");
   verticalCore(ctx, x + 286, 52, 42, "#ff2848");
   verticalCore(ctx, x + 1344, 44, 42, "#28b8ff");
-  panel(ctx, x + 300, 28, 860, 46, ["THE MARKET NEVER SLEEPS"], "red", 25);
-  panel(ctx, x + 330, 88, 790, 132, ["▁▃▂▅▃▆▅▇  ▲  +98.7%", "╲╱╲╱╲╱╲╱  LIVE MARKET"], "blue", 25);
+  sectionMasthead(ctx, x, "THE TICKER DISTRICT", "THE MARKET NEVER SLEEPS");
+  candles(ctx, x + 330, 80, 790, 144);
+  panel(ctx, x + 540, 91, 360, 30, ["LIVE MARKET  +98.7%"], "blue", 13);
   panel(ctx, x + 1160, 78, 220, 150, ["BUY", "OBEY", "TRADE", "REPEAT"], "red", 21);
   panel(ctx, x + 1410, 62, 320, 170, ["GLOBAL CONTROL", "REAL TIME", "MANIPULATION"], "white", 19);
+  windows(ctx, x + 30, 116, 230, 180, "#b851ff"); takerMark(ctx, x + 1490, 264, 24);
   terminal(ctx, x + 860, 232, 126, 64, "blue", "BTC / USD");
   terminal(ctx, x + 1008, 232, 126, 64, "red", "WALDOGE");
   terminal(ctx, x + 1240, 238, 96, 58, "blue", "VOLUME");
@@ -292,15 +344,15 @@ function drawCopy(ctx: CanvasRenderingContext2D, x: number): void {
   for (const off of [48, 218, 1320, 1500]) {
     verticalCore(ctx, x + off, 72, 38, off < 500 ? "#28b8ff" : "#ff2848");
   }
-  panel(ctx, x + 380, 14, 620, 50, ["WALDOGE ANALYSIS"], "red", 25);
+  sectionMasthead(ctx, x, "THE COPY MACHINE", "ANALYSE. REPLICATE. DOMINATE.");
+  panel(ctx, x + 380, 64, 620, 38, ["WALDOGE ANALYSIS"], "red", 20);
   // Central scanner / observation chamber.
   ctx.save();
   ctx.strokeStyle = "#ff2848"; ctx.lineWidth = 6; ctx.shadowColor = "#ff2848"; ctx.shadowBlur = 22;
-  ctx.strokeRect(x + 430, 76, 300, 188); ctx.shadowBlur = 0;
-  ctx.fillStyle = "rgba(255,26,70,.11)"; ctx.fillRect(x + 438, 84, 284, 172);
-  ctx.fillStyle = "#ff3657"; ctx.font = "900 54px Impact, sans-serif"; ctx.textAlign = "center";
-  ctx.fillText("W", x + 580, 190);
+  ctx.beginPath(); ctx.ellipse(x + 580, 184, 155, 128, 0, 0, Math.PI * 2); ctx.stroke(); ctx.shadowBlur = 0;
+  ctx.fillStyle = "rgba(255,26,70,.11)"; ctx.beginPath(); ctx.ellipse(x + 580, 184, 145, 118, 0, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
+  waldogeScan(ctx, x + 580, 205, .9);
   panel(ctx, x + 760, 80, 520, 170, ["MOVESET COPIED  ✓", "COMBAT DATA  ✓", "COMMUNITY PATTERNS  ✓", "BEHAVIOUR MODEL  ✓", "REPLICATION: 98%"], "white", 17);
   panel(ctx, x + 420, 270, 720, 42, ["WALDOGE DETECTED"], "red", 24);
   for (const off of [80, 250, 1320, 1500]) panel(ctx, x + off, 96, 130, 162, ["SERVER", "DATA", "ONLINE"], "blue", 14);
@@ -314,6 +366,7 @@ function drawCopy(ctx: CanvasRenderingContext2D, x: number): void {
     ctx.strokeStyle = "#31c5ff"; ctx.strokeRect(x + off, 210, 92, 102);
     ctx.fillStyle = "#31c5ff"; ctx.beginPath(); ctx.arc(x + off + 46, 246, 22, 0, Math.PI * 2); ctx.fill();
   }
+  for (const off of [1010, 1150, 1290, 1430, 1570]) copyBay(ctx, x + off, 220, off % 280 ? "#ff2848" : "#28b8ff");
   conduit(ctx, x + 365, 242, x + 1295, 242, "#31c5ff");
   conduit(ctx, x + 510, 74, x + 1180, 116, "#ff2848");
   girderBay(ctx, x + 4260 - 3600, 214, 600, 98, "#28b8ff");
@@ -332,7 +385,7 @@ function keyDisplay(ctx: CanvasRenderingContext2D): void {
   ctx.beginPath(); ctx.arc(-11, 0, 12, 0, Math.PI * 2); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(1, 0); ctx.lineTo(36, 0); ctx.lineTo(36, 12); ctx.moveTo(24, 0); ctx.lineTo(24, 10); ctx.stroke();
   ctx.restore();
-  panel(ctx, x - 105, y - 102, 210, 34, [quest.keyAvailable ? "TAKE THE KEY" : "KEY — GUARDED"], quest.keyAvailable ? "gold" : "red", 16);
+  panel(ctx, x - 145, y - 112, 290, 44, [quest.keyAvailable ? "TAKE THE KEY" : "KEY — GUARDED", "TICKER TAKER'S FORCES"], quest.keyAvailable ? "gold" : "red", 12);
 }
 
 function drawAnon(ctx: CanvasRenderingContext2D, x: number, feetY: number, height: number): void {
@@ -357,7 +410,7 @@ function anonCage(ctx: CanvasRenderingContext2D): void {
     ctx.save(); ctx.translate(left - 8, y); ctx.rotate(-0.42); ctx.strokeRect(0, -h, w / 2, h); ctx.restore();
   }
   ctx.restore();
-  panel(ctx, x - 150, 0, 300, 32, [quest.rescued ? "ANON RESCUED" : "ANON WALDOGE'S BOSS — CAPTURED"], "purple", 13);
+  panel(ctx, x - 150, top - 38, 300, 32, [quest.rescued ? "ANON RESCUED" : "ANON WALDOGE'S BOSS — CAPTURED"], "purple", 13);
 }
 
 function drawCitadel(ctx: CanvasRenderingContext2D, x: number): void {
@@ -367,6 +420,7 @@ function drawCitadel(ctx: CanvasRenderingContext2D, x: number): void {
   ctx.lineTo(x + 690, -34); ctx.lineTo(x + 830, -34); ctx.lineTo(x + 930, 36);
   ctx.lineTo(x + 1510, 36); ctx.lineTo(x + 1710, GROUND_Y); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = "#ff2848"; ctx.lineWidth = 5; ctx.stroke();
+  sectionMasthead(ctx, x, "THE INNER CITADEL", "TOTAL CONTROL");
   for (const off of [340, 560, 880, 1100, 1360, 1580]) verticalCore(ctx, x + off, 42, 38, off > 1000 ? "#b851ff" : "#ff2848");
   panel(ctx, x + 40, 20, 280, 174, ["ONE", "MARKET", "ONE TRUTH", "ONE OWNER"], "red", 22);
   panel(ctx, x + 1270, 34, 300, 130, ["DATA CAPTURE", "COMMUNITY ACQUISITION", "100%"], "red", 17);
@@ -375,6 +429,7 @@ function drawCitadel(ctx: CanvasRenderingContext2D, x: number): void {
   ctx.strokeStyle = "#263d5b"; ctx.lineWidth = 5; ctx.strokeRect(x + 360, 60, 760, GROUND_Y - 60);
   ctx.fillStyle = "#0a0813"; ctx.fillRect(x + 1100, 0, 620, GROUND_Y);
   ctx.strokeStyle = "#793bb0"; ctx.strokeRect(x + 1100, 0, 620, GROUND_Y);
+  windows(ctx, x + 380, 76, 710, 238, "#ff2848"); windows(ctx, x + 1120, 36, 570, 278, "#b851ff");
   // The four visible tiers correspond exactly to the locked collision bands.
   for (const [y, x0, x1] of [
     [262, 5400, 6500], [204, 6380, 7160], [146, 6500, 7060], [88, 6750, 7000],
@@ -385,6 +440,8 @@ function drawCitadel(ctx: CanvasRenderingContext2D, x: number): void {
   }
   panel(ctx, x + 370, 74, 230, 48, ["INNER CITADEL"], "red", 18);
   panel(ctx, x + 720, 98, 215, 44, ["KEY STRONGHOLD"], "gold", 16);
+  panel(ctx, x + 1160, 42, 330, 40, ["PRISON OF THE TAKEN"], "purple", 15);
+  for (const off of [220, 1580]) takerMark(ctx, x + off, 230, 28);
   terminal(ctx, x + 420, 156, 112, 60, "red", "ACCESS 7.4");
   terminal(ctx, x + 946, 218, 106, 60, "purple", "PRISON NET");
   conduit(ctx, x + 350, 232, x + 1690, 232, "#b851ff");
@@ -393,9 +450,13 @@ function drawCitadel(ctx: CanvasRenderingContext2D, x: number): void {
   anonCage(ctx);
 }
 
-function statue(ctx: CanvasRenderingContext2D, x: number): void {
+function statue(ctx: CanvasRenderingContext2D, x: number, kind: "cat" | "dog"): void {
   ctx.save(); ctx.fillStyle = "#d4a938"; ctx.shadowColor = "#f5d66d"; ctx.shadowBlur = 15;
   ctx.fillRect(x - 18, GROUND_Y - 72, 36, 58); ctx.beginPath(); ctx.arc(x, GROUND_Y - 88, 18, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath();
+  if (kind === "cat") { ctx.moveTo(x - 16, GROUND_Y - 101); ctx.lineTo(x - 11, GROUND_Y - 121); ctx.lineTo(x - 2, GROUND_Y - 105); ctx.moveTo(x + 16, GROUND_Y - 101); ctx.lineTo(x + 11, GROUND_Y - 121); ctx.lineTo(x + 2, GROUND_Y - 105); }
+  else { ctx.ellipse(x - 18, GROUND_Y - 90, 8, 20, -.35, 0, Math.PI * 2); ctx.ellipse(x + 18, GROUND_Y - 90, 8, 20, .35, 0, Math.PI * 2); }
+  ctx.fill();
   ctx.fillStyle = "#504019"; ctx.fillRect(x - 28, GROUND_Y - 14, 56, 14); ctx.restore();
 }
 
@@ -405,17 +466,20 @@ function drawThrone(ctx: CanvasRenderingContext2D, x: number): void {
   industrialFrame(ctx, x + 10, 94, 220, 226);
   industrialFrame(ctx, x + 1160, 102, 610, 218);
   for (const off of [80, 260, 1260, 1540, 1720]) verticalCore(ctx, x + off, 42, 44, "#ff2848");
-  panel(ctx, x + 250, 18, 910, 46, ["THE CRYPTOVERSE IS MINE"], "red", 25);
+  sectionMasthead(ctx, x, "TICKER TAKER'S THRONE", "THE FINAL FIGHT");
+  panel(ctx, x + 250, 62, 910, 38, ["THE CRYPTOVERSE IS MINE"], "red", 20);
   panel(ctx, x + 34, 46, 190, 120, ["YOU", "TRADE", "I TAKE"], "red", 21);
   panel(ctx, x + 1310, 48, 330, 120, ["WALDOGE", "WAS JUST", "THE BEGINNING"], "red", 20);
   // Giant globe + throne behind the clear arena lane.
   ctx.save(); ctx.strokeStyle = "#ff2848"; ctx.lineWidth = 5; ctx.shadowColor = "#ff2848"; ctx.shadowBlur = 22;
-  ctx.beginPath(); ctx.arc(x + 780, 165, 94, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(x + 780, 165, 42, 94, 0, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x + 690, 150); ctx.lineTo(x + 870, 150); ctx.moveTo(x + 700, 190); ctx.lineTo(x + 860, 190); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x + 780, 183, 122, 0, Math.PI * 2); ctx.stroke();
+  for (const rx of [38, 78]) { ctx.beginPath(); ctx.ellipse(x + 780, 183, rx, 122, 0, 0, Math.PI * 2); ctx.stroke(); }
+  for (const yy of [125, 155, 190, 225]) { const half = Math.sqrt(Math.max(0, 122 ** 2 - (yy - 183) ** 2)); ctx.beginPath(); ctx.moveTo(x + 780 - half, yy); ctx.lineTo(x + 780 + half, yy); ctx.stroke(); }
+  ctx.fillStyle = "rgba(255,40,72,.28)"; ctx.beginPath(); ctx.moveTo(x + 716, 152); ctx.lineTo(x + 758, 130); ctx.lineTo(x + 790, 158); ctx.lineTo(x + 842, 148); ctx.lineTo(x + 816, 190); ctx.lineTo(x + 850, 220); ctx.lineTo(x + 790, 238); ctx.lineTo(x + 742, 211); ctx.closePath(); ctx.fill();
   ctx.shadowBlur = 0; ctx.fillStyle = "#350915"; ctx.fillRect(x + 720, 222, 120, 90); ctx.fillRect(x + 698, 206, 164, 28);
   ctx.strokeStyle = "#e4b73d"; ctx.strokeRect(x + 720, 222, 120, 90); ctx.restore();
-  for (const off of [490, 570, 990, 1070]) statue(ctx, x + off);
+  takerMark(ctx, x + 780, 32, 24);
+  statue(ctx, x + 470, "cat"); statue(ctx, x + 560, "dog"); statue(ctx, x + 1000, "dog"); statue(ctx, x + 1090, "cat");
   verticalCore(ctx, x + 636, 82, 32, "#e4b73d");
   verticalCore(ctx, x + 892, 82, 32, "#e4b73d");
   girderBay(ctx, x + 300, 222, 320, 90, "#ff2848");

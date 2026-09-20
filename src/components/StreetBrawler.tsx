@@ -4436,6 +4436,8 @@ export const StreetBrawler: FC = () => {
             }
             dismountLadder(eClimb);
             if (catClimb) clearCatGuardLadder(catClimb);
+            e.y = groundYAt(g.level, e.x, e.y);
+            e.vy = 0;
           } else if (grounded && Math.abs(myGround - targetGround) > 10) {
             // Only route to a ladder that actually joins these two floors and
             // is reachable from this side of the pit wall; otherwise fall

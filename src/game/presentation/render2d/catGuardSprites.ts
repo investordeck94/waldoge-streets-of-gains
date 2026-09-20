@@ -86,13 +86,40 @@ export const CAT_GUARD_GROUPS: Record<CatGuardVariant, Record<Pose, Group>> = {
 const images: Partial<Record<CatGuardVariant, HTMLImageElement>> = {};
 const ready: Partial<Record<CatGuardVariant, boolean>> = {};
 const retries: Partial<Record<CatGuardVariant, number>> = {};
+const SHEET_WIDTH = 1536;
+const SHEET_HEIGHT = 1024;
+
+export function validateCatGuardFrames(): readonly string[] {
+  const issues: string[] = [];
+  for (const variant of Object.keys(CAT_GUARD_GROUPS) as CatGuardVariant[]) {
+    for (const [pose, authored] of Object.entries(CAT_GUARD_GROUPS[variant])) {
+      if (authored.count !== authored.frames.length || authored.count === 0) {
+        issues.push(`${variant}.${pose}: invalid frame count`);
+      }
+      authored.frames.forEach((frame, index) => {
+        if (frame.x < 0 || frame.y < 0 || frame.w <= 0 || frame.h <= 0
+          || frame.x + frame.w > SHEET_WIDTH || frame.y + frame.h > SHEET_HEIGHT) {
+          issues.push(`${variant}.${pose}[${index}]: source rectangle out of bounds`);
+        }
+        if (!Number.isFinite(frame.anchorX) || !Number.isFinite(frame.anchorY)
+          || frame.anchorX < 0 || frame.anchorX > frame.w || frame.anchorY !== frame.h) {
+          issues.push(`${variant}.${pose}[${index}]: invalid feet anchor`);
+        }
+      });
+    }
+  }
+  return issues;
+}
 
 function imageFor(variant: CatGuardVariant): HTMLImageElement | null {
   if (typeof Image === "undefined") return null;
   if (!images[variant]) {
     const image = new Image();
     image.decoding = "sync";
-    image.onload = () => { ready[variant] = true; };
+    image.onload = () => {
+      ready[variant] = image.naturalWidth === SHEET_WIDTH && image.naturalHeight === SHEET_HEIGHT;
+      if (ready[variant]) retries[variant] = 0;
+    };
     image.onerror = () => {
       ready[variant] = false;
       if ((retries[variant] ?? 0) >= 2) return;
@@ -142,8 +169,10 @@ export function catGuardFrameFor(e: CatGuardSpriteView, clock = renderNow()): Fr
   } else {
     index = Math.floor(clock / (pose === "run" ? 75 : 115)) % group.count;
   }
-  const source = group.frames[index] ?? group.frames[0];
-  return { ...source, index, count: group.count };
+  const safeIndex = Number.isFinite(index) ? Math.max(0, Math.min(group.count - 1, index)) : 0;
+  const source = group.frames[safeIndex];
+  if (!source) throw new Error(`Missing Cat Guard frame: ${e.variant}.${pose}[${safeIndex}]`);
+  return { ...source, index: safeIndex, count: group.count };
 }
 
 export function drawCatGuardSprite(
