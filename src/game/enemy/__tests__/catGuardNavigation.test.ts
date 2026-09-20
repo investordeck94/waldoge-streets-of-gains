@@ -25,6 +25,8 @@ describe("Level 7 Cat Guard ladder navigation", () => {
     expect(validCatGuardMount(guard(ladder.x + 30, 320), ladder, "main", new Set())).toBe(false);
     expect(validCatGuardMount(guard(ladder.x, 204), ladder, "key-deck-2", new Set())).toBe(false);
     expect(validCatGuardMount(guard(ladder.x, 320), ladder, "main", new Set([ladder.id ?? ""]))).toBe(false);
+    expect(validCatGuardMount({ ...guard(ladder.x, 320), state: "hit" }, ladder, "main", new Set())).toBe(false);
+    expect(validCatGuardMount({ ...guard(ladder.x, 320), state: "kick", catMove: "frontKick" }, ladder, "main", new Set())).toBe(false);
   });
 
   it("recognizes only real collision surfaces", () => {

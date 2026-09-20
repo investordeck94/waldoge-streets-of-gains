@@ -57,6 +57,7 @@ export function validCatGuardMount(
   fromSurface: string,
   occupiedLadderIds: ReadonlySet<string>,
 ): boolean {
+  if (guard.state === "dead" || guard.state === "hit" || guard.state === "punch" || guard.state === "kick" || guard.catMove) return false;
   if (!ladder.id || occupiedLadderIds.has(ladder.id)) return false;
   if (Math.abs(guard.x - ladder.x) > LADDER_GRAB_X) return false;
   const atBottom = ladder.bottomSurfaceId === fromSurface
