@@ -1,5 +1,12 @@
 # Waldoge: Streets of Gains — combat pass
 
+## Current — Level 7 strict blueprint correction and enemy sprite fix
+- [ ] Audit live Cat Guard movement, atlas frames, render order, geometry, quest flow, camera, and five-section presentation
+- [ ] Replace uniform sprite-sheet slicing with exact source rectangles and stable feet anchors; preserve one authoritative world position
+- [ ] Correct Level 7 decks/ladders and section composition against the supplied 9,000-unit blueprint without changing global gameplay
+- [ ] Add Level-7 geometry/debug validation for floor, surfaces, ladder endpoints, reachability, quest coordinates, and bounds
+- [ ] Validate X=0→9000, key→cage→rescue→Ticker Taker→victory, Cat Guard movement/attacks, desktop/mobile, tests, and build
+
 ## Current — Level 7 Ticker Taker Cat Guards
 - [x] Prepare cached Cat Guard sprite assets from the supplied black, orange/white, action, and blueprint references
 - [x] Add Level-7-only Black and Orange/White Cat Guard roster data without replacing Candle Minions
