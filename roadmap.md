@@ -1,10 +1,10 @@
 # Waldoge: Streets of Gains — combat pass
 
 ## Current — Level 7 final blueprint fidelity rebuild
-- [ ] Audit and preserve existing Level 7 traversal, combat, boss, camera, and sprite-stability systems
-- [ ] Author a 9,000-unit flat-floor graybox with exact five-section decks, ladders, encounters, key stronghold, and prison tower
-- [ ] Implement the guarded elevated key, canonical Anon cage artwork, unlock/rescue state, and boss progression gate
-- [ ] Rebuild Level 7 presentation from the approved blueprint without changing Levels 1–6 or global systems
+- [x] Audit and preserve existing Level 7 traversal, combat, boss, camera, and sprite-stability systems
+- [x] Author a 9,000-unit flat-floor graybox with exact five-section decks, ladders, encounters, key stronghold, and prison tower
+- [x] Implement the guarded elevated key, canonical Anon cage artwork, unlock/rescue state, and boss progression gate
+- [x] Rebuild Level 7 presentation from the approved blueprint without changing Levels 1–6 or global systems
 - [ ] Runtime-test every ladder/deck, full desktop/mobile playthroughs, all six visual checkpoints, tests, typecheck, and build
 
 ## Current — Level 5 blueprint reconstruction

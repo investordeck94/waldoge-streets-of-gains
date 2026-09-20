@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GROUND_Y } from "@/game/config/player";
-import { ENCOUNTER_ZONES, getLevelWidth, groundYAt, laddersFor, landingDecksFor, pitsFor } from "@/game/config/world";
+import { ENCOUNTER_ZONES, getLevelWidth, groundYAt, laddersFor, landingDeckForLadder, landingDecksFor, pitsFor } from "@/game/config/world";
 import { LEVELS } from "@/game/config/levels";
 import { applyCitadelRoster, CITADEL_KEY_GUARD_WAVE, CITADEL_LEVEL } from "@/game/enemy/citadelForces";
 import { collectCitadelKey, initialCitadelQuest, rescueAnon, unlockCitadelKey } from "@/game/logic/citadelQuest";
@@ -47,6 +47,7 @@ describe("Level 7 final blueprint geometry", () => {
         ? ladder.bottom === GROUND_Y
         : decks.some((d) => d.id === ladder.bottomSurfaceId && ladder.x >= d.x0 && ladder.x <= d.x1 && d.y === ladder.bottom);
       expect(top).toBeDefined();
+      expect(landingDeckForLadder(CITADEL_LEVEL, ladder)?.id).toBe(ladder.topSurfaceId);
       expect(bottom).toBe(true);
       expect(groundYAt(CITADEL_LEVEL, ladder.x, ladder.top)).toBe(ladder.top);
     }

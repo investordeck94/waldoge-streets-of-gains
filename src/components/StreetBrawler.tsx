@@ -156,6 +156,7 @@ import { setRenderClock, renderNow } from "@/game/presentation/render2d/clock";
 import {
   getLevelWidth, groundYAt, clampToPitWalls, hasVerticalTraversal,
   ladderAt, nearestLadder, connectingLadder, encounterX, bossArenaX, BOSS_WAKE_DISTANCE,
+  landingDeckForLadder,
   maxPitDepthFor, LADDER_GRAB_X, landingDeckAt, landingDecksFor, type LandingDeck,
 } from "@/game/config/world";
 import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/districts";
@@ -3998,7 +3999,9 @@ export const StreetBrawler: FC = () => {
               p.vy = 0;
               p.state = "idle";
               pAny.onPlatform = null;
-              pAny.worldDeck = exitDir < 0 ? landingDeckAt(g.level, lad.x) ?? undefined : undefined;
+              // Resolve the ladder's named top surface. X-only lookup is
+              // ambiguous on Level 7's stacked key/prison towers.
+              pAny.worldDeck = exitDir < 0 ? landingDeckForLadder(g.level, lad) ?? undefined : undefined;
               pClimb.climbAuto = undefined;
               pClimb.climbLock = 0;
               pClimb.climbRearm = false;

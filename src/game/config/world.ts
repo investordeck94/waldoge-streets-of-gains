@@ -165,6 +165,16 @@ export function landingDeckAt(level: number, x: number): LandingDeck | null {
   return null;
 }
 
+/** Exact authored surface at a ladder endpoint, including stacked deck routes. */
+export function landingDeckForLadder(level: number, ladder: Ladder): LandingDeck | null {
+  const decks = landingDecksFor(level);
+  if (ladder.topSurfaceId) {
+    const linked = decks.find((deck) => deck.id === ladder.topSurfaceId);
+    if (linked && ladder.x >= linked.x0 && ladder.x <= linked.x1 && linked.y === ladder.top) return linked;
+  }
+  return decks.find((deck) => ladder.x >= deck.x0 && ladder.x <= deck.x1 && deck.y === ladder.top) ?? null;
+}
+
 
 /** The pit containing x, or null when x is over the main street. */
 export function pitAt(level: number, x: number): GroundPit | null {

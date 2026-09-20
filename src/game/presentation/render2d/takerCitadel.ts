@@ -2,6 +2,7 @@
 import { GROUND_Y } from "@/game/config";
 import { getLevelWidth, landingDecksFor, laddersFor } from "@/game/config/world";
 import anonAsset from "@/assets/anon-waldoges-boss.png.asset.json";
+import anonLocalUrl from "@/assets/anon-waldoges-boss-local.png";
 import { flicker, renderNow } from "./clock";
 
 export const TAKER_CITADEL_LEVEL = 6;
@@ -61,7 +62,9 @@ export function preloadTakerCitadel(): void {
   anonImage = new Image();
   anonImage.decoding = "sync";
   anonImage.onload = () => { anonReady = true; };
-  anonImage.src = anonAsset.url;
+  // Keep the uploaded CDN pointer as provenance, but use the bundled original
+  // in the canvas: preview middleware can return HTML for asset-pointer URLs.
+  anonImage.src = anonLocalUrl;
 }
 preloadTakerCitadel();
 
@@ -271,6 +274,7 @@ export function takerSectionLabelAt(level: number, x: number): string | null {
 
 export const __takerCitadelTest = {
   anonUrl: anonAsset.url,
+  anonLocalUrl,
   blueprintMap: CITADEL_BLUEPRINT_MAP,
   keyPosition: CITADEL_KEY_POSITION,
   cagePosition: ANON_CAGE_POSITION,
