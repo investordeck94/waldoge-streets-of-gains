@@ -4804,7 +4804,10 @@ export const StreetBrawler: FC = () => {
             ));
             p.state = "hit";
             p.stateTimer = 8;
-            p.vx = e.facing * ("knockback" in strike ? strike.knockback : 3);
+            const strikeKnockback = "knockback" in strike && typeof strike.knockback === "number"
+              ? strike.knockback
+              : 3;
+            p.vx = e.facing * strikeKnockback;
             c.hitCount = 0;
             c.multiplier = 1;
             setComboCount(0);
@@ -5551,7 +5554,7 @@ export const StreetBrawler: FC = () => {
           // Full-body candle-boxer artwork; procedural draw is the pre-load fallback.
           if (isCatGuard(e)) {
             // Ticker Taker's Level-7 elite faction uses the supplied production sheets.
-            if (!drawCatGuardSprite(ctx, e as CatGuardState, g.camX)) {
+            if (!drawCatGuardSprite(ctx, e as Parameters<typeof drawCatGuardSprite>[1], g.camX)) {
               drawCandleMinion(ctx, e, g.camX);
             }
           } else if (isRaider(e as unknown as RaiderState)) {
