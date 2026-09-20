@@ -156,5 +156,5 @@
 - [x] Phase 5: match visible decks and ladders to canonical blueprint geometry
 - [x] Phase 6: place enemies deterministically on valid surfaces
 - [x] Phase 7: validate/correct physical key → ladders → cage → rescue progression
-- [ ] Phase 8: visual density still falls short of the supplied blueprint; geometry and route are aligned
+- [x] Phase 8: complete the section-by-section blueprint visual-density pass while preserving geometry and route
 - [x] Phase 9: complete desktop/mobile START → victory validation and full regression checks
