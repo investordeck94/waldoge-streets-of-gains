@@ -149,7 +149,7 @@
 - [x] Verify exact Monko poster, Exit Liquidity art, desktop/mobile rendering, tests, and build
 
 ## Level 7 definitive bug fix + blueprint fidelity pass
-- [ ] Phase 1: audit Cat Guard sprites, state, movement, ladders, geometry, sections, spawns, rendering, camera, and references before edits
+- [x] Phase 1: audit Cat Guard sprites, state, movement, ladders, geometry, sections, spawns, rendering, camera, and references before edits
 - [ ] Phase 2: fix deterministic Cat Guard frame extraction and continuous visibility
 - [ ] Phase 3: enforce collision-based Cat Guard movement and explicit validated ladder transitions
 - [ ] Phase 4: validate/correct the continuous 0–9000 Level 7 collision world
