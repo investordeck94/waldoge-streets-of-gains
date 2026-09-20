@@ -168,10 +168,84 @@ function dataColumns(ctx: CanvasRenderingContext2D, x: number, y: number, column
   ctx.restore();
 }
 
+function conduit(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, accent: string): void {
+  ctx.save();
+  ctx.strokeStyle = "#111a29"; ctx.lineWidth = 12; ctx.lineCap = "square";
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  ctx.strokeStyle = accent; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  for (let x = x0 + 24; x < x1; x += 64) {
+    ctx.fillStyle = "#324157"; ctx.fillRect(x, y0 - 7, 5, 14);
+  }
+  ctx.restore();
+}
+
+function terminal(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, tone: Tone, label: string): void {
+  const [fill, edge, text] = TONES[tone];
+  ctx.save();
+  ctx.fillStyle = "#050810"; ctx.fillRect(x - 7, y - 7, w + 14, h + 25);
+  ctx.strokeStyle = "#28384d"; ctx.lineWidth = 3; ctx.strokeRect(x - 7, y - 7, w + 14, h + 25);
+  ctx.fillStyle = fill; ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = edge; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+  ctx.fillStyle = text; ctx.font = "900 11px monospace"; ctx.textAlign = "center";
+  ctx.fillText(label, x + w / 2, y + 16, w - 8);
+  ctx.fillStyle = edge;
+  for (let row = 0; row < 4; row++) {
+    const width = 22 + ((row * 29 + x) % Math.max(24, w - 42));
+    ctx.fillRect(x + 10, y + 27 + row * 10, Math.min(width, w - 20), 3);
+  }
+  ctx.fillStyle = "#1d2939"; ctx.fillRect(x + w / 2 - 5, y + h, 10, 18);
+  ctx.fillRect(x + w / 2 - 22, y + h + 16, 44, 4);
+  ctx.restore();
+}
+
+function girderBay(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, accent: string): void {
+  ctx.save();
+  ctx.strokeStyle = "#253650"; ctx.lineWidth = 7; ctx.strokeRect(x, y, w, h);
+  ctx.strokeStyle = accent; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y); ctx.lineTo(x + w, y + h);
+  ctx.moveTo(x + w, y); ctx.lineTo(x, y + h);
+  ctx.stroke();
+  ctx.fillStyle = accent; ctx.fillRect(x - 3, y - 3, 7, 7); ctx.fillRect(x + w - 4, y - 3, 7, 7);
+  ctx.restore();
+}
+
+/** Architectural backing follows the locked collision decks exactly. */
+function geometryArchitecture(ctx: CanvasRenderingContext2D, section: number): void {
+  const accent = section === 3 ? "#a948e3" : section === 1 || section === 2 ? "#21a8d9" : "#d91f43";
+  for (const deck of landingDecksFor(TAKER_CITADEL_LEVEL)) {
+    if (deck.section !== section) continue;
+    const w = deck.x1 - deck.x0;
+    ctx.fillStyle = "#09101b"; ctx.fillRect(deck.x0, deck.y + 10, w, 10);
+    ctx.fillStyle = accent; ctx.fillRect(deck.x0, deck.y + 10, w, 2);
+    for (let sx = deck.x0 + 16; sx < deck.x1 - 8; sx += 72) {
+      const supportH = Math.min(48, GROUND_Y - deck.y - 20);
+      if (supportH <= 4) continue;
+      ctx.strokeStyle = "#26384e"; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(sx, deck.y + 18); ctx.lineTo(sx, deck.y + 18 + supportH); ctx.stroke();
+      ctx.strokeStyle = accent; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(sx, deck.y + 18); ctx.lineTo(Math.min(sx + 42, deck.x1), deck.y + 18 + supportH); ctx.stroke();
+    }
+  }
+  // Ladder wells are visual housings around the existing navigation objects;
+  // the actual rungs remain the shared terrain renderer's responsibility.
+  for (const ladder of laddersFor(TAKER_CITADEL_LEVEL)) {
+    if (ladder.section !== section) continue;
+    ctx.fillStyle = "rgba(4,8,16,.72)";
+    ctx.fillRect(ladder.x - 24, ladder.top - 30, 48, ladder.bottom - ladder.top + 32);
+    ctx.strokeStyle = accent; ctx.lineWidth = 1;
+    ctx.strokeRect(ladder.x - 25, ladder.top - 31, 50, ladder.bottom - ladder.top + 34);
+  }
+}
+
 function drawTaken(ctx: CanvasRenderingContext2D, x: number): void {
   industrialFrame(ctx, x + 20, 112, 280, 208);
   industrialFrame(ctx, x + 1160, 118, 610, 202);
-  for (const off of [325, 785, 1325]) verticalCore(ctx, x + off, 66, 46, "#ff2848");
+  for (const off of [325, 785, 1120, 1325, 1710]) verticalCore(ctx, x + off, 66, 46, "#ff2848");
+  girderBay(ctx, x + 300, 214, 320, 98, "#ff2848");
+  girderBay(ctx, x + 800, 156, 320, 156, "#ff2848");
+  girderBay(ctx, x + 1420, 214, 280, 98, "#ff2848");
   panel(ctx, x + 360, 18, 720, 48, ["TICKER TAKER NETWORK"], "red", 27);
   panel(ctx, x + 470, 76, 610, 150, [
     "JEET DISTRICT — ACQUIRED", "RUGGER EXCHANGE — ACQUIRED", "BAD ACTORS STUDIOS — ACQUIRED",
@@ -179,7 +253,11 @@ function drawTaken(ctx: CanvasRenderingContext2D, x: number): void {
   ], "white", 15);
   panel(ctx, x + 36, 76, 250, 146, ["ALL", "EMPIRES", "NOW HIS"], "red", 25);
   panel(ctx, x + 1260, 54, 430, 104, ["SAME COMMUNITY.", "STRONGER TOGETHER."], "red", 22);
+  terminal(ctx, x + 650, 236, 116, 62, "red", "EMPIRE 01");
+  terminal(ctx, x + 1140, 230, 108, 62, "white", "ACQUIRED");
+  conduit(ctx, x + 30, 246, x + 1740, 246, "#ff2848");
   dataColumns(ctx, x + 42, 238, 3, 4);
+  geometryArchitecture(ctx, 0);
 }
 
 function drawTicker(ctx: CanvasRenderingContext2D, x: number): void {
@@ -191,13 +269,21 @@ function drawTicker(ctx: CanvasRenderingContext2D, x: number): void {
   panel(ctx, x + 330, 88, 790, 132, ["▁▃▂▅▃▆▅▇  ▲  +98.7%", "╲╱╲╱╲╱╲╱  LIVE MARKET"], "blue", 25);
   panel(ctx, x + 1160, 78, 220, 150, ["BUY", "OBEY", "TRADE", "REPEAT"], "red", 21);
   panel(ctx, x + 1410, 62, 320, 170, ["GLOBAL CONTROL", "REAL TIME", "MANIPULATION"], "white", 19);
+  terminal(ctx, x + 860, 232, 126, 64, "blue", "BTC / USD");
+  terminal(ctx, x + 1008, 232, 126, 64, "red", "WALDOGE");
+  terminal(ctx, x + 1240, 238, 96, 58, "blue", "VOLUME");
+  girderBay(ctx, x + 2460 - 1800, 214, 600, 98, "#28b8ff");
+  girderBay(ctx, x + 2760 - 1800, 156, 260, 48, "#ff2848");
+  conduit(ctx, x + 22, 274, x + 1738, 274, "#28b8ff");
   dataColumns(ctx, x + 36, 118, 2, 11);
+  dataColumns(ctx, x + 1168, 246, 3, 5);
   ctx.strokeStyle = "#31c5ff"; ctx.lineWidth = 4; ctx.beginPath();
   for (let i = 0; i < 10; i++) {
     const px = x + 360 + i * 88, py = 266 - ((i * 37 + 28) % 76);
     if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
   }
   ctx.stroke();
+  geometryArchitecture(ctx, 1);
 }
 
 function drawCopy(ctx: CanvasRenderingContext2D, x: number): void {
@@ -223,6 +309,17 @@ function drawCopy(ctx: CanvasRenderingContext2D, x: number): void {
     ctx.strokeStyle = "#31c5ff"; ctx.strokeRect(x + off, 174, 94, 146);
     ctx.fillStyle = "#ff2848"; ctx.beginPath(); ctx.arc(x + off + 47, 224, 28, 0, Math.PI * 2); ctx.fill();
   }
+  for (const off of [82, 220]) {
+    ctx.fillStyle = "#111824"; ctx.fillRect(x + off, 210, 92, 102);
+    ctx.strokeStyle = "#31c5ff"; ctx.strokeRect(x + off, 210, 92, 102);
+    ctx.fillStyle = "#31c5ff"; ctx.beginPath(); ctx.arc(x + off + 46, 246, 22, 0, Math.PI * 2); ctx.fill();
+  }
+  conduit(ctx, x + 365, 242, x + 1295, 242, "#31c5ff");
+  conduit(ctx, x + 510, 74, x + 1180, 116, "#ff2848");
+  girderBay(ctx, x + 4260 - 3600, 214, 600, 98, "#28b8ff");
+  girderBay(ctx, x + 4560 - 3600, 156, 240, 48, "#ff2848");
+  terminal(ctx, x + 1035, 94, 110, 62, "red", "CLONE 06");
+  geometryArchitecture(ctx, 2);
 }
 
 function keyDisplay(ctx: CanvasRenderingContext2D): void {
@@ -278,6 +375,20 @@ function drawCitadel(ctx: CanvasRenderingContext2D, x: number): void {
   ctx.strokeStyle = "#263d5b"; ctx.lineWidth = 5; ctx.strokeRect(x + 360, 60, 760, GROUND_Y - 60);
   ctx.fillStyle = "#0a0813"; ctx.fillRect(x + 1100, 0, 620, GROUND_Y);
   ctx.strokeStyle = "#793bb0"; ctx.strokeRect(x + 1100, 0, 620, GROUND_Y);
+  // The four visible tiers correspond exactly to the locked collision bands.
+  for (const [y, x0, x1] of [
+    [262, 5400, 6500], [204, 6380, 7160], [146, 6500, 7060], [88, 6750, 7000],
+  ] as const) {
+    ctx.fillStyle = "#101625"; ctx.fillRect(x0, y + 10, x1 - x0, 9);
+    ctx.fillStyle = y === 88 ? "#b851ff" : "#ff2848"; ctx.fillRect(x0, y + 10, x1 - x0, 2);
+    for (let sx = x0 + 28; sx < x1 - 18; sx += 84) girderBay(ctx, sx, y + 19, Math.min(60, x1 - sx), Math.min(34, GROUND_Y - y - 20), y === 88 ? "#b851ff" : "#7b263b");
+  }
+  panel(ctx, x + 370, 74, 230, 48, ["INNER CITADEL"], "red", 18);
+  panel(ctx, x + 720, 98, 215, 44, ["KEY STRONGHOLD"], "gold", 16);
+  terminal(ctx, x + 420, 156, 112, 60, "red", "ACCESS 7.4");
+  terminal(ctx, x + 946, 218, 106, 60, "purple", "PRISON NET");
+  conduit(ctx, x + 350, 232, x + 1690, 232, "#b851ff");
+  geometryArchitecture(ctx, 3);
   keyDisplay(ctx);
   anonCage(ctx);
 }
@@ -295,6 +406,7 @@ function drawThrone(ctx: CanvasRenderingContext2D, x: number): void {
   industrialFrame(ctx, x + 1160, 102, 610, 218);
   for (const off of [80, 260, 1260, 1540, 1720]) verticalCore(ctx, x + off, 42, 44, "#ff2848");
   panel(ctx, x + 250, 18, 910, 46, ["THE CRYPTOVERSE IS MINE"], "red", 25);
+  panel(ctx, x + 34, 46, 190, 120, ["YOU", "TRADE", "I TAKE"], "red", 21);
   panel(ctx, x + 1310, 48, 330, 120, ["WALDOGE", "WAS JUST", "THE BEGINNING"], "red", 20);
   // Giant globe + throne behind the clear arena lane.
   ctx.save(); ctx.strokeStyle = "#ff2848"; ctx.lineWidth = 5; ctx.shadowColor = "#ff2848"; ctx.shadowBlur = 22;
@@ -303,7 +415,13 @@ function drawThrone(ctx: CanvasRenderingContext2D, x: number): void {
   ctx.beginPath(); ctx.moveTo(x + 690, 150); ctx.lineTo(x + 870, 150); ctx.moveTo(x + 700, 190); ctx.lineTo(x + 860, 190); ctx.stroke();
   ctx.shadowBlur = 0; ctx.fillStyle = "#350915"; ctx.fillRect(x + 720, 222, 120, 90); ctx.fillRect(x + 698, 206, 164, 28);
   ctx.strokeStyle = "#e4b73d"; ctx.strokeRect(x + 720, 222, 120, 90); ctx.restore();
-  statue(ctx, x + 570); statue(ctx, x + 990);
+  for (const off of [490, 570, 990, 1070]) statue(ctx, x + off);
+  verticalCore(ctx, x + 636, 82, 32, "#e4b73d");
+  verticalCore(ctx, x + 892, 82, 32, "#e4b73d");
+  girderBay(ctx, x + 300, 222, 320, 90, "#ff2848");
+  girderBay(ctx, x + 940, 222, 320, 90, "#ff2848");
+  conduit(ctx, x + 244, 244, x + 1310, 244, "#e4b73d");
+  geometryArchitecture(ctx, 4);
   panel(ctx, x + 650, 270, 260, 38, ["LET'S SEE WHO'S BETTER"], "red", 16);
 }
 
