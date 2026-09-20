@@ -147,3 +147,14 @@
 - [x] Rebuild Level 5 presentation only; preserve all collision, encounters, physics, and progression
 - [x] Compare live views at X 900, 2700, 4500, 6300, and 8100 against the blueprint
 - [x] Verify exact Monko poster, Exit Liquidity art, desktop/mobile rendering, tests, and build
+
+## Level 7 definitive bug fix + blueprint fidelity pass
+- [ ] Phase 1: audit Cat Guard sprites, state, movement, ladders, geometry, sections, spawns, rendering, camera, and references before edits
+- [ ] Phase 2: fix deterministic Cat Guard frame extraction and continuous visibility
+- [ ] Phase 3: enforce collision-based Cat Guard movement and explicit validated ladder transitions
+- [ ] Phase 4: validate/correct the continuous 0–9000 Level 7 collision world
+- [ ] Phase 5: match visible decks and ladders to canonical blueprint geometry
+- [ ] Phase 6: place enemies deterministically on valid surfaces
+- [ ] Phase 7: validate/correct physical key → ladders → cage → rescue progression
+- [ ] Phase 8: align Level 7 visuals with implemented geometry section-by-section
+- [ ] Phase 9: complete desktop/mobile START → victory validation and full regression checks
