@@ -4,6 +4,7 @@ import { getLevelWidth, landingDecksFor, laddersFor } from "@/game/config/world"
 import anonAsset from "@/assets/anon-waldoges-boss.png.asset.json";
 import anonLocalUrl from "@/assets/anon-waldoges-boss-local.png";
 import { flicker, renderNow } from "./clock";
+import { CITADEL_SECTION_BOUNDS, validateCitadelBlueprint } from "@/game/config/citadelBlueprint";
 
 export const TAKER_CITADEL_LEVEL = 6;
 export const TAKER_SECTION_WIDTH = 1800;
@@ -135,7 +136,42 @@ function cables(ctx: CanvasRenderingContext2D, start: number): void {
   }
 }
 
+function industrialFrame(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, accent = "#ff2848"): void {
+  ctx.save();
+  ctx.fillStyle = "#080c15"; ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = "#253650"; ctx.lineWidth = 5; ctx.strokeRect(x, y, w, h);
+  ctx.strokeStyle = accent; ctx.lineWidth = 2;
+  for (let px = x + 18; px < x + w; px += 74) {
+    ctx.beginPath(); ctx.moveTo(px, y + h); ctx.lineTo(px + 38, y); ctx.stroke();
+  }
+  ctx.fillStyle = accent; ctx.fillRect(x, y, w, 4);
+  ctx.restore();
+}
+
+function verticalCore(ctx: CanvasRenderingContext2D, x: number, top: number, w: number, accent: string): void {
+  ctx.fillStyle = "#050810"; ctx.fillRect(x, top, w, GROUND_Y - top);
+  ctx.strokeStyle = accent; ctx.lineWidth = 4; ctx.strokeRect(x, top, w, GROUND_Y - top);
+  ctx.fillStyle = accent;
+  for (let y = top + 14; y < GROUND_Y - 8; y += 34) ctx.fillRect(x + 8, y, w - 16, 4);
+}
+
+function dataColumns(ctx: CanvasRenderingContext2D, x: number, y: number, columns: number, rows: number): void {
+  ctx.save(); ctx.font = "700 10px monospace"; ctx.textAlign = "left";
+  for (let col = 0; col < columns; col++) {
+    const px = x + col * 92;
+    ctx.fillStyle = col % 2 ? "#31c5ff" : "#ff3657";
+    for (let row = 0; row < rows; row++) {
+      const value = ((col + 3) * 173 + row * 47) % 997;
+      ctx.fillText(`${value.toString().padStart(3, "0")}.${(row * 7) % 10}`, px, y + row * 15);
+    }
+  }
+  ctx.restore();
+}
+
 function drawTaken(ctx: CanvasRenderingContext2D, x: number): void {
+  industrialFrame(ctx, x + 20, 112, 280, 208);
+  industrialFrame(ctx, x + 1160, 118, 610, 202);
+  for (const off of [325, 785, 1325]) verticalCore(ctx, x + off, 66, 46, "#ff2848");
   panel(ctx, x + 360, 18, 720, 48, ["TICKER TAKER NETWORK"], "red", 27);
   panel(ctx, x + 470, 76, 610, 150, [
     "JEET DISTRICT — ACQUIRED", "RUGGER EXCHANGE — ACQUIRED", "BAD ACTORS STUDIOS — ACQUIRED",
@@ -143,16 +179,33 @@ function drawTaken(ctx: CanvasRenderingContext2D, x: number): void {
   ], "white", 15);
   panel(ctx, x + 36, 76, 250, 146, ["ALL", "EMPIRES", "NOW HIS"], "red", 25);
   panel(ctx, x + 1260, 54, 430, 104, ["SAME COMMUNITY.", "STRONGER TOGETHER."], "red", 22);
+  dataColumns(ctx, x + 42, 238, 3, 4);
 }
 
 function drawTicker(ctx: CanvasRenderingContext2D, x: number): void {
+  industrialFrame(ctx, x + 18, 92, 260, 228, "#28b8ff");
+  industrialFrame(ctx, x + 1390, 88, 380, 232, "#ff2848");
+  verticalCore(ctx, x + 286, 52, 42, "#ff2848");
+  verticalCore(ctx, x + 1344, 44, 42, "#28b8ff");
   panel(ctx, x + 300, 28, 860, 46, ["THE MARKET NEVER SLEEPS"], "red", 25);
   panel(ctx, x + 330, 88, 790, 132, ["▁▃▂▅▃▆▅▇  ▲  +98.7%", "╲╱╲╱╲╱╲╱  LIVE MARKET"], "blue", 25);
   panel(ctx, x + 1160, 78, 220, 150, ["BUY", "OBEY", "TRADE", "REPEAT"], "red", 21);
   panel(ctx, x + 1410, 62, 320, 170, ["GLOBAL CONTROL", "REAL TIME", "MANIPULATION"], "white", 19);
+  dataColumns(ctx, x + 36, 118, 2, 11);
+  ctx.strokeStyle = "#31c5ff"; ctx.lineWidth = 4; ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const px = x + 360 + i * 88, py = 266 - ((i * 37 + 28) % 76);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
 }
 
 function drawCopy(ctx: CanvasRenderingContext2D, x: number): void {
+  industrialFrame(ctx, x + 8, 96, 360, 224, "#28b8ff");
+  industrialFrame(ctx, x + 1300, 90, 470, 230, "#ff2848");
+  for (const off of [48, 218, 1320, 1500]) {
+    verticalCore(ctx, x + off, 72, 38, off < 500 ? "#28b8ff" : "#ff2848");
+  }
   panel(ctx, x + 380, 14, 620, 50, ["WALDOGE ANALYSIS"], "red", 25);
   // Central scanner / observation chamber.
   ctx.save();
@@ -165,6 +218,11 @@ function drawCopy(ctx: CanvasRenderingContext2D, x: number): void {
   panel(ctx, x + 760, 80, 520, 170, ["MOVESET COPIED  ✓", "COMBAT DATA  ✓", "COMMUNITY PATTERNS  ✓", "BEHAVIOUR MODEL  ✓", "REPLICATION: 98%"], "white", 17);
   panel(ctx, x + 420, 270, 720, 42, ["WALDOGE DETECTED"], "red", 24);
   for (const off of [80, 250, 1320, 1500]) panel(ctx, x + off, 96, 130, 162, ["SERVER", "DATA", "ONLINE"], "blue", 14);
+  for (const off of [1120, 1240]) {
+    ctx.fillStyle = "#111824"; ctx.fillRect(x + off, 174, 94, 146);
+    ctx.strokeStyle = "#31c5ff"; ctx.strokeRect(x + off, 174, 94, 146);
+    ctx.fillStyle = "#ff2848"; ctx.beginPath(); ctx.arc(x + off + 47, 224, 28, 0, Math.PI * 2); ctx.fill();
+  }
 }
 
 function keyDisplay(ctx: CanvasRenderingContext2D): void {
@@ -206,6 +264,13 @@ function anonCage(ctx: CanvasRenderingContext2D): void {
 }
 
 function drawCitadel(ctx: CanvasRenderingContext2D, x: number): void {
+  // A single dominant fortress silhouette supports the real key/prison decks.
+  ctx.fillStyle = "#050712"; ctx.beginPath();
+  ctx.moveTo(x + 180, GROUND_Y); ctx.lineTo(x + 360, 36); ctx.lineTo(x + 610, 36);
+  ctx.lineTo(x + 690, -34); ctx.lineTo(x + 830, -34); ctx.lineTo(x + 930, 36);
+  ctx.lineTo(x + 1510, 36); ctx.lineTo(x + 1710, GROUND_Y); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "#ff2848"; ctx.lineWidth = 5; ctx.stroke();
+  for (const off of [340, 560, 880, 1100, 1360, 1580]) verticalCore(ctx, x + off, 42, 38, off > 1000 ? "#b851ff" : "#ff2848");
   panel(ctx, x + 40, 20, 280, 174, ["ONE", "MARKET", "ONE TRUTH", "ONE OWNER"], "red", 22);
   panel(ctx, x + 1270, 34, 300, 130, ["DATA CAPTURE", "COMMUNITY ACQUISITION", "100%"], "red", 17);
   // Key and prison architecture remain distinct.
@@ -224,6 +289,11 @@ function statue(ctx: CanvasRenderingContext2D, x: number): void {
 }
 
 function drawThrone(ctx: CanvasRenderingContext2D, x: number): void {
+  // Wide final hall: architecture remains behind y=250, preserving the full
+  // main-floor boss lane from the approach through x=9000.
+  industrialFrame(ctx, x + 10, 94, 220, 226);
+  industrialFrame(ctx, x + 1160, 102, 610, 218);
+  for (const off of [80, 260, 1260, 1540, 1720]) verticalCore(ctx, x + off, 42, 44, "#ff2848");
   panel(ctx, x + 250, 18, 910, 46, ["THE CRYPTOVERSE IS MINE"], "red", 25);
   panel(ctx, x + 1310, 48, 330, 120, ["WALDOGE", "WAS JUST", "THE BEGINNING"], "red", 20);
   // Giant globe + throne behind the clear arena lane.
@@ -270,6 +340,34 @@ export function drawTakerCitadel(ctx: CanvasRenderingContext2D, level: number, c
 export function takerSectionLabelAt(level: number, x: number): string | null {
   if (!hasTakerCitadel(level)) return null;
   return TAKER_SECTIONS[Math.max(0, Math.min(4, Math.floor(x / TAKER_SECTION_WIDTH)))];
+}
+
+/** Level-7 validation overlay, called only by the existing CAM debug mode. */
+export function drawTakerCitadelDebug(ctx: CanvasRenderingContext2D, level: number, camX: number, canvasW: number): void {
+  if (!hasTakerCitadel(level)) return;
+  const report = validateCitadelBlueprint();
+  ctx.save();
+  ctx.font = "9px monospace"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+  for (let i = 0; i < CITADEL_SECTION_BOUNDS.length; i++) {
+    const sx = CITADEL_SECTION_BOUNDS[i] - camX;
+    if (sx < -2 || sx > canvasW + 2) continue;
+    ctx.strokeStyle = "rgba(255,215,0,.8)"; ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, 500); ctx.stroke();
+    ctx.fillStyle = "#ffd700"; ctx.fillText(`S${Math.min(i + 1, 5)} ${CITADEL_SECTION_BOUNDS[i]}`, sx + 3, 92);
+  }
+  for (const deck of landingDecksFor(level)) {
+    const sx = deck.x0 - camX;
+    if (sx + deck.x1 - deck.x0 < 0 || sx > canvasW) continue;
+    ctx.strokeStyle = "rgba(60,255,170,.9)"; ctx.strokeRect(sx, deck.y - 3, deck.x1 - deck.x0, 6);
+    ctx.fillStyle = "#7dffbf"; ctx.fillText(deck.id ?? "deck", sx + 2, deck.y - 16);
+  }
+  for (const ladder of laddersFor(level)) {
+    const sx = ladder.x - camX;
+    if (sx < 0 || sx > canvasW) continue;
+    ctx.fillStyle = "#6fe7ff"; ctx.fillText(ladder.id ?? "ladder", sx + 4, ladder.top + 4);
+  }
+  ctx.fillStyle = report.valid ? "#72ff9e" : "#ff4964";
+  ctx.fillText(`L7 VALIDATOR: ${report.valid ? "PASS" : "FAIL"} • ${report.deckCount} decks • ${report.ladderCount} ladders`, 250, 10);
+  ctx.restore();
 }
 
 export const __takerCitadelTest = {

@@ -172,6 +172,7 @@ import {
 } from "@/game/config/world";
 import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/districts";
 import { drawPits, drawLadders, drawLandingDecks } from "@/game/presentation/render2d/terrain";
+import { drawTakerCitadelDebug } from "@/game/presentation/render2d/takerCitadel";
 import { mount as mountLadder, stepClimb, dismount as dismountLadder, climbDirectionFor, ladderExitSurfaceY, type Climber } from "@/game/world/climb";
 import { selectBossMove, getMoveById, rollChain, type MartialForm } from "@/game/enemy/bossMoves";
 import {
@@ -5554,9 +5555,9 @@ export const StreetBrawler: FC = () => {
           // Full-body candle-boxer artwork; procedural draw is the pre-load fallback.
           if (isCatGuard(e)) {
             // Ticker Taker's Level-7 elite faction uses the supplied production sheets.
-            if (!drawCatGuardSprite(ctx, e as Parameters<typeof drawCatGuardSprite>[1], g.camX)) {
-              drawCandleMinion(ctx, e, g.camX);
-            }
+            // Never substitute a second character while the production PNG is
+            // decoding: each guard has one authoritative render dispatch.
+            drawCatGuardSprite(ctx, e as Parameters<typeof drawCatGuardSprite>[1], g.camX);
           } else if (isRaider(e as unknown as RaiderState)) {
             // Mr. Marketer's Raiding Team (Level 6 elite henchmen).
             if (!drawRaidingTeamSprite(ctx, e as Parameters<typeof drawRaidingTeamSprite>[1], g.camX)) {
@@ -5758,6 +5759,7 @@ export const StreetBrawler: FC = () => {
 
       // Camera debug overlay
       if (camDebugRef.current) {
+        drawTakerCitadelDebug(ctx, g.level, g.camX, CANVAS_W);
         const d = g.debugCam;
         const lines = [
           `anchor:    ${d.anchor.toFixed(2)}  (screen ${(CANVAS_W * d.anchor).toFixed(0)}px)`,

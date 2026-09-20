@@ -4,6 +4,7 @@ import { ENCOUNTER_ZONES, getLevelWidth, groundYAt, laddersFor, landingDeckForLa
 import { LEVELS } from "@/game/config/levels";
 import { applyCitadelRoster, CITADEL_KEY_GUARD_WAVE, CITADEL_LEVEL } from "@/game/enemy/citadelForces";
 import { collectCitadelKey, initialCitadelQuest, rescueAnon, unlockCitadelKey } from "@/game/logic/citadelQuest";
+import { CITADEL_ELEVATION_BANDS, CITADEL_SECTION_BOUNDS, validateCitadelBlueprint } from "@/game/config/citadelBlueprint";
 
 const KEY = { x: 6360, y: 88 } as const;
 const CAGE = { x: 6900, y: 88 } as const;
@@ -16,6 +17,12 @@ describe("Level 7 final blueprint geometry", () => {
     expect(getLevelWidth(CITADEL_LEVEL)).toBe(9000);
     expect(pitsFor(CITADEL_LEVEL)).toHaveLength(0);
     for (let x = 0; x <= 9000; x += 25) expect(groundYAt(CITADEL_LEVEL, x, GROUND_Y)).toBe(GROUND_Y);
+  });
+
+  it("passes the deterministic blueprint validator and preserves all elevation bands", () => {
+    expect(CITADEL_SECTION_BOUNDS).toEqual([0, 1800, 3600, 5400, 7200, 9000]);
+    expect(CITADEL_ELEVATION_BANDS.map((band) => band.y)).toEqual([GROUND_Y, 238, 190, 144, 88]);
+    expect(validateCitadelBlueprint()).toMatchObject({ valid: true, width: 9000, sections: 5, deckCount: 20, ladderCount: 24, issues: [] });
   });
 
   it("has one encounter in every section and a final throne boss", () => {
