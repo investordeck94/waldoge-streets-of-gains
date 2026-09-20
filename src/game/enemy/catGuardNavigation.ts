@@ -28,26 +28,26 @@ export function nextCatGuardLadder(fromSurface: string, toSurface: string, fromX
   const ladders = laddersFor(LEVEL).filter((ladder) =>
     ladder.id && ladder.bottomSurfaceId && ladder.topSurfaceId,
   );
-  const queue: Array<{ surface: string; first: Ladder | null }> = [{ surface: fromSurface, first: null }];
-  const visited = new Set([fromSurface]);
+  const queue: Array<{ surface: string; first: Ladder | null; cost: number }> = [{ surface: fromSurface, first: null, cost: 0 }];
+  const bestCost = new Map([[fromSurface, 0]]);
   while (queue.length) {
+    queue.sort((a, b) => a.cost - b.cost);
     const current = queue.shift();
     if (!current) break;
-    const candidates = current.first
-      ? ladders
-      : [...ladders].sort((a, b) => Math.abs(a.x - fromX) - Math.abs(b.x - fromX));
-    for (const ladder of candidates) {
+    for (const ladder of ladders) {
       const next = ladder.bottomSurfaceId === current.surface ? ladder.topSurfaceId
         : ladder.topSurfaceId === current.surface ? ladder.bottomSurfaceId
         : null;
-      if (!next || visited.has(next)) continue;
+      if (!next) continue;
       const first = current.first ?? ladder;
-      if (next === toSurface) return first;
-      visited.add(next);
-      queue.push({ surface: next, first });
+      const cost = current.cost + 1 + (current.first ? 0 : Math.abs(ladder.x - fromX));
+      if (cost >= (bestCost.get(next) ?? Infinity)) continue;
+      bestCost.set(next, cost);
+      queue.push({ surface: next, first, cost });
     }
   }
-  return null;
+  const target = queue.find((entry) => entry.surface === toSurface);
+  return target?.first ?? null;
 }
 
 export function validCatGuardMount(
