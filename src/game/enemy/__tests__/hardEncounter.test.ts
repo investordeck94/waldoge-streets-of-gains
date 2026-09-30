@@ -87,3 +87,23 @@ describe("Level 7 Hard finite encounter queue", () => {
     }
   });
 });
+describe("Level 7 Hard engagement slots", () => {
+  const f = (x: number, extra: Record<string, unknown> = {}) => ({ x, y: 320, hp: 10, state: "walk", ...extra });
+
+  it("lets at most three fighters engage and staggers the rest per side", () => {
+    const fighters = [f(460), f(520), f(560), f(600), f(640), f(300), f(260)];
+    const holds = assignLevel7HardEngagement(fighters, { x: 500, y: 320 });
+    expect(fighters.length - holds.size).toBe(LEVEL_7_HARD_ENGAGED_MAX);
+    const distances = [...holds.values()].sort((a, b) => a - b);
+    expect(new Set(distances).size).toBeGreaterThanOrEqual(2);
+    expect(Math.min(...distances)).toBe(LEVEL_7_HARD_HOLD_BASE);
+  });
+
+  it("never assigns excluded, dead, climbing, boss or other-deck fighters", () => {
+    const cat = f(700, { cat: true });
+    const fighters = [f(490), f(510), f(530), cat, f(560, { hp: 0, state: "dead" }),
+      f(580, { climbing: true }), f(600, { isBoss: true }), f(620, { y: 200 })];
+    const holds = assignLevel7HardEngagement(fighters, { x: 500, y: 320 }, (x) => "cat" in x);
+    expect(holds.size).toBe(0);
+  });
+});
