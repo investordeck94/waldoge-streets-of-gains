@@ -4,6 +4,7 @@ import {
   LEVEL_7_HARD_REFILL_FRAMES,
   beginLevel7HardWave,
   isLevel7HardWaveComplete,
+  shouldUseLevel7HardEncounter,
   stepLevel7HardWave,
 } from "../hardEncounter";
 
@@ -14,6 +15,12 @@ function roster(total: number): Fighter[] {
 }
 
 describe("Level 7 Hard finite encounter queue", () => {
+  it("is gated away from Normal Level 7 and every other level", () => {
+    expect(shouldUseLevel7HardEncounter(6, "blackMonday")).toBe(true);
+    expect(shouldUseLevel7HardEncounter(6, "normal")).toBe(false);
+    expect(shouldUseLevel7HardEncounter(5, "blackMonday")).toBe(false);
+  });
+
   it("partitions one finite roster without duplicates", () => {
     const fighters = roster(24);
     const wave = beginLevel7HardWave(fighters, 0);

@@ -168,6 +168,7 @@ import {
 import {
   beginLevel7HardWave,
   isLevel7HardWaveComplete,
+  shouldUseLevel7HardEncounter,
   stepLevel7HardWave,
   type Level7HardEncounter,
 } from "@/game/enemy/hardEncounter";
@@ -3097,7 +3098,7 @@ function initializeWaveEncounter(
   diff: Difficulty,
 ): { enemies: Entity[]; hardEncounter: Level7HardEncounter<Entity> | null } {
   const roster = spawnEnemies(levelIndex, waveIndex, playerX, diff);
-  if (levelIndex !== CITADEL_LEVEL || diff !== "blackMonday") {
+  if (!shouldUseLevel7HardEncounter(levelIndex, diff)) {
     return { enemies: roster, hardEncounter: null };
   }
   const managed = beginLevel7HardWave(roster, waveIndex);

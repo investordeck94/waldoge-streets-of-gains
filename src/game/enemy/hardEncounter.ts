@@ -22,6 +22,10 @@ export interface Level7HardWave<T extends EncounterEnemy> {
   encounter: Level7HardEncounter<T>;
 }
 
+export function shouldUseLevel7HardEncounter(level: number, difficulty: string): boolean {
+  return level === 6 && difficulty === "blackMonday";
+}
+
 export function isLivingEncounterEnemy(enemy: EncounterEnemy): boolean {
   return enemy.hp > 0 && enemy.state !== "dead";
 }
