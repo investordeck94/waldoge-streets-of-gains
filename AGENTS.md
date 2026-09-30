@@ -1,1 +1,2 @@
 - Game artwork loads through `imageResidency.ts` (level-scoped; Waldoge/Level 7 characters pinned as ImageBitmap) — why: mobile browsers evicted decoded sprites under memory pressure, making fighters vanish.
+- Level 7 FULL TRENCH MODE waves use `hardEncounter.ts` as a finite capped queue — why: instantiating the 4.5× roster at once produced unreadable enemy walls and stalled practical progression.

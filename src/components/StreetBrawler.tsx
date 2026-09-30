@@ -166,6 +166,13 @@ import {
   scaleBossForDifficulty as scaleBossForDifficultyModule,
 } from "@/game/enemy/Enemy";
 import {
+  beginLevel7HardWave,
+  isLevel7HardWaveComplete,
+  shouldUseLevel7HardEncounter,
+  stepLevel7HardWave,
+  type Level7HardEncounter,
+} from "@/game/enemy/hardEncounter";
+import {
   sanitizeEnemyMotion,
   sanitizeFighterMotion,
   clampFighterToWorld,
@@ -3084,6 +3091,20 @@ function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, di
   return wave;
 }
 
+function initializeWaveEncounter(
+  levelIndex: number,
+  waveIndex: number,
+  playerX: number,
+  diff: Difficulty,
+): { enemies: Entity[]; hardEncounter: Level7HardEncounter<Entity> | null } {
+  const roster = spawnEnemies(levelIndex, waveIndex, playerX, diff);
+  if (!shouldUseLevel7HardEncounter(levelIndex, diff)) {
+    return { enemies: roster, hardEncounter: null };
+  }
+  const managed = beginLevel7HardWave(roster, waveIndex);
+  return { enemies: managed.active, hardEncounter: managed.encounter };
+}
+
 // SPECIAL_ATTACKS is imported from src/game/config/combat.ts
 
 export const StreetBrawler: FC = () => {
@@ -3318,6 +3339,8 @@ export const StreetBrawler: FC = () => {
     /** LEVEL 7 story progression: elevated key → Anon prison tower → rescue. */
     citadelQuest: CitadelQuestState;
     citadelHintTimer: number;
+    /** Level-7-Hard-only finite remainder; null on every other encounter. */
+    hardEncounter: Level7HardEncounter<Entity> | null;
   }>({
     player: createPlayer(),
     enemies: [],
@@ -3353,6 +3376,7 @@ export const StreetBrawler: FC = () => {
     camAnchor: 0.5,
     camLookAhead: 0,
     specialFx: null,
+    hardEncounter: null,
     marketerQuest: { keyAvailable: false, keyTaken: false, rescued: false },
     marketerHintTimer: 0,
     citadelQuest: initialCitadelQuest(),
@@ -3413,12 +3437,21 @@ export const StreetBrawler: FC = () => {
     {
       const arena0 = bossArenaX(g.level);
       const enc0 = encounterX(g.level, g.wave);
-      g.enemies = g.wave >= LEVELS[g.level].waves.length
-        ? [scaleBossForDifficulty(
+      if (g.wave >= LEVELS[g.level].waves.length) {
+        g.enemies = [scaleBossForDifficulty(
             spawnBoss(arena0 === null ? 200 : Math.max(200, arena0 - 500), g.level, getLevelWidth(g.level)),
             diff, g.level,
-          )]
-        : spawnEnemies(g.level, g.wave, enc0 === null ? 200 : Math.max(200, enc0 - 400), diff);
+          )];
+        g.hardEncounter = null;
+      } else {
+        const initialized = initializeWaveEncounter(
+          g.level, g.wave,
+          enc0 === null ? 200 : Math.max(200, enc0 - 400),
+          diff,
+        );
+        g.enemies = initialized.enemies;
+        g.hardEncounter = initialized.hardEncounter;
+      }
     }
     g.combo = { inputs: [], timer: 0, hitCount: 0, hitTimer: 0, multiplier: 1, specialCooldown: 0, specialEnergy: 50 };
     g.effects = [];
@@ -5007,9 +5040,21 @@ export const StreetBrawler: FC = () => {
 
       // Wave / Level progression
       const alive = g.enemies.filter(e => e.state !== "dead");
-      if (alive.length === 0) {
+      const managedHardWave = g.hardEncounter;
+      if (managedHardWave) {
+        // Expired defeat poses are presentation-only and never consume the
+        // seven-fighter living cap. Refill from this wave's finite roster in
+        // small batches; no call to the roster factory occurs here.
+        g.enemies = g.enemies.filter(e => e.state !== "dead" || e.stateTimer > 0);
+        stepLevel7HardWave(g.enemies, managedHardWave);
+      }
+      const waveCleared = managedHardWave
+        ? isLevel7HardWaveComplete(g.enemies, managedHardWave)
+        : alive.length === 0;
+      if (waveCleared) {
+        g.hardEncounter = null;
         g.enemies = g.enemies.filter(e => e.stateTimer > 0);
-        if (g.enemies.length === 0) {
+        if (managedHardWave || g.enemies.length === 0) {
           // Was the just-cleared wave the boss wave (index === waves.length)?
           const justClearedBoss = g.wave >= LEVELS[g.level].waves.length;
 
@@ -5080,7 +5125,13 @@ export const StreetBrawler: FC = () => {
             g.camY = 0;
             {
               const ex0 = encounterX(g.level, 0);
-              g.enemies = spawnEnemies(g.level, 0, ex0 === null ? p.x : Math.max(p.x, ex0 - 400), g.difficulty);
+              const initialized = initializeWaveEncounter(
+                g.level, 0,
+                ex0 === null ? p.x : Math.max(p.x, ex0 - 400),
+                g.difficulty,
+              );
+              g.enemies = initialized.enemies;
+              g.hardEncounter = initialized.hardEncounter;
             }
             g.platforms = spawnPlatforms(g.level);
             g.powerups.push(...(g.platforms.length
@@ -5127,6 +5178,7 @@ export const StreetBrawler: FC = () => {
             setWave(g.wave);
             const isBossWave = g.wave === LEVELS[g.level].waves.length;
             if (isBossWave) {
+              g.hardEncounter = null;
               const arenaX = bossArenaX(g.level);
               const bMods = difficultyModifiers(g.difficulty, g.level);
               const boss = scaleBossForDifficulty(
@@ -5167,11 +5219,13 @@ export const StreetBrawler: FC = () => {
             } else {
               sfx(() => SFX.waveStart());
               const exN = encounterX(g.level, g.wave);
-              g.enemies = spawnEnemies(
+              const initialized = initializeWaveEncounter(
                 g.level, g.wave,
                 exN === null ? p.x : Math.max(p.x, exN - 400),
                 g.difficulty,
               );
+              g.enemies = initialized.enemies;
+              g.hardEncounter = initialized.hardEncounter;
             }
             }
           }
