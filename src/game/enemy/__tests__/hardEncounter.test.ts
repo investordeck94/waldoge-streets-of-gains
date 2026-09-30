@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   LEVEL_7_HARD_ACTIVE_CAP,
+  LEVEL_7_HARD_ENGAGED_MAX,
+  LEVEL_7_HARD_HOLD_BASE,
   LEVEL_7_HARD_REFILL_FRAMES,
+  assignLevel7HardEngagement,
   beginLevel7HardWave,
   isLevel7HardWaveComplete,
   shouldUseLevel7HardEncounter,
@@ -85,5 +88,25 @@ describe("Level 7 Hard finite encounter queue", () => {
       expect(isLevel7HardWaveComplete(wave.active, wave.encounter)).toBe(true);
       expect(wave.encounter.wave).toBe(waveIndex);
     }
+  });
+});
+describe("Level 7 Hard engagement slots", () => {
+  const f = (x: number, extra: Record<string, unknown> = {}) => ({ x, y: 320, hp: 10, state: "walk", ...extra });
+
+  it("lets at most two fighters engage and staggers the rest per side", () => {
+    const fighters = [f(460), f(520), f(560), f(600), f(640), f(300), f(260)];
+    const holds = assignLevel7HardEngagement(fighters, { x: 500, y: 320 });
+    expect(fighters.length - holds.size).toBe(LEVEL_7_HARD_ENGAGED_MAX);
+    const distances = [...holds.values()].sort((a, b) => a - b);
+    expect(new Set(distances).size).toBeGreaterThanOrEqual(2);
+    expect(Math.min(...distances)).toBe(LEVEL_7_HARD_HOLD_BASE);
+  });
+
+  it("never assigns excluded, dead, climbing, boss or other-deck fighters", () => {
+    const cat = f(700, { cat: true });
+    const fighters = [f(490), f(510), cat, f(560, { hp: 0, state: "dead" }),
+      f(580, { climbing: true }), f(600, { isBoss: true }), f(620, { y: 200 })];
+    const holds = assignLevel7HardEngagement(fighters, { x: 500, y: 320 }, (x) => "cat" in x);
+    expect(holds.size).toBe(0);
   });
 });

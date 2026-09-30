@@ -75,3 +75,50 @@ export function isLevel7HardWaveComplete<T extends EncounterEnemy>(
 ): boolean {
   return encounter.queue.length === 0 && active.every((enemy) => !isLivingEncounterEnemy(enemy));
 }
+// ---------------------------------------------------------------------------
+// Engagement slots — Level 7 FULL TRENCH MODE only.
+// The active cap bounds how many fighters exist; engagement bounds how many
+// may press Waldoge at once. Without it every live Candle Minion converges on
+// the same 50-unit strike distance and the capped group still stacks into a
+// single overlapping wall. Waiting fighters hold a staggered stand-off ring
+// and rotate in as engaged fighters fall. HP, damage, speed and cooldowns are
+// untouched; Cat Guards keep their own navigation and are never assigned.
+// ---------------------------------------------------------------------------
+
+export const LEVEL_7_HARD_ENGAGED_MAX = 2;
+export const LEVEL_7_HARD_HOLD_BASE = 150;
+export const LEVEL_7_HARD_HOLD_STEP = 72;
+/** Same-surface tolerance: fighters on another deck keep normal navigation. */
+export const LEVEL_7_HARD_SAME_SURFACE_Y = 30;
+
+export interface EngagementFighter extends EncounterEnemy {
+  x: number;
+  y: number;
+  isBoss?: boolean;
+  climbing?: boolean;
+}
+
+/**
+ * Deterministic per-frame assignment. Returns a map from waiting fighter to
+ * its stand-off distance from Waldoge; fighters absent from the map (engaged,
+ * off-surface, climbing, bosses, excluded) use their normal AI.
+ */
+export function assignLevel7HardEngagement<T extends EngagementFighter>(
+  fighters: T[],
+  player: { x: number; y: number },
+  exclude: (fighter: T) => boolean = () => false,
+): Map<T, number> {
+  const holds = new Map<T, number>();
+  const eligible = fighters
+    .filter((f) => isLivingEncounterEnemy(f) && !f.isBoss && !f.climbing && !exclude(f)
+      && Math.abs(f.y - player.y) <= LEVEL_7_HARD_SAME_SURFACE_Y)
+    .sort((a, b) => Math.abs(a.x - player.x) - Math.abs(b.x - player.x) || a.x - b.x);
+  const waiting = eligible.slice(LEVEL_7_HARD_ENGAGED_MAX);
+  const rank = { left: 0, right: 0 };
+  for (const f of waiting) {
+    const side = f.x < player.x ? "left" : "right";
+    holds.set(f, LEVEL_7_HARD_HOLD_BASE + rank[side] * LEVEL_7_HARD_HOLD_STEP);
+    rank[side] += 1;
+  }
+  return holds;
+}
