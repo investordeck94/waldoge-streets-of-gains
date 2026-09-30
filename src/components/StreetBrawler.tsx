@@ -4838,8 +4838,26 @@ export const StreetBrawler: FC = () => {
           );
         }
 
+        // Level 7 Hard waiting fighter: hold its stand-off slot, facing
+        // Waldoge, until an engaged fighter falls. Never attacks from here.
+        const holdDist = hardHolds?.get(e as unknown as Entity);
+        if (holdDist !== undefined && !catGuard && e.state !== "hit" && e.state !== "punch" && e.state !== "kick") {
+          const dx = p.x - e.x;
+          const dist = Math.abs(dx);
+          e.facing = dx > 0 ? 1 : -1;
+          const speed = (LEVELS[g.level]?.waves[g.wave]?.speed || 1.5) * difficultyModifiers(g.difficulty, g.level).enemySpeed;
+          if (dist > holdDist + 6) {
+            e.x += e.facing * speed;
+            e.state = "walk";
+          } else if (dist < holdDist - 6) {
+            e.x -= e.facing * speed * 0.7;
+            e.state = "walk";
+          } else {
+            e.state = "idle";
+          }
+        }
         // Normal Candle Minion / Raiding Team AI remains unchanged.
-        if (!catGuard && e.state !== "hit" && e.state !== "punch" && e.state !== "kick") {
+        else if (!catGuard && e.state !== "hit" && e.state !== "punch" && e.state !== "kick") {
           const dx = p.x - e.x;
           const dist = Math.abs(dx);
           e.facing = dx > 0 ? 1 : -1;
@@ -4863,7 +4881,7 @@ export const StreetBrawler: FC = () => {
         updateStuckWatchdog(
           e,
           p.x,
-          p.state !== "dead" && Math.abs(p.x - e.x) > 50,
+          holdDist === undefined && p.state !== "dead" && Math.abs(p.x - e.x) > 50,
         );
 
 
