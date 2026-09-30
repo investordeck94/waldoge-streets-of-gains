@@ -193,6 +193,51 @@ export function catGuardFrameFor(e: CatGuardSpriteView, clock = renderNow()): Fr
   return { ...source, index: safeIndex, count: group.count };
 }
 
+/** Share of each frame treated as the (unwidened) head. */
+export const FAT_CAT_HEAD_FRACTION = 0.4;
+/** Subtle body widening for THE FAT CATS. */
+export const FAT_CAT_BODY_WIDEN = 1.14;
+
+/**
+ * Dedicated sub-boss bar: "THE FAT CATS" with one independent segment per
+ * active cat, coloured by its own design.
+ */
+export function drawFatCatsBar(
+  ctx: CanvasRenderingContext2D,
+  cats: readonly CatGuardSpriteView[],
+  canvasW: number,
+  name: string,
+  barY = 66,
+): void {
+  if (cats.length === 0) return;
+  const totalW = Math.min(360, canvasW * 0.5);
+  const gap = 8;
+  const segW = (totalW - gap * (cats.length - 1)) / cats.length;
+  const left = (canvasW - totalW) / 2;
+  const barH = 10;
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.font = "bold 13px monospace";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#000";
+  ctx.fillStyle = "#ff4444";
+  ctx.strokeText(`\u2620 ${name} \u2620`, canvasW / 2, barY - 6);
+  ctx.fillText(`\u2620 ${name} \u2620`, canvasW / 2, barY - 6);
+  cats.forEach((cat, i) => {
+    const x = left + i * (segW + gap);
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(x - 2, barY - 2, segW + 4, barH + 4);
+    ctx.fillStyle = "#333";
+    ctx.fillRect(x, barY, segW, barH);
+    ctx.fillStyle = cat.variant === "catBlack" ? "#d31f2e" : "#d9a514";
+    ctx.fillRect(x, barY, segW * Math.max(0, Math.min(1, cat.hp / cat.maxHp)), barH);
+    ctx.strokeStyle = "#ff4444";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x - 2, barY - 2, segW + 4, barH + 4);
+  });
+  ctx.restore();
+}
+
 export function drawCatGuardSprite(
   ctx: CanvasRenderingContext2D,
   e: CatGuardSpriteView,
@@ -222,10 +267,21 @@ export function drawCatGuardSprite(
   ctx.scale(e.facing, 1);
   if (e.state === "hit") ctx.globalAlpha = 0.88;
   ctx.imageSmoothingEnabled = true;
+  // THE FAT CATS: head drawn unchanged, body below the neck widened slightly
+  // around the feet anchor. Same pixels, same atlas, hitbox untouched.
+  const headH = Math.round(frame.h * FAT_CAT_HEAD_FRACTION);
+  const bodyH = frame.h - headH;
+  const S = CAT_ATLAS_SCALE;
   ctx.drawImage(
     image,
-    frame.x * CAT_ATLAS_SCALE, frame.y * CAT_ATLAS_SCALE, frame.w * CAT_ATLAS_SCALE, frame.h * CAT_ATLAS_SCALE,
-    -frame.anchorX * scale, -frame.anchorY * scale, drawWidth, drawHeight,
+    frame.x * S, frame.y * S, frame.w * S, headH * S,
+    -frame.anchorX * scale, -frame.anchorY * scale, drawWidth, headH * scale + 0.5,
+  );
+  ctx.drawImage(
+    image,
+    frame.x * S, (frame.y + headH) * S, frame.w * S, bodyH * S,
+    -frame.anchorX * scale * FAT_CAT_BODY_WIDEN, (headH - frame.anchorY) * scale,
+    drawWidth * FAT_CAT_BODY_WIDEN, bodyH * scale,
   );
   ctx.restore();
 
