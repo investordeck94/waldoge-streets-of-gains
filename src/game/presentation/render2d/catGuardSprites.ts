@@ -198,7 +198,7 @@ export function drawCatGuardSprite(
   e: CatGuardSpriteView,
   camX: number,
 ): boolean {
-  const image = imageFor(e.variant);
+  const image = sourceFor(e.variant);
   if (!image) return false;
   const frame = catGuardFrameFor(e);
   const sx = e.x - camX;

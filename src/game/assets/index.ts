@@ -72,10 +72,12 @@ export const AUDIO_URLS = {
 // as an inline IIFE so the network request fires at module import.
 // ---------------------------------------------------------------------------
 
-function preload(src: string): HTMLImageElement | null {
+// Each portrait is 1024² (~4 MB decoded). Only the current level's boss is
+// ever drawn, so the others are released while another level is active.
+function preload(src: string, level: number): HTMLImageElement | null {
   if (typeof window === "undefined") return null;
   const i = new Image();
-  i.src = src;
+  residentImage(i, src, [level]);
   return i;
 }
 
