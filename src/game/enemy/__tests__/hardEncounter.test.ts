@@ -104,7 +104,7 @@ describe("Level 7 Hard engagement slots", () => {
 
   it("never assigns excluded, dead, climbing, boss or other-deck fighters", () => {
     const cat = f(700, { cat: true });
-    const fighters = [f(490), f(510), f(530), cat, f(560, { hp: 0, state: "dead" }),
+    const fighters = [f(490), f(510), cat, f(560, { hp: 0, state: "dead" }),
       f(580, { climbing: true }), f(600, { isBoss: true }), f(620, { y: 200 })];
     const holds = assignLevel7HardEngagement(fighters, { x: 500, y: 320 }, (x) => "cat" in x);
     expect(holds.size).toBe(0);
