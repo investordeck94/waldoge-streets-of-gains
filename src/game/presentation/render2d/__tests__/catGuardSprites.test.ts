@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CAT_GUARD_ASSETS, CAT_GUARD_GROUPS, CAT_GUARD_OUTFITS, catGuardFrameFor, catGuardPoseFor, validateCatGuardFrames } from "../catGuardSprites";
+import { CAT_GUARD_ASSETS, CAT_GUARD_GROUPS, CAT_GUARD_OUTFITS, CAT_GUARD_SHEET_SIZE, catGuardFrameFor, catGuardPoseFor, validateCatGuardFrames } from "../catGuardSprites";
 
 const view = (variant: "catBlack" | "catOrange") => ({
   x: 0, y: 320, height: 70, facing: 1, state: "idle", stateTimer: 0,
