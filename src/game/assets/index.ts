@@ -41,6 +41,7 @@ import fudderBossHead from "@/assets/boss-fudder-head.png";
 import exitLiquidityBossHead from "@/assets/boss-exit-liquidity-head.png";
 import mrMarketerBossHead from "@/assets/boss-mr-marketer-head.png";
 import tickerThiefBossHead from "@/assets/ticker-thief-head.png";
+import { residentImage } from "@/game/presentation/render2d/imageResidency";
 
 // ---------------------------------------------------------------------------
 // Raw URLs — usable by both the component (for <img>, <audio>) and the
