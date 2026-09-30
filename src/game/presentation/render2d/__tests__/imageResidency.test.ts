@@ -21,6 +21,8 @@ describe("level-scoped image residency", () => {
     const l4 = residentImage(new Image(), "http://x/level4.jpg", [3]);
     const l7 = residentImage(new Image(), "http://x/ticker.png", [6], { pin: true });
     const waldoge = residentImage(new Image(), "http://x/waldoge.png", "always", { pin: true });
+    setResidentLevel(3);
+    expect(l4.src).toBe("http://x/level4.jpg");
     setResidentLevel(6);
     expect(isResident(l4)).toBe(false);
     expect(l4.src).toBe(BLANK_IMAGE_SRC);

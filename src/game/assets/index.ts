@@ -83,13 +83,13 @@ function preload(src: string, level: number): HTMLImageElement | null {
 }
 
 export const BOSS_HEAD_IMAGES = {
-  jeet: preload(jeetBossHead),
-  badActor: preload(badActorBossHead),
-  rugger: preload(ruggerBossHead),
-  fudder: preload(fudderBossHead),
-  exitLiquidity: preload(exitLiquidityBossHead),
-  mrMarketer: preload(mrMarketerBossHead),
-  tickerThief: preload(tickerThiefBossHead),
+  jeet: preload(jeetBossHead, 0),
+  badActor: preload(badActorBossHead, 2),
+  rugger: preload(ruggerBossHead, 1),
+  fudder: preload(fudderBossHead, 3),
+  exitLiquidity: preload(exitLiquidityBossHead, 4),
+  mrMarketer: preload(mrMarketerBossHead, 5),
+  tickerThief: preload(tickerThiefBossHead, 6),
 } as const;
 
 // Individually-named exports so StreetBrawler.tsx's boss-head lookup chain
