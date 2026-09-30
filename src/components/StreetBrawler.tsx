@@ -96,6 +96,7 @@ import {
   drawRaidingTeamSprite,
   preloadRaidingTeamSprites,
 } from "@/game/presentation/render2d/raidingTeamSprites";
+import { residentImage, setResidentLevel } from "@/game/presentation/render2d/imageResidency";
 import {
   drawCatGuardSprite,
   preloadCatGuardSprites,
