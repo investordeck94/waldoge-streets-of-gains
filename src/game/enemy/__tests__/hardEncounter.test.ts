@@ -45,7 +45,7 @@ describe("Level 7 Hard finite encounter queue", () => {
 
   it("does not exceed the living cap or spawn while full", () => {
     const wave = beginLevel7HardWave(roster(LEVEL_7_HARD_ACTIVE_CAP + 5), 0);
-    expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(0);
+    expect(stepLevel7HardWave(wave.active, wave.encounter)).toHaveLength(0);
     expect(wave.active.filter((f) => f.state !== "dead")).toHaveLength(LEVEL_7_HARD_ACTIVE_CAP);
     expect(wave.encounter.queue).toHaveLength(5);
   });
@@ -58,13 +58,13 @@ describe("Level 7 Hard finite encounter queue", () => {
     wave.active[1].state = "dead";
     wave.active[2].hp = 0;
     wave.active[2].state = "dead";
-    expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(2);
+    expect(stepLevel7HardWave(wave.active, wave.encounter)).toHaveLength(2);
     expect(wave.active.filter((f) => f.hp > 0 && f.state !== "dead")).toHaveLength(LEVEL_7_HARD_ACTIVE_CAP - 1);
     expect(wave.encounter.queue).toHaveLength(3);
-    expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(0);
+    expect(stepLevel7HardWave(wave.active, wave.encounter)).toHaveLength(0);
     for (let i = 1; i < LEVEL_7_HARD_REFILL_FRAMES - 1; i++) stepLevel7HardWave(wave.active, wave.encounter);
     expect(wave.encounter.queue).toHaveLength(3);
-    expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(1);
+    expect(stepLevel7HardWave(wave.active, wave.encounter)).toHaveLength(1);
     expect(wave.active.filter((f) => f.hp > 0 && f.state !== "dead")).toHaveLength(LEVEL_7_HARD_ACTIVE_CAP);
   });
 
