@@ -51,3 +51,16 @@ describe("Level 7 Cat Guard ladder navigation", () => {
     expect(attacker.x).toBe(6204);
   });
 });
+import { resolveCitadelCrowdSpacing } from "../catGuardNavigation";
+describe("Level 7 mixed crowd spacing", () => {
+  it("separates a Cat Guard from a Candle Minion on the same surface without moving attackers", () => {
+    const minion = { x: 500, y: 320, vx: 0, hp: 40, state: "walk" };
+    const cat = { x: 504, y: 320, vx: 0, hp: 40, state: "walk" };
+    const attacker = { x: 800, y: 320, vx: 0, hp: 40, state: "punch" };
+    const near = { x: 806, y: 320, vx: 0, hp: 40, state: "idle" };
+    resolveCitadelCrowdSpacing([minion, cat, attacker, near]);
+    expect(cat.x - minion.x).toBeGreaterThanOrEqual(30);
+    expect(attacker.x).toBe(800);
+    expect(near.x - attacker.x).toBeGreaterThanOrEqual(30);
+  });
+});

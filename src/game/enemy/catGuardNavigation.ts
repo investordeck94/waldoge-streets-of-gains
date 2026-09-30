@@ -103,3 +103,42 @@ export function resolveCatGuardSpacing(guards: CatGuardClimbState[]): void {
     right.vx = Math.max(0, right.vx);
   }
 }
+/** Minimal crowd member used for Level-7 mixed-faction separation. */
+export interface CrowdMember {
+  x: number; y: number; vx: number; hp: number; state: string;
+  isBoss?: boolean; climbing?: boolean; catMove?: unknown;
+}
+
+const CROWD_SPACING = 30;
+
+/**
+ * Root-cause fix for merged sprites: Cat Guards and Candle Minions all converge
+ * on the player's x and previously only Cat-vs-Cat pairs were separated, so a
+ * guard and a minion could share the exact same pixels. Every living, grounded,
+ * non-boss enemy on the same surface now keeps a body-width gap. Attacking,
+ * staggered or climbing enemies are immovable anchors (never displaced), so
+ * strikes, hit reactions and ladder occupancy are untouched.
+ */
+export function resolveCitadelCrowdSpacing(members: CrowdMember[]): void {
+  const alive = members.filter((m) => !m.isBoss && m.hp > 0 && m.state !== "dead" && !m.climbing);
+  const movable = (m: CrowdMember) => m.state !== "hit" && m.state !== "punch" && m.state !== "kick" && !m.catMove;
+  const bySurface = new Map<string, CrowdMember[]>();
+  for (const m of alive) {
+    const id = catSurfaceIdAt(m.x, m.y) ?? `air:${Math.round(m.y)}`;
+    if (id.startsWith("air:")) continue; // airborne bodies resolve after landing
+    const list = bySurface.get(id) ?? [];
+    list.push(m);
+    bySurface.set(id, list);
+  }
+  for (const list of bySurface.values()) {
+    list.sort((a, b) => a.x - b.x);
+    for (let i = 1; i < list.length; i++) {
+      const left = list[i - 1];
+      const right = list[i];
+      const deficit = CROWD_SPACING - (right.x - left.x);
+      if (deficit <= 0) continue;
+      if (movable(right)) { right.x += deficit; right.vx = Math.max(0, right.vx); }
+      else if (movable(left)) { left.x -= deficit; left.vx = Math.min(0, left.vx); }
+    }
+  }
+}
