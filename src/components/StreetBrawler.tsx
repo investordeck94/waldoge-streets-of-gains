@@ -169,6 +169,7 @@ import {
   assignLevel7HardEngagement,
   beginLevel7HardWave,
   isLevel7HardWaveComplete,
+  level7HardProgress,
   shouldUseLevel7HardEncounter,
   stepLevel7HardWave,
   type Level7HardEncounter,
@@ -3103,8 +3104,40 @@ function initializeWaveEncounter(
     return { enemies: roster, hardEncounter: null };
   }
   const managed = beginLevel7HardWave(roster, waveIndex);
+  // Trace: how many times each Hard wave's roster was built this run. Wave 0
+  // starts a fresh Level 7 attempt. Any value above 1 would be a reseed.
+  if (waveIndex === 0) level7HardInitCounts.length = 0;
+  level7HardInitCounts[waveIndex] = (level7HardInitCounts[waveIndex] ?? 0) + 1;
+  console.info("[L7 Hard] wave init", {
+    wave: waveIndex + 1,
+    authored: managed.encounter.authoredTotal,
+    active: managed.active.length,
+    queued: managed.encounter.queue.length,
+    initCount: level7HardInitCounts[waveIndex],
+  });
   return { enemies: managed.active, hardEncounter: managed.encounter };
 }
+
+/** Per-wave roster build counts for the current Level 7 Hard attempt. */
+const level7HardInitCounts: number[] = [];
+
+/**
+ * On-device encounter trace overlay. Enable with `?encounterDebug=1` on the
+ * page URL (persists via localStorage) so a phone recording shows the live
+ * finite-queue numbers. Disable with `?encounterDebug=0`.
+ */
+function readEncounterDebugFlag(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const q = new URLSearchParams(window.location.search).get("encounterDebug");
+    if (q === "1") window.localStorage.setItem("sogEncounterDebug", "1");
+    if (q === "0") window.localStorage.removeItem("sogEncounterDebug");
+    return window.localStorage.getItem("sogEncounterDebug") === "1";
+  } catch {
+    return false;
+  }
+}
+const ENCOUNTER_DEBUG = readEncounterDebugFlag();
 
 // SPECIAL_ATTACKS is imported from src/game/config/combat.ts
 
@@ -3112,6 +3145,9 @@ export const StreetBrawler: FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<"menu" | "playing" | "gameover" | "victory">("menu");
   const [wave, setWave] = useState(0);
+  // Level 7 Hard only: living + queued fighters left in the current wave.
+  const [hardLeft, setHardLeft] = useState<number | null>(null);
+  const hardLeftRef = useRef<number | null>(null);
   const [level, setLevel] = useState(0);
   const [score, setScore] = useState(0);
   const [playerHp, setPlayerHp] = useState(100);
@@ -5076,7 +5112,17 @@ export const StreetBrawler: FC = () => {
       const waveCleared = managedHardWave
         ? isLevel7HardWaveComplete(g.enemies, managedHardWave)
         : alive.length === 0;
+      {
+        const left = g.hardEncounter ? level7HardProgress(g.enemies, g.hardEncounter).remaining : null;
+        if (left !== hardLeftRef.current) {
+          hardLeftRef.current = left;
+          setHardLeft(left);
+        }
+      }
       if (waveCleared) {
+        if (managedHardWave) {
+          console.info("[L7 Hard] wave complete", level7HardProgress(g.enemies, managedHardWave));
+        }
         g.hardEncounter = null;
         g.enemies = g.enemies.filter(e => e.stateTimer > 0);
         if (managedHardWave || g.enemies.length === 0) {
@@ -5538,10 +5584,26 @@ export const StreetBrawler: FC = () => {
         ctx.fillStyle = "#ffd70088";
         ctx.font = "bold 14px monospace";
         ctx.textAlign = "center";
+        const hardProgress = g.hardEncounter ? level7HardProgress(g.enemies, g.hardEncounter) : null;
         ctx.fillText(
-          `LEVEL ${g.level + 1}/${TOTAL_LEVELS} — WAVE ${Math.min(g.wave + 1, lvlWaves)}/${lvlWaves}`,
+          `LEVEL ${g.level + 1}/${TOTAL_LEVELS} — WAVE ${Math.min(g.wave + 1, lvlWaves)}/${lvlWaves}`
+            + (hardProgress ? ` — ${hardProgress.remaining} LEFT` : ""),
           CANVAS_W / 2, 25,
         );
+        if (hardProgress && ENCOUNTER_DEBUG) {
+          ctx.save();
+          ctx.font = "bold 11px monospace";
+          ctx.fillStyle = "rgba(0,0,0,0.65)";
+          ctx.fillRect(CANVAS_W / 2 - 250, 32, 500, 18);
+          ctx.fillStyle = "#54ff9f";
+          ctx.fillText(
+            `W${hardProgress.wave + 1} roster ${hardProgress.authored} | spawned ${hardProgress.spawned}`
+              + ` | living ${hardProgress.living} | killed ${hardProgress.killed}`
+              + ` | queued ${hardProgress.queued} | inits ${level7HardInitCounts[hardProgress.wave] ?? 0}`,
+            CANVAS_W / 2, 45,
+          );
+          ctx.restore();
+        }
       }
 
       // Combo counter on canvas
@@ -6173,7 +6235,7 @@ export const StreetBrawler: FC = () => {
               <span className="text-primary font-bold animate-pulse">{comboCount}x COMBO!</span>
             )}
             <span className="text-primary font-bold">
-              {`L${level + 1}/${TOTAL_LEVELS} · ${wave >= LEVELS[level].waves.length ? "⚠ BOSS" : `W${wave + 1}/${LEVELS[level].waves.length}`}`}
+              {`L${level + 1}/${TOTAL_LEVELS} · ${wave >= LEVELS[level].waves.length ? "⚠ BOSS" : `W${wave + 1}/${LEVELS[level].waves.length}${hardLeft !== null ? ` · ${hardLeft} LEFT` : ""}`}`}
             </span>
             <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
             {/* DogeOS wallet — presentational only, outside the game loop. */}

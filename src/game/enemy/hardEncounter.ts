@@ -15,6 +15,8 @@ export interface Level7HardEncounter<T extends EncounterEnemy> {
   queue: T[];
   refillTimer: number;
   readonly authoredTotal: number;
+  /** Fighters moved into the active encounter (opening slice + refills). Never exceeds authoredTotal. */
+  spawned: number;
 }
 
 export interface Level7HardWave<T extends EncounterEnemy> {
@@ -35,14 +37,16 @@ export function beginLevel7HardWave<T extends EncounterEnemy>(roster: T[], wave:
   // Identity de-duplication prevents the same instance from occupying both the
   // active list and queue if a caller accidentally supplies it twice.
   const finiteRoster = [...new Set(roster)];
+  const active = finiteRoster.slice(0, LEVEL_7_HARD_ACTIVE_CAP);
   return {
-    active: finiteRoster.slice(0, LEVEL_7_HARD_ACTIVE_CAP),
+    active,
     encounter: {
       level: 6,
       wave,
       queue: finiteRoster.slice(LEVEL_7_HARD_ACTIVE_CAP),
       refillTimer: 0,
       authoredTotal: finiteRoster.length,
+      spawned: active.length,
     },
   };
 }
@@ -64,6 +68,7 @@ export function stepLevel7HardWave<T extends EncounterEnemy>(
   if (amount === 0) return 0;
 
   active.push(...encounter.queue.splice(0, amount));
+  encounter.spawned += amount;
   encounter.refillTimer = LEVEL_7_HARD_REFILL_FRAMES;
   return amount;
 }
@@ -75,6 +80,36 @@ export function isLevel7HardWaveComplete<T extends EncounterEnemy>(
 ): boolean {
   return encounter.queue.length === 0 && active.every((enemy) => !isLivingEncounterEnemy(enemy));
 }
+
+export interface Level7HardProgress {
+  wave: number;
+  authored: number;
+  spawned: number;
+  living: number;
+  killed: number;
+  queued: number;
+  /** Fighters still to beat this wave: living active + queued. 0 ⇒ wave complete. */
+  remaining: number;
+}
+
+/** Read-only snapshot used by the HUD counter and the on-device trace overlay. */
+export function level7HardProgress<T extends EncounterEnemy>(
+  active: T[],
+  encounter: Level7HardEncounter<T>,
+): Level7HardProgress {
+  const living = active.filter(isLivingEncounterEnemy).length;
+  const queued = encounter.queue.length;
+  return {
+    wave: encounter.wave,
+    authored: encounter.authoredTotal,
+    spawned: encounter.spawned,
+    living,
+    killed: encounter.spawned - living,
+    queued,
+    remaining: living + queued,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Engagement slots — Level 7 FULL TRENCH MODE only.
 // The active cap bounds how many fighters exist; engagement bounds how many
