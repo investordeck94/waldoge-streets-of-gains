@@ -46,7 +46,7 @@ export function applyCitadelRoster<T extends Placeable>(enemies: T[], level: num
 
 /** Bring only abandoned off-screen Level 7 fighters forward onto valid routes. */
 export function recycleCitadelStragglers<T extends Placeable>(
-  enemies: T[], level: number, playerX: number, levelWidth: number,
+  enemies: T[], level: number, playerX: number, levelWidth: number, targetX?: number,
 ): number {
   if (level !== CITADEL_LEVEL) return 0;
   let moved = 0;
@@ -57,7 +57,7 @@ export function recycleCitadelStragglers<T extends Placeable>(
     if ((enemy as Placeable & { variant?: string }).variant === "catBlack"
       || (enemy as Placeable & { variant?: string }).variant === "catOrange") continue;
     if (enemy.x >= playerX - 1200) continue;
-    enemy.x = Math.min(levelWidth - 60, playerX + 620);
+    enemy.x = Math.min(levelWidth - 60, targetX ?? playerX + 620);
     enemy.y = GROUND_Y;
     enemy.vx = 0;
     enemy.vy = 0;
