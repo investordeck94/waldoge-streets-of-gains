@@ -1,8 +1,21 @@
 /** Cached, state-driven renderer for the supplied Cat Guard production sheets. */
 import blackSheet from "@/assets/cat-guard-black-production.png.asset.json";
 import orangeSheet from "@/assets/cat-guard-orange-production.png.asset.json";
-import blackRuntimeSheet from "@/assets/cat-guard-black-clean.png";
-import orangeRuntimeSheet from "@/assets/cat-guard-orange-clean.png";
+import blackRuntimeSheet from "@/assets/cat-guard-black-clean-75.png";
+import orangeRuntimeSheet from "@/assets/cat-guard-orange-clean-75.png";
+
+/**
+ * MEMORY BUDGET (shared-render invisibility root cause). Level 7 is the only
+ * level that keeps Waldoge, Ticker Taker, both Cat Guard sheets and Anon's
+ * portrait decoded at once. At full size the two clean guard sheets alone cost
+ * ~16 MB of decoded RGBA, pushing mobile browsers past their image budget; the
+ * engine then drops decoded bitmaps mid-fight and every atlas-drawn character
+ * (Waldoge and Ticker Taker included) silently draws nothing while procedural
+ * scenery keeps rendering. The runtime sheets are the same clean artwork,
+ * pre-scaled by this factor; frame tables stay in authored coordinates and only
+ * the SOURCE rect is scaled, so pose, anchor, size and hitboxes are unchanged.
+ */
+export const CAT_ATLAS_SCALE = 0.75;
 import { renderNow } from "./clock";
 import { CAT_GUARD_MOVES, type CatGuardMove, type CatGuardVariant } from "@/game/enemy/catGuards";
 
@@ -110,7 +123,8 @@ function imageFor(variant: CatGuardVariant): HTMLImageElement | null {
     image.decoding = "sync";
     image.onload = () => {
       const size = CAT_GUARD_SHEET_SIZE[variant];
-      ready[variant] = image.naturalWidth === size.width && image.naturalHeight === size.height;
+      ready[variant] = image.naturalWidth === Math.round(size.width * CAT_ATLAS_SCALE)
+        && image.naturalHeight === Math.round(size.height * CAT_ATLAS_SCALE);
       if (ready[variant]) retries[variant] = 0;
     };
     image.onerror = () => {
@@ -198,7 +212,8 @@ export function drawCatGuardSprite(
   if (e.state === "hit") ctx.globalAlpha = 0.88;
   ctx.imageSmoothingEnabled = true;
   ctx.drawImage(
-    image, frame.x, frame.y, frame.w, frame.h,
+    image,
+    frame.x * CAT_ATLAS_SCALE, frame.y * CAT_ATLAS_SCALE, frame.w * CAT_ATLAS_SCALE, frame.h * CAT_ATLAS_SCALE,
     -frame.anchorX * scale, -frame.anchorY * scale, drawWidth, drawHeight,
   );
   ctx.restore();

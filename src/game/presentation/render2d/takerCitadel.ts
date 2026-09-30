@@ -2,7 +2,9 @@
 import { GROUND_Y } from "@/game/config";
 import { getLevelWidth, landingDecksFor, laddersFor } from "@/game/config/world";
 import anonAsset from "@/assets/anon-waldoges-boss.png.asset.json";
-import anonLocalUrl from "@/assets/anon-waldoges-boss-local.png";
+// Pre-scaled (25%) copy of the same portrait: drawn 78px tall, so the full
+// 1145x1374 original only added ~6 MB of decoded memory to Level 7.
+import anonLocalUrl from "@/assets/anon-waldoges-boss-local-l7.png";
 import { flicker, renderNow } from "./clock";
 import { blueprintSky, sceneTaken, sceneTicker, sceneCopy, sceneCitadelBack, sceneThrone } from "./takerBlueprintScenes";
 import { CITADEL_SECTION_BOUNDS, validateCitadelBlueprint } from "@/game/config/citadelBlueprint";
