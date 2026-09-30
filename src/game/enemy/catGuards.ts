@@ -72,6 +72,11 @@ interface Spawnable extends CatGuardFields {
   stateTimer: number; attackCooldown: number; aiTimer?: number;
 }
 
+/** The Cat Guards are presented as THE FAT CATS, Level 7 sub-bosses. */
+export const FAT_CATS_NAME = "THE FAT CATS";
+/** Sub-boss toughness; movement, attacks and navigation are unchanged. */
+export const FAT_CAT_HP_MULTIPLIER = 3;
+
 /** Append authored guards; existing Candle Minions are never converted or removed. */
 export function appendCatGuardRoster<T extends Spawnable>(
   enemies: T[], level: number, wave: number,
@@ -80,7 +85,7 @@ export function appendCatGuardRoster<T extends Spawnable>(
   const baseline = enemies[0];
   if (!baseline) return enemies;
   for (const [index, placement] of (AUTHORED_GUARDS[wave] ?? []).entries()) {
-    const hp = Math.max(24, Math.round(baseline.maxHp * (placement.variant === "catBlack" ? 0.82 : 0.92)));
+    const hp = Math.max(24, Math.round(baseline.maxHp * (placement.variant === "catBlack" ? 0.82 : 0.92) * FAT_CAT_HP_MULTIPLIER));
     enemies.push({
       ...baseline,
       x: placement.x,
