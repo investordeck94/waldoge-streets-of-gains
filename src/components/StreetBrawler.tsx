@@ -3148,6 +3148,8 @@ export const StreetBrawler: FC = () => {
   // Level 7 Hard only: living + queued fighters left in the current wave.
   const [hardLeft, setHardLeft] = useState<number | null>(null);
   const hardLeftRef = useRef<number | null>(null);
+  const [hardTrace, setHardTrace] = useState<string | null>(null);
+  const hardTraceRef = useRef<string | null>(null);
   const [level, setLevel] = useState(0);
   const [score, setScore] = useState(0);
   const [playerHp, setPlayerHp] = useState(100);
@@ -5118,6 +5120,16 @@ export const StreetBrawler: FC = () => {
           hardLeftRef.current = left;
           setHardLeft(left);
         }
+        if (ENCOUNTER_DEBUG) {
+          const pr = g.hardEncounter ? level7HardProgress(g.enemies, g.hardEncounter) : null;
+          const trace = pr
+            ? `W${pr.wave + 1} roster ${pr.authored} · spawned ${pr.spawned} · living ${pr.living} · killed ${pr.killed} · queued ${pr.queued} · inits ${level7HardInitCounts[pr.wave] ?? 0}`
+            : null;
+          if (trace !== hardTraceRef.current) {
+            hardTraceRef.current = trace;
+            setHardTrace(trace);
+          }
+        }
       }
       if (waveCleared) {
         if (managedHardWave) {
@@ -6238,6 +6250,9 @@ export const StreetBrawler: FC = () => {
               {`L${level + 1}/${TOTAL_LEVELS} · ${wave >= LEVELS[level].waves.length ? "⚠ BOSS" : `W${wave + 1}/${LEVELS[level].waves.length}${hardLeft !== null ? ` · ${hardLeft} LEFT` : ""}`}`}
             </span>
             <span className="text-muted-foreground">Score: <span className="text-primary">{score}</span></span>
+            {hardTrace && (
+              <span className="basis-full font-mono text-[10px] text-accent">{hardTrace}</span>
+            )}
             {/* DogeOS wallet — presentational only, outside the game loop. */}
             <DogeOSConnectButton />
             <DogeOSPlayerBadge />
