@@ -154,7 +154,7 @@ export function sceneTaken(ctx: Ctx, start: number): void {
     block(ctx, x, top, 170, i * 17);
     roofline(ctx, x, x + 170, top, i);
   }
-  const c = start + 820;
+  const c = start + 1000;
   // Searchlight towers flank the acquisition complex (blueprint top corners).
   searchlight(ctx, c - 340, 52); searchlight(ctx, c + 340, 52);
   searchlight(ctx, start + 1560, 64, .8); searchlight(ctx, start + 120, 64, .8);
@@ -195,7 +195,7 @@ export function sceneTicker(ctx: Ctx, start: number): void {
     const x = start + i * 205; const top = 150 + hash(i + 11) * 40;
     block(ctx, x, top, 175, i * 23 + 5); roofline(ctx, x, x + 175, top, i + 20);
   }
-  const c = start + 820;
+  const c = start + 1000;
   searchlight(ctx, c - 380, 50); searchlight(ctx, c + 390, 50);
   // Spire towers with red V lanterns across the skyline.
   for (const dx of [-250, -60, 120, 250]) spire(ctx, c + dx, 26 + Math.abs(dx) * .08, 44);
@@ -243,7 +243,7 @@ export function sceneCopy(ctx: Ctx, start: number): void {
     const x = start + i * 205; const top = 110 + hash(i + 29) * 50;
     block(ctx, x, top, 180, i * 29 + 7, i % 2 ? BLUE : RED);
   }
-  const c = start + 820;
+  const c = start + 1000;
   // Overhead cable crown.
   ctx.strokeStyle = "#141c33"; ctx.lineWidth = 6;
   for (const dx of [-420, -300, -200, 200, 300, 420]) {
@@ -318,7 +318,7 @@ export function sceneCitadelBack(ctx: Ctx, start: number): void {
   doorway(ctx, start + 70, 220, 80, 100, RED);
   vLantern(ctx, start + 90, 120, 40, 48);
   // Left banner (camera-visible from the key deck): ONE MARKET ONE TRUTH ONE OWNER.
-  pennant(ctx, start + 470, 40, 150, 150, ["ONE", "MARKET", "ONE TRUTH", "ONE OWNER"], 20);
+  pennant(ctx, start + 640, 40, 150, 150, ["ONE", "MARKET", "ONE TRUTH", "ONE OWNER"], 20);
   // Guarded key chamber around the fixed key (6360, 262).
   const kx = 6360;
   ctx.fillStyle = "#070b1a"; ctx.fillRect(kx - 150, 60, 300, 202);
@@ -381,7 +381,7 @@ export function sceneThrone(ctx: Ctx, start: number): void {
     ctx.fillStyle = i % 2 ? "rgba(47,182,255,.35)" : "rgba(255,40,72,.35)";
     for (let y = 20; y < GROUND_Y - 40; y += 22) if (hash(i + y) > .5) ctx.fillRect(x + 16, y, 6, 5);
   }
-  const c = start + 820;
+  const c = start + 1000;
   // Overhead arches and cables.
   ctx.strokeStyle = "#5a0e20"; ctx.lineWidth = 6;
   for (const dx of [-380, 380]) { ctx.beginPath(); ctx.arc(c + dx, 20, 90, Math.PI * .05, Math.PI * .95); ctx.stroke(); }
