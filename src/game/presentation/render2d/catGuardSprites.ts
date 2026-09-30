@@ -127,7 +127,6 @@ function imageFor(variant: CatGuardVariant): HTMLImageElement | null {
     const image = new Image();
     image.decoding = "sync";
     image.onload = () => {
-      const size = CAT_GUARD_SHEET_SIZE[variant];
       const runtime = CAT_RUNTIME_SHEET_SIZE[variant];
       ready[variant] = image.naturalWidth === runtime.width && image.naturalHeight === runtime.height;
       if (ready[variant]) retries[variant] = 0;
