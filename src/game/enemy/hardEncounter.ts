@@ -1,6 +1,6 @@
 /** Finite encounter queue used only by Level 7 FULL TRENCH MODE. */
 
-export const LEVEL_7_HARD_ACTIVE_CAP = 7;
+export const LEVEL_7_HARD_ACTIVE_CAP = 10;
 export const LEVEL_7_HARD_REFILL_BATCH = 2;
 export const LEVEL_7_HARD_REFILL_FRAMES = 24;
 
@@ -120,7 +120,7 @@ export function level7HardProgress<T extends EncounterEnemy>(
 // untouched; Cat Guards keep their own navigation and are never assigned.
 // ---------------------------------------------------------------------------
 
-export const LEVEL_7_HARD_ENGAGED_MAX = 2;
+export const LEVEL_7_HARD_ENGAGED_MAX = 3;
 export const LEVEL_7_HARD_HOLD_BASE = 150;
 export const LEVEL_7_HARD_HOLD_STEP = 72;
 /** Same-surface tolerance: fighters on another deck keep normal navigation. */
