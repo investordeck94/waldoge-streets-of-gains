@@ -4411,7 +4411,7 @@ export const StreetBrawler: FC = () => {
         if (obj.broken && obj.breakTimer > 0) obj.breakTimer--;
       }
 
-      // Level 7 FULL TRENCH MODE only: at most three Candle Minions press
+      // Level 7 FULL TRENCH MODE only: at most two Candle Minions press
       // Waldoge; the rest hold a staggered stand-off ring (empty map elsewhere).
       const hardHolds = g.hardEncounter
         ? assignLevel7HardEngagement(g.enemies, p, (e) => isCatGuard(e))

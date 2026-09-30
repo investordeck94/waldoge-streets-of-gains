@@ -85,9 +85,9 @@ export function isLevel7HardWaveComplete<T extends EncounterEnemy>(
 // untouched; Cat Guards keep their own navigation and are never assigned.
 // ---------------------------------------------------------------------------
 
-export const LEVEL_7_HARD_ENGAGED_MAX = 3;
-export const LEVEL_7_HARD_HOLD_BASE = 130;
-export const LEVEL_7_HARD_HOLD_STEP = 48;
+export const LEVEL_7_HARD_ENGAGED_MAX = 2;
+export const LEVEL_7_HARD_HOLD_BASE = 150;
+export const LEVEL_7_HARD_HOLD_STEP = 72;
 /** Same-surface tolerance: fighters on another deck keep normal navigation. */
 export const LEVEL_7_HARD_SAME_SURFACE_Y = 30;
 

@@ -93,7 +93,7 @@ describe("Level 7 Hard finite encounter queue", () => {
 describe("Level 7 Hard engagement slots", () => {
   const f = (x: number, extra: Record<string, unknown> = {}) => ({ x, y: 320, hp: 10, state: "walk", ...extra });
 
-  it("lets at most three fighters engage and staggers the rest per side", () => {
+  it("lets at most two fighters engage and staggers the rest per side", () => {
     const fighters = [f(460), f(520), f(560), f(600), f(640), f(300), f(260)];
     const holds = assignLevel7HardEngagement(fighters, { x: 500, y: 320 });
     expect(fighters.length - holds.size).toBe(LEVEL_7_HARD_ENGAGED_MAX);
