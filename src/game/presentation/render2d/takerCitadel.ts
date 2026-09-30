@@ -8,6 +8,7 @@ import anonLocalUrl from "@/assets/anon-waldoges-boss-local-l7.png";
 import { flicker, renderNow } from "./clock";
 import { blueprintSky, sceneTaken, sceneTicker, sceneCopy, sceneCitadelBack, sceneThrone } from "./takerBlueprintScenes";
 import { CITADEL_SECTION_BOUNDS, validateCitadelBlueprint } from "@/game/config/citadelBlueprint";
+import { residentImage } from "./imageResidency";
 
 export const TAKER_CITADEL_LEVEL = 6;
 export const TAKER_SECTION_WIDTH = 1800;
@@ -68,7 +69,7 @@ export function preloadTakerCitadel(): void {
   anonImage.onload = () => { anonReady = true; };
   // Keep the uploaded CDN pointer as provenance, but use the bundled original
   // in the canvas: preview middleware can return HTML for asset-pointer URLs.
-  anonImage.src = anonLocalUrl;
+  residentImage(anonImage, anonLocalUrl, [6], { pin: true });
 }
 preloadTakerCitadel();
 

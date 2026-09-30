@@ -18,6 +18,7 @@ import type { StyleName } from "@/lib/fightStyles";
 import atlasUrl from "@/assets/waldoge-atlas-local.png";
 import punchExtUrl from "@/assets/waldoge-punch-extended-local.png";
 import { drawWaldogeFighter, type FighterView } from "./waldogeFighter";
+import { residentImage, drawSource } from "./imageResidency";
 
 export type { FighterView };
 
@@ -78,24 +79,25 @@ let atlasReady = false;
 let punchExt: HTMLImageElement | null = null;
 let punchExtReady = false;
 
-function getAtlas(): HTMLImageElement | null {
+function getAtlas(): CanvasImageSource | null {
   if (typeof Image === "undefined") return null;
   if (!atlas) {
     atlas = new Image();
     atlas.onload = () => { atlasReady = true; };
-    atlas.src = atlasUrl;
+    residentImage(atlas, atlasUrl, "always", { pin: true });
   }
-  return atlasReady && atlas.complete && atlas.naturalWidth > 0 ? atlas : null;
+  // Pinned decoded bitmap first: immune to mobile decoded-image eviction.
+  return atlasReady && atlas.complete && atlas.naturalWidth > 0 ? drawSource(atlas) : null;
 }
 
-function getPunchExt(): HTMLImageElement | null {
+function getPunchExt(): CanvasImageSource | null {
   if (typeof Image === "undefined") return null;
   if (!punchExt) {
     punchExt = new Image();
     punchExt.onload = () => { punchExtReady = true; };
-    punchExt.src = punchExtUrl;
+    residentImage(punchExt, punchExtUrl, "always", { pin: true });
   }
-  return punchExtReady && punchExt.complete && punchExt.naturalWidth > 0 ? punchExt : null;
+  return punchExtReady && punchExt.complete && punchExt.naturalWidth > 0 ? drawSource(punchExt) : null;
 }
 
 /** Kick off the download early (called once from the game bootstrap). */

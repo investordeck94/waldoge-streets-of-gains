@@ -20,6 +20,7 @@
 
 import { renderNow } from "./clock";
 import atlasAsset from "@/assets/fudder-atlas.png.asset.json";
+import { residentImage } from "./imageResidency";
 
 export interface FudderView {
   x: number;
@@ -65,7 +66,7 @@ function getAtlas(): HTMLImageElement | null {
   if (!atlas) {
     atlas = new Image();
     atlas.onload = () => { ready = true; };
-    atlas.src = atlasAsset.url;
+    residentImage(atlas, atlasAsset.url, [3]);
   }
   return ready && atlas.complete && atlas.naturalWidth > 0 ? atlas : null;
 }

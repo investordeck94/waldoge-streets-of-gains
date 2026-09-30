@@ -52,6 +52,7 @@ import susDogUrl from "@/assets/susdog-original.jpg";
 import badActorHeadUrl from "@/assets/badactor-boss-head.png";
 import nunFrogAsset from "@/assets/suster-act-nun-frog.png.asset.json";
 import nunSusDogAsset from "@/assets/suster-act-nun-sus-dog.png.asset.json";
+import { residentImage } from "./imageResidency";
 
 export const BAD_ACTOR_LEVEL = 2;
 
@@ -213,7 +214,7 @@ function load(src: string): HTMLImageElement | null {
   const existing = images.get(src);
   if (existing) return existing;
   const image = new Image();
-  image.src = src;
+  residentImage(image, src, [2]);
   images.set(src, image);
   return image;
 }

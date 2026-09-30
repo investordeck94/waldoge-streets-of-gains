@@ -19,6 +19,7 @@ import industrialLocal from "@/assets/level4-industrial.jpg-local.jpg";
 import factoryLocal from "@/assets/level4-factory.jpg-local.jpg";
 import arenaLocal from "@/assets/level4-arena.jpg-local.jpg";
 import { flicker, renderNow } from "./clock";
+import { residentImage } from "./imageResidency";
 
 export const FUDDER_TERRITORY_LEVEL = 3;
 export const FUDDER_SECTION_WIDTH = 1800;
@@ -83,7 +84,7 @@ const sectionReady = [false, false, false, false, false];
 
 function loadImage(src: string, ready: () => void): HTMLImageElement | null {
   if (typeof Image === "undefined") return null;
-  const image = new Image(); image.decoding = "sync"; image.onload = ready; image.src = src; return image;
+  const image = new Image(); image.decoding = "sync"; image.onload = ready; residentImage(image, src, [3]); return image;
 }
 export function preloadFudderTerritory(): void {
   if (!fudderImage) fudderImage = loadImage(fudderAtlasLocal, () => { fudderReady = true; });

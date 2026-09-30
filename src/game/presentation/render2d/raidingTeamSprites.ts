@@ -13,6 +13,7 @@
 
 import { renderNow } from "./clock";
 import atlasSrc from "@/assets/raiding-team-atlas.png";
+import { residentImage } from "./imageResidency";
 
 export interface RaidingTeamView {
   x: number;
@@ -64,7 +65,7 @@ function getAtlas(): HTMLImageElement | null {
     atlas = new Image();
     atlas.decoding = "sync";
     atlas.onload = () => { ready = true; };
-    atlas.src = atlasSrc;
+    residentImage(atlas, atlasSrc, [5]);
   }
   return ready && atlas.complete && atlas.naturalWidth > 0 ? atlas : null;
 }

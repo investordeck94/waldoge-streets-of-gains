@@ -22,6 +22,7 @@ import hqArt from "@/assets/level6-hq.jpg";
 import squirrelArt from "@/assets/squirrel-hodl.png";
 import marketerAtlasAsset from "@/assets/mr-marketer-atlas.png.asset.json";
 import { flicker, renderNow } from "./clock";
+import { residentImage } from "./imageResidency";
 
 export const MARKETER_TERRITORY_LEVEL = 5;
 export const MARKETER_SECTION_WIDTH = 1800;
@@ -125,7 +126,7 @@ function loadImage(src: string, ready: () => void): HTMLImageElement | null {
   const image = new Image();
   image.decoding = "sync";
   image.onload = ready;
-  image.src = src;
+  residentImage(image, src, [5]);
   return image;
 }
 

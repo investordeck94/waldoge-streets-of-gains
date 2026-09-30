@@ -23,6 +23,7 @@ export const CAT_RUNTIME_SHEET_SIZE = {
 } as const;
 import { renderNow } from "./clock";
 import { CAT_GUARD_MOVES, type CatGuardMove, type CatGuardVariant } from "@/game/enemy/catGuards";
+import { residentImage, drawSource } from "./imageResidency";
 
 export const CAT_GUARD_ASSETS = {
   catBlack: blackSheet.url,
@@ -140,11 +141,17 @@ function imageFor(variant: CatGuardVariant): HTMLImageElement | null {
     };
     // Local bundled copies are the persistent runtime source. The CDN pointers
     // above retain immutable provenance for the exact user-supplied sheets.
-    image.src = CAT_GUARD_RUNTIME_ASSETS[variant];
+    residentImage(image, CAT_GUARD_RUNTIME_ASSETS[variant], [6], { pin: true });
     images[variant] = image;
   }
   const image = images[variant];
   return image && ready[variant] && image.complete && image.naturalWidth > 0 ? image : null;
+}
+
+/** Pinned decoded copy when available, otherwise the image itself. */
+function sourceFor(variant: CatGuardVariant): CanvasImageSource | null {
+  const image = imageFor(variant);
+  return image ? drawSource(image) : null;
 }
 
 export function preloadCatGuardSprites(): void {
