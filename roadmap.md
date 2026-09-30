@@ -153,5 +153,5 @@
 - [x] Replace overlapping presentation-sheet crops with clean per-pose atlases extracted from each original Cat Guard design
 - [x] Validate both distinct guards through idle, walk, run, attacks, hit, defeat, and ladder presentation
 - [x] Correct the five section title hierarchy and compare all live midpoints directly against the reference pack
-- [ ] Replay key → cage → rescue → Ticker Taker → victory on desktop and mobile
-- [ ] Confirm full tests, typecheck, and final preview build
+- [x] Replay key → cage → rescue → Ticker Taker → victory on desktop and mobile
+- [x] Confirm full tests, typecheck, and final preview build
