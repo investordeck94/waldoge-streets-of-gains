@@ -106,10 +106,14 @@ function windows(ctx: CanvasRenderingContext2D, x: number, y: number, w: number,
 }
 
 function sectionMasthead(ctx: CanvasRenderingContext2D, start: number, title: string, subtitle: string): void {
-  panel(ctx, start + 590, 5, 620, 42, [title], "red", 22);
-  ctx.save(); ctx.fillStyle = "#f4c542"; ctx.font = "900 11px monospace"; ctx.textAlign = "center";
-  ctx.fillText(subtitle, start + 900, 58, 580); ctx.restore();
-  takerMark(ctx, start + 552, 26, 15); takerMark(ctx, start + 1248, 26, 15);
+  ctx.save();
+  ctx.fillStyle = "rgba(2,5,11,.94)"; ctx.fillRect(start + 430, 3, 940, 56);
+  ctx.strokeStyle = "#ff2848"; ctx.lineWidth = 3; ctx.strokeRect(start + 430, 3, 940, 56);
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = "#fff"; ctx.font = "900 24px Impact, sans-serif"; ctx.fillText(title, start + 900, 24, 760);
+  ctx.fillStyle = "#ff2848"; ctx.font = "900 15px Impact, sans-serif"; ctx.fillText(subtitle, start + 900, 46, 760);
+  ctx.restore();
+  takerMark(ctx, start + 390, 29, 17); takerMark(ctx, start + 1410, 29, 17);
 }
 
 function candles(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
