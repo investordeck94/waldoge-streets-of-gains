@@ -14,11 +14,11 @@ describe("Cat Guard production sprite registration", () => {
     expect(CAT_GUARD_OUTFITS.catOrange).toBe("WHITE TRACKSUIT + GOLD STRIPES");
   });
 
-  it("preserves every production state and authored frame count", () => {
+  it("preserves every production state and independently authored variant", () => {
     expect(CAT_GUARD_GROUPS.catBlack.cartwheel.count).toBe(8);
-    expect(CAT_GUARD_GROUPS.catOrange.cartwheel.count).toBe(8);
+    expect(CAT_GUARD_GROUPS.catOrange.cartwheel.count).toBe(7);
     expect(CAT_GUARD_GROUPS.catBlack.climb.count).toBe(6);
-    expect(CAT_GUARD_GROUPS.catOrange.defeat.count).toBe(6);
+    expect(CAT_GUARD_GROUPS.catOrange.defeat.count).toBe(4);
     expect(Object.keys(CAT_GUARD_GROUPS.catOrange)).toEqual(Object.keys(CAT_GUARD_GROUPS.catBlack));
   });
 
@@ -30,7 +30,7 @@ describe("Cat Guard production sprite registration", () => {
     expect(catGuardPoseFor({ ...view("catOrange"), catMove: "roundhouse" })).toBe("roundhouse");
   });
 
-  it("advances the real eight-frame Cartwheel in source order", () => {
+  it("advances the real eight-frame Black Cartwheel in source order", () => {
     const frames = Array.from({ length: 8 }, (_, index) => catGuardFrameFor({
       ...view("catBlack"), state: "kick", stateTimer: 48 - index * 6, catMove: "cartwheel" as const,
     }).index);
@@ -40,13 +40,14 @@ describe("Cat Guard production sprite registration", () => {
   it("uses explicit in-bounds rectangles with a stable feet anchor", () => {
     expect(validateCatGuardFrames()).toEqual([]);
     for (const variant of ["catBlack", "catOrange"] as const) {
+      const size = CAT_GUARD_SHEET_SIZE[variant];
       for (const pose of Object.values(CAT_GUARD_GROUPS[variant])) {
         expect(pose.frames).toHaveLength(pose.count);
         for (const frame of pose.frames) {
           expect(frame.w).toBeGreaterThan(0);
           expect(frame.h).toBeGreaterThan(0);
-          expect(frame.x + frame.w).toBeLessThanOrEqual(1536);
-          expect(frame.y + frame.h).toBeLessThanOrEqual(1024);
+          expect(frame.x + frame.w).toBeLessThanOrEqual(size.width);
+          expect(frame.y + frame.h).toBeLessThanOrEqual(size.height);
           expect(frame.anchorY).toBe(frame.h);
           expect(frame.scale).toBeGreaterThan(0);
         }
@@ -54,15 +55,13 @@ describe("Cat Guard production sprite registration", () => {
     }
   });
 
-  it("keeps Black Guard locomotion beyond the idle/walk divider", () => {
-    expect(CAT_GUARD_GROUPS.catBlack.walk.frames[0].x).toBeGreaterThan(382);
-    expect(CAT_GUARD_GROUPS.catBlack.run.frames[0].x).toBeGreaterThan(944);
+  it("keeps each variant on its independent clean runtime atlas", () => {
+    expect(CAT_GUARD_SHEET_SIZE.catBlack).not.toEqual(CAT_GUARD_SHEET_SIZE.catOrange);
+    expect(CAT_GUARD_GROUPS.catBlack.idle.frames[0]).not.toEqual(CAT_GUARD_GROUPS.catOrange.idle.frames[0]);
   });
 
-  it("uses clean character-only cells for climbing instead of baked ladder cells", () => {
-    expect(CAT_GUARD_GROUPS.catBlack.climb.frames.every((frame) => frame.y === 34)).toBe(true);
-    expect(CAT_GUARD_GROUPS.catOrange.climb.frames.every((frame) => frame.y === 128)).toBe(true);
-    expect(CAT_GUARD_GROUPS.catBlack.climb.frames.every((frame) => frame.x < 945)).toBe(true);
-    expect(CAT_GUARD_GROUPS.catOrange.climb.frames.every((frame) => frame.x < 1036)).toBe(true);
+  it("uses character-only locomotion cells for climbing instead of baked ladder cells", () => {
+    expect(CAT_GUARD_GROUPS.catBlack.climb.frames).toEqual(CAT_GUARD_GROUPS.catBlack.walk.frames);
+    expect(CAT_GUARD_GROUPS.catOrange.climb.frames).toEqual(CAT_GUARD_GROUPS.catOrange.walk.frames);
   });
 });
