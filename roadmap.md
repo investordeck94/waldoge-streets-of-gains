@@ -1,11 +1,11 @@
 # Waldoge: Streets of Gains — combat pass
 
 ## Current — Level 7 Hard Mode encounter correction
-- [ ] Replace the oversized all-at-once Hard wave roster with a finite, capped encounter queue
-- [ ] Make wave completion depend on living enemies plus the finite queued remainder
-- [ ] Preserve Level 7 Cat Guard identities while keeping simultaneous combat readable
-- [ ] Verify W1→W2→W3→W4→W5→boss live on phone-sized and desktop views
-- [ ] Regression-test Normal Mode, image residency, scenery, combat, tests, typecheck, and build
+- [x] Replace the oversized all-at-once Hard wave roster with a finite, capped encounter queue
+- [x] Make wave completion depend on living enemies plus the finite queued remainder
+- [x] Preserve Level 7 Cat Guard identities while keeping simultaneous combat readable
+- [x] Verify W1→W2→W3→W4→W5→boss live on phone-sized and desktop views
+- [x] Regression-test Normal Mode, image residency, scenery, combat, tests, typecheck, and build
 
 ## Current — Level 7 strict blueprint correction and enemy sprite fix
 - [x] Remove the ladder-like strip that appears during Cat Guard walking; verify normal walking never displays climb artwork
