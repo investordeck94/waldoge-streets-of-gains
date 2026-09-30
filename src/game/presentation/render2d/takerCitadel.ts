@@ -408,13 +408,17 @@ function paintedBackdrop(ctx: CanvasRenderingContext2D, index: number, start: nu
   if (!img || !isResident(img) || !img.complete || img.naturalWidth < 16) return false;
   if (!backdropReady[index]) backdropReady[index] = true;
   const w = TAKER_SECTION_WIDTH;
-  const h = w * img.naturalHeight / img.naturalWidth;
+  // Slight vertical fit (0.9) and a 50-unit drop so each landmark's crown
+  // sign sits inside the camera band; only the dark base wall goes under the
+  // street, never any landmark.
+  const h = w * img.naturalHeight / img.naturalWidth * 0.9;
   const x = start + BACKDROP_OFFSET;
-  ctx.drawImage(img, x, GROUND_Y - h, w, h);
+  const top = GROUND_Y + 50 - h;
+  ctx.drawImage(img, x, top, w, h);
   // Soft structural seam where two painted sections meet.
   const seam = ctx.createLinearGradient(x - 40, 0, x + 40, 0);
   seam.addColorStop(0, "rgba(2,5,11,0)"); seam.addColorStop(0.5, "rgba(2,5,11,.75)"); seam.addColorStop(1, "rgba(2,5,11,0)");
-  ctx.fillStyle = seam; ctx.fillRect(x - 40, GROUND_Y - h, 80, h);
+  ctx.fillStyle = seam; ctx.fillRect(x - 40, top, 80, h);
   return true;
 }
 
