@@ -16,6 +16,11 @@ import orangeRuntimeSheet from "@/assets/cat-guard-orange-clean-75.png";
  * the SOURCE rect is scaled, so pose, anchor, size and hitboxes are unchanged.
  */
 export const CAT_ATLAS_SCALE = 0.75;
+/** Exact pixel size of each pre-scaled runtime sheet (validated on load). */
+export const CAT_RUNTIME_SHEET_SIZE = {
+  catBlack: { width: 1012, height: 1207 },
+  catOrange: { width: 819, height: 1217 },
+} as const;
 import { renderNow } from "./clock";
 import { CAT_GUARD_MOVES, type CatGuardMove, type CatGuardVariant } from "@/game/enemy/catGuards";
 
@@ -123,8 +128,8 @@ function imageFor(variant: CatGuardVariant): HTMLImageElement | null {
     image.decoding = "sync";
     image.onload = () => {
       const size = CAT_GUARD_SHEET_SIZE[variant];
-      ready[variant] = image.naturalWidth === Math.round(size.width * CAT_ATLAS_SCALE)
-        && image.naturalHeight === Math.round(size.height * CAT_ATLAS_SCALE);
+      const runtime = CAT_RUNTIME_SHEET_SIZE[variant];
+      ready[variant] = image.naturalWidth === runtime.width && image.naturalHeight === runtime.height;
       if (ready[variant]) retries[variant] = 0;
     };
     image.onerror = () => {
