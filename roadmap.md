@@ -148,10 +148,10 @@
 - [x] Compare live views at X 900, 2700, 4500, 6300, and 8100 against the blueprint
 - [x] Verify exact Monko poster, Exit Liquidity art, desktop/mobile rendering, tests, and build
 
-## Current — Level 7 final bug fix + reference-pack fidelity pass
-- [x] Phase 1: inspect the original blueprint, all eleven reference-pack images, live desktop/mobile midpoints, Cat Guard systems, geometry, rendering, and camera paths
-- [x] Phase 2: harden Cat Guard frame validation, image readiness, grounding fallback, and deterministic spacing without changing combat or artwork
-- [x] Phase 3: implement section-specific scenery matching the enlarged 7.1–7.5 compositions around the locked 20 decks and 23 ladders
-- [x] Phase 4: compare live midpoint captures against every section reference and correct remaining evidence-backed visual discrepancies
-- [x] Phase 5: replay START → key → cage → rescue → Ticker Taker → victory on desktop and mobile
-- [x] Phase 6: run focused tests, complete test suite, typecheck, and build validation
+## Current — Level 7 critical Cat Guard + visual correction
+- [x] Resume the unfinished audit using the original guard sheets, live build evidence, and five blueprint sections
+- [x] Replace overlapping presentation-sheet crops with clean per-pose atlases extracted from each original Cat Guard design
+- [x] Validate both distinct guards through idle, walk, run, attacks, hit, defeat, and ladder presentation
+- [x] Correct the five section title hierarchy and compare all live midpoints directly against the reference pack
+- [ ] Replay key → cage → rescue → Ticker Taker → victory on desktop and mobile
+- [ ] Confirm full tests, typecheck, and final preview build
