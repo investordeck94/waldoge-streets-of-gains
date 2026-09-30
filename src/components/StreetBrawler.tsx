@@ -99,6 +99,7 @@ import {
 import { residentImage, setResidentLevel } from "@/game/presentation/render2d/imageResidency";
 import {
   drawCatGuardSprite,
+  drawFatCatsBar,
   preloadCatGuardSprites,
 } from "@/game/presentation/render2d/catGuardSprites";
 import {
@@ -123,6 +124,7 @@ import {
   recycleCitadelStragglers,
 } from "@/game/enemy/citadelForces";
 import {
+  FAT_CATS_NAME,
   appendCatGuardRoster,
   isCatGuard,
   resolveCatGuardStrike,
@@ -5616,6 +5618,10 @@ export const StreetBrawler: FC = () => {
           );
           ctx.restore();
         }
+        // THE FAT CATS sub-boss bar while a living cat is near Waldoge.
+        const fatCats = g.enemies.filter((e) => isCatGuard(e) && e.hp > 0 && e.state !== "dead"
+          && Math.abs(e.x - g.player.x) < CANVAS_W * 0.75);
+        drawFatCatsBar(ctx, fatCats as unknown as Parameters<typeof drawFatCatsBar>[1], CANVAS_W, FAT_CATS_NAME);
       }
 
       // Combo counter on canvas
