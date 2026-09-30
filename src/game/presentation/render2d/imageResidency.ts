@@ -32,6 +32,8 @@ export type ImageScope = "always" | readonly number[];
 export interface ResidencyOptions {
   /** Keep a fully decoded ImageBitmap copy while in scope. */
   pin?: boolean;
+  /** Initial per-image gate; see setImageWanted. Defaults to true. */
+  wanted?: boolean;
 }
 
 interface ResidencyRecord {
@@ -40,6 +42,8 @@ interface ResidencyRecord {
   scope: ImageScope;
   pin: boolean;
   resident: boolean;
+  /** Extra per-image gate (e.g. only nearby Level 7 backdrops). */
+  wanted: boolean;
   bitmap: ImageBitmap | null;
   /** Bumped on every acquire/release so stale bitmap promises are dropped. */
   generation: number;
@@ -109,7 +113,7 @@ export function residentImage(
   options: ResidencyOptions = {},
 ): HTMLImageElement {
   const rec: ResidencyRecord = {
-    img, src, scope, pin: !!options.pin, resident: false, bitmap: null, generation: 0,
+    img, src, scope, pin: !!options.pin, resident: false, wanted: options.wanted ?? true, bitmap: null, generation: 0,
   };
   const userLoad = img.onload;
   const userError = img.onerror;
@@ -123,7 +127,7 @@ export function residentImage(
     return userError?.apply(this, args);
   } as OnErrorEventHandler;
   records.set(img, rec);
-  if (inScope(scope, activeLevel)) acquire(rec);
+  if (rec.wanted && inScope(scope, activeLevel)) acquire(rec);
   return img;
 }
 
@@ -152,9 +156,23 @@ export function setResidentLevel(level: number): void {
   if (!Number.isFinite(level) || level === activeLevel) return;
   activeLevel = level;
   for (const rec of records.values()) {
-    if (inScope(rec.scope, level)) acquire(rec);
+    if (rec.wanted && inScope(rec.scope, level)) acquire(rec);
     else release(rec);
   }
+}
+
+/**
+ * Finer-grained gate inside a level: an unwanted image is released even when
+ * its level is active. Used to keep only the Level 7 backdrops near the
+ * camera decoded.
+ */
+export function setImageWanted(img: HTMLImageElement | null | undefined, wanted: boolean): void {
+  if (!img) return;
+  const rec = records.get(img);
+  if (!rec || rec.wanted === wanted) return;
+  rec.wanted = wanted;
+  if (wanted && inScope(rec.scope, activeLevel)) acquire(rec);
+  else if (!wanted) release(rec);
 }
 
 /** Diagnostics / tests. */
