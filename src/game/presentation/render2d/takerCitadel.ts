@@ -8,7 +8,12 @@ import anonLocalUrl from "@/assets/anon-waldoges-boss-local-l7.png";
 import { flicker, renderNow } from "./clock";
 import { blueprintSky, sceneTaken, sceneTicker, sceneCopy, sceneCitadelBack, sceneThrone } from "./takerBlueprintScenes";
 import { CITADEL_SECTION_BOUNDS, validateCitadelBlueprint } from "@/game/config/citadelBlueprint";
-import { residentImage } from "./imageResidency";
+import { residentImage, setImageWanted, isResident } from "./imageResidency";
+import takenBg from "@/assets/level7-taken-bg.jpg";
+import tickerBg from "@/assets/level7-ticker-bg.jpg";
+import copyBg from "@/assets/level7-copy-bg.jpg";
+import citadelBg from "@/assets/level7-citadel-bg.jpg";
+import throneBg from "@/assets/level7-throne-bg.jpg";
 
 export const TAKER_CITADEL_LEVEL = 6;
 export const TAKER_SECTION_WIDTH = 1800;
@@ -362,7 +367,71 @@ function drawThrone(ctx: CanvasRenderingContext2D, x: number): void {
   sceneThrone(ctx, x); sectionMasthead(ctx, x, "7.5  TICKER TAKER'S THRONE", "THE FINAL FIGHT"); geometryArchitecture(ctx, 4);
 }
 
+/**
+ * Painted blueprint backdrops — one per section, repainted from the supplied
+ * section blueprints (architecture only: no characters, ladders or walkable
+ * platforms, which stay the game's own world objects). World-anchored: each
+ * spans 1800 units from start+100 so its landmark sits at the gameplay
+ * camera centre (start+1000). Only the camera's section and its neighbours
+ * stay decoded, keeping Level 7's picture memory low on phones.
+ */
+const BACKDROP_SOURCES = [takenBg, tickerBg, copyBg, citadelBg, throneBg] as const;
+const BACKDROP_OFFSET = 100;
+const backdrops: Array<HTMLImageElement | null> = [null, null, null, null, null];
+const backdropReady = [false, false, false, false, false];
+
+function backdropFor(index: number): HTMLImageElement | null {
+  if (typeof Image === "undefined") return null;
+  if (!backdrops[index]) {
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => { backdropReady[index] = true; };
+    backdrops[index] = residentImage(img, BACKDROP_SOURCES[index], [TAKER_CITADEL_LEVEL]);
+  }
+  return backdrops[index];
+}
+
+/** Keep only the backdrops of the camera's section and its neighbours. */
+function streamBackdrops(camX: number, canvasW: number): void {
+  const centre = Math.floor((camX + canvasW / 2 - BACKDROP_OFFSET) / TAKER_SECTION_WIDTH);
+  for (let i = 0; i < 5; i++) {
+    const want = Math.abs(i - centre) <= 1;
+    if (want) backdropFor(i);
+    if (!want && backdrops[i]) backdropReady[i] = false;
+    setImageWanted(backdrops[i], want);
+  }
+}
+
+/** Draws the painted backdrop; false while it is loading (procedural fallback). */
+function paintedBackdrop(ctx: CanvasRenderingContext2D, index: number, start: number): boolean {
+  const img = backdrops[index];
+  if (!img || !isResident(img) || !img.complete || img.naturalWidth < 16) return false;
+  if (!backdropReady[index]) backdropReady[index] = true;
+  const w = TAKER_SECTION_WIDTH;
+  // Slight vertical fit (0.9) and a 50-unit drop so each landmark's crown
+  // sign sits inside the camera band; only the dark base wall goes under the
+  // street, never any landmark.
+  const h = w * img.naturalHeight / img.naturalWidth * 0.9;
+  const x = start + BACKDROP_OFFSET;
+  const top = GROUND_Y + 50 - h;
+  ctx.drawImage(img, x, top, w, h);
+  // Soft structural seam where two painted sections meet.
+  const seam = ctx.createLinearGradient(x - 40, 0, x + 40, 0);
+  seam.addColorStop(0, "rgba(2,5,11,0)"); seam.addColorStop(0.5, "rgba(2,5,11,.75)"); seam.addColorStop(1, "rgba(2,5,11,0)");
+  ctx.fillStyle = seam; ctx.fillRect(x - 40, top, 80, h);
+  return true;
+}
+
 const DRAW = [drawTaken, drawTicker, drawCopy, drawCitadel, drawThrone] as const;
+
+/** Over a painted backdrop: only deck supports + the live key/cage objects. */
+const FOREGROUND = [
+  (ctx: CanvasRenderingContext2D) => geometryArchitecture(ctx, 0),
+  (ctx: CanvasRenderingContext2D) => geometryArchitecture(ctx, 1),
+  (ctx: CanvasRenderingContext2D) => geometryArchitecture(ctx, 2),
+  (ctx: CanvasRenderingContext2D) => { geometryArchitecture(ctx, 3); keyDisplay(ctx); anonCage(ctx); },
+  (ctx: CanvasRenderingContext2D) => geometryArchitecture(ctx, 4),
+] as const satisfies ReadonlyArray<(ctx: CanvasRenderingContext2D, start: number) => void>;
 
 function atmosphere(ctx: CanvasRenderingContext2D, start: number, index: number): void {
   cables(ctx, start);
@@ -379,11 +448,17 @@ export function drawTakerCitadel(ctx: CanvasRenderingContext2D, level: number, c
   getLevelWidth(level);
   ctx.fillStyle = "#02050b"; ctx.fillRect(0, -260, canvasW, GROUND_Y + 580);
   ctx.save(); ctx.translate(-camX, 0);
+  streamBackdrops(camX, canvasW);
   const first = Math.max(0, Math.floor(camX / TAKER_SECTION_WIDTH));
   const last = Math.min(4, Math.floor((camX + canvasW) / TAKER_SECTION_WIDTH));
   for (let i = first; i <= last; i++) {
     const start = i * TAKER_SECTION_WIDTH;
-    blueprintSky(ctx, start, TAKER_SECTION_WIDTH, i); atmosphere(ctx, start, i); DRAW[i](ctx, start);
+    blueprintSky(ctx, start, TAKER_SECTION_WIDTH, i);
+    // The painted backdrop for section i spans start+100..start+1900; the
+    // previous section's backdrop covers this section's first 100 units.
+    const painted = paintedBackdrop(ctx, i, start) && (i === 0 || paintedBackdrop(ctx, i - 1, start - TAKER_SECTION_WIDTH));
+    if (!painted) { atmosphere(ctx, start, i); DRAW[i](ctx, start); }
+    else FOREGROUND[i](ctx);
   }
   ctx.restore();
   const floor = ctx.createLinearGradient(0, GROUND_Y, 0, GROUND_Y + 260);
