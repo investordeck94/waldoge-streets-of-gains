@@ -7,6 +7,7 @@ import {
   assignLevel7HardEngagement,
   beginLevel7HardWave,
   isLevel7HardWaveComplete,
+  level7HardProgress,
   shouldUseLevel7HardEncounter,
   stepLevel7HardWave,
 } from "../hardEncounter";
@@ -90,6 +91,29 @@ describe("Level 7 Hard finite encounter queue", () => {
     }
   });
 });
+describe("Level 7 Hard progress trace", () => {
+  it("counts down one way: queued → spawned → killed, never regenerating", () => {
+    const wave = beginLevel7HardWave(roster(24), 0);
+    let prev = level7HardProgress(wave.active, wave.encounter);
+    expect(prev).toMatchObject({ authored: 24, spawned: 7, living: 7, killed: 0, queued: 17, remaining: 24 });
+    let guard = 0;
+    while (prev.remaining > 0 && guard++ < 2000) {
+      const target = wave.active.find((f) => f.hp > 0);
+      if (target) { target.hp = 0; target.state = "dead"; }
+      stepLevel7HardWave(wave.active, wave.encounter);
+      const next = level7HardProgress(wave.active, wave.encounter);
+      expect(next.remaining).toBeLessThanOrEqual(prev.remaining);
+      expect(next.queued).toBeLessThanOrEqual(prev.queued);
+      expect(next.spawned).toBeLessThanOrEqual(24);
+      expect(next.living).toBeLessThanOrEqual(LEVEL_7_HARD_ACTIVE_CAP);
+      expect(next.killed + next.living + next.queued).toBe(24);
+      prev = next;
+    }
+    expect(prev).toMatchObject({ spawned: 24, killed: 24, queued: 0, remaining: 0 });
+    expect(isLevel7HardWaveComplete(wave.active, wave.encounter)).toBe(true);
+  });
+});
+
 describe("Level 7 Hard engagement slots", () => {
   const f = (x: number, extra: Record<string, unknown> = {}) => ({ x, y: 320, hp: 10, state: "walk", ...extra });
 

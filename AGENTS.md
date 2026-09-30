@@ -1,2 +1,3 @@
 - Game artwork loads through `imageResidency.ts` (level-scoped; Waldoge/Level 7 characters pinned as ImageBitmap) — why: mobile browsers evicted decoded sprites under memory pressure, making fighters vanish.
 - Level 7 FULL TRENCH MODE waves use `hardEncounter.ts` as a finite capped queue (7 live) plus engagement slots (2 attack, rest hold staggered stand-off distances) — why: instantiating the 4.5× roster at once, or letting every live fighter converge on one strike distance, produced unreadable enemy walls.
+- Level 7 Hard encounter tracing is gated behind `?encounterDebug=1` / localStorage `sogEncounterDebug=1` (HUD trace line + `[L7 Hard]` console logs) — why: phone recordings must prove the finite queue drains without shipping debug UI to players.
