@@ -198,6 +198,7 @@ import { drawDistrict, hasDistrict } from "@/game/presentation/render2d/district
 import { drawPits, drawLadders, drawLandingDecks } from "@/game/presentation/render2d/terrain";
 import { drawTakerCitadelDebug } from "@/game/presentation/render2d/takerCitadel";
 import { mount as mountLadder, stepClimb, dismount as dismountLadder, climbDirectionFor, ladderExitSurfaceY, type Climber } from "@/game/world/climb";
+import { FAT_CAT_STRIKE_CALLS } from "@/game/presentation/render2d/fatCatFx";
 import { selectBossMove, getMoveById, rollChain, type MartialForm } from "@/game/enemy/bossMoves";
 import {
   computeBossBias, getBossProfile, bossCooldownFrames, chainChanceFor,
@@ -4312,6 +4313,11 @@ export const StreetBrawler: FC = () => {
           if (inRange) {
             e.hp -= dmg;
             e.state = "hit";
+            if (isCatGuard(e)) {
+              // Fat Cat hit feedback (presentation only): white flash + reel.
+              (e as Entity & { catHitFlash?: number }).catHitFlash = 10;
+              triggerShake(3, 6);
+            }
             e.stateTimer = spec ? 15 : (move ? Math.max(8, msToFrames(move.hitstun) / 2) : 10);
             e.vx = (isGroundPound ? (dx > 0 ? 1 : -1) : p.facing) * kb;
             if (p.state === "uppercut") e.vy = -10;
@@ -4460,6 +4466,10 @@ export const StreetBrawler: FC = () => {
 
       // Enemy AI
       for (const e of g.enemies as MovingEnemy[]) {
+        {
+          const fc = e as Entity & { catHitFlash?: number };
+          if (fc.catHitFlash) fc.catHitFlash = Math.max(0, fc.catHitFlash - 1);
+        }
         if (e.state === "dead") { e.stateTimer--; continue; }
 
         // Shared safety layer (all enemies, all bosses, all 7 levels):
@@ -4933,7 +4943,19 @@ export const StreetBrawler: FC = () => {
             ? resolveCatGuardStrike(catGuard, p)
             : resolveGruntStrike(e, p, e.attackLanded === true);
           if (strike.hit) {
-            if (catGuard) catGuard.catAttackLanded = true;
+            if (catGuard) {
+              catGuard.catAttackLanded = true;
+              if (catGuard.catMove) {
+                const heavy = catGuard.catMove !== "lightPunch";
+                g.effects.push({
+                  x: p.x, y: p.y - 80, timer: 32,
+                  text: FAT_CAT_STRIKE_CALLS[catGuard.catMove],
+                  color: catGuard.variant === "catBlack" ? "#ff3b3b" : "#ffc23a",
+                  size: heavy ? 18 : 14,
+                });
+                triggerShake(heavy ? 6 : 3, heavy ? 12 : 6);
+              }
+            }
             else e.attackLanded = true;
             sfx(() => SFX.hit());
             p.hp -= Math.max(1, Math.round(

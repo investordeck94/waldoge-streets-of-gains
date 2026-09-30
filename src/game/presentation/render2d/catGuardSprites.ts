@@ -24,6 +24,9 @@ export const CAT_RUNTIME_SHEET_SIZE = {
 import { renderNow } from "./clock";
 import { CAT_GUARD_MOVES, type CatGuardMove, type CatGuardVariant } from "@/game/enemy/catGuards";
 import { residentImage, drawSource } from "./imageResidency";
+import {
+  drawFatCatStrike, drawFatCatTelegraph, fatCatHitOffset, flashCanvas, flashScratch, type FatCatFxView,
+} from "./fatCatFx";
 
 export const CAT_GUARD_ASSETS = {
   catBlack: blackSheet.url,
@@ -262,28 +265,59 @@ export function drawCatGuardSprite(
   ctx.fill();
   ctx.restore();
 
-  ctx.save();
-  ctx.translate(sx, feetY);
-  ctx.scale(e.facing, 1);
-  if (e.state === "hit") ctx.globalAlpha = 0.88;
-  ctx.imageSmoothingEnabled = true;
+  const fx = e as CatGuardSpriteView & FatCatFxView;
+  drawFatCatTelegraph(ctx, fx, sx);
+  const hitOff = fatCatHitOffset(fx);
   // THE FAT CATS: head drawn unchanged, body below the neck widened slightly
   // around the feet anchor. Same pixels, same atlas, hitbox untouched.
   const headH = Math.round(frame.h * FAT_CAT_HEAD_FRACTION);
   const bodyH = frame.h - headH;
   const S = CAT_ATLAS_SCALE;
-  ctx.drawImage(
-    image,
-    frame.x * S, frame.y * S, frame.w * S, headH * S,
-    -frame.anchorX * scale, -frame.anchorY * scale, drawWidth, headH * scale + 0.5,
-  );
-  ctx.drawImage(
-    image,
-    frame.x * S, (frame.y + headH) * S, frame.w * S, bodyH * S,
-    -frame.anchorX * scale * FAT_CAT_BODY_WIDEN, (headH - frame.anchorY) * scale,
-    drawWidth * FAT_CAT_BODY_WIDEN, bodyH * scale,
-  );
+  const paint = (c: CanvasRenderingContext2D) => {
+    c.drawImage(
+      image,
+      frame.x * S, frame.y * S, frame.w * S, headH * S,
+      -frame.anchorX * scale, -frame.anchorY * scale, drawWidth, headH * scale + 0.5,
+    );
+    c.drawImage(
+      image,
+      frame.x * S, (frame.y + headH) * S, frame.w * S, bodyH * S,
+      -frame.anchorX * scale * FAT_CAT_BODY_WIDEN, (headH - frame.anchorY) * scale,
+      drawWidth * FAT_CAT_BODY_WIDEN, bodyH * scale,
+    );
+  };
+  ctx.save();
+  ctx.translate(sx + hitOff.dx, feetY);
+  ctx.scale(e.facing * (2 - hitOff.squash), hitOff.squash);
+  if (e.state === "hit") ctx.globalAlpha = 0.88;
+  ctx.imageSmoothingEnabled = true;
+  paint(ctx);
   ctx.restore();
+
+  // Hit flash: white silhouette of the same frame, fading over ~10 frames.
+  const flash = fx.catHitFlash ?? 0;
+  if (flash > 0 && e.state !== "dead") {
+    const ox = Math.ceil(Math.max(frame.anchorX, frame.w - frame.anchorX) * scale * FAT_CAT_BODY_WIDEN) + 6;
+    const oy = Math.ceil(frame.anchorY * scale) + 6;
+    const W = ox * 2;
+    const H = oy + 12;
+    const c = flashCanvas(W, H);
+    const canvas = flashScratch();
+    if (c && canvas) {
+      c.translate(ox, oy);
+      c.scale(e.facing * (2 - hitOff.squash), hitOff.squash);
+      paint(c);
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.globalCompositeOperation = "source-atop";
+      c.fillStyle = "#ffffff";
+      c.fillRect(0, 0, W, H);
+      ctx.save();
+      ctx.globalAlpha = Math.min(0.85, flash / 10);
+      ctx.drawImage(canvas, 0, 0, W, H, sx + hitOff.dx - ox, feetY - oy, W, H);
+      ctx.restore();
+    }
+  }
+  drawFatCatStrike(ctx, fx, sx);
 
   if (e.state !== "dead") {
     const barW = 32;
