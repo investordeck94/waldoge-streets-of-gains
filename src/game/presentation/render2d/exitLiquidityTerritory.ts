@@ -20,6 +20,7 @@ import exchangeLocal from "@/assets/level5-dead-exchange.jpg-local.jpg";
 import vaultLocal from "@/assets/level5-liquidity-vault.jpg-local.jpg";
 import domainLocal from "@/assets/level5-exit-domain.jpg-local.jpg";
 import { flicker, renderNow } from "./clock";
+import { residentImage } from "./imageResidency";
 
 export const EXIT_LIQUIDITY_LEVEL = 4;
 export const EXIT_SECTION_WIDTH = 1800;
@@ -81,7 +82,7 @@ function loadImage(src: string, ready: () => void): HTMLImageElement | null {
   const image = new Image();
   image.decoding = "sync";
   image.onload = ready;
-  image.src = src;
+  residentImage(image, src, [4]);
   return image;
 }
 

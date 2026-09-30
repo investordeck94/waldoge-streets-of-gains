@@ -10,6 +10,7 @@ import panelB from "@/assets/rugger-empire-b.jpg.asset.json";
 import panelC from "@/assets/rugger-empire-c.jpg.asset.json";
 import panelD from "@/assets/rugger-empire-d.jpg.asset.json";
 import { flicker } from "./clock";
+import { residentImage } from "./imageResidency";
 
 export const RUGGER_LEVEL = 1;
 const PANEL_W = 1350;
@@ -44,7 +45,7 @@ export const RUGGER_LANDMARKS = [
 function preload(src: string): HTMLImageElement | null {
   if (typeof window === "undefined") return null;
   const image = new Image();
-  image.src = src;
+  residentImage(image, src, [1]);
   return image;
 }
 

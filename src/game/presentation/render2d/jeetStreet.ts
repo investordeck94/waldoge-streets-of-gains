@@ -20,6 +20,7 @@ import panelA from "@/assets/jeet-street-a.png.asset.json";
 import panelB from "@/assets/jeet-street-b.jpg.asset.json";
 import panelC from "@/assets/jeet-street-c.jpg.asset.json";
 import panelD from "@/assets/jeet-street-d.jpg.asset.json";
+import { residentImage } from "./imageResidency";
 
 export const JEET_LEVEL = 0;
 
@@ -37,7 +38,7 @@ const ROAD = "#22222a";
 function preload(src: string): HTMLImageElement | null {
   if (typeof window === "undefined") return null;
   const i = new Image();
-  i.src = src;
+  residentImage(i, src, [0]);
   return i;
 }
 

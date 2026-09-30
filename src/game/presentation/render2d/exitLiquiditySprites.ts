@@ -25,6 +25,7 @@
 
 import { renderNow } from "./clock";
 import atlasAsset from "@/assets/exit-liquidity-atlas.png.asset.json";
+import { residentImage } from "./imageResidency";
 
 export interface ExitLiquidityView {
   x: number;
@@ -74,7 +75,7 @@ function getAtlas(): HTMLImageElement | null {
   if (!atlas) {
     atlas = new Image();
     atlas.onload = () => { ready = true; };
-    atlas.src = atlasAsset.url;
+    residentImage(atlas, atlasAsset.url, [4]);
   }
   return ready && atlas.complete && atlas.naturalWidth > 0 ? atlas : null;
 }

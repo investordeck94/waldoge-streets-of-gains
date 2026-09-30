@@ -41,6 +41,7 @@ import fudderBossHead from "@/assets/boss-fudder-head.png";
 import exitLiquidityBossHead from "@/assets/boss-exit-liquidity-head.png";
 import mrMarketerBossHead from "@/assets/boss-mr-marketer-head.png";
 import tickerThiefBossHead from "@/assets/ticker-thief-head.png";
+import { residentImage } from "@/game/presentation/render2d/imageResidency";
 
 // ---------------------------------------------------------------------------
 // Raw URLs — usable by both the component (for <img>, <audio>) and the
@@ -72,21 +73,23 @@ export const AUDIO_URLS = {
 // as an inline IIFE so the network request fires at module import.
 // ---------------------------------------------------------------------------
 
-function preload(src: string): HTMLImageElement | null {
+// Each portrait is 1024² (~4 MB decoded). Only the current level's boss is
+// ever drawn, so the others are released while another level is active.
+function preload(src: string, level: number): HTMLImageElement | null {
   if (typeof window === "undefined") return null;
   const i = new Image();
-  i.src = src;
+  residentImage(i, src, [level]);
   return i;
 }
 
 export const BOSS_HEAD_IMAGES = {
-  jeet: preload(jeetBossHead),
-  badActor: preload(badActorBossHead),
-  rugger: preload(ruggerBossHead),
-  fudder: preload(fudderBossHead),
-  exitLiquidity: preload(exitLiquidityBossHead),
-  mrMarketer: preload(mrMarketerBossHead),
-  tickerThief: preload(tickerThiefBossHead),
+  jeet: preload(jeetBossHead, 0),
+  badActor: preload(badActorBossHead, 2),
+  rugger: preload(ruggerBossHead, 1),
+  fudder: preload(fudderBossHead, 3),
+  exitLiquidity: preload(exitLiquidityBossHead, 4),
+  mrMarketer: preload(mrMarketerBossHead, 5),
+  tickerThief: preload(tickerThiefBossHead, 6),
 } as const;
 
 // Individually-named exports so StreetBrawler.tsx's boss-head lookup chain

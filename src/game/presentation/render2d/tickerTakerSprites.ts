@@ -31,6 +31,7 @@
 
 import { renderNow, flicker } from "./clock";
 import atlasAsset from "@/assets/ticker-taker-atlas-40.png.asset.json";
+import { residentImage, drawSource } from "./imageResidency";
 
 export interface TickerTakerView {
   x: number;
@@ -99,7 +100,7 @@ export const TICKER_TAKER_ATLAS_HEIGHT = 928;
 let atlas: HTMLImageElement | null = null;
 let ready = false;
 
-function getAtlas(): HTMLImageElement | null {
+function getAtlas(): CanvasImageSource | null {
   if (typeof Image === "undefined") return null;
   if (!atlas) {
     atlas = new Image();
@@ -109,10 +110,12 @@ function getAtlas(): HTMLImageElement | null {
     atlas.decoding = "sync";
     atlas.fetchPriority = "high";
     atlas.onload = () => { ready = true; };
-    atlas.src = atlasAsset.url;
+    residentImage(atlas, atlasAsset.url, [6], { pin: true });
   }
   if (!(ready && atlas.complete && atlas.naturalWidth === TICKER_TAKER_ATLAS_WIDTH && atlas.naturalHeight === TICKER_TAKER_ATLAS_HEIGHT)) return null;
-  return atlas;
+  // Draw from the pinned decoded bitmap so a mobile browser can never evict
+  // and re-decode this sheet mid-fight (which painted nothing for ~1 s).
+  return drawSource(atlas);
 }
 
 /** Kick off the download early (called once from the game bootstrap). */
