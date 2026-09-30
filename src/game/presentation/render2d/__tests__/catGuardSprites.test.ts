@@ -65,3 +65,15 @@ describe("Cat Guard production sprite registration", () => {
     expect(CAT_GUARD_GROUPS.catOrange.climb.frames).toEqual(CAT_GUARD_GROUPS.catOrange.walk.frames);
   });
 });
+import { CAT_ATLAS_SCALE, CAT_RUNTIME_SHEET_SIZE } from "../catGuardSprites";
+describe("Cat Guard runtime memory budget", () => {
+  it("keeps every scaled source rect inside the pre-scaled runtime sheet", () => {
+    for (const variant of ["catBlack", "catOrange"] as const) {
+      const size = CAT_RUNTIME_SHEET_SIZE[variant];
+      for (const pose of Object.values(CAT_GUARD_GROUPS[variant])) for (const f of pose.frames) {
+        expect((f.x + f.w) * CAT_ATLAS_SCALE).toBeLessThanOrEqual(size.width + 0.5);
+        expect((f.y + f.h) * CAT_ATLAS_SCALE).toBeLessThanOrEqual(size.height + 0.5);
+      }
+    }
+  });
+});
