@@ -6,6 +6,7 @@
 - [x] Preserve Level 7 Cat Guard identities while keeping simultaneous combat readable
 - [x] Verify W1→W2→W3→W4→W5→boss live on phone-sized and desktop views
 - [x] Regression-test Normal Mode, image residency, scenery, combat, tests, typecheck, and build
+- [x] Add Hard-only engagement slots so the capped group spreads out instead of stacking into one line (live-verified phone + desktop)
 
 ## Current — Level 7 strict blueprint correction and enemy sprite fix
 - [x] Remove the ladder-like strip that appears during Cat Guard walking; verify normal walking never displays climb artwork
