@@ -106,15 +106,13 @@ function windows(ctx: CanvasRenderingContext2D, x: number, y: number, w: number,
   ctx.restore();
 }
 
-function sectionMasthead(ctx: CanvasRenderingContext2D, start: number, title: string, subtitle: string): void {
-  ctx.save();
-  ctx.fillStyle = "rgba(2,5,11,.94)"; ctx.fillRect(start + 560, 2, 680, 40);
-  ctx.strokeStyle = "#ff2848"; ctx.lineWidth = 3; ctx.strokeRect(start + 560, 2, 680, 40);
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillStyle = "#fff"; ctx.font = "900 18px Impact, sans-serif"; ctx.fillText(title, start + 900, 15, 640);
-  ctx.fillStyle = "#ff2848"; ctx.font = "900 11px Impact, sans-serif"; ctx.fillText(subtitle, start + 900, 33, 640);
-  ctx.restore();
-  takerMark(ctx, start + 530, 20, 12); takerMark(ctx, start + 1270, 20, 12);
+/**
+ * The blueprint's "7.x TITLE" header is a document caption above each panel,
+ * not in-world scenery. Drawing it in the sky collided with the game's own
+ * "LEVEL 7/7 — WAVE" readout, so it is intentionally not rendered in-game.
+ */
+function sectionMasthead(_ctx: CanvasRenderingContext2D, _start: number, _title: string, _subtitle: string): void {
+  // intentionally empty
 }
 
 function candles(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
