@@ -3383,8 +3383,8 @@ export const StreetBrawler: FC = () => {
     preloadTakerCitadel();
 
     const img = new Image();
-    img.src = waldogeHead;
     img.onload = () => { gameRef.current.headImg = img; };
+    residentImage(img, waldogeHead, "always");
   }, []);
 
   // Sync camera preset into game ref so the loop reads it without re-mounting
@@ -3641,6 +3641,9 @@ export const StreetBrawler: FC = () => {
 
     const runFrame = () => {
       if (!g.running) return;
+      // Keep only the current level's artwork in picture memory (no-op unless
+      // the level changed). Presentation only — gameplay state is untouched.
+      setResidentLevel(g.level);
       if (pausedRef.current) {
         // Draw pause overlay over the last frame and skip simulation
         ctx.fillStyle = "rgba(0,0,0,0.55)";
