@@ -10,6 +10,7 @@ import {
   level7HardProgress,
   shouldUseLevel7HardEncounter,
   stepLevel7HardWave,
+  unrosteredLevel7HardFighters,
 } from "../hardEncounter";
 
 interface Fighter { id: number; hp: number; state: string }
@@ -45,7 +46,7 @@ describe("Level 7 Hard finite encounter queue", () => {
 
   it("does not exceed the living cap or spawn while full", () => {
     const wave = beginLevel7HardWave(roster(LEVEL_7_HARD_ACTIVE_CAP + 5), 0);
-    expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(0);
+    expect(stepLevel7HardWave(wave.active, wave.encounter)).toHaveLength(0);
     expect(wave.active.filter((f) => f.state !== "dead")).toHaveLength(LEVEL_7_HARD_ACTIVE_CAP);
     expect(wave.encounter.queue).toHaveLength(5);
   });
@@ -58,13 +59,13 @@ describe("Level 7 Hard finite encounter queue", () => {
     wave.active[1].state = "dead";
     wave.active[2].hp = 0;
     wave.active[2].state = "dead";
-    expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(2);
+    expect(stepLevel7HardWave(wave.active, wave.encounter)).toHaveLength(2);
     expect(wave.active.filter((f) => f.hp > 0 && f.state !== "dead")).toHaveLength(LEVEL_7_HARD_ACTIVE_CAP - 1);
     expect(wave.encounter.queue).toHaveLength(3);
-    expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(0);
+    expect(stepLevel7HardWave(wave.active, wave.encounter)).toHaveLength(0);
     for (let i = 1; i < LEVEL_7_HARD_REFILL_FRAMES - 1; i++) stepLevel7HardWave(wave.active, wave.encounter);
     expect(wave.encounter.queue).toHaveLength(3);
-    expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(1);
+    expect(stepLevel7HardWave(wave.active, wave.encounter)).toHaveLength(1);
     expect(wave.active.filter((f) => f.hp > 0 && f.state !== "dead")).toHaveLength(LEVEL_7_HARD_ACTIVE_CAP);
   });
 
@@ -134,5 +135,51 @@ describe("Level 7 Hard engagement slots", () => {
       f(580, { climbing: true }), f(600, { isBoss: true }), f(620, { y: 200 })];
     const holds = assignLevel7HardEngagement(fighters, { x: 500, y: 320 }, (x) => "cat" in x);
     expect(holds.size).toBe(0);
+  });
+});
+
+describe("Level 7 Hard one-way roster (no respawns)", () => {
+  it("every spawn consumes one unique roster entry; defeated entries never return", () => {
+    const wave = beginLevel7HardWave(roster(24), 0);
+    let prevRemaining = level7HardProgress(wave.active, wave.encounter).remaining;
+    let prevQueued = wave.encounter.queue.length;
+    const defeatedIds = new Set<number>();
+    for (let frame = 0; frame < 5000 && !isLevel7HardWaveComplete(wave.active, wave.encounter); frame++) {
+      if (frame % 7 === 0) {
+        const t = wave.active.find((f) => f.hp > 0);
+        if (t) { t.hp = 0; t.state = "dead"; defeatedIds.add(wave.encounter.rosterIds.get(t)!); }
+      }
+      const entered = stepLevel7HardWave(wave.active, wave.encounter);
+      for (const e of entered) expect(defeatedIds.has(wave.encounter.rosterIds.get(e)!)).toBe(false);
+      expect(wave.encounter.queue.length).toBe(prevQueued - entered.length);
+      const pr = level7HardProgress(wave.active, wave.encounter);
+      expect(pr.remaining).toBeLessThanOrEqual(prevRemaining);
+      prevRemaining = pr.remaining;
+      prevQueued = wave.encounter.queue.length;
+    }
+    expect(new Set(wave.encounter.spawnLog).size).toBe(24);
+    expect(wave.encounter.spawnLog).toHaveLength(24);
+    expect(wave.encounter.defeated.size).toBe(24);
+    expect(unrosteredLevel7HardFighters(wave.active, wave.encounter)).toBe(0);
+  });
+
+  it("refuses to spawn an entry that was already released or defeated", () => {
+    const wave = beginLevel7HardWave(roster(LEVEL_7_HARD_ACTIVE_CAP + 1), 0);
+    const opener = wave.active[0];
+    opener.hp = 0; opener.state = "dead";
+    wave.encounter.queue.unshift(opener); // simulated corrupt re-queue
+    const entered = stepLevel7HardWave(wave.active, wave.encounter);
+    expect(entered).not.toContain(opener);
+    expect(wave.active.filter((f) => f === opener)).toHaveLength(1);
+  });
+
+  it("passes each arriving fighter through the placement hook exactly once", () => {
+    const wave = beginLevel7HardWave(roster(LEVEL_7_HARD_ACTIVE_CAP + 2), 0);
+    wave.active[0].hp = 0; wave.active[0].state = "dead";
+    wave.active[1].hp = 0; wave.active[1].state = "dead";
+    const placed: Fighter[] = [];
+    stepLevel7HardWave(wave.active, wave.encounter, (f) => placed.push(f));
+    expect(placed).toHaveLength(2);
+    expect(new Set(placed).size).toBe(2);
   });
 });

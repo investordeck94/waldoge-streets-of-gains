@@ -174,6 +174,7 @@ import {
   level7HardProgress,
   shouldUseLevel7HardEncounter,
   stepLevel7HardWave,
+  unrosteredLevel7HardFighters,
   type Level7HardEncounter,
 } from "@/game/enemy/hardEncounter";
 import {
@@ -5086,7 +5087,13 @@ export const StreetBrawler: FC = () => {
       if (g.level === CITADEL_LEVEL) {
         resolveCatGuardSpacing(g.enemies.filter(isCatGuard) as CatGuardClimbState[]);
         resolveCitadelCrowdSpacing(g.enemies as unknown as Parameters<typeof resolveCitadelCrowdSpacing>[0]);
-        recycleCitadelStragglers(g.enemies.filter((e) => !e.isBoss), g.level, p.x, getLevelWidth(g.level));
+        recycleCitadelStragglers(
+          g.enemies.filter((e) => !e.isBoss), g.level, p.x, getLevelWidth(g.level),
+          // Hard: a relocated straggler re-enters from just beyond the right
+          // edge of the view and walks in, instead of popping up in sight
+          // (which read as a defeated fighter respawning).
+          g.hardEncounter ? Math.max(p.x + 620, g.camX + CANVAS_W + 60) : undefined,
+        );
         const q = g.citadelQuest;
         unlockCitadelKey(q, g.wave, CITADEL_KEY_GUARD_WAVE);
         if (collectCitadelKey(q, p, CITADEL_KEY_POSITION)) {
@@ -5111,7 +5118,34 @@ export const StreetBrawler: FC = () => {
         // seven-fighter living cap. Refill from this wave's finite roster in
         // small batches; no call to the roster factory occurs here.
         g.enemies = g.enemies.filter(e => e.state !== "dead" || e.stateTimer > 0);
-        stepLevel7HardWave(g.enemies, managedHardWave);
+        const levelW = getLevelWidth(g.level);
+        const entered = stepLevel7HardWave(g.enemies, managedHardWave, (e) => {
+          // Cat Guards keep their authored deck positions and navigation.
+          if (isCatGuard(e)) return;
+          const onScreen = e.x > g.camX - 40 && e.x < g.camX + CANVAS_W + 40;
+          const farBehind = e.x < p.x - 1200;
+          if (!onScreen && !farBehind) return;
+          // Never materialise a new fighter inside the view (it looks exactly
+          // like the Candle Minion just defeated there). Enter from off-screen.
+          const ahead = g.camX + CANVAS_W + 60;
+          e.x = ahead <= levelW - 60 ? ahead : Math.max(40, g.camX - 60);
+          e.y = GROUND_Y;
+          e.vx = 0;
+          e.vy = 0;
+          e.facing = e.x > p.x ? -1 : 1;
+        });
+        if (ENCOUNTER_DEBUG) {
+          for (const e of entered) {
+            console.info("[L7 Hard] spawn", {
+              wave: managedHardWave.wave + 1,
+              rosterId: managedHardWave.rosterIds.get(e),
+              queued: managedHardWave.queue.length,
+              x: Math.round(e.x), camX: Math.round(g.camX),
+            });
+          }
+          const stray = unrosteredLevel7HardFighters(g.enemies, managedHardWave);
+          if (stray > 0) console.error("[L7 Hard] fighters outside the finite roster", stray);
+        }
       }
       const waveCleared = managedHardWave
         ? isLevel7HardWaveComplete(g.enemies, managedHardWave)
