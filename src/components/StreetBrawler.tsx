@@ -135,6 +135,7 @@ import {
   nextCatGuardLadder,
   occupyCatGuardLadder,
   resolveCatGuardSpacing,
+  resolveCitadelCrowdSpacing,
   validCatGuardMount,
   type CatGuardClimbState,
 } from "@/game/enemy/catGuardNavigation";
@@ -4982,6 +4983,7 @@ export const StreetBrawler: FC = () => {
       // advances only when Waldoge reaches their real deck coordinates.
       if (g.level === CITADEL_LEVEL) {
         resolveCatGuardSpacing(g.enemies.filter(isCatGuard) as CatGuardClimbState[]);
+        resolveCitadelCrowdSpacing(g.enemies as unknown as Parameters<typeof resolveCitadelCrowdSpacing>[0]);
         recycleCitadelStragglers(g.enemies.filter((e) => !e.isBoss), g.level, p.x, getLevelWidth(g.level));
         const q = g.citadelQuest;
         unlockCitadelKey(q, g.wave, CITADEL_KEY_GUARD_WAVE);
