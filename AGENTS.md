@@ -1,0 +1,1 @@
+- Game artwork loads through `imageResidency.ts` (level-scoped; Waldoge/Level 7 characters pinned as ImageBitmap) — why: mobile browsers evicted decoded sprites under memory pressure, making fighters vanish.
