@@ -4,6 +4,7 @@ import { getLevelWidth, landingDecksFor, laddersFor } from "@/game/config/world"
 import anonAsset from "@/assets/anon-waldoges-boss.png.asset.json";
 import anonLocalUrl from "@/assets/anon-waldoges-boss-local.png";
 import { flicker, renderNow } from "./clock";
+import { blueprintSky, sceneTaken, sceneTicker, sceneCopy, sceneCitadelBack, sceneThrone } from "./takerBlueprintScenes";
 import { CITADEL_SECTION_BOUNDS, validateCitadelBlueprint } from "@/game/config/citadelBlueprint";
 
 export const TAKER_CITADEL_LEVEL = 6;
@@ -291,92 +292,13 @@ function geometryArchitecture(ctx: CanvasRenderingContext2D, section: number): v
 }
 
 function drawTaken(ctx: CanvasRenderingContext2D, x: number): void {
-  industrialFrame(ctx, x + 20, 104, 280, 216);
-  industrialFrame(ctx, x + 1160, 104, 610, 216);
-  windows(ctx, x + 34, 124, 250, 174, "#28b8ff"); windows(ctx, x + 1180, 124, 560, 174, "#ff2848");
-  for (const off of [325, 785, 1120, 1325, 1710]) verticalCore(ctx, x + off, 66, 46, "#ff2848");
-  girderBay(ctx, x + 300, 214, 320, 98, "#ff2848");
-  girderBay(ctx, x + 800, 156, 320, 156, "#ff2848");
-  girderBay(ctx, x + 1420, 214, 280, 98, "#ff2848");
-  sectionMasthead(ctx, x, "THE TAKEN DISTRICT", "EVERYTHING IS MINE");
-  panel(ctx, x + 360, 70, 720, 42, ["TICKER TAKER NETWORK"], "red", 24);
-  panel(ctx, x + 470, 120, 610, 120, [
-    "JEET DISTRICT — ACQUIRED", "RUGGER EXCHANGE — ACQUIRED", "BAD ACTORS STUDIOS — ACQUIRED",
-    "FUDDER MEDIA — ACQUIRED", "EXIT LIQUIDITY — ACQUIRED", "MR. MARKETER — ACQUIRED",
-  ], "white", 15);
-  panel(ctx, x + 36, 76, 250, 146, ["ALL", "EMPIRES", "NOW HIS"], "red", 25);
-  panel(ctx, x + 1260, 58, 430, 72, ["CONQUERED EMPIRES"], "red", 19);
-  takerMark(ctx, x + 1420, 174, 31); takerMark(ctx, x + 1680, 174, 22);
-  terminal(ctx, x + 650, 236, 116, 62, "red", "EMPIRE 01");
-  terminal(ctx, x + 1140, 230, 108, 62, "white", "ACQUIRED");
-  conduit(ctx, x + 30, 246, x + 1740, 246, "#ff2848");
-  dataColumns(ctx, x + 42, 238, 3, 4);
-  geometryArchitecture(ctx, 0);
+  sceneTaken(ctx, x); sectionMasthead(ctx, x, "7.1  THE TAKEN DISTRICT", "EVERYTHING IS MINE"); geometryArchitecture(ctx, 0);
 }
-
 function drawTicker(ctx: CanvasRenderingContext2D, x: number): void {
-  industrialFrame(ctx, x + 18, 92, 260, 228, "#28b8ff");
-  industrialFrame(ctx, x + 1390, 88, 380, 232, "#ff2848");
-  verticalCore(ctx, x + 286, 52, 42, "#ff2848");
-  verticalCore(ctx, x + 1344, 44, 42, "#28b8ff");
-  sectionMasthead(ctx, x, "THE TICKER DISTRICT", "THE MARKET NEVER SLEEPS");
-  candles(ctx, x + 330, 80, 790, 144);
-  panel(ctx, x + 540, 91, 360, 30, ["LIVE MARKET  +98.7%"], "blue", 13);
-  panel(ctx, x + 1160, 78, 220, 150, ["BUY", "OBEY", "TRADE", "REPEAT"], "red", 21);
-  panel(ctx, x + 1410, 62, 320, 170, ["GLOBAL CONTROL", "REAL TIME", "MANIPULATION"], "white", 19);
-  windows(ctx, x + 30, 116, 230, 180, "#b851ff"); takerMark(ctx, x + 1490, 264, 24);
-  terminal(ctx, x + 860, 232, 126, 64, "blue", "BTC / USD");
-  terminal(ctx, x + 1008, 232, 126, 64, "red", "WALDOGE");
-  terminal(ctx, x + 1240, 238, 96, 58, "blue", "VOLUME");
-  girderBay(ctx, x + 2460 - 1800, 214, 600, 98, "#28b8ff");
-  girderBay(ctx, x + 2760 - 1800, 156, 260, 48, "#ff2848");
-  conduit(ctx, x + 22, 274, x + 1738, 274, "#28b8ff");
-  dataColumns(ctx, x + 36, 118, 2, 11);
-  dataColumns(ctx, x + 1168, 246, 3, 5);
-  ctx.strokeStyle = "#31c5ff"; ctx.lineWidth = 4; ctx.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const px = x + 360 + i * 88, py = 266 - ((i * 37 + 28) % 76);
-    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-  }
-  ctx.stroke();
-  geometryArchitecture(ctx, 1);
+  sceneTicker(ctx, x); sectionMasthead(ctx, x, "7.2  THE TICKER DISTRICT", "THE MARKET NEVER SLEEPS"); geometryArchitecture(ctx, 1);
 }
-
 function drawCopy(ctx: CanvasRenderingContext2D, x: number): void {
-  industrialFrame(ctx, x + 8, 96, 360, 224, "#28b8ff");
-  industrialFrame(ctx, x + 1300, 90, 470, 230, "#ff2848");
-  for (const off of [48, 218, 1320, 1500]) {
-    verticalCore(ctx, x + off, 72, 38, off < 500 ? "#28b8ff" : "#ff2848");
-  }
-  sectionMasthead(ctx, x, "THE COPY MACHINE", "ANALYSE. REPLICATE. DOMINATE.");
-  panel(ctx, x + 380, 64, 620, 38, ["WALDOGE ANALYSIS"], "red", 20);
-  // Central scanner / observation chamber.
-  ctx.save();
-  ctx.strokeStyle = "#ff2848"; ctx.lineWidth = 6; ctx.shadowColor = "#ff2848"; ctx.shadowBlur = 22;
-  ctx.beginPath(); ctx.ellipse(x + 580, 184, 155, 128, 0, 0, Math.PI * 2); ctx.stroke(); ctx.shadowBlur = 0;
-  ctx.fillStyle = "rgba(255,26,70,.11)"; ctx.beginPath(); ctx.ellipse(x + 580, 184, 145, 118, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-  waldogeScan(ctx, x + 580, 205, .9);
-  panel(ctx, x + 760, 80, 520, 170, ["MOVESET COPIED  ✓", "COMBAT DATA  ✓", "COMMUNITY PATTERNS  ✓", "BEHAVIOUR MODEL  ✓", "REPLICATION: 98%"], "white", 17);
-  panel(ctx, x + 420, 270, 720, 42, ["WALDOGE DETECTED"], "red", 24);
-  for (const off of [80, 250, 1320, 1500]) panel(ctx, x + off, 96, 130, 162, ["SERVER", "DATA", "ONLINE"], "blue", 14);
-  for (const off of [1120, 1240]) {
-    ctx.fillStyle = "#111824"; ctx.fillRect(x + off, 174, 94, 146);
-    ctx.strokeStyle = "#31c5ff"; ctx.strokeRect(x + off, 174, 94, 146);
-    ctx.fillStyle = "#ff2848"; ctx.beginPath(); ctx.arc(x + off + 47, 224, 28, 0, Math.PI * 2); ctx.fill();
-  }
-  for (const off of [82, 220]) {
-    ctx.fillStyle = "#111824"; ctx.fillRect(x + off, 210, 92, 102);
-    ctx.strokeStyle = "#31c5ff"; ctx.strokeRect(x + off, 210, 92, 102);
-    ctx.fillStyle = "#31c5ff"; ctx.beginPath(); ctx.arc(x + off + 46, 246, 22, 0, Math.PI * 2); ctx.fill();
-  }
-  for (const off of [1010, 1150, 1290, 1430, 1570]) copyBay(ctx, x + off, 220, off % 280 ? "#ff2848" : "#28b8ff");
-  conduit(ctx, x + 365, 242, x + 1295, 242, "#31c5ff");
-  conduit(ctx, x + 510, 74, x + 1180, 116, "#ff2848");
-  girderBay(ctx, x + 4260 - 3600, 214, 600, 98, "#28b8ff");
-  girderBay(ctx, x + 4560 - 3600, 156, 240, 48, "#ff2848");
-  terminal(ctx, x + 1035, 94, 110, 62, "red", "CLONE 06");
-  geometryArchitecture(ctx, 2);
+  sceneCopy(ctx, x); sectionMasthead(ctx, x, "7.3  THE COPY MACHINE", "ANALYSE. REPLICATE. DOMINATE."); geometryArchitecture(ctx, 2);
 }
 
 function keyDisplay(ctx: CanvasRenderingContext2D): void {
@@ -418,37 +340,8 @@ function anonCage(ctx: CanvasRenderingContext2D): void {
 }
 
 function drawCitadel(ctx: CanvasRenderingContext2D, x: number): void {
-  // A single dominant fortress silhouette supports the real key/prison decks.
-  ctx.fillStyle = "#050712"; ctx.beginPath();
-  ctx.moveTo(x + 180, GROUND_Y); ctx.lineTo(x + 360, 36); ctx.lineTo(x + 610, 36);
-  ctx.lineTo(x + 690, -34); ctx.lineTo(x + 830, -34); ctx.lineTo(x + 930, 36);
-  ctx.lineTo(x + 1510, 36); ctx.lineTo(x + 1710, GROUND_Y); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = "#ff2848"; ctx.lineWidth = 5; ctx.stroke();
-  sectionMasthead(ctx, x, "THE INNER CITADEL", "TOTAL CONTROL");
-  for (const off of [340, 560, 880, 1100, 1360, 1580]) verticalCore(ctx, x + off, 42, 38, off > 1000 ? "#b851ff" : "#ff2848");
-  panel(ctx, x + 40, 20, 280, 174, ["ONE", "MARKET", "ONE TRUTH", "ONE OWNER"], "red", 22);
-  panel(ctx, x + 1270, 34, 300, 130, ["DATA CAPTURE", "COMMUNITY ACQUISITION", "100%"], "red", 17);
-  // Key and prison architecture remain distinct.
-  ctx.fillStyle = "#080b13"; ctx.fillRect(x + 360, 60, 760, GROUND_Y - 60);
-  ctx.strokeStyle = "#263d5b"; ctx.lineWidth = 5; ctx.strokeRect(x + 360, 60, 760, GROUND_Y - 60);
-  ctx.fillStyle = "#0a0813"; ctx.fillRect(x + 1100, 0, 620, GROUND_Y);
-  ctx.strokeStyle = "#793bb0"; ctx.strokeRect(x + 1100, 0, 620, GROUND_Y);
-  windows(ctx, x + 380, 76, 710, 238, "#ff2848"); windows(ctx, x + 1120, 36, 570, 278, "#b851ff");
-  // The four visible tiers correspond exactly to the locked collision bands.
-  for (const [y, x0, x1] of [
-    [262, 5400, 6500], [204, 6380, 7160], [146, 6500, 7060], [88, 6750, 7000],
-  ] as const) {
-    ctx.fillStyle = "#101625"; ctx.fillRect(x0, y + 10, x1 - x0, 9);
-    ctx.fillStyle = y === 88 ? "#b851ff" : "#ff2848"; ctx.fillRect(x0, y + 10, x1 - x0, 2);
-    for (let sx = x0 + 28; sx < x1 - 18; sx += 84) girderBay(ctx, sx, y + 19, Math.min(60, x1 - sx), Math.min(34, GROUND_Y - y - 20), y === 88 ? "#b851ff" : "#7b263b");
-  }
-  panel(ctx, x + 370, 74, 230, 48, ["INNER CITADEL"], "red", 18);
-  panel(ctx, x + 720, 98, 215, 44, ["KEY STRONGHOLD"], "gold", 16);
-  panel(ctx, x + 1160, 42, 330, 40, ["PRISON OF THE TAKEN"], "purple", 15);
-  for (const off of [220, 1580]) takerMark(ctx, x + off, 230, 28);
-  terminal(ctx, x + 420, 156, 112, 60, "red", "ACCESS 7.4");
-  terminal(ctx, x + 946, 218, 106, 60, "purple", "PRISON NET");
-  conduit(ctx, x + 350, 232, x + 1690, 232, "#b851ff");
+  sceneCitadelBack(ctx, x);
+  sectionMasthead(ctx, x, "7.4  THE INNER CITADEL", "TOTAL CONTROL");
   geometryArchitecture(ctx, 3);
   keyDisplay(ctx);
   anonCage(ctx);
@@ -465,32 +358,7 @@ function statue(ctx: CanvasRenderingContext2D, x: number, kind: "cat" | "dog"): 
 }
 
 function drawThrone(ctx: CanvasRenderingContext2D, x: number): void {
-  // Wide final hall: architecture remains behind y=250, preserving the full
-  // main-floor boss lane from the approach through x=9000.
-  industrialFrame(ctx, x + 10, 94, 220, 226);
-  industrialFrame(ctx, x + 1160, 102, 610, 218);
-  for (const off of [80, 260, 1260, 1540, 1720]) verticalCore(ctx, x + off, 42, 44, "#ff2848");
-  sectionMasthead(ctx, x, "TICKER TAKER'S THRONE", "THE FINAL FIGHT");
-  panel(ctx, x + 250, 62, 910, 38, ["THE CRYPTOVERSE IS MINE"], "red", 20);
-  panel(ctx, x + 34, 46, 190, 120, ["YOU", "TRADE", "I TAKE"], "red", 21);
-  panel(ctx, x + 1310, 48, 330, 120, ["WALDOGE", "WAS JUST", "THE BEGINNING"], "red", 20);
-  // Giant globe + throne behind the clear arena lane.
-  ctx.save(); ctx.strokeStyle = "#ff2848"; ctx.lineWidth = 5; ctx.shadowColor = "#ff2848"; ctx.shadowBlur = 22;
-  ctx.beginPath(); ctx.arc(x + 780, 183, 122, 0, Math.PI * 2); ctx.stroke();
-  for (const rx of [38, 78]) { ctx.beginPath(); ctx.ellipse(x + 780, 183, rx, 122, 0, 0, Math.PI * 2); ctx.stroke(); }
-  for (const yy of [125, 155, 190, 225]) { const half = Math.sqrt(Math.max(0, 122 ** 2 - (yy - 183) ** 2)); ctx.beginPath(); ctx.moveTo(x + 780 - half, yy); ctx.lineTo(x + 780 + half, yy); ctx.stroke(); }
-  ctx.fillStyle = "rgba(255,40,72,.28)"; ctx.beginPath(); ctx.moveTo(x + 716, 152); ctx.lineTo(x + 758, 130); ctx.lineTo(x + 790, 158); ctx.lineTo(x + 842, 148); ctx.lineTo(x + 816, 190); ctx.lineTo(x + 850, 220); ctx.lineTo(x + 790, 238); ctx.lineTo(x + 742, 211); ctx.closePath(); ctx.fill();
-  ctx.shadowBlur = 0; ctx.fillStyle = "#350915"; ctx.fillRect(x + 720, 222, 120, 90); ctx.fillRect(x + 698, 206, 164, 28);
-  ctx.strokeStyle = "#e4b73d"; ctx.strokeRect(x + 720, 222, 120, 90); ctx.restore();
-  takerMark(ctx, x + 780, 32, 24);
-  statue(ctx, x + 470, "cat"); statue(ctx, x + 560, "dog"); statue(ctx, x + 1000, "dog"); statue(ctx, x + 1090, "cat");
-  verticalCore(ctx, x + 636, 82, 32, "#e4b73d");
-  verticalCore(ctx, x + 892, 82, 32, "#e4b73d");
-  girderBay(ctx, x + 300, 222, 320, 90, "#ff2848");
-  girderBay(ctx, x + 940, 222, 320, 90, "#ff2848");
-  conduit(ctx, x + 244, 244, x + 1310, 244, "#e4b73d");
-  geometryArchitecture(ctx, 4);
-  panel(ctx, x + 650, 270, 260, 38, ["LET'S SEE WHO'S BETTER"], "red", 16);
+  sceneThrone(ctx, x); sectionMasthead(ctx, x, "7.5  TICKER TAKER'S THRONE", "THE FINAL FIGHT"); geometryArchitecture(ctx, 4);
 }
 
 const DRAW = [drawTaken, drawTicker, drawCopy, drawCitadel, drawThrone] as const;
@@ -514,7 +382,7 @@ export function drawTakerCitadel(ctx: CanvasRenderingContext2D, level: number, c
   const last = Math.min(4, Math.floor((camX + canvasW) / TAKER_SECTION_WIDTH));
   for (let i = first; i <= last; i++) {
     const start = i * TAKER_SECTION_WIDTH;
-    skyline(ctx, start, i); atmosphere(ctx, start, i); DRAW[i](ctx, start);
+    blueprintSky(ctx, start, TAKER_SECTION_WIDTH, i); DRAW[i](ctx, start); atmosphere(ctx, start, i);
   }
   ctx.restore();
   const floor = ctx.createLinearGradient(0, GROUND_Y, 0, GROUND_Y + 260);
