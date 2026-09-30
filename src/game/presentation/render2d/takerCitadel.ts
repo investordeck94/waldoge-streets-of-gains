@@ -108,13 +108,13 @@ function windows(ctx: CanvasRenderingContext2D, x: number, y: number, w: number,
 
 function sectionMasthead(ctx: CanvasRenderingContext2D, start: number, title: string, subtitle: string): void {
   ctx.save();
-  ctx.fillStyle = "rgba(2,5,11,.94)"; ctx.fillRect(start + 430, 3, 940, 56);
-  ctx.strokeStyle = "#ff2848"; ctx.lineWidth = 3; ctx.strokeRect(start + 430, 3, 940, 56);
+  ctx.fillStyle = "rgba(2,5,11,.94)"; ctx.fillRect(start + 560, 2, 680, 40);
+  ctx.strokeStyle = "#ff2848"; ctx.lineWidth = 3; ctx.strokeRect(start + 560, 2, 680, 40);
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillStyle = "#fff"; ctx.font = "900 24px Impact, sans-serif"; ctx.fillText(title, start + 900, 24, 760);
-  ctx.fillStyle = "#ff2848"; ctx.font = "900 15px Impact, sans-serif"; ctx.fillText(subtitle, start + 900, 46, 760);
+  ctx.fillStyle = "#fff"; ctx.font = "900 18px Impact, sans-serif"; ctx.fillText(title, start + 900, 15, 640);
+  ctx.fillStyle = "#ff2848"; ctx.font = "900 11px Impact, sans-serif"; ctx.fillText(subtitle, start + 900, 33, 640);
   ctx.restore();
-  takerMark(ctx, start + 390, 29, 17); takerMark(ctx, start + 1410, 29, 17);
+  takerMark(ctx, start + 530, 20, 12); takerMark(ctx, start + 1270, 20, 12);
 }
 
 function candles(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
@@ -382,7 +382,7 @@ export function drawTakerCitadel(ctx: CanvasRenderingContext2D, level: number, c
   const last = Math.min(4, Math.floor((camX + canvasW) / TAKER_SECTION_WIDTH));
   for (let i = first; i <= last; i++) {
     const start = i * TAKER_SECTION_WIDTH;
-    blueprintSky(ctx, start, TAKER_SECTION_WIDTH, i); DRAW[i](ctx, start); atmosphere(ctx, start, i);
+    blueprintSky(ctx, start, TAKER_SECTION_WIDTH, i); atmosphere(ctx, start, i); DRAW[i](ctx, start);
   }
   ctx.restore();
   const floor = ctx.createLinearGradient(0, GROUND_Y, 0, GROUND_Y + 260);
