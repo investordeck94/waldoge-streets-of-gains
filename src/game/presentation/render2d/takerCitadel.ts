@@ -454,7 +454,7 @@ export function drawTakerCitadel(ctx: CanvasRenderingContext2D, level: number, c
     // previous section's backdrop covers this section's first 100 units.
     const painted = paintedBackdrop(ctx, i, start) && (i === 0 || paintedBackdrop(ctx, i - 1, start - TAKER_SECTION_WIDTH));
     if (!painted) { atmosphere(ctx, start, i); DRAW[i](ctx, start); }
-    else FOREGROUND[i](ctx, start);
+    else FOREGROUND[i](ctx);
   }
   ctx.restore();
   const floor = ctx.createLinearGradient(0, GROUND_Y, 0, GROUND_Y + 260);
