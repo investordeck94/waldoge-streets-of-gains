@@ -49,7 +49,7 @@ describe("Level 7 Hard finite encounter queue", () => {
     expect(wave.active.filter((f) => f.hp > 0 && f.state !== "dead")).toHaveLength(6);
     expect(wave.encounter.queue).toHaveLength(3);
     expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(0);
-    for (let i = 1; i < LEVEL_7_HARD_REFILL_FRAMES; i++) stepLevel7HardWave(wave.active, wave.encounter);
+    for (let i = 1; i < LEVEL_7_HARD_REFILL_FRAMES - 1; i++) stepLevel7HardWave(wave.active, wave.encounter);
     expect(wave.encounter.queue).toHaveLength(3);
     expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(1);
     expect(wave.active.filter((f) => f.hp > 0 && f.state !== "dead")).toHaveLength(7);
