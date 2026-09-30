@@ -23,13 +23,15 @@ describe("Level 7 Hard finite encounter queue", () => {
     expect(shouldUseLevel7HardEncounter(6, "blackMonday")).toBe(true);
     expect(shouldUseLevel7HardEncounter(6, "normal")).toBe(false);
     expect(shouldUseLevel7HardEncounter(5, "blackMonday")).toBe(false);
+    expect(shouldUseLevel7HardEncounter(0, "blackMonday")).toBe(false); // Level 1 untouched
+    expect(shouldUseLevel7HardEncounter(0, "normal")).toBe(false);
   });
 
   it("partitions one finite roster without duplicates", () => {
     const fighters = roster(24);
     const wave = beginLevel7HardWave(fighters, 0);
     expect(wave.active).toHaveLength(LEVEL_7_HARD_ACTIVE_CAP);
-    expect(wave.encounter.queue).toHaveLength(17);
+    expect(wave.encounter.queue).toHaveLength(24 - LEVEL_7_HARD_ACTIVE_CAP);
     expect(wave.encounter.authoredTotal).toBe(24);
     expect(new Set([...wave.active, ...wave.encounter.queue]).size).toBe(24);
   });
@@ -42,14 +44,14 @@ describe("Level 7 Hard finite encounter queue", () => {
   });
 
   it("does not exceed the living cap or spawn while full", () => {
-    const wave = beginLevel7HardWave(roster(12), 0);
+    const wave = beginLevel7HardWave(roster(LEVEL_7_HARD_ACTIVE_CAP + 5), 0);
     expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(0);
     expect(wave.active.filter((f) => f.state !== "dead")).toHaveLength(LEVEL_7_HARD_ACTIVE_CAP);
     expect(wave.encounter.queue).toHaveLength(5);
   });
 
   it("dead fighters release capacity and refill only a controlled batch", () => {
-    const wave = beginLevel7HardWave(roster(12), 0);
+    const wave = beginLevel7HardWave(roster(LEVEL_7_HARD_ACTIVE_CAP + 5), 0);
     wave.active[0].hp = 0;
     wave.active[0].state = "dead";
     wave.active[1].hp = 0;
@@ -57,17 +59,17 @@ describe("Level 7 Hard finite encounter queue", () => {
     wave.active[2].hp = 0;
     wave.active[2].state = "dead";
     expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(2);
-    expect(wave.active.filter((f) => f.hp > 0 && f.state !== "dead")).toHaveLength(6);
+    expect(wave.active.filter((f) => f.hp > 0 && f.state !== "dead")).toHaveLength(LEVEL_7_HARD_ACTIVE_CAP - 1);
     expect(wave.encounter.queue).toHaveLength(3);
     expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(0);
     for (let i = 1; i < LEVEL_7_HARD_REFILL_FRAMES - 1; i++) stepLevel7HardWave(wave.active, wave.encounter);
     expect(wave.encounter.queue).toHaveLength(3);
     expect(stepLevel7HardWave(wave.active, wave.encounter)).toBe(1);
-    expect(wave.active.filter((f) => f.hp > 0 && f.state !== "dead")).toHaveLength(7);
+    expect(wave.active.filter((f) => f.hp > 0 && f.state !== "dead")).toHaveLength(LEVEL_7_HARD_ACTIVE_CAP);
   });
 
   it("completes only when living active and queued remaining are both zero", () => {
-    const wave = beginLevel7HardWave(roster(9), 0);
+    const wave = beginLevel7HardWave(roster(LEVEL_7_HARD_ACTIVE_CAP + 2), 0);
     wave.active.forEach((f) => { f.hp = 0; f.state = "dead"; });
     expect(isLevel7HardWaveComplete(wave.active, wave.encounter)).toBe(false);
     stepLevel7HardWave(wave.active, wave.encounter);
@@ -95,7 +97,7 @@ describe("Level 7 Hard progress trace", () => {
   it("counts down one way: queued → spawned → killed, never regenerating", () => {
     const wave = beginLevel7HardWave(roster(24), 0);
     let prev = level7HardProgress(wave.active, wave.encounter);
-    expect(prev).toMatchObject({ authored: 24, spawned: 7, living: 7, killed: 0, queued: 17, remaining: 24 });
+    expect(prev).toMatchObject({ authored: 24, spawned: LEVEL_7_HARD_ACTIVE_CAP, living: LEVEL_7_HARD_ACTIVE_CAP, killed: 0, queued: 24 - LEVEL_7_HARD_ACTIVE_CAP, remaining: 24 });
     let guard = 0;
     while (prev.remaining > 0 && guard++ < 2000) {
       const target = wave.active.find((f) => f.hp > 0);
@@ -117,7 +119,7 @@ describe("Level 7 Hard progress trace", () => {
 describe("Level 7 Hard engagement slots", () => {
   const f = (x: number, extra: Record<string, unknown> = {}) => ({ x, y: 320, hp: 10, state: "walk", ...extra });
 
-  it("lets at most two fighters engage and staggers the rest per side", () => {
+  it("lets at most ENGAGED_MAX fighters engage and staggers the rest per side", () => {
     const fighters = [f(460), f(520), f(560), f(600), f(640), f(300), f(260)];
     const holds = assignLevel7HardEngagement(fighters, { x: 500, y: 320 });
     expect(fighters.length - holds.size).toBe(LEVEL_7_HARD_ENGAGED_MAX);
