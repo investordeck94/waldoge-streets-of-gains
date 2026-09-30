@@ -166,6 +166,12 @@ import {
   scaleBossForDifficulty as scaleBossForDifficultyModule,
 } from "@/game/enemy/Enemy";
 import {
+  beginLevel7HardWave,
+  isLevel7HardWaveComplete,
+  stepLevel7HardWave,
+  type Level7HardEncounter,
+} from "@/game/enemy/hardEncounter";
+import {
   sanitizeEnemyMotion,
   sanitizeFighterMotion,
   clampFighterToWorld,
@@ -3084,6 +3090,20 @@ function spawnEnemies(levelIndex: number, waveIndex: number, playerX: number, di
   return wave;
 }
 
+function initializeWaveEncounter(
+  levelIndex: number,
+  waveIndex: number,
+  playerX: number,
+  diff: Difficulty,
+): { enemies: Entity[]; hardEncounter: Level7HardEncounter<Entity> | null } {
+  const roster = spawnEnemies(levelIndex, waveIndex, playerX, diff);
+  if (levelIndex !== CITADEL_LEVEL || diff !== "blackMonday") {
+    return { enemies: roster, hardEncounter: null };
+  }
+  const managed = beginLevel7HardWave(roster, waveIndex);
+  return { enemies: managed.active, hardEncounter: managed.encounter };
+}
+
 // SPECIAL_ATTACKS is imported from src/game/config/combat.ts
 
 export const StreetBrawler: FC = () => {
@@ -3318,6 +3338,8 @@ export const StreetBrawler: FC = () => {
     /** LEVEL 7 story progression: elevated key → Anon prison tower → rescue. */
     citadelQuest: CitadelQuestState;
     citadelHintTimer: number;
+    /** Level-7-Hard-only finite remainder; null on every other encounter. */
+    hardEncounter: Level7HardEncounter<Entity> | null;
   }>({
     player: createPlayer(),
     enemies: [],
@@ -3353,6 +3375,7 @@ export const StreetBrawler: FC = () => {
     camAnchor: 0.5,
     camLookAhead: 0,
     specialFx: null,
+    hardEncounter: null,
     marketerQuest: { keyAvailable: false, keyTaken: false, rescued: false },
     marketerHintTimer: 0,
     citadelQuest: initialCitadelQuest(),
