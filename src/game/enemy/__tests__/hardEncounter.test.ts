@@ -20,7 +20,7 @@ describe("Level 7 Hard finite encounter queue", () => {
     expect(wave.active).toHaveLength(LEVEL_7_HARD_ACTIVE_CAP);
     expect(wave.encounter.queue).toHaveLength(17);
     expect(wave.encounter.authoredTotal).toBe(24);
-    expect(new Set([...wave.active, ...wave.encounter.queue])).toHaveLength(24);
+    expect(new Set([...wave.active, ...wave.encounter.queue]).size).toBe(24);
   });
 
   it("deduplicates repeated object identities during the single initialization", () => {
