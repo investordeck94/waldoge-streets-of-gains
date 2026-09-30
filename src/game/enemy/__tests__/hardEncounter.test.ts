@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   LEVEL_7_HARD_ACTIVE_CAP,
+  LEVEL_7_HARD_ENGAGED_MAX,
+  LEVEL_7_HARD_HOLD_BASE,
   LEVEL_7_HARD_REFILL_FRAMES,
+  assignLevel7HardEngagement,
   beginLevel7HardWave,
   isLevel7HardWaveComplete,
   shouldUseLevel7HardEncounter,

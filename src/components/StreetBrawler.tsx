@@ -166,6 +166,7 @@ import {
   scaleBossForDifficulty as scaleBossForDifficultyModule,
 } from "@/game/enemy/Enemy";
 import {
+  assignLevel7HardEngagement,
   beginLevel7HardWave,
   isLevel7HardWaveComplete,
   shouldUseLevel7HardEncounter,
@@ -4409,6 +4410,12 @@ export const StreetBrawler: FC = () => {
       for (const obj of g.alleyObjects) {
         if (obj.broken && obj.breakTimer > 0) obj.breakTimer--;
       }
+
+      // Level 7 FULL TRENCH MODE only: at most three Candle Minions press
+      // Waldoge; the rest hold a staggered stand-off ring (empty map elsewhere).
+      const hardHolds = g.hardEncounter
+        ? assignLevel7HardEngagement(g.enemies, p, (e) => isCatGuard(e))
+        : null;
 
       // Enemy AI
       for (const e of g.enemies as MovingEnemy[]) {
