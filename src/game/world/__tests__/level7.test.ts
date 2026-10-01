@@ -102,3 +102,11 @@ describe("Levels 1–6 geometry regression", () => {
     expect(LEVELS.slice(0, 6).map((l) => l.boss.name)).toEqual(["JEET", "RUGGER", "BAD ACTOR", "FUDDER", "EXIT LIQUIDITY", "MR MARKETER"]);
   });
 });
+describe("Opening breathing space", () => {
+  it("stages no Level 7 wave-1 fighter inside the opening clearance", async () => {
+    const { OPENING_CLEAR_X } = await import("@/game/enemy/citadelForces");
+    const enemies = Array.from({ length: 24 }, (_, i) => ({ x: 600 + i * 320, y: 320 }));
+    applyCitadelRoster(enemies, CITADEL_LEVEL, 0);
+    for (const e of enemies) expect(e.x).toBeGreaterThanOrEqual(OPENING_CLEAR_X);
+  });
+});

@@ -24,11 +24,21 @@ const WAVE_DECK_IDS: Record<number, readonly string[]> = {
   4: ["prison-deck-1", "prison-deck-2", "cage-level"],
 };
 
+/**
+ * Opening breathing space (all levels rule): at a level's first wave no fighter
+ * may be staged within this world-X of the level start, so Waldoge can orient
+ * before the first group arrives. Level 1–6 openers already sit beyond it.
+ */
+export const OPENING_CLEAR_X = 760;
+
 /** Place most fighters on the authored vertical route, leaving a floor guard. */
 export function applyCitadelRoster<T extends Placeable>(enemies: T[], level: number, wave: number): T[] {
   if (level !== CITADEL_LEVEL || enemies.length === 0) return enemies;
   const wanted = WAVE_DECK_IDS[wave] ?? [];
-  const decks = landingDecksFor(level).filter((deck) => deck.id && wanted.includes(deck.id));
+  const decks = landingDecksFor(level).filter((deck) => deck.id && wanted.includes(deck.id)
+    // Wave 1 skips decks inside the opening clearance (Level 7: taken-west),
+    // keeping the same authored decks further along the street.
+    && (wave !== 0 || deck.x0 >= OPENING_CLEAR_X));
   enemies.forEach((enemy, index) => {
     if (index === 0 || decks.length === 0) {
       enemy.y = GROUND_Y;
