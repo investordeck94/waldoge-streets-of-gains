@@ -42,6 +42,7 @@ export function applyCitadelRoster<T extends Placeable>(enemies: T[], level: num
   enemies.forEach((enemy, index) => {
     if (index === 0 || decks.length === 0) {
       enemy.y = GROUND_Y;
+      if (wave === 0) enemy.x = Math.max(enemy.x, OPENING_CLEAR_X);
       return;
     }
     const deck = decks[(index - 1) % decks.length];
