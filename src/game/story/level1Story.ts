@@ -62,7 +62,7 @@ export const STORY_PANEL_2_ANONVERSE: StoryScene = {
       transition: "fade",
       characters: [
         // back row (smaller, on the far walkway)
-        { art: "cut-dogevan", x: 20, bottom: 36, scale: 0.26 },
+        { art: "cut-dogevan", x: 31, bottom: 38, scale: 0.26 },
         { art: "cut-anon", x: 40, bottom: 40, scale: 0.22 },
         { art: "cut-squirrel", x: 63, bottom: 33, scale: 0.13 },
         // middle row
