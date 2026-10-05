@@ -5,9 +5,9 @@ import { drawSource, isResident, residentImage } from "./imageResidency";
 import { BADDIE_CAGE_X, BADDIE_OPEN_FRAMES, type BaddieState } from "@/game/story/level4Baddie";
 
 const ATLAS = {
-  caged: { x: 0, y: 0, w: 115, h: 145 },
-  empty: { x: 120, y: 0, w: 258, h: 258 },
-  thankful: { x: 400, y: 0, w: 114, h: 256 },
+  caged: { x: 0, y: 0, w: 144, h: 176 },
+  empty: { x: 164, y: 0, w: 251, h: 267 },
+  thankful: { x: 435, y: 0, w: 77, h: 135 },
 } as const;
 
 let atlas: HTMLImageElement | null = null;
