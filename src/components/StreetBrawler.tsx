@@ -76,7 +76,8 @@ import type { RunResult } from "@/lib/dogeos/rewardsApi";
 import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter";
 import { drawFilf } from "@/game/presentation/render2d/filfSprites";
-import { FILF_LEVEL, FILF_CAGE_X, initialFilfState, canRescueFilf, beginFilfRescue, stepFilf } from "@/game/story/filfRescue";
+import { FILF_LEVEL, FILF_CAGE_X, FILF_KEY_X, initialFilfState, canRescueFilf, beginFilfRescue, stepFilf, tryCollectFilfKey, filfHasKey } from "@/game/story/filfRescue";
+import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
 import { STORY_PANEL_1_EARTH, STORY_PANEL_2_ANONVERSE, STORY_PANEL_3_HIDE_AND_SEEK, STORY_PANEL_4_MONKO_BANANAS, STORY_PANEL_5_DOXX_BLACKJACK, STORY_PANEL_6_BLAZE_CHILL, STORY_PANEL_7_DOBERMANN_GUARD, STORY_PANEL_8_FILF_BADDIE, STORY_PANEL_9_SQUIRREL_NUTS, STORY_PANEL_10_ANON_MAYOR, STORY_PANEL_11_PEACE_ENDS, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
 import type { StoryScene } from "@/game/story/storyTypes";
 import { StoryPanel } from "@/components/game/StoryPanel";
@@ -3241,6 +3242,7 @@ export const StreetBrawler: FC = () => {
   const filfRequestRef = useRef(false);
   const filfPromptRef = useRef(false);
   const [filfPrompt, setFilfPrompt] = useState(false);
+  const [filfHasKeyUi, setFilfHasKeyUi] = useState(false);
   const [showCamDebug, setShowCamDebug] = useState(false);
   const camDebugRef = useRef(false);
   const [camPreset, setCamPreset] = useState<"snappy" | "buttery">("snappy");
@@ -3602,6 +3604,7 @@ export const StreetBrawler: FC = () => {
     filfRequestRef.current = false;
     filfPromptRef.current = false;
     setFilfPrompt(false);
+    setFilfHasKeyUi(false);
     storyActiveRef.current = false;
     storyFinishRef.current = null;
     setStoryScene(null);
@@ -5187,11 +5190,22 @@ export const StreetBrawler: FC = () => {
         let prompt = false;
         if (g.level === FILF_LEVEL) {
           const floorY = groundYAt(g.level, FILF_CAGE_X, undefined, false);
+          const keyFloorY = groundYAt(g.level, FILF_KEY_X, undefined, false);
+          if (p.hp > 0 && tryCollectFilfKey(fs, p.x, p.y, keyFloorY)) {
+            sfx(() => SFX.waveStart());
+            g.effects.push({ x: FILF_KEY_X, y: keyFloorY - 110, timer: 110, text: "KEY COLLECTED!", color: "#ffd23f", size: 20 });
+            setFilfHasKeyUi(true);
+          }
           prompt = p.hp > 0 && canRescueFilf(fs, p.x, p.y, floorY);
           const wants = filfRequestRef.current;
-          if (prompt && wants && beginFilfRescue(fs)) {
+          if (prompt && wants && !filfHasKey(fs)) {
+            if (fs.lockedCooldown <= 0) {
+              fs.lockedCooldown = 90;
+              g.effects.push({ x: FILF_CAGE_X, y: floorY - 130, timer: 90, text: "THE CAGE IS LOCKED. I NEED THE KEY.", color: "#ff5f5f", size: 14 });
+            }
+          } else if (prompt && wants && beginFilfRescue(fs)) {
             sfx(() => SFX.waveStart());
-            g.effects.push({ x: FILF_CAGE_X, y: floorY - 130, timer: 90, text: "CAGE OPENED!", color: "#ffd23f", size: 18 });
+            g.effects.push({ x: FILF_CAGE_X, y: floorY - 130, timer: 90, text: "KEY USED — CAGE OPENED!", color: "#ffd23f", size: 18 });
             prompt = false;
           }
           if (stepFilf(fs)) {
@@ -5600,6 +5614,9 @@ export const StreetBrawler: FC = () => {
         drawAlleyObject(ctx, obj, g.camX);
       }
 
+      if (g.level === FILF_LEVEL && !filfHasKey(filfRef.current)) {
+        drawFilfKey(ctx, FILF_KEY_X, groundYAt(g.level, FILF_KEY_X, undefined, false), g.camX, g.animFrameCount);
+      }
       if (g.level === FILF_LEVEL) {
         drawFilf(
           ctx, filfRef.current, g.camX, groundYAt(g.level, FILF_CAGE_X, undefined, false),
@@ -6287,7 +6304,7 @@ export const StreetBrawler: FC = () => {
             onClick={() => { filfRequestRef.current = true; }}
             className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse"
           >
-            RESCUE FILF
+            {filfHasKeyUi ? "UNLOCK CAGE" : "CAGE LOCKED — FIND KEY"}
           </button>
         )}
         {gameState === "playing" && storyScene && (
