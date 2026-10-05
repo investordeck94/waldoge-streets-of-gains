@@ -55,9 +55,9 @@ import cut_sus_tied from "@/assets/story/cutouts/sus-tied.webp";
 import cut_sus_tied_slump from "@/assets/story/cutouts/sus-tied-slump.webp";
 import ruggerHead from "@/assets/rugger-boss-head.png";
 import badActorHead from "@/assets/badactor-boss-head.png";
-import baddieCaged from "@/assets/baddie-caged.png.asset.json";
-import baddieWorried from "@/assets/baddie-worried.png.asset.json";
-import baddieThankful from "@/assets/baddie-thankful.png.asset.json";
+import baddieCaged from "@/assets/baddie-caged-local.png";
+import baddieWorried from "@/assets/baddie-worried-local.png";
+import baddieThankful from "@/assets/baddie-thankful-local.png";
 import fudderAtlas from "@/assets/fudder-atlas.png.asset.json";
 import fudderWorldBg from "@/assets/level4-media.jpg-local.jpg";
 import type { StoryArtId, StoryPanelData, StoryPortrait } from "./storyTypes";
@@ -132,9 +132,9 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "badactor-head": { src: badActorHead, alt: "Bad Actor" },
   "bg-fudder-world": { src: fudderWorldBg, alt: "Fudder's controlled propaganda world" },
   "fudder-story": { src: fudderAtlas.url, frame: { x: 21, y: 8, w: 190, h: 241 }, sheet: { w: 1024, h: 512 }, alt: "Fudder" },
-  "baddie-caged": { src: baddieCaged.url, alt: "Baddie locked inside a cage" },
-  "baddie-thankful": { src: baddieThankful.url, alt: "Baddie thankful after her rescue" },
-  "baddie-worried": { src: baddieWorried.url, alt: "Baddie worried" },
+  "baddie-caged": { src: baddieCaged, alt: "Baddie locked inside a cage" },
+  "baddie-thankful": { src: baddieThankful, alt: "Baddie thankful after her rescue" },
+  "baddie-worried": { src: baddieWorried, alt: "Baddie worried" },
   "bg-once-peaceful": { src: oncePeacefulBg, alt: "The Anonverse at dusk under storm clouds, streets shuttered and empty" },
 
 /**
