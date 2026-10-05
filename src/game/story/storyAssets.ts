@@ -21,6 +21,7 @@ import blaze420_blaze_itStory from "@/assets/story/story-420-blaze-it.jpeg.asset
 import dobermannStory from "@/assets/story/story-dobermann.jpeg.asset.json";
 import filfStory from "@/assets/story/story-filf.jpeg.asset.json";
 import earthBg from "@/assets/story/story-earth.jpg";
+import anonverseBg from "@/assets/story/story-anonverse.jpg";
 import type { StoryArtId, StoryPanelData, StoryPortrait } from "./storyTypes";
 
 export interface StoryArt {
@@ -44,6 +45,7 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "filf-thankful": filf("portraitThankful"),
   "filf-full": filf("idle"),
   "bg-earth": { src: earthBg, alt: "Planet Earth from space" },
+  "bg-anonverse": { src: anonverseBg, alt: "The peaceful futuristic Anonverse" },
 
 /**
  * CANONICAL STORY CHARACTERS — approved artwork, used exactly as supplied
