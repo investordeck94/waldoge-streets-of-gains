@@ -30,7 +30,7 @@ function getAtlas(): HTMLImageElement | null {
   if (typeof window === "undefined") return null;
   if (!atlas) {
     atlas = new Image();
-    residentImage(atlas, FILF_ATLAS_URL, [0]); // Level 1 only
+    residentImage(atlas, FILF_ATLAS_URL, [0, 2]); // Level 1 + Level 3 captive
   }
   return atlas;
 }
@@ -49,16 +49,17 @@ function blit(ctx: CanvasRenderingContext2D, id: FrameId, cx: number, footY: num
 
 export function drawFilf(
   ctx: CanvasRenderingContext2D,
-  s: FilfState,
+  s: Pick<FilfState, "phase" | "timer">,
   camX: number,
   floorY: number,
   playerX: number,
   frame: number,
   promptVisible: boolean,
+  cageX: number = FILF_CAGE_X,
 ) {
-  const sx = FILF_CAGE_X - camX;
+  const sx = cageX - camX;
   if (sx < -200 || sx > ctx.canvas.width + 200) return;
-  const near = Math.abs(playerX - FILF_CAGE_X) < 420;
+  const near = Math.abs(playerX - cageX) < 420;
 
   ctx.save();
   ctx.globalAlpha = 0.35;
