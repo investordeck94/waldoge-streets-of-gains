@@ -20,8 +20,9 @@ function getAtlas(): HTMLImageElement | null {
     fallbackAtlas = new Image();
     residentImage(fallbackAtlas, atlasLocal, [3]);
   }
-  if (atlas.complete && atlas.naturalWidth > 0 && isResident(atlas)) return atlas;
+  // Bundled atlas first: it is the verified full-body crop; CDN copy may be stale-cached.
   if (fallbackAtlas?.complete && fallbackAtlas.naturalWidth > 0 && isResident(fallbackAtlas)) return fallbackAtlas;
+  if (atlas.complete && atlas.naturalWidth > 0 && isResident(atlas)) return atlas;
   return null;
 }
 if (typeof window !== "undefined") getAtlas();
@@ -65,15 +66,16 @@ export function drawBaddieCaptive(
     if (!blit(ctx, "caged", x, floorY, 145)) fallbackCage(ctx, x, floorY);
   } else if (state.phase === "opening") {
     const t = state.timer / BADDIE_OPEN_FRAMES;
-    if (t < 0.45) blit(ctx, "caged", x + Math.sin(state.timer * 1.7) * 3, floorY, 145);
-    else {
-      blit(ctx, "empty", x - 15, floorY + 2, 145);
+    // Full cage stays around Baddie until the unlock, then the opened cage fades away.
+    if (t < 0.45) {
+      if (!blit(ctx, "caged", x + Math.sin(state.timer * 1.7) * 3, floorY, 145)) fallbackCage(ctx, x, floorY);
+    } else {
       const release = Math.min(1, (t - 0.45) / 0.4);
-      blit(ctx, "thankful", x + 25 + release * 64, floorY, 132, release);
+      blit(ctx, "empty", x, floorY + 2, 145, 1 - release);
+      blit(ctx, "thankful", x, floorY, 132, release);
     }
   } else {
-    blit(ctx, "empty", x - 15, floorY + 2, 145);
-    blit(ctx, "thankful", x + 92, floorY, 132);
+    blit(ctx, "thankful", x, floorY, 132);
   }
 
   if (!promptVisible) return;
