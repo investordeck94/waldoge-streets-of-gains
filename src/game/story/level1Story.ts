@@ -218,3 +218,22 @@ export const STORY_PANEL_9_SQUIRREL_NUTS: StoryScene = {
     },
   ],
 };
+
+/** Panel 10 — Anon as mayor and leader of the Anonverse. */
+export const STORY_PANEL_10_ANON_MAYOR: StoryScene = {
+  id: "story-10-anon-mayor",
+  kind: "opening",
+  title: "WALDOGE: STREETS OF GAINS",
+  panels: [
+    {
+      background: "bg-anon-mayor",
+      narration: "ANON WAS THE TOWN\nMAYOR AND LEADER.",
+      transition: "fade",
+      characters: [
+        // Supplied Anon artwork, unchanged — standing beside the podium,
+        // overlooking the residents going about their day below.
+        { art: "cut-anon", x: 68, bottom: 0, scale: 0.55 },
+      ],
+    },
+  ],
+};

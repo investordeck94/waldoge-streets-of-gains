@@ -32,6 +32,7 @@ import chillTerraceBg from "@/assets/story/story-chill-terrace.jpg";
 import watchtowerBg from "@/assets/story/story-watchtower.jpg";
 import showOffBg from "@/assets/story/story-show-off.jpg";
 import squirrelNutsBg from "@/assets/story/story-squirrel-nuts.jpg";
+import anonMayorBg from "@/assets/story/story-anon-mayor.jpg";
 import cut_sus_dog from "@/assets/story/cutouts/sus-dog.webp";
 import cut_b420_blaze_it from "@/assets/story/cutouts/420-blaze-it.webp";
 import cut_dobermann from "@/assets/story/cutouts/dobermann.webp";
@@ -88,6 +89,7 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "bg-watchtower": { src: watchtowerBg, alt: "Stone watchtower rooftop overlooking the Anonverse at dusk" },
   "bg-show-off": { src: showOffBg, alt: "Sunny Anonverse promenade with cheering townsfolk holding up 10 score cards" },
   "bg-squirrel-nuts": { src: squirrelNutsBg, alt: "Sunny Anonverse plaza corner with an oak tree and scattered acorns" },
+  "bg-anon-mayor": { src: anonMayorBg, alt: "Anonverse town square seen from a mayor's balcony podium, residents below" },
 
 /**
  * CANONICAL STORY CHARACTERS — approved artwork, used exactly as supplied
