@@ -3618,7 +3618,8 @@ export const StreetBrawler: FC = () => {
   useEffect(() => {
     if (!import.meta.env.DEV) return;
     (window as unknown as { __sogStart?: unknown }).__sogStart = startGame;
-  }, [startGame]);
+    (window as unknown as { __sogStory?: unknown }).__sogStory = openStory;
+  }, [startGame, openStory]);
 
 
   // Input handling
