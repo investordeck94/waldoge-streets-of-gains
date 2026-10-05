@@ -3605,7 +3605,7 @@ export const StreetBrawler: FC = () => {
     storyActiveRef.current = false;
     storyFinishRef.current = null;
     setStoryScene(null);
-    if (g.level === FILF_LEVEL) openStory(STORY_PANEL_1_EARTH, () => openStory(STORY_PANEL_2_ANONVERSE, () => openStory(STORY_PANEL_3_HIDE_AND_SEEK, () => openStory(STORY_PANEL_4_MONKO_BANANAS, () => openStory(STORY_PANEL_5_DOXX_BLACKJACK, () => openStory(STORY_PANEL_6_BLAZE_CHILL, () => openStory(STORY_PANEL_7_DOBERMANN_GUARD, () => openStory(LEVEL1_OPENING))))))));
+    if (g.level === FILF_LEVEL) openStory(STORY_PANEL_1_EARTH, () => openStory(STORY_PANEL_2_ANONVERSE, () => openStory(STORY_PANEL_3_HIDE_AND_SEEK, () => openStory(STORY_PANEL_4_MONKO_BANANAS, () => openStory(STORY_PANEL_5_DOXX_BLACKJACK, () => openStory(STORY_PANEL_6_BLAZE_CHILL, () => openStory(STORY_PANEL_7_DOBERMANN_GUARD, () => openStory(STORY_PANEL_8_FILF_BADDIE, () => openStory(LEVEL1_OPENING)))))))));
     setGameState("playing");
     if (import.meta.env.DEV) {
       (window as unknown as { __sog?: unknown }).__sog = g;
