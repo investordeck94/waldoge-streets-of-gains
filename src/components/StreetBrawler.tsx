@@ -3654,6 +3654,7 @@ export const StreetBrawler: FC = () => {
       (window as unknown as { __sogFilf?: unknown }).__sogFilf = filfRef.current;
       (window as unknown as { __sogDoxx?: unknown }).__sogDoxx = doxxRef.current;
       (window as unknown as { __sogCaptives?: unknown }).__sogCaptives = captivesRef.current;
+      (window as unknown as { __sogBaddie?: unknown }).__sogBaddie = baddieRef.current;
     }
   }, [openStory]);
 
@@ -5470,6 +5471,7 @@ export const StreetBrawler: FC = () => {
             setWave(0);
             if (g.level === FILF_LEVEL + 1 && g.level < TOTAL_LEVELS) openStory(LEVEL1_COMPLETE, () => openStory(LEVEL2_OPENING_CALL));
             if (g.level === DOXX_LEVEL + 1 && g.level < TOTAL_LEVELS) openStory(LEVEL2_ENDING_BAD_ACTOR_CALL);
+            if (g.level === BADDIE_LEVEL && g.level < TOTAL_LEVELS) openStory(LEVEL4_OPENING_FUDDER_REVEAL);
             if (g.level >= TOTAL_LEVELS) {
               g.running = false;
               sfx(() => SFX.victory());
