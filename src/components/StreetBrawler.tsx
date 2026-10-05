@@ -77,6 +77,9 @@ import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter";
 import { drawFilf } from "@/game/presentation/render2d/filfSprites";
 import { FILF_LEVEL, FILF_CAGE_X, FILF_KEY_X, initialFilfState, canRescueFilf, beginFilfRescue, stepFilf, tryCollectFilfKey, filfHasKey } from "@/game/story/filfRescue";
+import { drawDoxx, drawDoxxBlueprints } from "@/game/presentation/render2d/doxxSprites";
+import { DOXX_LEVEL, DOXX_CAGE_X, DOXX_BLUEPRINT_X, initialDoxxState, canRescueDoxx, beginDoxxRescue, stepDoxx, tryCollectBlueprints, doxxHasBlueprints, doxxObjectiveText } from "@/game/story/doxxRescue";
+import { LEVEL2_OPENING_CALL, LEVEL2_DOXX_RESCUE } from "@/game/story/level2Story";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
 import { STORY_PANEL_1_EARTH, STORY_PANEL_2_ANONVERSE, STORY_PANEL_3_HIDE_AND_SEEK, STORY_PANEL_4_MONKO_BANANAS, STORY_PANEL_5_DOXX_BLACKJACK, STORY_PANEL_6_BLAZE_CHILL, STORY_PANEL_7_DOBERMANN_GUARD, STORY_PANEL_8_FILF_BADDIE, STORY_PANEL_9_SQUIRREL_NUTS, STORY_PANEL_10_ANON_MAYOR, STORY_PANEL_11_PEACE_ENDS, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
 import type { StoryScene } from "@/game/story/storyTypes";
@@ -3243,6 +3246,11 @@ export const StreetBrawler: FC = () => {
   const filfPromptRef = useRef(false);
   const [filfPrompt, setFilfPrompt] = useState(false);
   const [filfHasKeyUi, setFilfHasKeyUi] = useState(false);
+  // DOXX — Level 2 captured NPC + blueprints objective (no combat data).
+  const doxxRef = useRef(initialDoxxState());
+  const doxxPromptRef = useRef(false);
+  const [doxxPrompt, setDoxxPrompt] = useState(false);
+  const [doxxObjective, setDoxxObjective] = useState(() => doxxObjectiveText(initialDoxxState()));
   const [showCamDebug, setShowCamDebug] = useState(false);
   const camDebugRef = useRef(false);
   const [camPreset, setCamPreset] = useState<"snappy" | "buttery">("snappy");
@@ -3605,14 +3613,20 @@ export const StreetBrawler: FC = () => {
     filfPromptRef.current = false;
     setFilfPrompt(false);
     setFilfHasKeyUi(false);
+    doxxRef.current = initialDoxxState();
+    doxxPromptRef.current = false;
+    setDoxxPrompt(false);
+    setDoxxObjective(doxxObjectiveText(doxxRef.current));
     storyActiveRef.current = false;
     storyFinishRef.current = null;
     setStoryScene(null);
     if (g.level === FILF_LEVEL) openStory(STORY_PANEL_1_EARTH, () => openStory(STORY_PANEL_2_ANONVERSE, () => openStory(STORY_PANEL_3_HIDE_AND_SEEK, () => openStory(STORY_PANEL_4_MONKO_BANANAS, () => openStory(STORY_PANEL_5_DOXX_BLACKJACK, () => openStory(STORY_PANEL_6_BLAZE_CHILL, () => openStory(STORY_PANEL_7_DOBERMANN_GUARD, () => openStory(STORY_PANEL_8_FILF_BADDIE, () => openStory(STORY_PANEL_9_SQUIRREL_NUTS, () => openStory(STORY_PANEL_10_ANON_MAYOR, () => openStory(STORY_PANEL_11_PEACE_ENDS, () => openStory(LEVEL1_OPENING))))))))))));
+    else if (g.level === DOXX_LEVEL) openStory(LEVEL2_OPENING_CALL);
     setGameState("playing");
     if (import.meta.env.DEV) {
       (window as unknown as { __sog?: unknown }).__sog = g;
       (window as unknown as { __sogFilf?: unknown }).__sogFilf = filfRef.current;
+      (window as unknown as { __sogDoxx?: unknown }).__sogDoxx = doxxRef.current;
     }
   }, [openStory]);
 
@@ -5214,6 +5228,42 @@ export const StreetBrawler: FC = () => {
             openStory(LEVEL1_FILF_RESCUE);
           }
         }
+        // LEVEL 2 STORY — Doxx's blueprints + cage (same E / button interaction).
+        {
+          const ds = doxxRef.current;
+          let dPrompt = false;
+          if (g.level === DOXX_LEVEL) {
+            const cageFloor = groundYAt(g.level, DOXX_CAGE_X, undefined, false);
+            const bpFloor = groundYAt(g.level, DOXX_BLUEPRINT_X, undefined, false);
+            if (p.hp > 0 && tryCollectBlueprints(ds, p.x, p.y, bpFloor)) {
+              sfx(() => SFX.waveStart());
+              g.effects.push({ x: DOXX_BLUEPRINT_X, y: bpFloor - 110, timer: 120, text: "DOXX'S BLUEPRINTS RECOVERED!", color: "#9cc8ff", size: 18 });
+              setDoxxObjective(doxxObjectiveText(ds));
+            }
+            dPrompt = p.hp > 0 && canRescueDoxx(ds, p.x, p.y, cageFloor);
+            const wants = filfRequestRef.current;
+            if (dPrompt && wants && !doxxHasBlueprints(ds)) {
+              if (ds.lockedCooldown <= 0) {
+                ds.lockedCooldown = 90;
+                g.effects.push({ x: DOXX_CAGE_X, y: cageFloor - 150, timer: 90, text: "LOCKED! FIND DOXX'S BLUEPRINTS FIRST.", color: "#ff5f5f", size: 14 });
+              }
+            } else if (dPrompt && wants && beginDoxxRescue(ds)) {
+              sfx(() => SFX.waveStart());
+              g.effects.push({ x: DOXX_CAGE_X, y: cageFloor - 150, timer: 90, text: "CAGE OPENED!", color: "#9cc8ff", size: 18 });
+              dPrompt = false;
+            }
+            if (stepDoxx(ds)) {
+              sfx(() => SFX.victory());
+              g.effects.push({ x: DOXX_CAGE_X + 80, y: cageFloor - 140, timer: 120, text: "DOXX RESCUED!", color: "#ffd23f", size: 22 });
+              setDoxxObjective(doxxObjectiveText(ds));
+              openStory(LEVEL2_DOXX_RESCUE);
+            }
+          }
+          if (dPrompt !== doxxPromptRef.current) {
+            doxxPromptRef.current = dPrompt;
+            setDoxxPrompt(dPrompt);
+          }
+        }
         filfRequestRef.current = false;
         if (prompt !== filfPromptRef.current) {
           filfPromptRef.current = prompt;
@@ -5294,7 +5344,7 @@ export const StreetBrawler: FC = () => {
             g.wave = 0;
             setLevel(g.level);
             setWave(0);
-            if (g.level === FILF_LEVEL + 1 && g.level < TOTAL_LEVELS) openStory(LEVEL1_COMPLETE);
+            if (g.level === FILF_LEVEL + 1 && g.level < TOTAL_LEVELS) openStory(LEVEL1_COMPLETE, () => openStory(LEVEL2_OPENING_CALL));
             if (g.level >= TOTAL_LEVELS) {
               g.running = false;
               sfx(() => SFX.victory());
@@ -5614,6 +5664,10 @@ export const StreetBrawler: FC = () => {
         drawAlleyObject(ctx, obj, g.camX);
       }
 
+      if (g.level === DOXX_LEVEL) {
+        if (!doxxHasBlueprints(doxxRef.current)) drawDoxxBlueprints(ctx, DOXX_BLUEPRINT_X, groundYAt(g.level, DOXX_BLUEPRINT_X, undefined, false), g.camX, g.animFrameCount);
+        drawDoxx(ctx, doxxRef.current, g.camX, groundYAt(g.level, DOXX_CAGE_X, undefined, false), g.player?.x ?? 0, g.animFrameCount, doxxPromptRef.current, doxxHasBlueprints(doxxRef.current));
+      }
       if (g.level === FILF_LEVEL && !filfHasKey(filfRef.current)) {
         drawFilfKey(ctx, FILF_KEY_X, groundYAt(g.level, FILF_KEY_X, undefined, false), g.camX, g.animFrameCount);
       }
@@ -6298,6 +6352,20 @@ export const StreetBrawler: FC = () => {
             display: gameState === "playing" ? "block" : "none",
           }}
         />
+        {gameState === "playing" && level === DOXX_LEVEL && !storyScene && (
+          <div className="absolute right-1 top-1 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[42%]">
+            {doxxObjective}
+          </div>
+        )}
+        {gameState === "playing" && doxxPrompt && !storyScene && (
+          <button
+            type="button"
+            onClick={() => { filfRequestRef.current = true; }}
+            className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse"
+          >
+            {doxxObjective.includes("RECOVERED") ? "RESCUE DOXX" : "CAGE LOCKED — FIND BLUEPRINTS"}
+          </button>
+        )}
         {gameState === "playing" && filfPrompt && !storyScene && (
           <button
             type="button"
