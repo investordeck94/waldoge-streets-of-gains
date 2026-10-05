@@ -4080,6 +4080,7 @@ export const StreetBrawler: FC = () => {
 
 
 
+      if (g.keyJustPressed.has("e")) filfRequestRef.current = true;
       g.keyJustPressed.clear();
 
       // Player physics (with jump-through platforms)
@@ -5177,7 +5178,7 @@ export const StreetBrawler: FC = () => {
         if (g.level === FILF_LEVEL) {
           const floorY = groundYAt(g.level, FILF_CAGE_X, undefined, false);
           prompt = p.hp > 0 && canRescueFilf(fs, p.x, p.y, floorY);
-          const wants = g.keyJustPressed.has("e") || filfRequestRef.current;
+          const wants = filfRequestRef.current;
           if (prompt && wants && beginFilfRescue(fs)) {
             sfx(() => SFX.waveStart());
             g.effects.push({ x: FILF_CAGE_X, y: floorY - 130, timer: 90, text: "CAGE OPENED!", color: "#ffd23f", size: 18 });
