@@ -57,6 +57,7 @@ function Stage({ panel }: { panel: StoryPanelData }) {
             style={{
               height: `${Math.max(0.1, Math.min(1, c.scale ?? 0.9)) * 100}%`,
               ...(free ? { left: `${c.x}%`, bottom: `${c.bottom ?? 0}%` } : {}),
+              ...(c.rotate ? { rotate: `${c.rotate}deg`, transformOrigin: "bottom center" } : {}),
             }}
           >
             <Art id={c.art} flip={c.flip} height="100%" className="max-w-none" />
@@ -170,6 +171,9 @@ export function StoryPanel({ scene, onDone }: { scene: StoryScene; onDone: () =>
           <Stage panel={panel} />
           {panel.narration && (
             <p className="text-foreground text-base sm:text-xl italic leading-snug mb-2 break-words whitespace-pre-line">{panel.narration}</p>
+          )}
+          {panel.subNarration && (
+            <p className="text-muted-foreground text-xs sm:text-sm italic uppercase tracking-wide leading-snug mb-2 break-words whitespace-pre-line">{panel.subNarration}</p>
           )}
           {line && (
             <div className="flex gap-3 sm:gap-4 items-start">
