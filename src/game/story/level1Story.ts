@@ -161,3 +161,21 @@ export const STORY_PANEL_6_BLAZE_CHILL: StoryScene = {
     },
   ],
 };
+
+/** Panel 7 — Dobermann standing guard over the peaceful Anonverse. */
+export const STORY_PANEL_7_DOBERMANN_GUARD: StoryScene = {
+  id: "story-7-dobermann-guard",
+  kind: "opening",
+  title: "WALDOGE: STREETS OF GAINS",
+  panels: [
+    {
+      background: "bg-watchtower",
+      narration: "DOBERMANN STOOD ON GUARD,\nREADY TO BITE HEADS OFF.",
+      transition: "fade",
+      characters: [
+        // Supplied Dobermann artwork, unchanged, watching over the town.
+        { art: "cut-dobermann", x: 30, bottom: 0, scale: 0.62 },
+      ],
+    },
+  ],
+};
