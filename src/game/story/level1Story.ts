@@ -237,3 +237,18 @@ export const STORY_PANEL_10_ANON_MAYOR: StoryScene = {
     },
   ],
 };
+
+/** Panel 11 — cinematic transition: the peaceful opening chapter ends. */
+export const STORY_PANEL_11_PEACE_ENDS: StoryScene = {
+  id: "story-11-peace-ends",
+  kind: "opening",
+  title: "WALDOGE: STREETS OF GAINS",
+  panels: [
+    {
+      background: "bg-once-peaceful",
+      narration: "LIFE WAS GOOD.\nTHE ANONVERSE WAS PEACEFUL.\nEVERYONE HAD THEIR PLACE…",
+      subNarration: "BUT PEACE NEVER LASTS FOREVER.",
+      transition: "fade",
+    },
+  ],
+};
