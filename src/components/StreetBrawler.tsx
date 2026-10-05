@@ -3218,8 +3218,13 @@ export const StreetBrawler: FC = () => {
   // Story / narration overlay (reusable). While open, the simulation is frozen.
   const [storyScene, setStoryScene] = useState<StoryScene | null>(null);
   const storyActiveRef = useRef(false);
-  const openStory = useCallback((scene: StoryScene) => {
+  const storyFinishRef = useRef<(() => void) | null>(null);
+  /** Opens a story sequence; `onFinish` runs once when it ends or is skipped. */
+  const openStory = useCallback((scene: StoryScene, onFinish?: () => void) => {
     storyActiveRef.current = true;
+    storyFinishRef.current = onFinish ?? null;
+    gameRef.current.keys.clear();
+    gameRef.current.keyJustPressed.clear();
     setStoryScene(scene);
   }, []);
   const closeStory = useCallback(() => {
@@ -3227,6 +3232,9 @@ export const StreetBrawler: FC = () => {
     setStoryScene(null);
     gameRef.current.keys.clear();
     gameRef.current.keyJustPressed.clear();
+    const cb = storyFinishRef.current;
+    storyFinishRef.current = null;
+    cb?.();
   }, []);
   // FILF — Level 1 captured NPC (never an enemy; no combat data).
   const filfRef = useRef(initialFilfState());
@@ -3595,6 +3603,7 @@ export const StreetBrawler: FC = () => {
     filfPromptRef.current = false;
     setFilfPrompt(false);
     storyActiveRef.current = false;
+    storyFinishRef.current = null;
     setStoryScene(null);
     if (g.level === FILF_LEVEL) openStory(LEVEL1_OPENING);
     setGameState("playing");
