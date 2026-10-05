@@ -83,6 +83,9 @@ import { LEVEL2_OPENING_CALL, LEVEL2_DOXX_RESCUE } from "@/game/story/level2Stor
 import { drawCaptives } from "@/game/presentation/render2d/captivesSprites";
 import { CAPTIVES_LEVEL, CAPTIVES, CAPTIVE_RESCUE_BONUS, initialCaptivesState, tryCollectCaptiveKey, canRescueCaptive, beginCaptiveRescue, stepCaptive, captivesObjectiveText, type CaptiveId } from "@/game/story/level3Captives";
 import { LEVEL3_SUS_RESCUE, LEVEL3_FILF_RESCUE } from "@/game/story/level3Story";
+import { drawBaddieCaptive } from "@/game/presentation/render2d/baddieCaptiveSprites";
+import { BADDIE_LEVEL, BADDIE_CAGE_X, BADDIE_KEY_X, BADDIE_RESCUE_BONUS, initialBaddieState, tryCollectBaddieKey, canRescueBaddie, beginBaddieRescue, stepBaddie, baddieObjectiveText } from "@/game/story/level4Baddie";
+import { LEVEL4_OPENING_FUDDER_REVEAL, LEVEL4_BADDIE_RESCUE } from "@/game/story/level4Story";
 import { LEVEL2_ENDING_BAD_ACTOR_CALL } from "@/game/story/level2EndStory";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
 import { STORY_PANEL_1_EARTH, STORY_PANEL_2_ANONVERSE, STORY_PANEL_3_HIDE_AND_SEEK, STORY_PANEL_4_MONKO_BANANAS, STORY_PANEL_5_DOXX_BLACKJACK, STORY_PANEL_6_BLAZE_CHILL, STORY_PANEL_7_DOBERMANN_GUARD, STORY_PANEL_8_FILF_BADDIE, STORY_PANEL_9_SQUIRREL_NUTS, STORY_PANEL_10_ANON_MAYOR, STORY_PANEL_11_PEACE_ENDS, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
@@ -3257,6 +3260,11 @@ export const StreetBrawler: FC = () => {
   const captivePromptRef = useRef<CaptiveId | null>(null);
   const [captivePrompt, setCaptivePrompt] = useState<CaptiveId | null>(null);
   const [captivesObjective, setCaptivesObjective] = useState(() => captivesObjectiveText(initialCaptivesState()));
+  // LEVEL 4 — Baddie's optional key-gated rescue (never combat state).
+  const baddieRef = useRef(initialBaddieState());
+  const baddiePromptRef = useRef(false);
+  const [baddiePrompt, setBaddiePrompt] = useState(false);
+  const [baddieObjective, setBaddieObjective] = useState(() => baddieObjectiveText(initialBaddieState()));
   const doxxPromptRef = useRef(false);
   const [doxxPrompt, setDoxxPrompt] = useState(false);
   const [doxxObjective, setDoxxObjective] = useState(() => doxxObjectiveText(initialDoxxState()));
@@ -3630,17 +3638,23 @@ export const StreetBrawler: FC = () => {
     captivePromptRef.current = null;
     setCaptivePrompt(null);
     setCaptivesObjective(captivesObjectiveText(captivesRef.current));
+    baddieRef.current = initialBaddieState();
+    baddiePromptRef.current = false;
+    setBaddiePrompt(false);
+    setBaddieObjective(baddieObjectiveText(baddieRef.current));
     storyActiveRef.current = false;
     storyFinishRef.current = null;
     setStoryScene(null);
     if (g.level === FILF_LEVEL) openStory(STORY_PANEL_1_EARTH, () => openStory(STORY_PANEL_2_ANONVERSE, () => openStory(STORY_PANEL_3_HIDE_AND_SEEK, () => openStory(STORY_PANEL_4_MONKO_BANANAS, () => openStory(STORY_PANEL_5_DOXX_BLACKJACK, () => openStory(STORY_PANEL_6_BLAZE_CHILL, () => openStory(STORY_PANEL_7_DOBERMANN_GUARD, () => openStory(STORY_PANEL_8_FILF_BADDIE, () => openStory(STORY_PANEL_9_SQUIRREL_NUTS, () => openStory(STORY_PANEL_10_ANON_MAYOR, () => openStory(STORY_PANEL_11_PEACE_ENDS, () => openStory(LEVEL1_OPENING))))))))))));
     else if (g.level === DOXX_LEVEL) openStory(LEVEL2_OPENING_CALL);
+    else if (g.level === BADDIE_LEVEL) openStory(LEVEL4_OPENING_FUDDER_REVEAL);
     setGameState("playing");
     if (import.meta.env.DEV) {
       (window as unknown as { __sog?: unknown }).__sog = g;
       (window as unknown as { __sogFilf?: unknown }).__sogFilf = filfRef.current;
       (window as unknown as { __sogDoxx?: unknown }).__sogDoxx = doxxRef.current;
       (window as unknown as { __sogCaptives?: unknown }).__sogCaptives = captivesRef.current;
+      (window as unknown as { __sogBaddie?: unknown }).__sogBaddie = baddieRef.current;
     }
   }, [openStory]);
 
@@ -5337,6 +5351,44 @@ export const StreetBrawler: FC = () => {
             setCaptivePrompt(cPrompt);
           }
         }
+        // LEVEL 4 STORY — Baddie is locked in one cage until its single key is found.
+        {
+          const bs = baddieRef.current;
+          let bPrompt = false;
+          if (g.level === BADDIE_LEVEL) {
+            const keyFloor = groundYAt(g.level, BADDIE_KEY_X, undefined, false);
+            const cageFloor = groundYAt(g.level, BADDIE_CAGE_X, undefined, false);
+            if (p.hp > 0 && tryCollectBaddieKey(bs, p.x, p.y, keyFloor)) {
+              sfx(() => SFX.waveStart());
+              g.effects.push({ x: BADDIE_KEY_X, y: keyFloor - 110, timer: 110, text: "BADDIE'S CAGE KEY COLLECTED!", color: "#ffd23f", size: 18 });
+              setBaddieObjective(baddieObjectiveText(bs));
+            }
+            bPrompt = p.hp > 0 && canRescueBaddie(bs, p.x, p.y, cageFloor);
+            if (bPrompt && filfRequestRef.current && !bs.keyCollected) {
+              if (bs.lockedCooldown <= 0) {
+                bs.lockedCooldown = 90;
+                g.effects.push({ x: BADDIE_CAGE_X, y: cageFloor - 150, timer: 90, text: "THE CAGE IS LOCKED. I NEED THE KEY.", color: "#ff5f5f", size: 14 });
+              }
+            } else if (bPrompt && filfRequestRef.current && beginBaddieRescue(bs)) {
+              sfx(() => SFX.waveStart());
+              g.effects.push({ x: BADDIE_CAGE_X, y: cageFloor - 150, timer: 90, text: "KEY USED — CAGE OPENED!", color: "#ffd23f", size: 18 });
+              bPrompt = false;
+            }
+            if (stepBaddie(bs)) {
+              sfx(() => SFX.victory());
+              g.score += BADDIE_RESCUE_BONUS;
+              setScore(g.score);
+              g.effects.push({ x: BADDIE_CAGE_X + 80, y: cageFloor - 140, timer: 120, text: "BADDIE RESCUED!", color: "#ff5fa2", size: 22 });
+              g.effects.push({ x: BADDIE_CAGE_X + 80, y: cageFloor - 180, timer: 140, text: `+${BADDIE_RESCUE_BONUS} RESCUE BONUS`, color: "#ffd23f", size: 16 });
+              setBaddieObjective(baddieObjectiveText(bs));
+              openStory(LEVEL4_BADDIE_RESCUE);
+            }
+          }
+          if (bPrompt !== baddiePromptRef.current) {
+            baddiePromptRef.current = bPrompt;
+            setBaddiePrompt(bPrompt);
+          }
+        }
         filfRequestRef.current = false;
         if (prompt !== filfPromptRef.current) {
           filfPromptRef.current = prompt;
@@ -5419,6 +5471,7 @@ export const StreetBrawler: FC = () => {
             setWave(0);
             if (g.level === FILF_LEVEL + 1 && g.level < TOTAL_LEVELS) openStory(LEVEL1_COMPLETE, () => openStory(LEVEL2_OPENING_CALL));
             if (g.level === DOXX_LEVEL + 1 && g.level < TOTAL_LEVELS) openStory(LEVEL2_ENDING_BAD_ACTOR_CALL);
+            if (g.level === BADDIE_LEVEL && g.level < TOTAL_LEVELS) openStory(LEVEL4_OPENING_FUDDER_REVEAL);
             if (g.level >= TOTAL_LEVELS) {
               g.running = false;
               sfx(() => SFX.victory());
@@ -5740,6 +5793,10 @@ export const StreetBrawler: FC = () => {
 
       if (g.level === CAPTIVES_LEVEL) {
         drawCaptives(ctx, captivesRef.current, g.camX, (x) => groundYAt(g.level, x, undefined, false), g.player?.x ?? 0, g.animFrameCount, captivePromptRef.current);
+      }
+      if (g.level === BADDIE_LEVEL) {
+        if (!baddieRef.current.keyCollected) drawFilfKey(ctx, BADDIE_KEY_X, groundYAt(g.level, BADDIE_KEY_X, undefined, false), g.camX, g.animFrameCount);
+        drawBaddieCaptive(ctx, baddieRef.current, g.camX, groundYAt(g.level, BADDIE_CAGE_X, undefined, false), g.animFrameCount, baddiePromptRef.current);
       }
       if (g.level === DOXX_LEVEL) {
         if (!doxxHasBlueprints(doxxRef.current)) drawDoxxBlueprints(ctx, DOXX_BLUEPRINT_X, groundYAt(g.level, DOXX_BLUEPRINT_X, undefined, false), g.camX, g.animFrameCount);
@@ -6439,6 +6496,20 @@ export const StreetBrawler: FC = () => {
           <div className="absolute right-1 top-1 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[42%]">
             {captivesObjective}
           </div>
+        )}
+        {gameState === "playing" && level === BADDIE_LEVEL && !storyScene && (
+          <div className="absolute right-1 top-1 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[42%]">
+            {baddieObjective}
+          </div>
+        )}
+        {gameState === "playing" && baddiePrompt && !storyScene && (
+          <button
+            type="button"
+            onClick={() => { filfRequestRef.current = true; }}
+            className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse"
+          >
+            {baddieRef.current.keyCollected ? "RESCUE BADDIE" : "CAGE LOCKED — FIND BADDIE'S KEY"}
+          </button>
         )}
         {gameState === "playing" && captivePrompt && !storyScene && (
           <button

@@ -1,5 +1,11 @@
 # Waldoge: Streets of Gains — combat pass
 
+## Current — Level 4 Baddie rescue
+- [ ] Add the supplied Baddie cage and release artwork as Level 4-only assets
+- [ ] Add one fixed key, locked cage interaction, one-time rescue, and +2500 bonus
+- [ ] Add and visually verify the Fudder opening and Baddie rescue stories
+- [ ] Verify reset behavior, desktop/phone presentation, tests, typecheck, and build
+
 ## Current — Level 7 Hard Mode encounter correction
 - [x] Replace the oversized all-at-once Hard wave roster with a finite, capped encounter queue
 - [x] Make wave completion depend on living enemies plus the finite queued remainder
@@ -163,3 +169,8 @@
 - [x] Correct the five section title hierarchy and compare all live midpoints directly against the reference pack
 - [x] Replay key → cage → rescue → Ticker Taker → victory on desktop and mobile
 - [x] Confirm full tests, typecheck, and final preview build
+
+## Current — Level 4 Baddie rescue
+- [x] Add Baddie in a separate cage with a physical key objective
+- [x] Prevent rescue until the key is collected and award the existing rescue bonus once
+- [x] Verify the locked cage, key collection, rescue story, and supplied artwork on desktop and phone
