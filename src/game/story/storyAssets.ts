@@ -80,6 +80,7 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "bg-banana-stack": { src: bananaStackBg, alt: "Anonverse plaza with a ridiculous banana tower" },
   "prop-banana": { src: bananaProp, alt: "Banana" },
   "bg-casino": { src: casinoBg, alt: "Futuristic Anonverse casino with a blackjack table" },
+  "bg-chill-terrace": { src: chillTerraceBg, alt: "Peaceful Anonverse sky terrace with a hammock" },
 
 /**
  * CANONICAL STORY CHARACTERS — approved artwork, used exactly as supplied
