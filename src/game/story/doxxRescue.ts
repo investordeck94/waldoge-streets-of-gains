@@ -13,6 +13,8 @@ export const DOXX_BLUEPRINT_PICKUP_RANGE = 52;
 export const DOXX_CAGE_X = 8300;
 export const DOXX_RESCUE_RANGE = 95;
 export const DOXX_OPEN_FRAMES = 70;
+/** Score bonus awarded once when Doxx is rescued. */
+export const DOXX_RESCUE_BONUS = 2500;
 
 export type DoxxPhase = "caged" | "opening" | "freed";
 export type DoxxObjective = "DOXX_CAPTURED" | "BLUEPRINTS_RECOVERED" | "DOXX_RESCUED";
