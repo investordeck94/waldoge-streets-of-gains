@@ -14,6 +14,8 @@ export const FILF_OPEN_FRAMES = 70;
 /** The single cage key — on the street floor, well before the cage. */
 export const FILF_KEY_X = 2350;
 export const FILF_KEY_PICKUP_RANGE = 48;
+/** Score bonus awarded once when FILF is rescued. */
+export const FILF_RESCUE_BONUS = 2500;
 
 export type FilfPhase = "caged" | "opening" | "freed";
 export type FilfObjective = "KEY_NOT_COLLECTED" | "KEY_COLLECTED" | "FILF_RESCUED";
