@@ -47,6 +47,14 @@ import anonverseBg from "@/assets/story/story-anonverse.jpg";
 import { DOXX_ATLAS_SIZE, DOXX_ATLAS_URL, DOXX_FRAMES } from "@/game/presentation/render2d/doxxSprites";
 import l2CallBg from "@/assets/story/story-l2-call.jpg";
 import ruggerCellBg from "@/assets/story/story-rugger-cell.jpg";
+import oldTheatreBg from "@/assets/story/story-old-theatre.jpg";
+import studioCaptiveBg from "@/assets/story/story-studio-captive.jpg";
+import cut_sus_caged_stand from "@/assets/story/cutouts/sus-caged-stand.webp";
+import cut_sus_caged_sit from "@/assets/story/cutouts/sus-caged-sit.webp";
+import cut_sus_tied from "@/assets/story/cutouts/sus-tied.webp";
+import cut_sus_tied_slump from "@/assets/story/cutouts/sus-tied-slump.webp";
+import ruggerHead from "@/assets/rugger-boss-head.png";
+import badActorHead from "@/assets/badactor-boss-head.png";
 import type { StoryArtId, StoryPanelData, StoryPortrait } from "./storyTypes";
 
 export interface StoryArt {
@@ -107,6 +115,15 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "doxx-bust-urgent": doxx("bustUrgent"),
   "doxx-phone": doxx("phone", "Hidden phone"),
   "doxx-blueprint": doxx("blueprint", "Doxx's blueprints"),
+  "bg-old-theatre": { src: oldTheatreBg, alt: "Abandoned old movie theatre at night" },
+  "bg-studio-captive": { src: studioCaptiveBg, alt: "Dark film studio holding room" },
+  // Supplied SUS Dog captive sheet — fake checker background removed only.
+  "sus-caged-stand": { src: cut_sus_caged_stand, alt: "SUS Dog caged" },
+  "sus-caged-sit": { src: cut_sus_caged_sit, alt: "SUS Dog caged" },
+  "sus-tied": { src: cut_sus_tied, alt: "SUS Dog tied up" },
+  "sus-tied-slump": { src: cut_sus_tied_slump, alt: "SUS Dog tied up" },
+  "rugger-head": { src: ruggerHead, alt: "Rugger" },
+  "badactor-head": { src: badActorHead, alt: "Bad Actor" },
   "bg-once-peaceful": { src: oncePeacefulBg, alt: "The Anonverse at dusk under storm clouds, streets shuttered and empty" },
 
 /**

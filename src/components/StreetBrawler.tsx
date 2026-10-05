@@ -80,6 +80,7 @@ import { FILF_LEVEL, FILF_CAGE_X, FILF_KEY_X, FILF_RESCUE_BONUS, initialFilfStat
 import { drawDoxx, drawDoxxBlueprints } from "@/game/presentation/render2d/doxxSprites";
 import { DOXX_LEVEL, DOXX_CAGE_X, DOXX_BLUEPRINT_X, DOXX_KEY_X, DOXX_RESCUE_BONUS, initialDoxxState, canRescueDoxx, beginDoxxRescue, stepDoxx, tryCollectBlueprints, tryCollectDoxxKey, doxxHasBlueprints, doxxHasKey, doxxObjectiveText } from "@/game/story/doxxRescue";
 import { LEVEL2_OPENING_CALL, LEVEL2_DOXX_RESCUE } from "@/game/story/level2Story";
+import { LEVEL2_ENDING_BAD_ACTOR_CALL } from "@/game/story/level2EndStory";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
 import { STORY_PANEL_1_EARTH, STORY_PANEL_2_ANONVERSE, STORY_PANEL_3_HIDE_AND_SEEK, STORY_PANEL_4_MONKO_BANANAS, STORY_PANEL_5_DOXX_BLACKJACK, STORY_PANEL_6_BLAZE_CHILL, STORY_PANEL_7_DOBERMANN_GUARD, STORY_PANEL_8_FILF_BADDIE, STORY_PANEL_9_SQUIRREL_NUTS, STORY_PANEL_10_ANON_MAYOR, STORY_PANEL_11_PEACE_ENDS, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
 import type { StoryScene } from "@/game/story/storyTypes";
@@ -5360,6 +5361,7 @@ export const StreetBrawler: FC = () => {
             setLevel(g.level);
             setWave(0);
             if (g.level === FILF_LEVEL + 1 && g.level < TOTAL_LEVELS) openStory(LEVEL1_COMPLETE, () => openStory(LEVEL2_OPENING_CALL));
+            if (g.level === DOXX_LEVEL + 1 && g.level < TOTAL_LEVELS) openStory(LEVEL2_ENDING_BAD_ACTOR_CALL);
             if (g.level >= TOTAL_LEVELS) {
               g.running = false;
               sfx(() => SFX.victory());
