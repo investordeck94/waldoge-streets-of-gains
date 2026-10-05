@@ -49,3 +49,33 @@ export const LEVEL1_COMPLETE: StoryScene = {
     { text: "Anon Eco is safe... for now. But this is only the beginning." },
   ],
 };
+
+/** Panel 2 — the peaceful Anonverse; every canonical character once. */
+export const STORY_PANEL_2_ANONVERSE: StoryScene = {
+  id: "story-2-anonverse",
+  kind: "opening",
+  title: "WALDOGE: STREETS OF GAINS",
+  panels: [
+    {
+      background: "bg-anonverse",
+      narration: "IN A LAND CALLED\nTHE ANONVERSE…",
+      transition: "fade",
+      characters: [
+        // back row (smaller, on the far walkway)
+        { art: "cut-dogevan", x: 31, bottom: 38, scale: 0.26 },
+        { art: "cut-anon", x: 40, bottom: 40, scale: 0.22 },
+        { art: "cut-squirrel", x: 63, bottom: 33, scale: 0.13 },
+        // middle row
+        { art: "cut-doxx", x: 36, bottom: 16, scale: 0.3 },
+        { art: "cut-420-blaze-it", x: 48, bottom: 20, scale: 0.36 },
+        { art: "cut-sus-dog", x: 84, bottom: 8, scale: 0.48, flip: true },
+        { art: "cut-dobermann", x: 95, bottom: 26, scale: 0.36, flip: true },
+        // front row
+        { art: "cut-monko", x: 8, bottom: 0, scale: 0.56 },
+        { art: "cut-filf", x: 23, bottom: 0, scale: 0.54 },
+        { art: "cut-waldoge", x: 56, bottom: 0, scale: 0.62 },
+        { art: "cut-baddie", x: 71, bottom: 0, scale: 0.55, flip: true },
+      ],
+    },
+  ],
+};

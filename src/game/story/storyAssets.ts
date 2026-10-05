@@ -21,6 +21,17 @@ import blaze420_blaze_itStory from "@/assets/story/story-420-blaze-it.jpeg.asset
 import dobermannStory from "@/assets/story/story-dobermann.jpeg.asset.json";
 import filfStory from "@/assets/story/story-filf.jpeg.asset.json";
 import earthBg from "@/assets/story/story-earth.jpg";
+import cut_waldoge from "@/assets/story/cutouts/waldoge.webp";
+import cut_baddie from "@/assets/story/cutouts/baddie.webp";
+import cut_anon from "@/assets/story/cutouts/anon.webp";
+import cut_monko from "@/assets/story/cutouts/monko.webp";
+import cut_dogevan from "@/assets/story/cutouts/dogevan.webp";
+import cut_doxx from "@/assets/story/cutouts/doxx.webp";
+import cut_sus_dog from "@/assets/story/cutouts/sus-dog.webp";
+import cut_b420_blaze_it from "@/assets/story/cutouts/420-blaze-it.webp";
+import cut_dobermann from "@/assets/story/cutouts/dobermann.webp";
+import cut_filf from "@/assets/story/cutouts/filf.webp";
+import anonverseBg from "@/assets/story/story-anonverse.jpg";
 import type { StoryArtId, StoryPanelData, StoryPortrait } from "./storyTypes";
 
 export interface StoryArt {
@@ -44,6 +55,19 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "filf-thankful": filf("portraitThankful"),
   "filf-full": filf("idle"),
   "bg-earth": { src: earthBg, alt: "Planet Earth from space" },
+  // Background-free copies of the canonical art (white removed only) for scene composition.
+  "cut-waldoge": { src: cut_waldoge, alt: "waldoge" },
+  "cut-baddie": { src: cut_baddie, alt: "baddie" },
+  "cut-anon": { src: cut_anon, alt: "anon" },
+  "cut-monko": { src: cut_monko, alt: "monko" },
+  "cut-dogevan": { src: cut_dogevan, alt: "dogevan" },
+  "cut-doxx": { src: cut_doxx, alt: "doxx" },
+  "cut-sus-dog": { src: cut_sus_dog, alt: "sus-dog" },
+  "cut-420-blaze-it": { src: cut_b420_blaze_it, alt: "420-blaze-it" },
+  "cut-dobermann": { src: cut_dobermann, alt: "dobermann" },
+  "cut-filf": { src: cut_filf, alt: "filf" },
+  "cut-squirrel": { src: squirrelStory.url, alt: "Squirrel" },
+  "bg-anonverse": { src: anonverseBg, alt: "The peaceful futuristic Anonverse" },
 
 /**
  * CANONICAL STORY CHARACTERS — approved artwork, used exactly as supplied

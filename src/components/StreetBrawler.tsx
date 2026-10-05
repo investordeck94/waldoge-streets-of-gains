@@ -77,7 +77,7 @@ import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter";
 import { drawFilf } from "@/game/presentation/render2d/filfSprites";
 import { FILF_LEVEL, FILF_CAGE_X, initialFilfState, canRescueFilf, beginFilfRescue, stepFilf } from "@/game/story/filfRescue";
-import { STORY_PANEL_1_EARTH, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
+import { STORY_PANEL_1_EARTH, STORY_PANEL_2_ANONVERSE, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
 import type { StoryScene } from "@/game/story/storyTypes";
 import { StoryPanel } from "@/components/game/StoryPanel";
 import { drawWaldogeSprite, preloadWaldogeSprites } from "@/game/presentation/render2d/waldogeSprites";
@@ -3605,7 +3605,7 @@ export const StreetBrawler: FC = () => {
     storyActiveRef.current = false;
     storyFinishRef.current = null;
     setStoryScene(null);
-    if (g.level === FILF_LEVEL) openStory(STORY_PANEL_1_EARTH, () => openStory(LEVEL1_OPENING));
+    if (g.level === FILF_LEVEL) openStory(STORY_PANEL_1_EARTH, () => openStory(STORY_PANEL_2_ANONVERSE, () => openStory(LEVEL1_OPENING)));
     setGameState("playing");
     if (import.meta.env.DEV) {
       (window as unknown as { __sog?: unknown }).__sog = g;

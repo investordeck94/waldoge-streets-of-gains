@@ -29,6 +29,10 @@ export interface StoryCharacter {
   scale?: number;
   /** Dim when this character is not the one speaking. */
   dimmed?: boolean;
+  /** Free placement for crowd scenes: horizontal centre, % of stage width (overrides `position`). */
+  x?: number;
+  /** Free placement: bottom offset, % of stage height (with `x`). */
+  bottom?: number;
 }
 
 export type StoryTransition = "fade" | "slide" | "cut";
