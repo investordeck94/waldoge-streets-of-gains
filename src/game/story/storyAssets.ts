@@ -28,6 +28,7 @@ import cut_monko from "@/assets/story/cutouts/monko.webp";
 import cut_dogevan from "@/assets/story/cutouts/dogevan.webp";
 import cut_doxx from "@/assets/story/cutouts/doxx.webp";
 import casinoBg from "@/assets/story/story-casino.jpg";
+import chillTerraceBg from "@/assets/story/story-chill-terrace.jpg";
 import cut_sus_dog from "@/assets/story/cutouts/sus-dog.webp";
 import cut_b420_blaze_it from "@/assets/story/cutouts/420-blaze-it.webp";
 import cut_dobermann from "@/assets/story/cutouts/dobermann.webp";
