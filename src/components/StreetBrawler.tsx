@@ -3640,6 +3640,7 @@ export const StreetBrawler: FC = () => {
     const onDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       if (!g.keys.has(key)) g.keyJustPressed.add(key);
+      if (key === "e" && !e.repeat) filfRequestRef.current = true;
       g.keys.add(key);
       const alt = codeToKey(e.code);
       if (alt && alt !== key) g.keys.add(alt);
@@ -4080,7 +4081,6 @@ export const StreetBrawler: FC = () => {
 
 
 
-      if (g.keyJustPressed.has("e")) filfRequestRef.current = true;
       g.keyJustPressed.clear();
 
       // Player physics (with jump-through platforms)
