@@ -213,7 +213,7 @@ export const STORY_PANEL_9_SQUIRREL_NUTS: StoryScene = {
         // Supplied Squirrel artwork, unchanged. Its canvas carries large
         // transparent margins, so `bottom` is shifted to keep his feet on
         // the ground (about 40% of the image height is empty below him).
-        { art: "cut-squirrel", x: 70, bottom: -22, scale: 0.55 },
+        { art: "cut-squirrel", x: 68, bottom: -38, scale: 0.95 },
       ],
     },
   ],
