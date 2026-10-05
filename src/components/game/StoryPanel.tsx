@@ -43,8 +43,9 @@ const POS: Record<NonNullable<StoryCharacter["position"]>, string> = {
 
 function Stage({ panel }: { panel: StoryPanelData }) {
   if (!panel.background && !panel.characters?.length) return null;
+  const captiveNoir = panel.treatment === "captive-noir";
   return (
-    <div className="relative w-full aspect-[16/9] max-h-[45svh] overflow-hidden rounded-md border-2 border-primary/60 bg-background mb-3">
+    <div className={`relative w-full aspect-[16/9] max-h-[45svh] overflow-hidden bg-background mb-3 ${captiveNoir ? "rounded-sm border-2 border-foreground/20 shadow-[4px_4px_0_hsl(var(--background))]" : "rounded-md border-2 border-primary/60"}`}>
       {panel.background && (
         <Art id={panel.background} className="absolute inset-0 w-full h-full" fit="cover" height="100%" />
       )}
@@ -64,6 +65,18 @@ function Stage({ panel }: { panel: StoryPanelData }) {
           </div>
         );
       })}
+      {captiveNoir && (
+        <>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/85 via-transparent to-background/30" />
+          <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(hsl(var(--foreground))_1px,transparent_1px)] [background-size:4px_4px]" />
+          <div className="absolute left-2 top-2 border border-border bg-background/90 px-2 py-1 font-mono text-[8px] font-bold tracking-wider text-muted-foreground">
+            LOC: {panel.locationLabel ?? "STREETS_OF_GAINS_04"}
+          </div>
+          <div className="absolute bottom-2 left-2 -skew-x-6 border border-background bg-accent px-2 py-1 font-heading text-[9px] font-black tracking-wider text-accent-foreground shadow-[2px_2px_0_hsl(var(--background))]">
+            IMPRISONED
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -144,6 +157,7 @@ export function StoryPanel({ scene, onDone }: { scene: StoryScene; onDone: () =>
   const speaker = panel.dialogue?.speaker ?? panel.speaker;
   const line = panel.dialogue?.text ?? panel.text;
   const portrait = panel.dialogue?.portrait ?? panel.portrait;
+  const captiveNoir = panel.treatment === "captive-noir";
 
   return (
     <div
@@ -154,7 +168,8 @@ export function StoryPanel({ scene, onDone }: { scene: StoryScene; onDone: () =>
       aria-modal="true"
       aria-label={scene.title}
     >
-      <div className="w-full max-w-2xl glass-card border-2 border-primary/70 rounded-lg p-3 sm:p-5 shadow-2xl max-h-[95svh] overflow-y-auto">
+      <div className={`relative w-full max-w-2xl border-2 border-primary/70 p-3 sm:p-5 max-h-[95svh] overflow-y-auto ${captiveNoir ? "rounded-sm bg-card shadow-[0_0_28px_hsl(var(--primary)/0.16)]" : "glass-card rounded-lg shadow-2xl"}`}>
+        {captiveNoir && <div className="pointer-events-none absolute inset-0 z-20 opacity-[0.035] [background-image:linear-gradient(transparent_50%,hsl(var(--foreground)/0.25)_50%)] [background-size:100%_2px]" />}
         <div className="flex items-center justify-between mb-3 gap-2">
           <span className="font-mono text-[11px] font-bold tracking-[0.2em] text-primary truncate">{scene.title}</span>
           {!scene.unskippable && (
@@ -178,8 +193,15 @@ export function StoryPanel({ scene, onDone }: { scene: StoryScene; onDone: () =>
           {line && (
             <div className="flex gap-3 sm:gap-4 items-start">
               {portrait && (
-                <div className="shrink-0 w-20 h-20 sm:w-28 sm:h-28 rounded-md border-2 border-primary bg-background overflow-hidden flex items-center justify-center">
+                <div className={`relative shrink-0 w-20 h-20 sm:w-28 sm:h-28 border-2 border-primary bg-background overflow-hidden flex items-center justify-center ${captiveNoir ? "rounded-sm shadow-[4px_4px_0_hsl(var(--background))]" : "rounded-md"}`}>
                   <Art id={portrait} height="100%" className="max-w-full" fit="cover" />
+                  {captiveNoir && (
+                    <div className="pointer-events-none absolute inset-0 flex justify-around px-1 opacity-80">
+                      <span className="h-full w-1.5 border-x border-muted-foreground bg-secondary" />
+                      <span className="h-full w-1.5 border-x border-muted-foreground bg-secondary" />
+                      <span className="h-full w-1.5 border-x border-muted-foreground bg-secondary" />
+                    </div>
+                  )}
                 </div>
               )}
               <div className="flex-1 min-w-0">

@@ -55,7 +55,9 @@ import cut_sus_tied from "@/assets/story/cutouts/sus-tied.webp";
 import cut_sus_tied_slump from "@/assets/story/cutouts/sus-tied-slump.webp";
 import ruggerHead from "@/assets/rugger-boss-head.png";
 import badActorHead from "@/assets/badactor-boss-head.png";
-import baddieCaptiveAtlasLocal from "@/assets/baddie-captive-atlas-local.png";
+import baddieCaged from "@/assets/baddie-caged-local.png";
+import baddieWorried from "@/assets/baddie-worried-local.png";
+import baddieThankful from "@/assets/baddie-thankful-local.png";
 import fudderAtlas from "@/assets/fudder-atlas.png.asset.json";
 import fudderWorldBg from "@/assets/level4-media.jpg-local.jpg";
 import type { StoryArtId, StoryPanelData, StoryPortrait } from "./storyTypes";
@@ -130,9 +132,9 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "badactor-head": { src: badActorHead, alt: "Bad Actor" },
   "bg-fudder-world": { src: fudderWorldBg, alt: "Fudder's controlled propaganda world" },
   "fudder-story": { src: fudderAtlas.url, frame: { x: 21, y: 8, w: 190, h: 241 }, sheet: { w: 1024, h: 512 }, alt: "Fudder" },
-  "baddie-caged": { src: baddieCaptiveAtlasLocal, frame: { x: 0, y: 0, w: 115, h: 145 }, sheet: { w: 700, h: 280 }, alt: "Baddie locked inside a cage" },
-  "baddie-thankful": { src: baddieCaptiveAtlasLocal, frame: { x: 400, y: 0, w: 114, h: 256 }, sheet: { w: 700, h: 280 }, alt: "Baddie thankful after her rescue" },
-  "baddie-worried": { src: baddieCaptiveAtlasLocal, frame: { x: 520, y: 0, w: 167, h: 136 }, sheet: { w: 700, h: 280 }, alt: "Baddie worried" },
+  "baddie-caged": { src: baddieCaged, alt: "Baddie locked inside a cage" },
+  "baddie-thankful": { src: baddieThankful, alt: "Baddie thankful after her rescue" },
+  "baddie-worried": { src: baddieWorried, alt: "Baddie worried" },
   "bg-once-peaceful": { src: oncePeacefulBg, alt: "The Anonverse at dusk under storm clouds, streets shuttered and empty" },
 
 /**

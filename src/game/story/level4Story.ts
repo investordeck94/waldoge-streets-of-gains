@@ -18,9 +18,11 @@ export const LEVEL4_OPENING_FUDDER_REVEAL: StoryScene = {
     },
     {
       background: "bg-fudder-world",
-      characters: [{ art: "baddie-caged", x: 50, bottom: 1, scale: 0.86 }],
+      characters: [{ art: "baddie-caged", x: 50, bottom: 1, scale: 0.92 }],
       narration: "BADDIE HAD BEEN CAPTURED.",
       subNarration: "LOCKED BEHIND BARS IN FUDDER'S WORLD.",
+      treatment: "captive-noir",
+      locationLabel: "FUDDER DETENTION BLOCK",
     },
     {
       background: "bg-fudder-world",
@@ -58,10 +60,14 @@ export const LEVEL4_BADDIE_RESCUE: StoryScene = {
   panels: [
     {
       background: "bg-fudder-world",
-      characters: [{ art: "baddie-thankful", x: 50, bottom: 0, scale: 0.86 }],
+      characters: [{ art: "baddie-caged", x: 50, bottom: 1, scale: 0.92 }],
       dialogue: { speaker: "BADDIE", text: "YOU FOUND THE KEY! I KNEW FUDDER COULDN'T KEEP ME CAGED FOREVER.", portrait: "baddie-worried" },
+      treatment: "captive-noir",
+      locationLabel: "FUDDER DETENTION BLOCK",
     },
     {
+      background: "bg-fudder-world",
+      characters: [{ art: "baddie-thankful", x: 50, bottom: 0, scale: 0.9 }],
       dialogue: { speaker: "WALDOGE", text: "Get somewhere safe. I'm ending Fudder's story next.", portrait: "waldoge" },
     },
   ],

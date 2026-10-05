@@ -53,6 +53,10 @@ export interface StoryPanelData {
   /** Auto-advance after this many ms (tap still advances earlier). */
   durationMs?: number;
   transition?: StoryTransition;
+  /** Optional scene-specific presentation treatment. */
+  treatment?: "captive-noir";
+  /** Small location stamp used by cinematic treatments. */
+  locationLabel?: string;
 
   // --- Legacy compact form (portrait card + one line of text) ---
   speaker?: string;
