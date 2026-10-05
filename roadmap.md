@@ -169,3 +169,8 @@
 - [x] Correct the five section title hierarchy and compare all live midpoints directly against the reference pack
 - [x] Replay key → cage → rescue → Ticker Taker → victory on desktop and mobile
 - [x] Confirm full tests, typecheck, and final preview build
+
+## Current — Level 4 Baddie rescue
+- [x] Add Baddie in a separate cage with a physical key objective
+- [x] Prevent rescue until the key is collected and award the existing rescue bonus once
+- [x] Verify the locked cage, key collection, rescue story, and supplied artwork on desktop and phone
