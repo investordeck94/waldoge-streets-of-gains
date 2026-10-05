@@ -48,15 +48,21 @@ function Stage({ panel }: { panel: StoryPanelData }) {
       {panel.background && (
         <Art id={panel.background} className="absolute inset-0 w-full h-full" fit="cover" height="100%" />
       )}
-      {panel.characters?.map((c, i) => (
-        <div
-          key={`${c.art}-${i}`}
-          className={`absolute bottom-0 ${POS[c.position ?? "center"]} transition-opacity ${c.dimmed ? "opacity-50" : ""}`}
-          style={{ height: `${Math.max(0.2, Math.min(1, c.scale ?? 0.9)) * 100}%` }}
-        >
-          <Art id={c.art} flip={c.flip} height="100%" className="max-w-none" />
-        </div>
-      ))}
+      {panel.characters?.map((c, i) => {
+        const free = typeof c.x === "number";
+        return (
+          <div
+            key={`${c.art}-${i}`}
+            className={`absolute ${free ? "-translate-x-1/2" : `bottom-0 ${POS[c.position ?? "center"]}`} transition-opacity ${c.dimmed ? "opacity-50" : ""}`}
+            style={{
+              height: `${Math.max(0.1, Math.min(1, c.scale ?? 0.9)) * 100}%`,
+              ...(free ? { left: `${c.x}%`, bottom: `${c.bottom ?? 0}%` } : {}),
+            }}
+          >
+            <Art id={c.art} flip={c.flip} height="100%" className="max-w-none" />
+          </div>
+        );
+      })}
     </div>
   );
 }
