@@ -1,5 +1,6 @@
 /** Level 4 Baddie captive presentation. Baddie remains outside combat state. */
 import atlasAsset from "@/assets/baddie-captive-atlas.png.asset.json";
+import atlasLocal from "@/assets/baddie-captive-atlas-local.png";
 import { drawSource, isResident, residentImage } from "./imageResidency";
 import { BADDIE_CAGE_X, BADDIE_OPEN_FRAMES, type BaddieState } from "@/game/story/level4Baddie";
 
@@ -10,13 +11,18 @@ const ATLAS = {
 } as const;
 
 let atlas: HTMLImageElement | null = null;
+let fallbackAtlas: HTMLImageElement | null = null;
 function getAtlas(): HTMLImageElement | null {
   if (typeof Image === "undefined") return null;
   if (!atlas) {
     atlas = new Image();
     residentImage(atlas, atlasAsset.url, [3]);
+    fallbackAtlas = new Image();
+    residentImage(fallbackAtlas, atlasLocal, [3]);
   }
-  return atlas.complete && atlas.naturalWidth > 0 && isResident(atlas) ? atlas : null;
+  if (atlas.complete && atlas.naturalWidth > 0 && isResident(atlas)) return atlas;
+  if (fallbackAtlas?.complete && fallbackAtlas.naturalWidth > 0 && isResident(fallbackAtlas)) return fallbackAtlas;
+  return null;
 }
 if (typeof window !== "undefined") getAtlas();
 
