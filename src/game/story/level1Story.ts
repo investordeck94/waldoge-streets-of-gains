@@ -179,3 +179,22 @@ export const STORY_PANEL_7_DOBERMANN_GUARD: StoryScene = {
     },
   ],
 };
+
+/** Panel 8 — FILF and Baddie showing off on the Anonverse promenade. */
+export const STORY_PANEL_8_FILF_BADDIE: StoryScene = {
+  id: "story-8-filf-baddie",
+  kind: "opening",
+  title: "WALDOGE: STREETS OF GAINS",
+  panels: [
+    {
+      background: "bg-show-off",
+      narration: "FILF AND BADDIE\nWOULD SHOW OFF FOR THE GUYS.",
+      transition: "fade",
+      characters: [
+        // Supplied FILF and Baddie artwork, unchanged, strutting centre stage.
+        { art: "cut-filf", x: 38, bottom: 0, scale: 0.66 },
+        { art: "cut-baddie", x: 58, bottom: 0, scale: 0.66 },
+      ],
+    },
+  ],
+};

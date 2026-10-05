@@ -77,7 +77,7 @@ import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter";
 import { drawFilf } from "@/game/presentation/render2d/filfSprites";
 import { FILF_LEVEL, FILF_CAGE_X, initialFilfState, canRescueFilf, beginFilfRescue, stepFilf } from "@/game/story/filfRescue";
-import { STORY_PANEL_1_EARTH, STORY_PANEL_2_ANONVERSE, STORY_PANEL_3_HIDE_AND_SEEK, STORY_PANEL_4_MONKO_BANANAS, STORY_PANEL_5_DOXX_BLACKJACK, STORY_PANEL_6_BLAZE_CHILL, STORY_PANEL_7_DOBERMANN_GUARD, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
+import { STORY_PANEL_1_EARTH, STORY_PANEL_2_ANONVERSE, STORY_PANEL_3_HIDE_AND_SEEK, STORY_PANEL_4_MONKO_BANANAS, STORY_PANEL_5_DOXX_BLACKJACK, STORY_PANEL_6_BLAZE_CHILL, STORY_PANEL_7_DOBERMANN_GUARD, STORY_PANEL_8_FILF_BADDIE, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
 import type { StoryScene } from "@/game/story/storyTypes";
 import { StoryPanel } from "@/components/game/StoryPanel";
 import { drawWaldogeSprite, preloadWaldogeSprites } from "@/game/presentation/render2d/waldogeSprites";
