@@ -81,6 +81,7 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "filf-happy": filf("portraitHappy"),
   "filf-thankful": filf("portraitThankful"),
   "filf-full": filf("idle"),
+  "filf-caged": filf("cage", "FILF caged"),
   "bg-earth": { src: earthBg, alt: "Planet Earth from space" },
   // Background-free copies of the canonical art (white removed only) for scene composition.
   "cut-waldoge": { src: cut_waldoge, alt: "waldoge" },

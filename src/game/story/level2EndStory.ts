@@ -29,7 +29,7 @@ export const LEVEL2_ENDING_BAD_ACTOR_CALL: StoryScene = {
       background: "bg-studio-captive",
       characters: [
         { art: "sus-caged-stand", x: 32, bottom: 4, scale: 0.82 },
-        { art: "cut-filf", x: 70, bottom: 2, scale: 0.8 },
+        { art: "filf-caged", x: 70, bottom: 4, scale: 0.8 },
       ],
       subNarration: "THE CALLER IS BAD ACTOR. SUS DOG AND FILF ARE ALIVE — HELD AGAINST THEIR WILL.",
       dialogue: { speaker: "BAD ACTOR", text: "I'VE GOT SUS DOG AND FILF. I'M HOLDING THEM CAPTIVE…", portrait: "badactor-head" },
