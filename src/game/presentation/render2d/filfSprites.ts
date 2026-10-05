@@ -36,7 +36,7 @@ function getAtlas(): HTMLImageElement | null {
 }
 if (typeof window !== "undefined") getAtlas();
 
-const CAGE_H = 104;
+const CAGE_H = 132;
 
 function blit(ctx: CanvasRenderingContext2D, id: FrameId, cx: number, footY: number, height: number) {
   const img = getAtlas();
@@ -64,7 +64,7 @@ export function drawFilf(
   ctx.globalAlpha = 0.35;
   ctx.fillStyle = "#000";
   ctx.beginPath();
-  ctx.ellipse(sx, floorY + 2, 44, 6, 0, 0, Math.PI * 2);
+  ctx.ellipse(sx, floorY + 2, 56, 7, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
@@ -79,7 +79,7 @@ export function drawFilf(
     } else {
       blit(ctx, "cageEmpty", sx - 18, floorY + 4, CAGE_H * 0.95);
       const step = Math.min(1, (t - 0.45) / 0.4);
-      blit(ctx, "surprise", sx + 20 + step * 46, floorY, 92);
+      blit(ctx, "surprise", sx + 24 + step * 58, floorY, 116);
     }
     // Sparkles while the lock gives way
     ctx.save();
@@ -94,7 +94,7 @@ export function drawFilf(
   } else {
     blit(ctx, "cageEmpty", sx - 18, floorY + 4, CAGE_H * 0.95);
     const id: FrameId = s.timer < 200 ? "thank" : near ? "wave" : "idle";
-    blit(ctx, id, sx + 66, floorY, id === "idle" ? 98 : 92);
+    blit(ctx, id, sx + 84, floorY, id === "idle" ? 124 : 116);
   }
 
   if (promptVisible) {
