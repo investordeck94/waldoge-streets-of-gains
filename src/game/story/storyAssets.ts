@@ -55,7 +55,6 @@ import cut_sus_tied from "@/assets/story/cutouts/sus-tied.webp";
 import cut_sus_tied_slump from "@/assets/story/cutouts/sus-tied-slump.webp";
 import ruggerHead from "@/assets/rugger-boss-head.png";
 import badActorHead from "@/assets/badactor-boss-head.png";
-import baddieCaptiveAtlas from "@/assets/baddie-captive-atlas.png.asset.json";
 import baddieCaptiveAtlasLocal from "@/assets/baddie-captive-atlas-local.png";
 import fudderAtlas from "@/assets/fudder-atlas.png.asset.json";
 import fudderWorldBg from "@/assets/level4-media.jpg-local.jpg";
