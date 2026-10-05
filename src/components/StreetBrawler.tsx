@@ -78,7 +78,7 @@ import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter"
 import { drawFilf } from "@/game/presentation/render2d/filfSprites";
 import { FILF_LEVEL, FILF_CAGE_X, FILF_KEY_X, FILF_RESCUE_BONUS, initialFilfState, canRescueFilf, beginFilfRescue, stepFilf, tryCollectFilfKey, filfHasKey } from "@/game/story/filfRescue";
 import { drawDoxx, drawDoxxBlueprints } from "@/game/presentation/render2d/doxxSprites";
-import { DOXX_LEVEL, DOXX_CAGE_X, DOXX_BLUEPRINT_X, DOXX_RESCUE_BONUS, initialDoxxState, canRescueDoxx, beginDoxxRescue, stepDoxx, tryCollectBlueprints, doxxHasBlueprints, doxxObjectiveText } from "@/game/story/doxxRescue";
+import { DOXX_LEVEL, DOXX_CAGE_X, DOXX_BLUEPRINT_X, DOXX_KEY_X, DOXX_RESCUE_BONUS, initialDoxxState, canRescueDoxx, beginDoxxRescue, stepDoxx, tryCollectBlueprints, tryCollectDoxxKey, doxxHasBlueprints, doxxHasKey, doxxObjectiveText } from "@/game/story/doxxRescue";
 import { LEVEL2_OPENING_CALL, LEVEL2_DOXX_RESCUE } from "@/game/story/level2Story";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
 import { STORY_PANEL_1_EARTH, STORY_PANEL_2_ANONVERSE, STORY_PANEL_3_HIDE_AND_SEEK, STORY_PANEL_4_MONKO_BANANAS, STORY_PANEL_5_DOXX_BLACKJACK, STORY_PANEL_6_BLAZE_CHILL, STORY_PANEL_7_DOBERMANN_GUARD, STORY_PANEL_8_FILF_BADDIE, STORY_PANEL_9_SQUIRREL_NUTS, STORY_PANEL_10_ANON_MAYOR, STORY_PANEL_11_PEACE_ENDS, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
@@ -5243,12 +5243,21 @@ export const StreetBrawler: FC = () => {
               g.effects.push({ x: DOXX_BLUEPRINT_X, y: bpFloor - 110, timer: 120, text: "DOXX'S BLUEPRINTS RECOVERED!", color: "#9cc8ff", size: 18 });
               setDoxxObjective(doxxObjectiveText(ds));
             }
+            const keyFloorY = groundYAt(g.level, DOXX_KEY_X, undefined, false);
+            if (p.hp > 0 && tryCollectDoxxKey(ds, p.x, p.y, keyFloorY)) {
+              sfx(() => SFX.waveStart());
+              g.effects.push({ x: DOXX_KEY_X, y: keyFloorY - 110, timer: 110, text: "CAGE KEY COLLECTED!", color: "#ffd23f", size: 20 });
+              setDoxxObjective(doxxObjectiveText(ds));
+            }
             dPrompt = p.hp > 0 && canRescueDoxx(ds, p.x, p.y, cageFloor);
             const wants = filfRequestRef.current;
-            if (dPrompt && wants && !doxxHasBlueprints(ds)) {
+            if (dPrompt && wants && !(doxxHasBlueprints(ds) && doxxHasKey(ds))) {
               if (ds.lockedCooldown <= 0) {
                 ds.lockedCooldown = 90;
-                g.effects.push({ x: DOXX_CAGE_X, y: cageFloor - 150, timer: 90, text: "LOCKED! FIND DOXX'S BLUEPRINTS FIRST.", color: "#ff5f5f", size: 14 });
+                const lockedText = !doxxHasBlueprints(ds)
+                  ? "LOCKED! FIND DOXX'S BLUEPRINTS FIRST."
+                  : "LOCKED! FIND THE CAGE KEY.";
+                g.effects.push({ x: DOXX_CAGE_X, y: cageFloor - 150, timer: 90, text: lockedText, color: "#ff5f5f", size: 14 });
               }
             } else if (dPrompt && wants && beginDoxxRescue(ds)) {
               sfx(() => SFX.waveStart());
@@ -5672,6 +5681,7 @@ export const StreetBrawler: FC = () => {
 
       if (g.level === DOXX_LEVEL) {
         if (!doxxHasBlueprints(doxxRef.current)) drawDoxxBlueprints(ctx, DOXX_BLUEPRINT_X, groundYAt(g.level, DOXX_BLUEPRINT_X, undefined, false), g.camX, g.animFrameCount);
+        if (!doxxHasKey(doxxRef.current)) drawFilfKey(ctx, DOXX_KEY_X, groundYAt(g.level, DOXX_KEY_X, undefined, false), g.camX, g.animFrameCount);
         drawDoxx(ctx, doxxRef.current, g.camX, groundYAt(g.level, DOXX_CAGE_X, undefined, false), g.player?.x ?? 0, g.animFrameCount, doxxPromptRef.current, doxxHasBlueprints(doxxRef.current));
       }
       if (g.level === FILF_LEVEL && !filfHasKey(filfRef.current)) {
@@ -6369,7 +6379,7 @@ export const StreetBrawler: FC = () => {
             onClick={() => { filfRequestRef.current = true; }}
             className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse"
           >
-            {doxxObjective.includes("RECOVERED") ? "RESCUE DOXX" : "CAGE LOCKED — FIND BLUEPRINTS"}
+            {!doxxObjective.includes("RECOVERED") ? "CAGE LOCKED — FIND BLUEPRINTS" : doxxObjective.includes("CAGE KEY") ? "CAGE LOCKED — FIND KEY" : "RESCUE DOXX"}
           </button>
         )}
         {gameState === "playing" && filfPrompt && !storyScene && (

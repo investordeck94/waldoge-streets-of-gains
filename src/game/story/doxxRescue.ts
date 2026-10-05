@@ -15,6 +15,9 @@ export const DOXX_RESCUE_RANGE = 95;
 export const DOXX_OPEN_FRAMES = 70;
 /** Score bonus awarded once when Doxx is rescued. */
 export const DOXX_RESCUE_BONUS = 2500;
+/** The single cage key — on the street floor between the blueprints and the cage. */
+export const DOXX_KEY_X = 6400;
+export const DOXX_KEY_PICKUP_RANGE = 48;
 
 export type DoxxPhase = "caged" | "opening" | "freed";
 export type DoxxObjective = "DOXX_CAPTURED" | "BLUEPRINTS_RECOVERED" | "DOXX_RESCUED";
@@ -24,14 +27,24 @@ export interface DoxxState {
   timer: number;
   rescued: boolean;
   objective: DoxxObjective;
+  /** The physical cage key — required together with the blueprints. */
+  keyCollected: boolean;
   lockedCooldown: number;
 }
 
 export const initialDoxxState = (): DoxxState => ({
-  phase: "caged", timer: 0, rescued: false, objective: "DOXX_CAPTURED", lockedCooldown: 0,
+  phase: "caged", timer: 0, rescued: false, objective: "DOXX_CAPTURED", keyCollected: false, lockedCooldown: 0,
 });
 
 export const doxxHasBlueprints = (s: DoxxState) => s.objective !== "DOXX_CAPTURED";
+export const doxxHasKey = (s: DoxxState) => s.keyCollected;
+
+export function tryCollectDoxxKey(s: DoxxState, px: number, py: number, floorY: number): boolean {
+  if (s.keyCollected || s.rescued) return false;
+  if (Math.abs(px - DOXX_KEY_X) > DOXX_KEY_PICKUP_RANGE || py < floorY - 60) return false;
+  s.keyCollected = true;
+  return true;
+}
 
 export function tryCollectBlueprints(s: DoxxState, px: number, py: number, floorY: number): boolean {
   if (s.objective !== "DOXX_CAPTURED") return false;
@@ -45,7 +58,7 @@ export function canRescueDoxx(s: DoxxState, px: number, py: number, floorY: numb
 }
 
 export function beginDoxxRescue(s: DoxxState): boolean {
-  if (s.phase !== "caged" || s.objective !== "BLUEPRINTS_RECOVERED") return false;
+  if (s.phase !== "caged" || s.objective !== "BLUEPRINTS_RECOVERED" || !s.keyCollected) return false;
   s.phase = "opening";
   s.timer = 0;
   return true;
@@ -67,6 +80,7 @@ export function stepDoxx(s: DoxxState): boolean {
 
 export function doxxObjectiveText(s: DoxxState): string {
   if (s.objective === "DOXX_CAPTURED") return "OBJECTIVE: FIND DOXX'S BLUEPRINTS AND RESCUE DOXX";
+  if (s.objective === "BLUEPRINTS_RECOVERED" && !s.keyCollected) return "OBJECTIVE: BLUEPRINTS RECOVERED — FIND THE CAGE KEY";
   if (s.objective === "BLUEPRINTS_RECOVERED") return "OBJECTIVE: BLUEPRINTS RECOVERED — RESCUE DOXX";
   return "OBJECTIVE: DOXX RESCUED";
 }

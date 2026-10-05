@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  DOXX_BLUEPRINT_X, DOXX_CAGE_X, DOXX_OPEN_FRAMES, beginDoxxRescue, canRescueDoxx,
-  initialDoxxState, stepDoxx, tryCollectBlueprints, doxxObjectiveText,
+  DOXX_BLUEPRINT_X, DOXX_CAGE_X, DOXX_KEY_X, DOXX_OPEN_FRAMES, beginDoxxRescue, canRescueDoxx,
+  initialDoxxState, stepDoxx, tryCollectBlueprints, tryCollectDoxxKey, doxxObjectiveText,
 } from "../doxxRescue";
 
-describe("Doxx rescue + blueprints", () => {
+describe("Doxx rescue + blueprints + key", () => {
   it("cage stays locked without the blueprints", () => {
     const s = initialDoxxState();
     expect(canRescueDoxx(s, DOXX_CAGE_X, 320, 320)).toBe(true);
@@ -19,9 +19,21 @@ describe("Doxx rescue + blueprints", () => {
     expect(tryCollectBlueprints(s, DOXX_BLUEPRINT_X, 320, 320)).toBe(false);
     expect(DOXX_BLUEPRINT_X).toBeLessThan(DOXX_CAGE_X - 2000);
   });
-  it("rescues exactly once, state never goes backwards", () => {
+  it("key collects once, only at its spot, and the cage stays locked without it", () => {
     const s = initialDoxxState();
     tryCollectBlueprints(s, DOXX_BLUEPRINT_X, 320, 320);
+    expect(beginDoxxRescue(s)).toBe(false); // blueprints but no key
+    expect(doxxObjectiveText(s)).toContain("FIND THE CAGE KEY");
+    expect(tryCollectDoxxKey(s, DOXX_KEY_X - 300, 320, 320)).toBe(false);
+    expect(tryCollectDoxxKey(s, DOXX_KEY_X, 320, 320)).toBe(true);
+    expect(tryCollectDoxxKey(s, DOXX_KEY_X, 320, 320)).toBe(false);
+    expect(DOXX_KEY_X).toBeGreaterThan(DOXX_BLUEPRINT_X);
+    expect(DOXX_KEY_X).toBeLessThan(DOXX_CAGE_X);
+  });
+  it("rescues exactly once with blueprints AND key, state never goes backwards", () => {
+    const s = initialDoxxState();
+    tryCollectBlueprints(s, DOXX_BLUEPRINT_X, 320, 320);
+    tryCollectDoxxKey(s, DOXX_KEY_X, 320, 320);
     expect(beginDoxxRescue(s)).toBe(true);
     let freed = 0;
     for (let i = 0; i < DOXX_OPEN_FRAMES * 3; i++) if (stepDoxx(s)) freed++;
@@ -29,9 +41,10 @@ describe("Doxx rescue + blueprints", () => {
     expect(s.objective).toBe("DOXX_RESCUED");
     expect(beginDoxxRescue(s)).toBe(false);
     expect(tryCollectBlueprints(s, DOXX_BLUEPRINT_X, 320, 320)).toBe(false);
+    expect(tryCollectDoxxKey(s, DOXX_KEY_X, 320, 320)).toBe(false);
     expect(doxxObjectiveText(s)).toContain("DOXX RESCUED");
   });
   it("has no combat data", () => {
-    expect(Object.keys(initialDoxxState()).sort()).toEqual(["lockedCooldown", "objective", "phase", "rescued", "timer"]);
+    expect(Object.keys(initialDoxxState()).sort()).toEqual(["keyCollected", "lockedCooldown", "objective", "phase", "rescued", "timer"]);
   });
 });
