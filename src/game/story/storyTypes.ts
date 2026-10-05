@@ -33,6 +33,8 @@ export interface StoryCharacter {
   x?: number;
   /** Free placement: bottom offset, % of stage height (with `x`). */
   bottom?: number;
+  /** Tilt in degrees (e.g. a searching lean). */
+  rotate?: number;
 }
 
 export type StoryTransition = "fade" | "slide" | "cut";
@@ -44,6 +46,8 @@ export interface StoryPanelData {
   characters?: StoryCharacter[];
   /** Narration caption (italic box). */
   narration?: string;
+  /** Smaller secondary caption shown under `narration`. */
+  subNarration?: string;
   /** Character line. */
   dialogue?: { speaker: string; text: string; portrait?: StoryArtId };
   /** Auto-advance after this many ms (tap still advances earlier). */

@@ -31,6 +31,9 @@ import cut_sus_dog from "@/assets/story/cutouts/sus-dog.webp";
 import cut_b420_blaze_it from "@/assets/story/cutouts/420-blaze-it.webp";
 import cut_dobermann from "@/assets/story/cutouts/dobermann.webp";
 import cut_filf from "@/assets/story/cutouts/filf.webp";
+import hideSeekBg from "@/assets/story/story-hide-seek.jpg";
+import bushProp from "@/assets/story/story-bush.png";
+import magnifierProp from "@/assets/story/story-magnifier.png";
 import anonverseBg from "@/assets/story/story-anonverse.jpg";
 import type { StoryArtId, StoryPanelData, StoryPortrait } from "./storyTypes";
 
@@ -67,6 +70,9 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "cut-dobermann": { src: cut_dobermann, alt: "dobermann" },
   "cut-filf": { src: cut_filf, alt: "filf" },
   "cut-squirrel": { src: squirrelStory.url, alt: "Squirrel" },
+  "bg-hide-seek": { src: hideSeekBg, alt: "Anonverse park corner" },
+  "prop-bush": { src: bushProp, alt: "Hedge bush" },
+  "prop-magnifier": { src: magnifierProp, alt: "Magnifying glass" },
   "bg-anonverse": { src: anonverseBg, alt: "The peaceful futuristic Anonverse" },
 
 /**

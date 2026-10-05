@@ -79,3 +79,26 @@ export const STORY_PANEL_2_ANONVERSE: StoryScene = {
     },
   ],
 };
+
+/** Panel 3 — Waldoge hides, SUS Dog plays detective. */
+export const STORY_PANEL_3_HIDE_AND_SEEK: StoryScene = {
+  id: "story-3-hide-and-seek",
+  kind: "opening",
+  title: "WALDOGE: STREETS OF GAINS",
+  panels: [
+    {
+      background: "bg-hide-seek",
+      narration: "WALDOGE WOULD PLAY\nHIDE AND SEEK…",
+      subNarration: "WHILE SUS DOG PLAYED DETECTIVE,\nTRYING TO FIND HIM.",
+      transition: "fade",
+      characters: [
+        // Waldoge peeks out from behind the hedge (bush drawn after him).
+        { art: "cut-waldoge", x: 66, bottom: 14, scale: 0.62, rotate: -8 },
+        { art: "prop-bush", x: 64, bottom: 2, scale: 0.5 },
+        // SUS Dog searches on the path, leaning in the wrong direction.
+        { art: "cut-sus-dog", x: 22, bottom: 0, scale: 0.8, rotate: -6 },
+        { art: "prop-magnifier", x: 34, bottom: 40, scale: 0.22, flip: true },
+      ],
+    },
+  ],
+};
