@@ -198,3 +198,23 @@ export const STORY_PANEL_8_FILF_BADDIE: StoryScene = {
     },
   ],
 };
+
+/** Panel 9 — Squirrel ignored by the town while happily collecting nuts. */
+export const STORY_PANEL_9_SQUIRREL_NUTS: StoryScene = {
+  id: "story-9-squirrel-nuts",
+  kind: "opening",
+  title: "WALDOGE: STREETS OF GAINS",
+  panels: [
+    {
+      background: "bg-squirrel-nuts",
+      narration: "SQUIRREL WOULD GET IGNORED\nAND FIND NUTS.",
+      transition: "fade",
+      characters: [
+        // Supplied Squirrel artwork, unchanged. Its canvas carries large
+        // transparent margins, so `bottom` is shifted to keep his feet on
+        // the ground (about 40% of the image height is empty below him).
+        { art: "cut-squirrel", x: 70, bottom: -22, scale: 0.55 },
+      ],
+    },
+  ],
+};
