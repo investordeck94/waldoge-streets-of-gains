@@ -142,3 +142,22 @@ export const STORY_PANEL_5_DOXX_BLACKJACK: StoryScene = {
     },
   ],
 };
+
+/** Panel 6 — 420 Blaze It relaxing on an Anonverse sky terrace. */
+export const STORY_PANEL_6_BLAZE_CHILL: StoryScene = {
+  id: "story-6-blaze-chill",
+  kind: "opening",
+  title: "WALDOGE: STREETS OF GAINS",
+  panels: [
+    {
+      background: "bg-chill-terrace",
+      narration: "420 BLAZE IT\nWOULD GET STONED ALL DAY.",
+      transition: "fade",
+      characters: [
+        // Supplied 420 Blaze It artwork, lounging beside the hammock,
+        // tilted back into an easy, unhurried lean.
+        { art: "cut-420-blaze-it", x: 33, bottom: 0, scale: 0.58, rotate: -5 },
+      ],
+    },
+  ],
+};
