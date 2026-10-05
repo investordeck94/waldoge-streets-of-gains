@@ -29,6 +29,7 @@ import cut_dogevan from "@/assets/story/cutouts/dogevan.webp";
 import cut_doxx from "@/assets/story/cutouts/doxx.webp";
 import casinoBg from "@/assets/story/story-casino.jpg";
 import chillTerraceBg from "@/assets/story/story-chill-terrace.jpg";
+import watchtowerBg from "@/assets/story/story-watchtower.jpg";
 import cut_sus_dog from "@/assets/story/cutouts/sus-dog.webp";
 import cut_b420_blaze_it from "@/assets/story/cutouts/420-blaze-it.webp";
 import cut_dobermann from "@/assets/story/cutouts/dobermann.webp";
@@ -82,6 +83,7 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "prop-banana": { src: bananaProp, alt: "Banana" },
   "bg-casino": { src: casinoBg, alt: "Futuristic Anonverse casino with a blackjack table" },
   "bg-chill-terrace": { src: chillTerraceBg, alt: "Peaceful Anonverse sky terrace with a hammock" },
+  "bg-watchtower": { src: watchtowerBg, alt: "Stone watchtower rooftop overlooking the Anonverse at dusk" },
 
 /**
  * CANONICAL STORY CHARACTERS — approved artwork, used exactly as supplied
