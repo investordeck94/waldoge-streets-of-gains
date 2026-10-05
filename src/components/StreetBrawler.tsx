@@ -75,6 +75,11 @@ import { HARD_MODE_DIFFICULTY } from "@/lib/dogeos/weeklyCompetition";
 import type { RunResult } from "@/lib/dogeos/rewardsApi";
 import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter";
+import { drawFilf } from "@/game/presentation/render2d/filfSprites";
+import { FILF_LEVEL, FILF_CAGE_X, initialFilfState, canRescueFilf, beginFilfRescue, stepFilf } from "@/game/story/filfRescue";
+import { LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
+import type { StoryScene } from "@/game/story/storyTypes";
+import { StoryPanel } from "@/components/game/StoryPanel";
 import { drawWaldogeSprite, preloadWaldogeSprites } from "@/game/presentation/render2d/waldogeSprites";
 import { drawRuggerSprite, preloadRuggerSprites, type RuggerView, type RuggerForm } from "@/game/presentation/render2d/ruggerSprites";
 import { drawJeetSprite, preloadJeetSprites, type JeetView, type JeetForm } from "@/game/presentation/render2d/jeetSprites";
@@ -3210,6 +3215,24 @@ export const StreetBrawler: FC = () => {
   recordWeeklyRunRef.current = recordWeeklyRun;
 
   const pausedRef = useRef(false);
+  // Story / narration overlay (reusable). While open, the simulation is frozen.
+  const [storyScene, setStoryScene] = useState<StoryScene | null>(null);
+  const storyActiveRef = useRef(false);
+  const openStory = useCallback((scene: StoryScene) => {
+    storyActiveRef.current = true;
+    setStoryScene(scene);
+  }, []);
+  const closeStory = useCallback(() => {
+    storyActiveRef.current = false;
+    setStoryScene(null);
+    gameRef.current.keys.clear();
+    gameRef.current.keyJustPressed.clear();
+  }, []);
+  // FILF — Level 1 captured NPC (never an enemy; no combat data).
+  const filfRef = useRef(initialFilfState());
+  const filfRequestRef = useRef(false);
+  const filfPromptRef = useRef(false);
+  const [filfPrompt, setFilfPrompt] = useState(false);
   const [showCamDebug, setShowCamDebug] = useState(false);
   const camDebugRef = useRef(false);
   const [camPreset, setCamPreset] = useState<"snappy" | "buttery">("snappy");
@@ -3567,11 +3590,19 @@ export const StreetBrawler: FC = () => {
         })
         .catch(() => {});
     }
+    filfRef.current = initialFilfState();
+    filfRequestRef.current = false;
+    filfPromptRef.current = false;
+    setFilfPrompt(false);
+    storyActiveRef.current = false;
+    setStoryScene(null);
+    if (g.level === FILF_LEVEL) openStory(LEVEL1_OPENING);
     setGameState("playing");
     if (import.meta.env.DEV) {
       (window as unknown as { __sog?: unknown }).__sog = g;
+      (window as unknown as { __sogFilf?: unknown }).__sogFilf = filfRef.current;
     }
-  }, []);
+  }, [openStory]);
 
   // DEV-only debug handle: lets an automated browser session start a specific
   // district and inspect live physics state. Never present in production.
@@ -3609,6 +3640,7 @@ export const StreetBrawler: FC = () => {
     const onDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       if (!g.keys.has(key)) g.keyJustPressed.add(key);
+      if (key === "e" && !e.repeat) filfRequestRef.current = true;
       g.keys.add(key);
       const alt = codeToKey(e.code);
       if (alt && alt !== key) g.keys.add(alt);
@@ -3721,6 +3753,12 @@ export const StreetBrawler: FC = () => {
       // Keep only the current level's artwork in picture memory (no-op unless
       // the level changed). Presentation only — gameplay state is untouched.
       setResidentLevel(g.level);
+      if (storyActiveRef.current) {
+        // Story panel open: freeze the simulation, keep the last frame.
+        g.keyJustPressed.clear();
+        g.animFrame = requestAnimationFrame(tick);
+        return;
+      }
       if (pausedRef.current) {
         // Draw pause overlay over the last frame and skip simulation
         ctx.fillStyle = "rgba(0,0,0,0.55)";
@@ -5132,6 +5170,33 @@ export const StreetBrawler: FC = () => {
         setCitadelQuestState(g.citadelQuest);
       }
 
+      // LEVEL 1 STORY — FILF's cage. Deliberate interaction only (E key or
+      // the on-screen RESCUE FILF button); walking past never frees her.
+      {
+        const fs = filfRef.current;
+        let prompt = false;
+        if (g.level === FILF_LEVEL) {
+          const floorY = groundYAt(g.level, FILF_CAGE_X, undefined, false);
+          prompt = p.hp > 0 && canRescueFilf(fs, p.x, p.y, floorY);
+          const wants = filfRequestRef.current;
+          if (prompt && wants && beginFilfRescue(fs)) {
+            sfx(() => SFX.waveStart());
+            g.effects.push({ x: FILF_CAGE_X, y: floorY - 130, timer: 90, text: "CAGE OPENED!", color: "#ffd23f", size: 18 });
+            prompt = false;
+          }
+          if (stepFilf(fs)) {
+            sfx(() => SFX.victory());
+            g.effects.push({ x: FILF_CAGE_X + 60, y: floorY - 120, timer: 120, text: "FILF RESCUED!", color: "#ff5fa2", size: 22 });
+            openStory(LEVEL1_FILF_RESCUE);
+          }
+        }
+        filfRequestRef.current = false;
+        if (prompt !== filfPromptRef.current) {
+          filfPromptRef.current = prompt;
+          setFilfPrompt(prompt);
+        }
+      }
+
       // Wave / Level progression
       const alive = g.enemies.filter(e => e.state !== "dead");
       const managedHardWave = g.hardEncounter;
@@ -5205,6 +5270,7 @@ export const StreetBrawler: FC = () => {
             g.wave = 0;
             setLevel(g.level);
             setWave(0);
+            if (g.level === FILF_LEVEL + 1 && g.level < TOTAL_LEVELS) openStory(LEVEL1_COMPLETE);
             if (g.level >= TOTAL_LEVELS) {
               g.running = false;
               sfx(() => SFX.victory());
@@ -5522,6 +5588,13 @@ export const StreetBrawler: FC = () => {
       for (const obj of g.alleyObjects) {
         if (obj.broken && obj.breakTimer <= 0) continue;
         drawAlleyObject(ctx, obj, g.camX);
+      }
+
+      if (g.level === FILF_LEVEL) {
+        drawFilf(
+          ctx, filfRef.current, g.camX, groundYAt(g.level, FILF_CAGE_X, undefined, false),
+          g.player?.x ?? 0, g.animFrameCount, filfPromptRef.current,
+        );
       }
 
       // Player ground shadow (helps judge platform landings)
@@ -6198,6 +6271,18 @@ export const StreetBrawler: FC = () => {
             display: gameState === "playing" ? "block" : "none",
           }}
         />
+        {gameState === "playing" && filfPrompt && !storyScene && (
+          <button
+            type="button"
+            onClick={() => { filfRequestRef.current = true; }}
+            className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse"
+          >
+            RESCUE FILF
+          </button>
+        )}
+        {gameState === "playing" && storyScene && (
+          <StoryPanel scene={storyScene} onDone={closeStory} />
+        )}
         {/* Landscape rotate hint — portrait-only game */}
         {gameState === "playing" && (
           <div className="landscape-rotate-hint absolute inset-0 hidden items-center justify-center bg-background/95 rounded-lg z-50 p-6 text-center">
