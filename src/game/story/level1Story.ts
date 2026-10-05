@@ -97,7 +97,7 @@ export const STORY_PANEL_3_HIDE_AND_SEEK: StoryScene = {
         { art: "prop-bush", x: 64, bottom: 2, scale: 0.5 },
         // SUS Dog searches on the path, leaning in the wrong direction.
         { art: "cut-sus-dog", x: 22, bottom: 0, scale: 0.8, rotate: -6 },
-        { art: "prop-magnifier", x: 9, bottom: 34, scale: 0.2, flip: true },
+        { art: "prop-magnifier", x: 34, bottom: 40, scale: 0.22, flip: true },
       ],
     },
   ],
