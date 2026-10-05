@@ -2,6 +2,16 @@ import type { StoryScene } from "./storyTypes";
 
 /** Level 1 (Anon Eco) story content. Only Level 1 is authored for now. */
 
+/** Panel 1 — Earth from space. Shown before the Level 1 opening. */
+export const STORY_PANEL_1_EARTH: StoryScene = {
+  id: "story-1-earth",
+  kind: "opening",
+  title: "WALDOGE: STREETS OF GAINS",
+  panels: [
+    { background: "bg-earth", narration: "ONCE UPON A TIME,\nON A PLANET CALLED EARTH…", transition: "fade" },
+  ],
+};
+
 export const LEVEL1_OPENING: StoryScene = {
   id: "l1-opening",
   kind: "opening",

@@ -20,6 +20,7 @@ import sus_dogStory from "@/assets/story/story-sus-dog.jpeg.asset.json";
 import blaze420_blaze_itStory from "@/assets/story/story-420-blaze-it.jpeg.asset.json";
 import dobermannStory from "@/assets/story/story-dobermann.jpeg.asset.json";
 import filfStory from "@/assets/story/story-filf.jpeg.asset.json";
+import earthBg from "@/assets/story/story-earth.jpg";
 import type { StoryArtId, StoryPanelData, StoryPortrait } from "./storyTypes";
 
 export interface StoryArt {
@@ -42,6 +43,7 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "filf-happy": filf("portraitHappy"),
   "filf-thankful": filf("portraitThankful"),
   "filf-full": filf("idle"),
+  "bg-earth": { src: earthBg, alt: "Planet Earth from space" },
 
 /**
  * CANONICAL STORY CHARACTERS — approved artwork, used exactly as supplied
