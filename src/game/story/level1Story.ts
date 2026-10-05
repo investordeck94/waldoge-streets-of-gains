@@ -124,3 +124,21 @@ export const STORY_PANEL_4_MONKO_BANANAS: StoryScene = {
     },
   ],
 };
+
+/** Panel 5 — Doxx enjoying blackjack in an Anonverse casino. */
+export const STORY_PANEL_5_DOXX_BLACKJACK: StoryScene = {
+  id: "story-5-doxx-blackjack",
+  kind: "opening",
+  title: "WALDOGE: STREETS OF GAINS",
+  panels: [
+    {
+      background: "bg-casino",
+      narration: "DOXX WOULD PLAY\nBLACKJACK.",
+      transition: "fade",
+      characters: [
+        // Supplied Doxx artwork, seated at the table's edge facing his cards.
+        { art: "cut-doxx", x: 76, bottom: 0, scale: 0.7 },
+      ],
+    },
+  ],
+};
