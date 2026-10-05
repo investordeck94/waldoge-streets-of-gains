@@ -163,7 +163,7 @@ export function StoryPanel({ scene, onDone }: { scene: StoryScene; onDone: () =>
         <div key={index} className={TRANSITION[panel.transition ?? "slide"]}>
           <Stage panel={panel} />
           {panel.narration && (
-            <p className="text-foreground text-base sm:text-xl italic leading-snug mb-2 break-words">{panel.narration}</p>
+            <p className="text-foreground text-base sm:text-xl italic leading-snug mb-2 break-words whitespace-pre-line">{panel.narration}</p>
           )}
           {line && (
             <div className="flex gap-3 sm:gap-4 items-start">
