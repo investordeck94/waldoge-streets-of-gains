@@ -25,12 +25,10 @@ export const LEVEL4_OPENING_FUDDER_REVEAL: StoryScene = {
       locationLabel: "FUDDER DETENTION BLOCK",
     },
     {
-      background: "bg-fudder-world",
-      characters: [
-        { art: "fudder-story", x: 27, bottom: 0, scale: 0.9 },
-        { art: "baddie-caged", x: 72, bottom: 1, scale: 0.72 },
-      ],
-      dialogue: { speaker: "FUDDER", text: "DON'T WORRY, BADDIE…\nI'LL MAKE SURE EVERYONE KNOWS WALDOGE IS A JUST A SHIT COIN.\nI HAVE POWERFUL FRIENDS." },
+      // Full painted panel: Fudder, Baddie caged, speech bubble and the three
+      // labelled screens (JEET / RUGGER / BAD ACTOR — text only, no portraits)
+      // are baked into the artwork.
+      background: "bg-fudder-panel",
     },
     {
       background: "bg-fudder-world",

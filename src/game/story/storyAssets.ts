@@ -60,6 +60,7 @@ import baddieWorried from "@/assets/baddie-worried-local.png";
 import baddieThankful from "@/assets/baddie-thankful-local.png";
 import fudderAtlas from "@/assets/fudder-atlas.png.asset.json";
 import fudderWorldBg from "@/assets/level4-media.jpg-local.jpg";
+import fudderPanelBg from "@/assets/level4-fudder-panel.png";
 import type { StoryArtId, StoryPanelData, StoryPortrait } from "./storyTypes";
 
 export interface StoryArt {
@@ -131,6 +132,7 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "rugger-head": { src: ruggerHead, alt: "Rugger" },
   "badactor-head": { src: badActorHead, alt: "Bad Actor" },
   "bg-fudder-world": { src: fudderWorldBg, alt: "Fudder's controlled propaganda world" },
+  "bg-fudder-panel": { src: fudderPanelBg, alt: "Fudder in his media room with Baddie caged; screens labelled JEET — WORKED FOR ME, RUGGER — WORKED FOR ME, BAD ACTOR — MY RIGHT HAND MAN" },
   "fudder-story": { src: fudderAtlas.url, frame: { x: 21, y: 8, w: 190, h: 241 }, sheet: { w: 1024, h: 512 }, alt: "Fudder" },
   "baddie-caged": { src: baddieCaged, alt: "Baddie locked inside a cage" },
   "baddie-thankful": { src: baddieThankful, alt: "Baddie thankful after her rescue" },
