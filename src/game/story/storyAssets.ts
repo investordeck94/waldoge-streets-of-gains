@@ -44,6 +44,9 @@ import magnifierProp from "@/assets/story/story-magnifier.png";
 import bananaStackBg from "@/assets/story/story-banana-stack.jpg";
 import bananaProp from "@/assets/story/story-banana.png";
 import anonverseBg from "@/assets/story/story-anonverse.jpg";
+import { DOXX_ATLAS_SIZE, DOXX_ATLAS_URL, DOXX_FRAMES } from "@/game/presentation/render2d/doxxSprites";
+import l2CallBg from "@/assets/story/story-l2-call.jpg";
+import ruggerCellBg from "@/assets/story/story-rugger-cell.jpg";
 import type { StoryArtId, StoryPanelData, StoryPortrait } from "./storyTypes";
 
 export interface StoryArt {
@@ -56,6 +59,10 @@ export interface StoryArt {
 
 const filf = (id: keyof typeof FILF_FRAMES, alt = "FILF"): StoryArt => ({
   src: FILF_ATLAS_URL, frame: FILF_FRAMES[id], sheet: FILF_ATLAS_SIZE, alt,
+});
+
+const doxx = (id: keyof typeof DOXX_FRAMES, alt = "Doxx"): StoryArt => ({
+  src: DOXX_ATLAS_URL, frame: DOXX_FRAMES[id], sheet: DOXX_ATLAS_SIZE, alt,
 });
 
 export const STORY_ART: Record<StoryArtId, StoryArt> = {
@@ -91,6 +98,15 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "bg-show-off": { src: showOffBg, alt: "Sunny Anonverse promenade with cheering townsfolk holding up 10 score cards" },
   "bg-squirrel-nuts": { src: squirrelNutsBg, alt: "Sunny Anonverse plaza corner with an oak tree and scattered acorns" },
   "bg-anon-mayor": { src: anonMayorBg, alt: "Anonverse town square seen from a mayor's balcony podium, residents below" },
+  "bg-l2-call": { src: l2CallBg, alt: "Neon Anon Eco street at night" },
+  "bg-rugger-cell": { src: ruggerCellBg, alt: "Secret holding cell in Rugger's casino vault" },
+  // Doxx — crops of the supplied canonical NPC sheet; blueprints = supplied art.
+  "doxx-tied-phone": doxx("tiedPhone"),
+  "doxx-tied-phone-2": doxx("tiedPhone2"),
+  "doxx-bust-call": doxx("bustCall"),
+  "doxx-bust-urgent": doxx("bustUrgent"),
+  "doxx-phone": doxx("phone", "Hidden phone"),
+  "doxx-blueprint": doxx("blueprint", "Doxx's blueprints"),
   "bg-once-peaceful": { src: oncePeacefulBg, alt: "The Anonverse at dusk under storm clouds, streets shuttered and empty" },
 
 /**
