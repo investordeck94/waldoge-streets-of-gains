@@ -12,7 +12,6 @@ export const LEVEL2_ENDING_BAD_ACTOR_CALL: StoryScene = {
   panels: [
     {
       background: "bg-rugger-cell",
-      characters: [{ art: "rugger-head", x: 50, bottom: 0, scale: 0.6, rotate: -70 }],
       narration: "RUGGER IS DOWN… BUT STILL TALKING.",
       dialogue: { speaker: "RUGGER", text: "I WAS ONLY WORKING ON\n★ BAD ACTOR'S ★ ORDERS…", portrait: "rugger-head" },
       transition: "fade",
