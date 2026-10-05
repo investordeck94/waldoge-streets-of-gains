@@ -31,6 +31,7 @@ import casinoBg from "@/assets/story/story-casino.jpg";
 import chillTerraceBg from "@/assets/story/story-chill-terrace.jpg";
 import watchtowerBg from "@/assets/story/story-watchtower.jpg";
 import showOffBg from "@/assets/story/story-show-off.jpg";
+import squirrelNutsBg from "@/assets/story/story-squirrel-nuts.jpg";
 import cut_sus_dog from "@/assets/story/cutouts/sus-dog.webp";
 import cut_b420_blaze_it from "@/assets/story/cutouts/420-blaze-it.webp";
 import cut_dobermann from "@/assets/story/cutouts/dobermann.webp";
@@ -86,6 +87,7 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "bg-chill-terrace": { src: chillTerraceBg, alt: "Peaceful Anonverse sky terrace with a hammock" },
   "bg-watchtower": { src: watchtowerBg, alt: "Stone watchtower rooftop overlooking the Anonverse at dusk" },
   "bg-show-off": { src: showOffBg, alt: "Sunny Anonverse promenade with cheering townsfolk holding up 10 score cards" },
+  "bg-squirrel-nuts": { src: squirrelNutsBg, alt: "Sunny Anonverse plaza corner with an oak tree and scattered acorns" },
 
 /**
  * CANONICAL STORY CHARACTERS — approved artwork, used exactly as supplied
