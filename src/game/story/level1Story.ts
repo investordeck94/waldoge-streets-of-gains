@@ -102,3 +102,25 @@ export const STORY_PANEL_3_HIDE_AND_SEEK: StoryScene = {
     },
   ],
 };
+
+/** Panel 4 — Monko peacefully stacking bananas. */
+export const STORY_PANEL_4_MONKO_BANANAS: StoryScene = {
+  id: "story-4-monko-bananas",
+  kind: "opening",
+  title: "WALDOGE: STREETS OF GAINS",
+  panels: [
+    {
+      background: "bg-banana-stack",
+      narration: "MONKO WOULD SPEND\nHIS DAYS STACKING BANANAS.",
+      transition: "fade",
+      characters: [
+        // Monko faces the tower he is building (his cutout faces left).
+        { art: "cut-monko", x: 67, bottom: 0, scale: 0.52 },
+        // The next banana, mid-flight on its way to the top of the stack.
+        { art: "prop-banana", x: 59, bottom: 55, scale: 0.075, rotate: -18 },
+        // One ready at his feet.
+        { art: "prop-banana", x: 61, bottom: 3, scale: 0.05 },
+      ],
+    },
+  ],
+};

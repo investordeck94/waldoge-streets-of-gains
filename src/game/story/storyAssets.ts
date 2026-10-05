@@ -34,6 +34,8 @@ import cut_filf from "@/assets/story/cutouts/filf.webp";
 import hideSeekBg from "@/assets/story/story-hide-seek.jpg";
 import bushProp from "@/assets/story/story-bush.png";
 import magnifierProp from "@/assets/story/story-magnifier.png";
+import bananaStackBg from "@/assets/story/story-banana-stack.jpg";
+import bananaProp from "@/assets/story/story-banana.png";
 import anonverseBg from "@/assets/story/story-anonverse.jpg";
 import type { StoryArtId, StoryPanelData, StoryPortrait } from "./storyTypes";
 
@@ -74,6 +76,8 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "prop-bush": { src: bushProp, alt: "Hedge bush" },
   "prop-magnifier": { src: magnifierProp, alt: "Magnifying glass" },
   "bg-anonverse": { src: anonverseBg, alt: "The peaceful futuristic Anonverse" },
+  "bg-banana-stack": { src: bananaStackBg, alt: "Anonverse plaza with a ridiculous banana tower" },
+  "prop-banana": { src: bananaProp, alt: "Banana" },
 
 /**
  * CANONICAL STORY CHARACTERS — approved artwork, used exactly as supplied
