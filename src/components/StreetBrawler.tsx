@@ -76,9 +76,9 @@ import type { RunResult } from "@/lib/dogeos/rewardsApi";
 import { stepProjectile, stepPowerUp, progressOf } from "@/game/engine";
 import { drawWaldogeFighter } from "@/game/presentation/render2d/waldogeFighter";
 import { drawFilf } from "@/game/presentation/render2d/filfSprites";
-import { FILF_LEVEL, FILF_CAGE_X, FILF_KEY_X, initialFilfState, canRescueFilf, beginFilfRescue, stepFilf, tryCollectFilfKey, filfHasKey } from "@/game/story/filfRescue";
+import { FILF_LEVEL, FILF_CAGE_X, FILF_KEY_X, FILF_RESCUE_BONUS, initialFilfState, canRescueFilf, beginFilfRescue, stepFilf, tryCollectFilfKey, filfHasKey } from "@/game/story/filfRescue";
 import { drawDoxx, drawDoxxBlueprints } from "@/game/presentation/render2d/doxxSprites";
-import { DOXX_LEVEL, DOXX_CAGE_X, DOXX_BLUEPRINT_X, initialDoxxState, canRescueDoxx, beginDoxxRescue, stepDoxx, tryCollectBlueprints, doxxHasBlueprints, doxxObjectiveText } from "@/game/story/doxxRescue";
+import { DOXX_LEVEL, DOXX_CAGE_X, DOXX_BLUEPRINT_X, DOXX_RESCUE_BONUS, initialDoxxState, canRescueDoxx, beginDoxxRescue, stepDoxx, tryCollectBlueprints, doxxHasBlueprints, doxxObjectiveText } from "@/game/story/doxxRescue";
 import { LEVEL2_OPENING_CALL, LEVEL2_DOXX_RESCUE } from "@/game/story/level2Story";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
 import { STORY_PANEL_1_EARTH, STORY_PANEL_2_ANONVERSE, STORY_PANEL_3_HIDE_AND_SEEK, STORY_PANEL_4_MONKO_BANANAS, STORY_PANEL_5_DOXX_BLACKJACK, STORY_PANEL_6_BLAZE_CHILL, STORY_PANEL_7_DOBERMANN_GUARD, STORY_PANEL_8_FILF_BADDIE, STORY_PANEL_9_SQUIRREL_NUTS, STORY_PANEL_10_ANON_MAYOR, STORY_PANEL_11_PEACE_ENDS, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
@@ -5225,6 +5225,9 @@ export const StreetBrawler: FC = () => {
           if (stepFilf(fs)) {
             sfx(() => SFX.victory());
             g.effects.push({ x: FILF_CAGE_X + 60, y: floorY - 120, timer: 120, text: "FILF RESCUED!", color: "#ff5fa2", size: 22 });
+            g.score += FILF_RESCUE_BONUS;
+            setScore(g.score);
+            g.effects.push({ x: FILF_CAGE_X + 60, y: floorY - 160, timer: 140, text: `+${FILF_RESCUE_BONUS} RESCUE BONUS`, color: "#ffd23f", size: 16 });
             openStory(LEVEL1_FILF_RESCUE);
           }
         }
@@ -5255,6 +5258,9 @@ export const StreetBrawler: FC = () => {
             if (stepDoxx(ds)) {
               sfx(() => SFX.victory());
               g.effects.push({ x: DOXX_CAGE_X + 80, y: cageFloor - 140, timer: 120, text: "DOXX RESCUED!", color: "#ffd23f", size: 22 });
+              g.score += DOXX_RESCUE_BONUS;
+              setScore(g.score);
+              g.effects.push({ x: DOXX_CAGE_X + 80, y: cageFloor - 180, timer: 140, text: `+${DOXX_RESCUE_BONUS} RESCUE BONUS`, color: "#9cc8ff", size: 16 });
               setDoxxObjective(doxxObjectiveText(ds));
               openStory(LEVEL2_DOXX_RESCUE);
             }
