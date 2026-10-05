@@ -23,12 +23,12 @@ describe("Doxx rescue + blueprints + key", () => {
     const s = initialDoxxState();
     tryCollectBlueprints(s, DOXX_BLUEPRINT_X, 320, 320);
     expect(beginDoxxRescue(s)).toBe(false); // blueprints but no key
+    expect(doxxObjectiveText(s)).toContain("FIND THE CAGE KEY");
     expect(tryCollectDoxxKey(s, DOXX_KEY_X - 300, 320, 320)).toBe(false);
     expect(tryCollectDoxxKey(s, DOXX_KEY_X, 320, 320)).toBe(true);
     expect(tryCollectDoxxKey(s, DOXX_KEY_X, 320, 320)).toBe(false);
     expect(DOXX_KEY_X).toBeGreaterThan(DOXX_BLUEPRINT_X);
     expect(DOXX_KEY_X).toBeLessThan(DOXX_CAGE_X);
-    expect(doxxObjectiveText(s)).toContain("FIND THE CAGE KEY");
   });
   it("rescues exactly once with blueprints AND key, state never goes backwards", () => {
     const s = initialDoxxState();
