@@ -6519,9 +6519,10 @@ export const StreetBrawler: FC = () => {
             } else {
               // Gauntlet art is a forearm + fist (fist centre ≈ x52,y22 of a 72×39 cell).
               // Pin the fist exactly over Waldoge's paw so it reads as worn, not floating.
-              const s = 0.5;
-              c.translate(hand.x, hand.y);
-              c.scale(1 / k, 1 / k);
+              // Drawn in frame-local units so it scales with the paw; the HAND anchors sit
+              // at the wrist, the visible paw is ~(+14, +12) further out.
+              const s = 1.7;
+              c.translate(hand.x + 14, hand.y + 12);
               drawStrip(c, "gauntletHold", striking ? 1 : 0, -(52 - 36) * s, (39 - 22) * s, s, false);
             }
             c.restore();
