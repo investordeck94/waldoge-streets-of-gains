@@ -6825,13 +6825,13 @@ export const StreetBrawler: FC = () => {
           <LegendaryToast key={`l${legendToast}`} onDone={() => setLegendToast(0)} />
         )}
         {gameState === "playing" && !storyScene && [DOXX_LEVEL, CAPTIVES_LEVEL, BADDIE_LEVEL, MONKO_LEVEL].includes(level) && (
-          <Button type="button" variant="outline" size="icon" aria-label="Objectives information" title="Objectives information"
-            aria-expanded={objectivesOpen} aria-controls="game-objectives"
+          <button type="button"
+            aria-label="Objectives" aria-expanded={objectivesOpen} aria-controls="game-objectives"
             onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}
             onClick={() => setObjectivesOpen((open) => !open)}
-            className="absolute right-1 top-1 z-40 h-7 w-7 border-primary/60 bg-background/80 text-primary font-mono font-bold rounded-full">
-            <span aria-hidden="true">i</span>
-          </Button>
+            className="absolute right-1 top-1 z-40 h-7 px-2 border border-primary/60 bg-background/80 text-primary font-mono font-bold text-[10px] sm:text-xs tracking-wider rounded-full uppercase">
+            Objectives
+          </button>
         )}
         {gameState === "playing" && objectivesOpen && level === DOXX_LEVEL && !storyScene && (
           <div id="game-objectives" className="absolute right-1 top-9 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
