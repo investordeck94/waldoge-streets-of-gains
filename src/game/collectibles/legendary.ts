@@ -3,10 +3,8 @@
  * Fixed, hand-picked placements on existing geometry (no new platforms).
  *
  * 01 — Level 6: mid-top walkway (y=108, away from its ladder); a hop from its top.
- *      that walkway is the challenge, then a hop from its top.
  * 02 — Level 7: above the copy-west walkway (y=262), past its ladder. Pickup needs
  *      feet ≤125 (rise 137): single jump peaks ~120 (too low), double ~210.
- *      jump lifts Waldoge high enough.
  */
 export interface LegendarySpot { id: string; level: number; x: number; y: number }
 
