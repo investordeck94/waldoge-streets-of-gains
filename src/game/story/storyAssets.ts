@@ -83,6 +83,9 @@ import l6ColdCall from "@/assets/level6-coldcall.jpg";
 import l6Funnel from "@/assets/level6-funnel.jpg";
 import l6Manipulation from "@/assets/level6-manipulation.jpg";
 import l6Hq from "@/assets/level6-hq.jpg";
+import l7CitadelBg from "@/assets/level7-citadel-bg.jpg";
+import l7AnonRescued from "@/assets/anon/anon-rescued.png";
+import l7AnonCaged from "@/assets/anon/anon-caged.png";
 import type { StoryArtId, StoryPanelData, StoryPortrait } from "./storyTypes";
 
 export interface StoryArt {
@@ -185,6 +188,9 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "bg-l6-funnel": { src: l6Funnel, alt: "The Funnel" },
   "bg-l6-manipulation": { src: l6Manipulation, alt: "Manipulation District" },
   "bg-l6-hq": { src: l6Hq, alt: "Mr Marketer's HQ" },
+  "bg-l7-citadel": { src: l7CitadelBg, alt: "The Citadel" },
+  "l7-anon-rescued": { src: l7AnonRescued, alt: "Anon, freed from his cage" },
+  "l7-anon-cage": { src: l7AnonCaged, alt: "Anon's cage" },
   "bg-once-peaceful": { src: oncePeacefulBg, alt: "The Anonverse at dusk under storm clouds, streets shuttered and empty" },
 
 /**
