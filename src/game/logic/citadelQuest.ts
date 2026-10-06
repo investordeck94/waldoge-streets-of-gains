@@ -11,8 +11,9 @@ export const initialCitadelQuest = (): CitadelQuestState => ({
   rescued: false,
 });
 
-export function unlockCitadelKey(state: CitadelQuestState, clearedWave: number, keyGuardWave: number): void {
-  if (clearedWave > keyGuardWave) state.keyAvailable = true;
+export function unlockCitadelKey(state: CitadelQuestState, clearedWave: number, keyGuardWave: number, fatCatsAlive = 0): void {
+  // The key only appears once the key-guard wave (THE FAT CATS) is beaten.
+  if (clearedWave > keyGuardWave && fatCatsAlive === 0) state.keyAvailable = true;
 }
 
 export function collectCitadelKey(
@@ -32,7 +33,7 @@ export function rescueAnon(
   cage: { x: number; y: number },
 ): boolean {
   if (!state.keyTaken || state.rescued) return false;
-  if (Math.abs(player.x - cage.x) >= 72 || Math.abs(player.y - cage.y) >= 48) return false;
+  if (Math.abs(player.x - cage.x) >= 110 || Math.abs(player.y - cage.y) >= 48) return false;
   state.rescued = true;
   return true;
 }

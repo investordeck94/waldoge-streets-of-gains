@@ -147,6 +147,7 @@ import {
   CITADEL_KEY_POSITION,
   preloadTakerCitadel,
   setCitadelQuestState,
+  getCitadelQuestState,
 } from "@/game/presentation/render2d/takerCitadel";
 import {
   CITADEL_KEY_GUARD_WAVE,
@@ -3353,6 +3354,8 @@ export const StreetBrawler: FC = () => {
   const [baddiePrompt, setBaddiePrompt] = useState(false);
   const [squirrelPrompt, setSquirrelPrompt] = useState(false);
   const squirrelPromptRef = useRef(false);
+  const [anonPrompt, setAnonPrompt] = useState(false);
+  const anonPromptRef = useRef(false);
   const [baddieObjective, setBaddieObjective] = useState(() => baddieObjectiveText(initialBaddieState()));
   // LEVEL 5 — Monko's finite banana recovery and cage rescue (never combat state).
   const monkoRef = useRef(initialMonkoState());
@@ -3737,6 +3740,7 @@ export const StreetBrawler: FC = () => {
     baddiePromptRef.current = false;
     setBaddiePrompt(false);
     setSquirrelPrompt(false); squirrelPromptRef.current = false;
+    setAnonPrompt(false); anonPromptRef.current = false;
     setBaddieObjective(baddieObjectiveText(baddieRef.current));
     monkoRef.current = initialMonkoState();
     monkoPromptRef.current = false;
@@ -5325,12 +5329,22 @@ export const StreetBrawler: FC = () => {
           g.hardEncounter ? Math.max(p.x + 620, g.camX + CANVAS_W + 60) : undefined,
         );
         const q = g.citadelQuest;
-        unlockCitadelKey(q, g.wave, CITADEL_KEY_GUARD_WAVE);
+        unlockCitadelKey(q, g.wave, CITADEL_KEY_GUARD_WAVE,
+          g.enemies.filter((e) => isCatGuard(e) && e.hp > 0 && e.state !== "dead").length);
         if (collectCitadelKey(q, p, CITADEL_KEY_POSITION)) {
           sfx(() => SFX.waveStart());
           g.effects.push({ x: p.x, y: p.y - 72, timer: 130, text: "KEY TO ANON'S CAGE", color: "#ffd23f", size: 20 });
         }
-        if (rescueAnon(q, p, ANON_CAGE_POSITION)) {
+        // Anon's cage: same yellow UNLOCK button as Levels 1–6; key required, rescue once.
+        const anonNear = !q.rescued && Math.abs(p.x - ANON_CAGE_POSITION.x) < 110 && Math.abs(p.y - ANON_CAGE_POSITION.y) < 48;
+        if (anonPromptRef.current !== anonNear) { anonPromptRef.current = anonNear; setAnonPrompt(anonNear); }
+        let anonUnlock = false;
+        if (anonNear && filfRequestRef.current) {
+          filfRequestRef.current = false;
+          if (!q.keyTaken) g.effects.push({ x: p.x, y: p.y - 72, timer: 90, text: "LOCKED — THE FAT CATS HAVE THE KEY", color: "#ff5566", size: 16 });
+          else anonUnlock = true;
+        }
+        if (anonUnlock && rescueAnon(q, p, ANON_CAGE_POSITION)) {
           sfx(() => SFX.victory());
           g.effects.push({ x: p.x, y: p.y - 72, timer: 160, text: "ANON RESCUED!", color: "#c36bff", size: 22 });
         }
@@ -6887,6 +6901,15 @@ export const StreetBrawler: FC = () => {
             className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse"
           >
             {!monkoRef.current.bananasRecovered ? "CAGE LOCKED — RECOVER BANANAS" : !monkoRef.current.cageKey ? "CAGE LOCKED — FIND CAGE KEY" : "RESCUE MONKO"}
+          </button>
+        )}
+        {gameState === "playing" && anonPrompt && !storyScene && (
+          <button
+            type="button"
+            onClick={() => { filfRequestRef.current = true; }}
+            className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse"
+          >
+            {getCitadelQuestState().keyTaken ? "UNLOCK" : "CAGE LOCKED — DEFEAT THE FAT CATS"}
           </button>
         )}
         {gameState === "playing" && squirrelPrompt && !storyScene && (
