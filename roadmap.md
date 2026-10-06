@@ -1,10 +1,10 @@
 # Waldoge: Streets of Gains — combat pass
 
 ## Current — Canonical Monko NPC and Level 5 rescue
-- [ ] Replace every old pink Monko game/story reference with the supplied canonical sprite sheet
-- [ ] Add the Level 5 opening story, physical banana stash, cage, and one-way rescue objective
-- [ ] Keep Monko outside player, enemy, companion, attack, damage, and combat systems
-- [ ] Verify full-body story framing and Level 5 rescue on desktop and phone-sized views
+- [x] Replace every old pink Monko game/story reference with the supplied canonical sprite sheet
+- [x] Add the Level 5 opening story, physical banana stash, cage, and one-way rescue objective
+- [x] Keep Monko outside player, enemy, companion, attack, damage, and combat systems
+- [x] Verify full-body story framing and Level 5 rescue on desktop and phone-sized views
 
 ## Current — Level 4 Baddie rescue
 - [ ] Add the supplied Baddie cage and release artwork as Level 4-only assets
