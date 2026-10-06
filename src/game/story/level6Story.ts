@@ -89,3 +89,28 @@ export const LEVEL6_OPENING_MARKETING_MACHINE: StoryScene = {
     },
   ],
 };
+
+/** Plays once, right after Squirrel's cage is unlocked. */
+export const LEVEL6_SQUIRREL_RESCUE: StoryScene = {
+  id: "l6-squirrel-rescue",
+  kind: "rescue",
+  title: "SQUIRREL RESCUED",
+  panels: [
+    {
+      treatment: T, panelTitle: "SQUIRREL RESCUED", background: "bg-l6-hq",
+      characters: [{ art: "cut-waldoge", x: 24, bottom: 2, scale: 0.7, dimmed: true }, { art: "l6-sq-idle", x: 72, bottom: 2, scale: 0.5 }],
+      dialogue: { speaker: "SQUIRREL", portrait: "l6-sq-portrait", text: "YOU CAME BACK FOR ME. THANK YOU FOR NOT IGNORING ME.", bubble: { x: 40, y: 10, tailX: 70, tailY: 50 } },
+      transition: "fade",
+    },
+    {
+      treatment: T, panelTitle: "SQUIRREL RESCUED", background: "bg-l6-hq",
+      characters: [{ art: "cut-waldoge", x: 24, bottom: 2, scale: 0.7 }, { art: "l6-sq-idle", x: 72, bottom: 2, scale: 0.5, dimmed: true }],
+      dialogue: { speaker: "WALDOGE", portrait: "waldoge", text: "IT'S TIME TO FIND OUT WHO'S REALLY BEHIND SENDING THESE GOONS AFTER US ANONS.", bubble: { x: 58, y: 10, tailX: 28, tailY: 40 } },
+    },
+    {
+      treatment: T, panelTitle: "SQUIRREL RESCUED", background: "bg-l6-hq",
+      characters: [{ art: "cut-waldoge", x: 24, bottom: 2, scale: 0.7 }, { art: "l6-sq-idle", x: 72, bottom: 2, scale: 0.5, dimmed: true }],
+      dialogue: { speaker: "WALDOGE", portrait: "waldoge", text: "BUT FIRST… I'LL DEAL WITH THIS BOOSTS-AND-TRENDING LOSER. TIME TO GIVE HIM A MAXIMUM-AWARENESS SLAP TO THE FACE.", bubble: { x: 58, y: 10, tailX: 28, tailY: 40 } },
+    },
+  ],
+};

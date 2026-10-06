@@ -90,7 +90,7 @@ import { LEVEL4_OPENING_FUDDER_REVEAL, LEVEL4_BADDIE_RESCUE } from "@/game/story
 import { drawMonkoQuest } from "@/game/presentation/render2d/monkoCaptiveSprites";
 import { MONKO_BANANA_Y, MONKO_CAGE_Y, MONKO_BANANA_KEY_X, MONKO_BANANA_KEY_Y, MONKO_CAGE_KEY_X, MONKO_CAGE_KEY_Y, tryCollectMonkoKeys, nearMonkoBananas, MONKO_LEVEL, MONKO_BANANA_X, MONKO_CAGE_X, MONKO_RESCUE_BONUS, initialMonkoState, tryRecoverMonkoBananas, canRescueMonko, beginMonkoRescue, stepMonko, monkoObjectiveText } from "@/game/story/monkoRescue";
 import { LEVEL5_OPENING_EXIT_LIQUIDITY, LEVEL5_MONKO_RESCUE } from "@/game/story/level5Story";
-import { LEVEL6_OPENING_MARKETING_MACHINE } from "@/game/story/level6Story";
+import { LEVEL6_OPENING_MARKETING_MACHINE, LEVEL6_SQUIRREL_RESCUE } from "@/game/story/level6Story";
 import { LEVEL2_ENDING_BAD_ACTOR_CALL } from "@/game/story/level2EndStory";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
 import { glassesForLevel, touchesGlass, type GlassSpot } from "@/game/collectibles/glasses";
@@ -120,6 +120,7 @@ import {
   CAGE_POSITION,
   KEY_POSITION,
   preloadMarketerTerritory,
+  getMarketerQuestState,
   setMarketerQuestState,
 } from "@/game/presentation/render2d/marketerTerritory";
 import {
@@ -3350,6 +3351,8 @@ export const StreetBrawler: FC = () => {
   const baddieRef = useRef(initialBaddieState());
   const baddiePromptRef = useRef(false);
   const [baddiePrompt, setBaddiePrompt] = useState(false);
+  const [squirrelPrompt, setSquirrelPrompt] = useState(false);
+  const squirrelPromptRef = useRef(false);
   const [baddieObjective, setBaddieObjective] = useState(() => baddieObjectiveText(initialBaddieState()));
   // LEVEL 5 — Monko's finite banana recovery and cage rescue (never combat state).
   const monkoRef = useRef(initialMonkoState());
@@ -3733,6 +3736,7 @@ export const StreetBrawler: FC = () => {
     baddieRef.current = initialBaddieState();
     baddiePromptRef.current = false;
     setBaddiePrompt(false);
+    setSquirrelPrompt(false); squirrelPromptRef.current = false;
     setBaddieObjective(baddieObjectiveText(baddieRef.current));
     monkoRef.current = initialMonkoState();
     monkoPromptRef.current = false;
@@ -5285,11 +5289,22 @@ export const StreetBrawler: FC = () => {
           sfx(() => SFX.waveStart());
           g.effects.push({ x: p.x, y: p.y - 110, timer: 130, text: "🔑 KEY OBTAINED", color: "#ffd23f", size: 20 });
         }
-        if (q.keyTaken && !q.rescued
-          && Math.abs(p.x - CAGE_POSITION.x) < 80 && Math.abs(p.y - GROUND_Y) < 90) {
-          q.rescued = true;
-          sfx(() => SFX.victory());
-          g.effects.push({ x: p.x, y: p.y - 110, timer: 160, text: "SQUIRREL RESCUED!", color: "#54ff9f", size: 22 });
+        // Squirrel's cage: same yellow UNLOCK button as Levels 1–5; key required, rescue once.
+        const sqNear = !q.rescued && Math.abs(p.x - CAGE_POSITION.x) < 110 && Math.abs(p.y - GROUND_Y) < 90;
+        if (sqNear && filfRequestRef.current) {
+          filfRequestRef.current = false;
+          if (!q.keyTaken) {
+            g.effects.push({ x: p.x, y: p.y - 110, timer: 90, text: "LOCKED — RAIDING TEAM HAS THE KEY", color: "#ff5566", size: 16 });
+          } else {
+            q.rescued = true;
+            sfx(() => SFX.victory());
+            g.effects.push({ x: p.x, y: p.y - 110, timer: 160, text: "SQUIRREL RESCUED!", color: "#54ff9f", size: 22 });
+            openStory(LEVEL6_SQUIRREL_RESCUE);
+          }
+        }
+        if (squirrelPromptRef.current !== (sqNear && !q.rescued)) {
+          squirrelPromptRef.current = sqNear && !q.rescued;
+          setSquirrelPrompt(squirrelPromptRef.current);
         }
         setMarketerQuestState(q);
       } else if (g.marketerQuest.keyAvailable || g.marketerQuest.keyTaken || g.marketerQuest.rescued) {
@@ -6872,6 +6887,15 @@ export const StreetBrawler: FC = () => {
             className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse"
           >
             {!monkoRef.current.bananasRecovered ? "CAGE LOCKED — RECOVER BANANAS" : !monkoRef.current.cageKey ? "CAGE LOCKED — FIND CAGE KEY" : "RESCUE MONKO"}
+          </button>
+        )}
+        {gameState === "playing" && squirrelPrompt && !storyScene && (
+          <button
+            type="button"
+            onClick={() => { filfRequestRef.current = true; }}
+            className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse"
+          >
+            {getMarketerQuestState().keyTaken ? "UNLOCK" : "CAGE LOCKED — FIND KEY"}
           </button>
         )}
         {gameState === "playing" && baddiePrompt && !storyScene && (
