@@ -3,7 +3,7 @@ import type { StoryScene } from "./storyTypes";
 const captured = { art: "monko-caged", x: 78, bottom: 2, scale: 0.76 } as const;
 const exitPortrait = "exit-liquidity-head";
 
-/** Exact seven-panel Level 5 opening. Exit Liquidity owns every dialogue line. */
+/** Exact seven-panel Level 5 opening — speaker ownership per supplied board. */
 export const LEVEL5_OPENING_EXIT_LIQUIDITY: StoryScene = {
   id: "l5-opening-exit-liquidity",
   kind: "opening",
@@ -12,23 +12,17 @@ export const LEVEL5_OPENING_EXIT_LIQUIDITY: StoryScene = {
     {
       background: "bg-level5-cemetery",
       narration: "WELCOME TO THE\nGRAVEYARD OF GAINS…",
-      subNarration: "WHERE FAILED PROJECTS,\nDEAD COINS AND LOST FORTUNES\nCOME TO DIE.",
+      subNarration: "WHERE FAILED PROJECTS,\nDEAD COINS AND LOST\nFORTUNES COME TO DIE.",
       transition: "fade",
     },
     {
-      background: "bg-level5-throne",
-      characters: [captured],
-      narration: "MONKO HAS BEEN CAPTURED.",
-      subNarration: "EXIT LIQUIDITY HAS TAKEN HIM PRISONER.",
+      background: "bg-level5-cemetery",
+      characters: [{ ...captured, x: 50 }],
+      dialogue: { speaker: "MONKO", portrait: "monko-portrait-worried", text: "LET ME OUT! MY BANANAS! THOSE ARE MY BANANAS!" },
     },
     {
       background: "bg-level5-throne",
-      characters: [captured],
-      dialogue: {
-        speaker: "EXIT LIQUIDITY",
-        portrait: exitPortrait,
-        text: "EVERYTHING YOU HAVE… EVERYTHING THE ANONVERSE HAS BUILT… IT ALL BELONGS TO ME NOW. I'LL TAKE IT ONE PIECE AT A TIME.",
-      },
+      dialogue: { speaker: "EXIT LIQUIDITY", portrait: exitPortrait, text: "ALL YOUR ASSETS BELONG TO ME NOW." },
     },
     {
       background: "bg-level5-throne",
@@ -36,30 +30,31 @@ export const LEVEL5_OPENING_EXIT_LIQUIDITY: StoryScene = {
       dialogue: {
         speaker: "EXIT LIQUIDITY",
         portrait: exitPortrait,
-        text: "AND I'M STARTING WITH YOU, MONKO. YOUR BANANAS ARE MINE.",
+        text: "ONE BY ONE I WILL TAKE THE ANONVERSE ASSETS. STARTING WITH YOU, MONKO. YOUR BANANAS ARE MINE.",
+      },
+      subNarration: "MONKO: “NO! MY BANANAS!”",
+    },
+    {
+      background: "bg-level5-throne",
+      characters: [{ art: "cut-waldoge", x: 76, bottom: 2, scale: 0.6 }],
+      dialogue: {
+        speaker: "EXIT LIQUIDITY",
+        portrait: exitPortrait,
+        text: "THEN THAT CRETIN WHO'S BEEN CAUSING MY ORGANISATION PROBLEMS… THAT HIDING DOG. LET'S SEE IF HE COMES OUT OF HIDING NOW.",
       },
     },
     {
       background: "bg-level5-throne",
-      characters: [captured],
       dialogue: {
         speaker: "EXIT LIQUIDITY",
         portrait: exitPortrait,
-        text: "AND THEN THERE'S THAT CRETIN HIDING IN THE SHADOWS… WALDOGE. YOU'VE BEEN CAUSING MY ORGANISATION PROBLEMS FOR FAR TOO LONG. LET'S SEE HOW LONG YOU STAY IN HIDING.",
-      },
-    },
-    {
-      background: "bg-level5-throne",
-      characters: [captured],
-      dialogue: {
-        speaker: "EXIT LIQUIDITY",
-        portrait: exitPortrait,
-        text: "ONE THING YOU SHOULD UNDERSTAND… I'M NOT FUDDER. AND I'M CERTAINLY NOT ONE OF HIS MINIONS. WHAT'S COMING FOR YOU IS MUCH WORSE. YOU HAVEN'T EVEN SEEN THE BEGINNING YET.",
+        text: "ONE THING I MUST SAY… I'M NOT FUDDER. AND I'M CERTAINLY NOT ONE OF HIS MINIONS. YOU'RE IN FOR A WHOLE LOT WORSE.",
       },
     },
     {
       background: "bg-level5-cemetery",
-      narration: "MONKO HAS BEEN CAPTURED.\nEXIT LIQUIDITY HAS STOLEN HIS BANANAS.",
+      characters: [{ art: "cut-waldoge", x: 50, bottom: 2, scale: 0.7 }],
+      narration: "MONKO HAS BEEN CAPTURED.\nHIS BANANAS HAVE BEEN STOLEN.",
       subNarration: "FIND MONKO.\nRECOVER HIS BANANAS.\nRESCUE MONKO.\nDEFEAT EXIT LIQUIDITY.",
       transition: "fade",
     },
