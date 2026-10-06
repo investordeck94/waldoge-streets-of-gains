@@ -294,6 +294,7 @@ type Entity = PlayerEntity;
 // Splash / ComboState / Projectile) now live in src/game/Types.ts (Phase 1).
 // Byte-identical shapes; every existing call site continues to compile
 // unchanged via the imports below.
+import { Backpack } from "@/components/game/Backpack";
 import type {
   Projectile,
   PowerUp,
@@ -3246,6 +3247,13 @@ export const StreetBrawler: FC = () => {
   recordWeeklyRunRef.current = recordWeeklyRun;
 
   const pausedRef = useRef(false);
+  const bagPrevPausedRef = useRef<boolean | null>(null);
+  const onBackpackOpen = useCallback((open: boolean) => {
+    const g = gameRef.current;
+    if (open) { bagPrevPausedRef.current = pausedRef.current; pausedRef.current = true; }
+    else if (bagPrevPausedRef.current !== null) { pausedRef.current = bagPrevPausedRef.current; bagPrevPausedRef.current = null; }
+    g?.keys?.clear(); g?.keyJustPressed?.clear();
+  }, []);
   // Story / narration overlay (reusable). While open, the simulation is frozen.
   const [storyScene, setStoryScene] = useState<StoryScene | null>(null);
   const storyActiveRef = useRef(false);
@@ -6631,6 +6639,7 @@ export const StreetBrawler: FC = () => {
             </div>
           );
         })()}
+        {gameState === "playing" && !storyScene && <Backpack onOpenChange={onBackpackOpen} />}
         {gameState === "playing" && glassToast > 0 && !storyScene && (
           <GlassToast key={glassToast} onDone={() => setGlassToast(0)} />
         )}
