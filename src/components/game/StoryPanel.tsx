@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import type { StoryArtId, StoryCharacter, StoryPanelData, StoryScene } from "@/game/story/storyTypes";
 import { STORY_ART, prefetchPanel, releaseStoryPrefetch } from "@/game/story/storyAssets";
+import { storyCharacterFlip } from "@/game/story/storyFacing";
 
 /** Renders one registered art entry (whole image or a sprite-sheet crop). */
 function Art({ id, height, flip, className = "", fit = "contain" }: {
@@ -62,14 +63,14 @@ function Stage({ panel, num }: { panel: StoryPanelData; num?: number }) {
               ...(c.rotate ? { rotate: `${c.rotate}deg`, transformOrigin: "bottom center" } : {}),
             }}
           >
-            <Art id={c.art} flip={c.flip} height="100%" className="max-w-none" />
+            <Art id={c.art} flip={storyCharacterFlip(panel, c)} height="100%" className="max-w-none" />
           </div>
         );
       })}
       {panel.monitor && (
         <div className="absolute -translate-x-1/2 aspect-[4/3] border-4 border-muted bg-background shadow-[0_0_24px_hsl(var(--accent)/0.5)] overflow-hidden" style={{ left: `${panel.monitor.x}%`, top: `${panel.monitor.y}%`, width: `${panel.monitor.w}%` }}>
           <div className="absolute inset-0 bg-gradient-to-b from-accent/30 to-primary/20" />
-          <div className="absolute inset-x-0 bottom-0 h-[92%] flex justify-center"><Art id={panel.monitor.art} height="100%" className="max-w-none" /></div>
+          <div className="absolute inset-x-0 bottom-0 h-[92%] flex justify-center"><Art id={panel.monitor.art} flip={storyCharacterFlip(panel, { art: panel.monitor.art, x: panel.monitor.x })} height="100%" className="max-w-none" /></div>
           <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(transparent_50%,hsl(var(--background)/0.6)_50%)] [background-size:100%_3px]" />
         </div>
       )}
