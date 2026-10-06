@@ -35,7 +35,7 @@ export function getCoins(): number { return data.coins; }
 export function isGlassCollected(id: string): boolean { return collectedSet.has(id); }
 export function collectedCount(ids: readonly string[]): number { return ids.filter((id) => collectedSet.has(id)).length; }
 
-/** Atomic + idempotent: returns true only the first time an id is claimed. */
+/** Legendary one-time collectibles: returns true only the first time ever. */
 export function claimCollectible(id: string, value: number): boolean {
   if (collectedSet.has(id)) return false;
   collectedSet.add(id);
@@ -44,8 +44,14 @@ export function claimCollectible(id: string, value: number): boolean {
   return true;
 }
 
+/** Magnifying glasses pay coins EVERY game: once per id per run (run set is
+ *  cleared by resetRunPickups on new game). Atomic + idempotent within a run. */
 export function claimGlass(id: string): boolean {
-  return claimCollectible(id, GLASS_COIN_VALUE);
+  if (runPicked.has(id)) return false;
+  runPicked.add(id);
+  data.coins += GLASS_COIN_VALUE;
+  commit();
+  return true;
 }
 
 /** For the upcoming inventory shop. Returns false (no change) if unaffordable. */

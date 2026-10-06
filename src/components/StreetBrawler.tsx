@@ -5424,11 +5424,11 @@ export const StreetBrawler: FC = () => {
         // COLLECTIBLES — idempotent glass claims (+coins only; score untouched).
         if (p.hp > 0) {
           for (const gl of glassesForLevel(g.level)) {
-            if (!isPickedThisRun(gl.id) && touchesGlass(gl, p.x, p.y) && pickThisRun(gl.id)) {
+            if (!isPickedThisRun(gl.id) && touchesGlass(gl, p.x, p.y)) {
               glassPopsRef.current.push({ g: gl, t: 0 });
               sfx(() => SFX.waveStart());
               setGlassTick((n) => n + 1);
-              if (!claimGlass(gl.id)) continue;
+              if (!claimGlass(gl.id)) continue; // claimGlass marks the per-run pickup
               g.effects.push({ x: gl.x, y: gl.y - 30, timer: 70, text: `+${GLASS_COIN_VALUE} COINS`, color: "#ffd23f", size: 16 });
               setGlassTick((n) => n + 1);
               setGlassToast((n) => n + 1);
