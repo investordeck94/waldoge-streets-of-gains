@@ -296,7 +296,7 @@ type Entity = PlayerEntity;
 // unchanged via the imports below.
 import { Backpack } from "@/components/game/Backpack";
 import { LuckyDipModal } from "@/components/game/LuckyDipModal";
-import { getInventory, useItem as consumeItem, type ItemId } from "@/game/inventory/inventory";
+import { getInventory, useItem as consumeItem, recordWeaponHit, ITEM_DEFS, type ItemId } from "@/game/inventory/inventory";
 import { LUCKY_DIP_STANDS, BLAZE_HANDOVER_OFFSET_X, INTERACT_RANGE, equipmentDamage, DOG_MAX_KILLS, DOG_BOSS_CHIP_TOTAL, type DogAlly } from "@/game/inventory/luckyDip";
 import { drawStrip, drawLuckyDipSign, preloadLuckyDipArt } from "@/game/presentation/render2d/luckyDipSprites";
 import { drawDoxxStand } from "@/game/presentation/render2d/doxxSprites";
@@ -4499,6 +4499,7 @@ export const StreetBrawler: FC = () => {
 
           if (inRange) {
             e.hp -= equipmentDamage(dmg, e, isCatGuard(e), getInventory().equipped);
+            { const wb = recordWeaponHit().broke; if (wb) g.effects.push({ x: p.x, y: p.y - 140, timer: 90, text: `${ITEM_DEFS[wb].name} BROKE!`, color: "#ff5a5a", size: 14 }); }
             e.state = "hit";
             if (isCatGuard(e)) {
               // Fat Cat hit feedback (presentation only): white flash + reel.
