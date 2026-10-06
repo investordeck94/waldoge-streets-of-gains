@@ -42,6 +42,7 @@
  * ============================================================================= */
 import { FC, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { TitleScreen, type ContinueInfo } from "@/components/game/TitleScreen";
+import { Button } from "@/components/ui/button";
 // Static asset URLs + preloaded boss-head Image objects live in
 // src/game/assets/index.ts. Individual named exports are aliased below
 // so every existing draw-site keeps its short local name unchanged.
@@ -3213,6 +3214,8 @@ export const StreetBrawler: FC = () => {
   const [hardTrace, setHardTrace] = useState<string | null>(null);
   const hardTraceRef = useRef<string | null>(null);
   const [level, setLevel] = useState(0);
+  const [objectivesOpen, setObjectivesOpen] = useState(false);
+  useEffect(() => { setObjectivesOpen(false); }, [level, gameState]);
   const [score, setScore] = useState(0);
   // Magnifying-glass collectibles → coins. Never touches score.
   const [coins, setCoins] = useState(getCoins);
@@ -6773,7 +6776,7 @@ export const StreetBrawler: FC = () => {
       )}
 
       <div
-        className="relative w-full mx-auto"
+        className={`relative w-full mx-auto ${gameState === "playing" ? "mt-7 sm:mt-8" : ""}`}
         style={{
           // Allow the canvas to grow up to ~55svh on mobile so it's not tiny,
           // but never wider than the native 800px so visuals stay crisp.
@@ -6795,7 +6798,7 @@ export const StreetBrawler: FC = () => {
           const ids = glassesForLevel(level).map((gl) => gl.id);
           void glassTick;
           return (
-            <div className="absolute left-1 top-7 sm:top-10 z-30 pointer-events-none flex items-center gap-1.5 font-mono font-bold text-[9px] sm:text-xs tracking-wider bg-background/80 border border-primary/60 px-1.5 py-0.5 rounded" aria-label="Collectibles">
+            <div className="absolute left-1 -top-6 sm:-top-7 z-30 pointer-events-none flex items-center gap-1.5 font-mono font-bold text-[9px] sm:text-xs tracking-wider bg-background/80 border border-primary/60 px-1.5 py-0.5 rounded" aria-label="Collectibles">
               <img src={glassIcon} alt="" className="h-3.5 sm:h-5 w-auto" style={{ imageRendering: "pixelated" }} />
               <span className="text-foreground">{pickedCount(ids)}/{ids.length}</span>
               <span className="inline-block h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 rounded-full bg-primary border border-primary-foreground/40" />
@@ -6821,23 +6824,32 @@ export const StreetBrawler: FC = () => {
         {gameState === "playing" && legendToast > 0 && !storyScene && (
           <LegendaryToast key={`l${legendToast}`} onDone={() => setLegendToast(0)} />
         )}
-        {gameState === "playing" && level === DOXX_LEVEL && !storyScene && (
-          <div className="absolute right-1 top-1 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[42%]">
+        {gameState === "playing" && !storyScene && [DOXX_LEVEL, CAPTIVES_LEVEL, BADDIE_LEVEL, MONKO_LEVEL].includes(level) && (
+          <Button type="button" variant="outline" size="icon" aria-label="Objectives information" title="Objectives information"
+            aria-expanded={objectivesOpen} aria-controls="game-objectives"
+            onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}
+            onClick={() => setObjectivesOpen((open) => !open)}
+            className="absolute right-1 top-1 z-40 h-7 w-7 border-primary/60 bg-background/80 text-primary font-mono font-bold rounded-full">
+            <span aria-hidden="true">i</span>
+          </Button>
+        )}
+        {gameState === "playing" && objectivesOpen && level === DOXX_LEVEL && !storyScene && (
+          <div id="game-objectives" className="absolute right-1 top-9 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {doxxObjective}
           </div>
         )}
-        {gameState === "playing" && level === CAPTIVES_LEVEL && !storyScene && (
-          <div className="absolute right-1 top-1 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[42%]">
+        {gameState === "playing" && objectivesOpen && level === CAPTIVES_LEVEL && !storyScene && (
+          <div id="game-objectives" className="absolute right-1 top-9 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {captivesObjective}
           </div>
         )}
-        {gameState === "playing" && level === BADDIE_LEVEL && !storyScene && (
-          <div className="absolute right-1 top-1 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[42%]">
+        {gameState === "playing" && objectivesOpen && level === BADDIE_LEVEL && !storyScene && (
+          <div id="game-objectives" className="absolute right-1 top-9 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {baddieObjective}
           </div>
         )}
-        {gameState === "playing" && level === MONKO_LEVEL && !storyScene && (
-          <div className="absolute right-1 top-1 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+        {gameState === "playing" && objectivesOpen && level === MONKO_LEVEL && !storyScene && (
+          <div id="game-objectives" className="absolute right-1 top-9 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {monkoObjective}
           </div>
         )}
