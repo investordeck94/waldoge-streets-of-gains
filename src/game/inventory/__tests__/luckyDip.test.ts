@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { getCoins, spendCoins, claimCollectible } from "@/game/collectibles/coinWallet";
 import { getInventory, useItem } from "../inventory";
-import { purchaseLuckyDip, LUCKY_DIP_STANDS, claimBlazeHandover, resetBlazeRun, equipmentDamage } from "../luckyDip";
+import { purchaseLuckyDip, LUCKY_DIP_STANDS, equipmentDamage } from "../luckyDip";
 
 describe("Lucky Dip", () => {
   beforeEach(() => { spendCoins(getCoins()); });
@@ -18,12 +18,6 @@ describe("Lucky Dip", () => {
     expect(getCoins()).toBe(0);
     const after = Object.values(getInventory().items).reduce((a, b) => a + (b ?? 0), 0);
     expect(after).toBe(before + 1);
-  });
-  it("420 handover pays once per level per run", () => {
-    resetBlazeRun();
-    expect(claimBlazeHandover(3)).toBe(true);
-    expect(claimBlazeHandover(3)).toBe(false);
-    expect(claimBlazeHandover(0)).toBe(false);
   });
   it("equipment one-shots standard enemies but never one-shots bosses", () => {
     expect(equipmentDamage(12, { hp: 80, maxHp: 80 }, false, "sidearm")).toBe(80);

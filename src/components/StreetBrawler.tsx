@@ -297,7 +297,7 @@ type Entity = PlayerEntity;
 import { Backpack } from "@/components/game/Backpack";
 import { LuckyDipModal } from "@/components/game/LuckyDipModal";
 import { getInventory, useItem as consumeItem, type ItemId } from "@/game/inventory/inventory";
-import { LUCKY_DIP_STANDS, BLAZE_NPC_X, INTERACT_RANGE, blazeAvailable, claimBlazeHandover, resetBlazeRun, equipmentDamage, DOG_MAX_KILLS, DOG_BOSS_CHIP_TOTAL, type DogAlly } from "@/game/inventory/luckyDip";
+import { LUCKY_DIP_STANDS, BLAZE_HANDOVER_OFFSET_X, INTERACT_RANGE, equipmentDamage, DOG_MAX_KILLS, DOG_BOSS_CHIP_TOTAL, type DogAlly } from "@/game/inventory/luckyDip";
 import { drawStrip, drawLuckyDipSign, preloadLuckyDipArt } from "@/game/presentation/render2d/luckyDipSprites";
 import { drawDoxxStand } from "@/game/presentation/render2d/doxxSprites";
 import type {
@@ -3278,9 +3278,9 @@ export const StreetBrawler: FC = () => {
   const pausedRef = useRef(false);
   const bagPrevPausedRef = useRef<boolean | null>(null);
   const dogRef = useRef<DogAlly | null>(null);
-  const blazeRef = useRef<{ level: number; phase: "idle" | "hand" | "vanish" | "gone"; t: number }>({ level: -1, phase: "idle", t: 0 });
-  const ldPromptRef = useRef<"dip" | "blaze" | null>(null);
-  const [ldPrompt, setLdPrompt] = useState<"dip" | "blaze" | null>(null);
+  const blazeRef = useRef<{ level: number; phase: "hand" | "vanish" | "gone"; t: number; x: number }>({ level: -1, phase: "gone", t: 0, x: 0 });
+  const ldPromptRef = useRef<"dip" | null>(null);
+  const [ldPrompt, setLdPrompt] = useState<"dip" | null>(null);
   const [shopOpen, setShopOpen] = useState(false);
   const shopOpenRef = useRef(false);
   const onBackpackOpen = useCallback((open: boolean) => {
@@ -3609,7 +3609,7 @@ export const StreetBrawler: FC = () => {
   // resumes at the furthest district reached in the save file. Omitted for a
   // fresh run, keeping the original level-0 / query-override behaviour.
   const startGame = useCallback((diff: Difficulty = "normal", startLevel?: number, freePlay = false) => {
-    resetRunPickups(); resetBlazeRun(); dogRef.current = null; preloadLuckyDipArt();
+    resetRunPickups(); blazeRef.current = { level: -1, phase: "gone", t: 0, x: 0 }; dogRef.current = null; preloadLuckyDipArt();
     const g = gameRef.current;
     freePlayRef.current = freePlay;
     g.difficulty = diff;
@@ -5561,23 +5561,21 @@ export const StreetBrawler: FC = () => {
         }
         // LUCKY DIP stall (L3–7) + 420 BLAZE IT handover NPC + DOBERMANN ally.
         {
-          let lp: "dip" | "blaze" | null = null;
+          let lp: "dip" | null = null;
           const standX = LUCKY_DIP_STANDS[g.level];
           if (standX !== undefined && p.hp > 0 && Math.abs(p.x - standX) < INTERACT_RANGE && Math.abs(p.y - groundYAt(g.level, standX, undefined, false)) < 30) lp = "dip";
-          const bz = blazeRef.current;
-          if (bz.level !== g.level) { bz.level = g.level; bz.phase = blazeAvailable(g.level) ? "idle" : "gone"; bz.t = 0; }
-          const bx = BLAZE_NPC_X[g.level];
-          if (bx !== undefined && bz.phase === "idle" && p.hp > 0 && Math.abs(p.x - bx) < INTERACT_RANGE && Math.abs(p.y - groundYAt(g.level, bx, undefined, false)) < 30) lp = "blaze";
           if (filfRequestRef.current && lp === "dip" && !shopOpenRef.current) {
             shopOpenRef.current = true; setShopOpen(true);
-          } else if (filfRequestRef.current && lp === "blaze" && bz.phase === "idle") {
-            bz.phase = "hand"; bz.t = 0;
           }
-          if (bz.phase === "hand") {
+          // 420 Blaze It: temporary presentation of a Lucky Dip health reward only.
+          const bz = blazeRef.current;
+          if (bz.level !== g.level) bz.phase = "gone";
+          else if (bz.phase === "hand") {
             bz.t++;
-            if (bz.t === 56 && claimBlazeHandover(g.level) && bx !== undefined) {
+            if (bz.t === 56) {
               sfx(() => SFX.waveStart());
-              g.effects.push({ x: bx, y: groundYAt(g.level, bx, undefined, false) - 120, timer: 110, text: "HEALTH RESTORE ITEM +1", color: "#7dff6a", size: 16 });
+              g.effects.push({ x: bz.x, y: groundYAt(g.level, bz.x, undefined, false) - 130, timer: 110, text: "420 BLAZE IT", color: "#7dff6a", size: 16 });
+              g.effects.push({ x: bz.x, y: groundYAt(g.level, bz.x, undefined, false) - 110, timer: 110, text: "HEALTH ITEM RECEIVED!", color: "#7dff6a", size: 14 });
             }
             if (bz.t >= 72) { bz.phase = "vanish"; bz.t = 0; }
           } else if (bz.phase === "vanish") { bz.t++; if (bz.t >= 48) bz.phase = "gone"; }
@@ -6067,20 +6065,12 @@ export const StreetBrawler: FC = () => {
             drawLuckyDipSign(ctx, sx + 22, fy, g.animFrameCount, ldPromptRef.current === "dip" ? "LUCKY DIP [E]" : null);
           }
         }
-        const bx = BLAZE_NPC_X[g.level]; const bz = blazeRef.current;
-        if (bx !== undefined && bz.level === g.level && bz.phase !== "gone") {
-          const fy = groundYAt(g.level, bx, undefined, false); const sx = bx - g.camX;
-          const flip = (g.player?.x ?? 0) < bx;
-          if (bz.phase === "idle") drawStrip(ctx, "blazeIdle", Math.floor(g.animFrameCount / 14) % 3, sx, fy, 1.45, flip);
-          else if (bz.phase === "hand") drawStrip(ctx, "blazeHand", bz.t / 9, sx, fy, 1.45, flip);
+        const bz = blazeRef.current;
+        if (bz.level === g.level && bz.phase !== "gone") {
+          const fy = groundYAt(g.level, bz.x, undefined, false); const sx = bz.x - g.camX;
+          const flip = (g.player?.x ?? 0) < bz.x;
+          if (bz.phase === "hand") drawStrip(ctx, "blazeHand", bz.t / 9, sx, fy, 1.45, flip);
           else drawStrip(ctx, "blazeVanish", bz.t / 8, sx, fy, 1.45, flip);
-          if (bz.phase === "idle" && ldPromptRef.current === "blaze") {
-            ctx.save(); ctx.font = "bold 12px monospace"; ctx.textAlign = "center";
-            const label = "TALK TO 420 BLAZE IT [E]"; const w = ctx.measureText(label).width + 14;
-            ctx.fillStyle = "rgba(10,6,16,0.85)"; ctx.fillRect(sx - w / 2, fy - 136, w, 20);
-            ctx.strokeStyle = "#7dff6a"; ctx.strokeRect(sx - w / 2, fy - 136, w, 20);
-            ctx.fillStyle = "#fff"; ctx.fillText(label, sx, fy - 122); ctx.restore();
-          }
         }
       }
       if (g.level === FILF_LEVEL && !filfHasKey(filfRef.current)) {
@@ -6818,11 +6808,11 @@ export const StreetBrawler: FC = () => {
         {gameState === "playing" && ldPrompt && !storyScene && !shopOpen && (
           <button type="button" onClick={() => { filfRequestRef.current = true; }}
             className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse">
-            {ldPrompt === "dip" ? "DOXX LUCKY DIP" : "TALK TO 420 BLAZE IT"}
+            DOXX LUCKY DIP
           </button>
         )}
         {gameState === "playing" && shopOpen && (
-          <LuckyDipModal onClose={() => { shopOpenRef.current = false; setShopOpen(false); }} onOpenChange={onBackpackOpen} />
+          <LuckyDipModal onClose={() => { shopOpenRef.current = false; setShopOpen(false); }} onOpenChange={onBackpackOpen} onReward={(r) => { if (r !== "health") return; const g = gameRef.current; const sx0 = LUCKY_DIP_STANDS[g?.level ?? -1]; if (!g || sx0 === undefined) return; blazeRef.current = { level: g.level, phase: "hand", t: 0, x: sx0 + BLAZE_HANDOVER_OFFSET_X }; }} />
         )}
         {gameState === "playing" && glassToast > 0 && !storyScene && (
           <GlassToast key={glassToast} onDone={() => setGlassToast(0)} />
