@@ -95,6 +95,10 @@ import { glassesForLevel, touchesGlass, type GlassSpot } from "@/game/collectibl
 import { claimGlass, collectedCount, getCoins, isGlassCollected, subscribeCoins, GLASS_COIN_VALUE } from "@/game/collectibles/coinWallet";
 import { drawGlass } from "@/game/presentation/render2d/glassSprites";
 import glassIcon from "@/assets/glass/frame5.png";
+import { LEGENDARY, legendaryForLevel, touchesLegendary, LEGENDARY_COIN_VALUE, type LegendarySpot } from "@/game/collectibles/legendary";
+import { claimCollectible } from "@/game/collectibles/coinWallet";
+import { drawCandy } from "@/game/presentation/render2d/candySprites";
+import candyIcon from "@/assets/candy/candy.png";
 import { STORY_PANEL_1_EARTH, STORY_PANEL_2_ANONVERSE, STORY_PANEL_3_HIDE_AND_SEEK, STORY_PANEL_4_MONKO_BANANAS, STORY_PANEL_5_DOXX_BLACKJACK, STORY_PANEL_6_BLAZE_CHILL, STORY_PANEL_7_DOBERMANN_GUARD, STORY_PANEL_8_FILF_BADDIE, STORY_PANEL_9_SQUIRREL_NUTS, STORY_PANEL_10_ANON_MAYOR, STORY_PANEL_11_PEACE_ENDS, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
 import type { StoryScene } from "@/game/story/storyTypes";
 import { StoryPanel } from "@/components/game/StoryPanel";
@@ -3184,6 +3188,8 @@ export const StreetBrawler: FC = () => {
   const [glassTick, setGlassTick] = useState(0);
   const [glassToast, setGlassToast] = useState(0);
   const glassPopsRef = useRef<{ g: GlassSpot; t: number }[]>([]);
+  const [legendToast, setLegendToast] = useState(0);
+  const candyPopsRef = useRef<{ c: LegendarySpot; t: number }[]>([]);
   useEffect(() => subscribeCoins((w) => setCoins(w.coins)), []);
   const [playerHp, setPlayerHp] = useState(100);
   const [comboCount, setComboCount] = useState(0);
@@ -5424,6 +5430,15 @@ export const StreetBrawler: FC = () => {
               setGlassToast((n) => n + 1);
             }
           }
+          for (const lc of legendaryForLevel(g.level)) {
+            if (!isGlassCollected(lc.id) && touchesLegendary(lc, p.x, p.y) && claimCollectible(lc.id, LEGENDARY_COIN_VALUE)) {
+              candyPopsRef.current.push({ c: lc, t: 0 });
+              sfx(() => SFX.waveStart());
+              g.effects.push({ x: lc.x, y: Math.max(40, lc.y + 30), timer: 90, text: `+${LEGENDARY_COIN_VALUE} COINS`, color: "#ffe066", size: 22 });
+              setGlassTick((n) => n + 1);
+              setLegendToast((n) => n + 1);
+            }
+          }
         }
         // LEVEL 5 STORY — one fixed banana stash unlocks Monko's one-way rescue.
         {
@@ -5890,6 +5905,12 @@ export const StreetBrawler: FC = () => {
         pp.t += 1;
         drawGlass(ctx, pp.g, g.camX, g.animFrameCount, pp.t / 24);
         return pp.t < 24;
+      });
+      for (const lc of legendaryForLevel(g.level)) if (!isGlassCollected(lc.id)) drawCandy(ctx, lc, g.camX, g.animFrameCount);
+      candyPopsRef.current = candyPopsRef.current.filter((pp) => {
+        pp.t += 1;
+        drawCandy(ctx, pp.c, g.camX, g.animFrameCount, pp.t / 40);
+        return pp.t < 40;
       });
       if (g.level === MONKO_LEVEL) {
         if (!monkoRef.current.bananaKey) drawFilfKey(ctx, MONKO_BANANA_KEY_X, MONKO_BANANA_KEY_Y, g.camX, g.animFrameCount);
@@ -6599,11 +6620,16 @@ export const StreetBrawler: FC = () => {
               <span className="text-foreground">{collectedCount(ids)}/{ids.length}</span>
               <span className="inline-block h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 rounded-full bg-primary border border-primary-foreground/40" />
               <span className="text-primary" data-testid="coin-balance">{coins}</span>
+              <img src={candyIcon} alt="Legendary" className="h-3.5 sm:h-5 w-auto ml-0.5" style={{ imageRendering: "pixelated" }} />
+              <span className="text-foreground" data-testid="legendary-count">{collectedCount(LEGENDARY.map((c) => c.id))}/{LEGENDARY.length}</span>
             </div>
           );
         })()}
         {gameState === "playing" && glassToast > 0 && !storyScene && (
           <GlassToast key={glassToast} onDone={() => setGlassToast(0)} />
+        )}
+        {gameState === "playing" && legendToast > 0 && !storyScene && (
+          <LegendaryToast key={`l${legendToast}`} onDone={() => setLegendToast(0)} />
         )}
         {gameState === "playing" && level === DOXX_LEVEL && !storyScene && (
           <div className="absolute right-1 top-1 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[42%]">
@@ -6958,6 +6984,19 @@ function GlassToast({ onDone }: { onDone: () => void }) {
       <div className="font-mono font-black leading-tight tracking-wider">
         <div className="text-[9px] sm:text-xs text-foreground">MAGNIFYING GLASS</div>
         <div className="text-sm sm:text-lg text-primary">+{GLASS_COIN_VALUE} COINS</div>
+      </div>
+    </div>
+  );
+}
+
+function LegendaryToast({ onDone }: { onDone: () => void }) {
+  useEffect(() => { const t = setTimeout(onDone, 2600); return () => clearTimeout(t); }, [onDone]);
+  return (
+    <div className="absolute left-1/2 top-[14%] -translate-x-1/2 z-50 pointer-events-none flex items-center gap-3 border-4 border-primary bg-background/95 px-4 py-2 shadow-2xl ring-2 ring-accent animate-in fade-in zoom-in-50 duration-300" data-testid="legendary-toast">
+      <img src={candyIcon} alt="" className="h-12 sm:h-16 w-auto animate-bounce" style={{ imageRendering: "pixelated" }} />
+      <div className="font-mono font-black leading-tight tracking-wider text-center">
+        <div className="text-[10px] sm:text-sm text-accent animate-pulse">LEGENDARY COLLECTIBLE!</div>
+        <div className="text-lg sm:text-2xl text-primary">+{LEGENDARY_COIN_VALUE} COINS</div>
       </div>
     </div>
   );
