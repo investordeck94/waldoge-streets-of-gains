@@ -354,11 +354,12 @@ function squirrelCage(ctx: CanvasRenderingContext2D): void {
     }
     // Padlock.
     ctx.fillStyle = quest.keyTaken ? "#ffd23f" : "#9aa0a8";
-    ctx.fillRect(x - 13, ground - h / 2 - 12, 26, 24);
+    const lx = cagedArt ? x + 52 : x;
+    ctx.fillRect(lx - 13, ground - h / 2 - 12, 26, 24);
     ctx.strokeStyle = quest.keyTaken ? "#ffd23f" : "#9aa0a8";
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(x, ground - h / 2 - 12, 9, Math.PI, 0);
+    ctx.arc(lx, ground - h / 2 - 12, 9, Math.PI, 0);
     ctx.stroke();
     ctx.textAlign = "center";
     ctx.font = "900 16px Impact, sans-serif";
