@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ITEM_DEFS, equipItem, getInventory, subscribeInventory, type ItemId } from "@/game/inventory/inventory";
+import rucksack from "@/assets/rucksack.png";
 import { ITEM_ICONS } from "@/game/presentation/render2d/luckyDipSprites";
 
 /** Move the backpack by changing this one value. */
@@ -13,17 +14,8 @@ const POS: Record<HudCorner, string> = {
 };
 
 function BagIcon() {
-  // Original pixel-art backpack, drawn with theme colours.
-  return (
-    <svg viewBox="0 0 16 16" className="h-5 w-5 sm:h-6 sm:w-6" style={{ imageRendering: "pixelated" }} shapeRendering="crispEdges" aria-hidden>
-      <rect x="5" y="1" width="6" height="2" className="fill-muted-foreground" />
-      <rect x="4" y="3" width="8" height="1" className="fill-muted-foreground" />
-      <rect x="3" y="4" width="10" height="11" className="fill-primary" />
-      <rect x="3" y="7" width="10" height="1" className="fill-primary-foreground/60" />
-      <rect x="5" y="9" width="6" height="4" className="fill-background/70" />
-      <rect x="7" y="10" width="2" height="1" className="fill-accent" />
-    </svg>
-  );
+  // Supplied red-white rucksack artwork (canonical inventory icon).
+  return <img src={rucksack} alt="" draggable={false} className="h-12 w-12 sm:h-16 sm:w-16 object-contain" style={{ imageRendering: "pixelated" }} />;
 }
 
 export function Backpack({ onOpenChange, onUse }: { onOpenChange: (open: boolean) => void; onUse: (id: ItemId) => string | null }) {
@@ -73,7 +65,7 @@ export function Backpack({ onOpenChange, onUse }: { onOpenChange: (open: boolean
       onPointerDown={stop} onTouchStart={stop} onMouseDown={stop} onKeyDown={stop}>
       <button type="button" aria-label="Inventory" aria-expanded={open} data-testid="backpack-button"
         onClick={() => setOpen((o) => !o)}
-        className="block bg-background/80 border border-primary/60 rounded p-0.5 touch-manipulation">
+        className="block touch-manipulation transition-transform hover:scale-105 active:scale-95">
         <BagIcon />
       </button>
       {open && (
