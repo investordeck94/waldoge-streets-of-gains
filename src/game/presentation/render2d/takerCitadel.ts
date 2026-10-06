@@ -6,6 +6,9 @@ import anonAsset from "@/assets/anon-waldoges-boss.png.asset.json";
 // 1145x1374 original only added ~6 MB of decoded memory to Level 7.
 import anonLocalUrl from "@/assets/anon-waldoges-boss-local-l7.png";
 import { flicker, renderNow } from "./clock";
+import anonCagedUrl from "@/assets/anon/anon-caged.png";
+import anonRescuedUrl from "@/assets/anon/anon-rescued.png";
+import { drawFilfKey } from "./filfKey";
 import { blueprintSky, sceneTaken, sceneTicker, sceneCopy, sceneCitadelBack, sceneThrone } from "./takerBlueprintScenes";
 import { CITADEL_SECTION_BOUNDS, validateCitadelBlueprint } from "@/game/config/citadelBlueprint";
 import { residentImage, setImageWanted, isResident } from "./imageResidency";
@@ -77,6 +80,22 @@ export function preloadTakerCitadel(): void {
   residentImage(anonImage, anonLocalUrl, [6], { pin: true });
 }
 preloadTakerCitadel();
+
+const anonFrames: Record<string, HTMLImageElement> = {};
+function anonFrame(url: string): HTMLImageElement | null {
+  if (typeof Image === "undefined") return null;
+  if (!anonFrames[url]) { anonFrames[url] = new Image(); residentImage(anonFrames[url], url, [6], { pin: true }); }
+  const i = anonFrames[url];
+  return i.complete && i.naturalWidth ? i : null;
+}
+anonFrame(anonCagedUrl); anonFrame(anonRescuedUrl);
+function blitAnon(ctx: CanvasRenderingContext2D, url: string, cx: number, feetY: number, h: number): boolean {
+  const i = anonFrame(url);
+  if (!i) return false;
+  const w = h * i.naturalWidth / i.naturalHeight;
+  ctx.drawImage(i, Math.round(cx - w / 2), Math.round(feetY - h), Math.round(w), Math.round(h));
+  return true;
+}
 
 export function hasTakerCitadel(level: number): boolean { return level === TAKER_CITADEL_LEVEL; }
 
@@ -310,14 +329,9 @@ function drawCopy(ctx: CanvasRenderingContext2D, x: number): void {
 function keyDisplay(ctx: CanvasRenderingContext2D): void {
   if (quest.keyTaken) return;
   const { x, y } = CITADEL_KEY_POSITION;
-  const bob = Math.sin(renderNow() / 300) * 4;
-  ctx.save(); ctx.translate(x, y - 34 + bob);
-  ctx.shadowColor = quest.keyAvailable ? "#ffd940" : "#ff2848"; ctx.shadowBlur = 20;
-  ctx.strokeStyle = quest.keyAvailable ? "#ffd940" : "#a05c20"; ctx.lineWidth = 8;
-  ctx.beginPath(); ctx.arc(-11, 0, 12, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(1, 0); ctx.lineTo(36, 0); ctx.lineTo(36, 12); ctx.moveTo(24, 0); ctx.lineTo(24, 10); ctx.stroke();
-  ctx.restore();
-  panel(ctx, x - 145, y - 112, 290, 44, [quest.keyAvailable ? "TAKE THE KEY" : "KEY — GUARDED", "TICKER TAKER'S FORCES"], quest.keyAvailable ? "gold" : "red", 12);
+  // Same shared gold key as Levels 1–6; it only appears once THE FAT CATS fall.
+  if (quest.keyAvailable) drawFilfKey(ctx, x, y, 0, Math.floor(renderNow() / 16));
+  panel(ctx, x - 145, y - 112, 290, 44, [quest.keyAvailable ? "TAKE THE KEY" : "KEY — HELD BY THE FAT CATS", "DEFEAT THEM FIRST"], quest.keyAvailable ? "gold" : "red", 12);
 }
 
 function drawAnon(ctx: CanvasRenderingContext2D, x: number, feetY: number, height: number): void {
@@ -329,19 +343,11 @@ function drawAnon(ctx: CanvasRenderingContext2D, x: number, feetY: number, heigh
 
 function anonCage(ctx: CanvasRenderingContext2D): void {
   const { x, y } = ANON_CAGE_POSITION;
-  const w = 190, h = 86, left = x - w / 2, top = y - h;
-  drawAnon(ctx, quest.rescued ? x + 138 : x, y, 78);
-  ctx.save();
-  if (!quest.rescued) {
-    ctx.fillStyle = "rgba(10,4,22,.55)"; ctx.fillRect(left, top, w, h);
-    ctx.strokeStyle = "#bb57ff"; ctx.lineWidth = 5; ctx.strokeRect(left, top, w, h);
-    for (let bx = left + 16; bx < left + w; bx += 24) { ctx.beginPath(); ctx.moveTo(bx, top); ctx.lineTo(bx, y); ctx.stroke(); }
-    ctx.fillStyle = quest.keyTaken ? "#ffd940" : "#9fabb8"; ctx.fillRect(x - 12, y - 42, 24, 22);
-  } else {
-    ctx.strokeStyle = "#6e3a91"; ctx.lineWidth = 5; ctx.strokeRect(left, top, w, h);
-    ctx.save(); ctx.translate(left - 8, y); ctx.rotate(-0.42); ctx.strokeRect(0, -h, w / 2, h); ctx.restore();
-  }
-  ctx.restore();
+  const h = 150, top = y - h;
+  // ONE cage: the supplied caged-Anon artwork (Anon fully behind its bars).
+  // After rescue the cage is gone and the supplied RESCUED frame stands beside it.
+  if (!quest.rescued) blitAnon(ctx, anonCagedUrl, x, y, h);
+  else if (!blitAnon(ctx, anonRescuedUrl, x + 40, y, 96)) drawAnon(ctx, x + 40, y, 96);
   panel(ctx, x - 150, top - 38, 300, 32, [quest.rescued ? "ANON RESCUED" : "ANON WALDOGE'S BOSS — CAPTURED"], "purple", 13);
 }
 
