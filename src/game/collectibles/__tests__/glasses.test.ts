@@ -32,11 +32,11 @@ import { LEGENDARY, touchesLegendary } from "../legendary";
 import { claimCollectible, isGlassCollected } from "../coinWallet";
 import { glassesForLevel as gfl } from "../glasses";
 describe("legendary candy canes", () => {
-  it("two per level, unique, hidden in street breakables and not beside glasses", () => {
-    expect(LEGENDARY).toHaveLength(14);
-    expect(new Set(LEGENDARY.map((c) => c.id)).size).toBe(14);
+  it("one per level, unique, hidden in street breakables and not beside glasses", () => {
+    expect(LEGENDARY).toHaveLength(7);
+    expect(new Set(LEGENDARY.map((c) => c.id)).size).toBe(7);
     for (let level = 0; level < 7; level++) {
-      expect(LEGENDARY.filter((c) => c.level === level)).toHaveLength(2);
+      expect(LEGENDARY.filter((c) => c.level === level)).toHaveLength(1);
     }
     for (const c of LEGENDARY) for (const g of gfl(c.level)) expect(Math.abs(g.x - c.x)).toBeGreaterThan(150);
     for (const c of LEGENDARY) expect(["trashcan", "crate"]).toContain(c.containerType);
