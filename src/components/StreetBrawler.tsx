@@ -6778,7 +6778,7 @@ export const StreetBrawler: FC = () => {
             </div>
           );
         })()}
-        {gameState === "playing" && !storyScene && <Backpack onOpenChange={onBackpackOpen} onUse={onUseItem} />}
+        {gameState === "playing" && !storyScene && <Backpack slot="overlay" onOpenChange={onBackpackOpen} onUse={onUseItem} />}
         {gameState === "playing" && ldPrompt && !storyScene && !shopOpen && (
           <button type="button" onClick={() => { filfRequestRef.current = true; }}
             className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse">
@@ -6882,6 +6882,9 @@ export const StreetBrawler: FC = () => {
           <div className="glass-card px-3 py-2">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[10px] font-bold font-mono text-green-400 tracking-wider">PLAYER HP</span>
+              <div className="ml-auto -my-3">
+                {!storyScene && <Backpack slot="hud" onOpenChange={onBackpackOpen} onUse={onUseItem} />}
+              </div>
             </div>
             <div
               className="relative h-9 w-full rounded-sm overflow-visible border-2"
