@@ -14,13 +14,13 @@ const ch = (art: string, x: number, scale: number, dimmed = false, bottom = 2): 
 
 // ---- Panel 1: villains down, police arriving ----
 const p1 = (speaker: "TT" | "W"): StoryCharacter[] => [
-  ch("ep-fatcat-white-defeat", 14, 0.22, speaker === "W" ? false : true),
-  ch("ep-fatcat-black-defeat", 36, 0.2, speaker === "W" ? false : true),
-  ch("ep-ticker-defeat", 58, 0.27, speaker === "W"),
+  ch("ep-fatcat-white-defeat", 13, 0.26, speaker === "W" ? false : true),
+  ch("ep-fatcat-black-defeat", 36, 0.24, speaker === "W" ? false : true),
+  ch("ep-ticker-defeat", 60, 0.3, speaker === "W"),
   ch("cut-waldoge", 84, 0.78, speaker === "TT"),
 ];
-const ttBubble: B = { x: 52, y: 12, tailX: 56, tailY: 70 };
-const wBubble1: B = { x: 72, y: 6, tailX: 82, tailY: 22 };
+const ttBubble: B = { x: 52, y: 16, tailX: 56, tailY: 70 };
+const wBubble1: B = { x: 72, y: 12, tailX: 82, tailY: 22 };
 
 // ---- Panel 2: celebration crowd, Waldoge centre ----
 const crowd = (focus: "anon" | "all"): StoryCharacter[] => [
@@ -31,7 +31,7 @@ const crowd = (focus: "anon" | "all"): StoryCharacter[] => [
   ch("cut-sus-dog", 18, 0.48, focus === "anon", 3),
   ch("cut-doxx", 32, 0.42, focus === "anon", 2),
   ch("cut-monko", 61, 0.4, focus === "anon", 1),
-  ch("cut-squirrel", 40, 0.32, focus === "anon", 30),
+  ch("l6-sq-idle", 40, 0.32, focus === "anon", 30),
   ch("cut-filf", 27, 0.44, focus === "anon", 0),
   ch("cut-waldoge", 50, 0.68, focus === "anon", 0),
   ch("l7-anon-rescued", 14, 0.42, focus !== "anon", 0),
@@ -45,16 +45,16 @@ const friends = (speaker: "SQ" | "W"): StoryCharacter[] => [
   ch("cut-waldoge", 46, 0.78, speaker === "SQ", 0),
   ch("l6-sq-idle", 24, 0.5, speaker === "W", 0),
 ];
-const sqBubble: B = { x: 22, y: 8, tailX: 24, tailY: 44 };
-const wBubble3: B = { x: 70, y: 8, tailX: 50, tailY: 22 };
+const sqBubble: B = { x: 28, y: 16, tailX: 24, tailY: 44 };
+const wBubble3: B = { x: 72, y: 14, tailX: 50, tailY: 22 };
 
 // ---- Panel 4: back into hiding ----
 const hide = (speaker: "A" | "W"): StoryCharacter[] => [
   ch("l7-anon-rescued", 22, 0.48, speaker === "W"),
   ch("cut-waldoge", 70, 0.78, speaker === "A"),
 ];
-const aBubble: B = { x: 30, y: 10, tailX: 22, tailY: 50 };
-const wBubble4: B = { x: 58, y: 8, tailX: 68, tailY: 22 };
+const aBubble: B = { x: 30, y: 16, tailX: 22, tailY: 50 };
+const wBubble4: B = { x: 56, y: 16, tailX: 68, tailY: 22 };
 
 // ---- Panel 5: and just like that... ----
 const search = (speaker: "SUS" | "MONKO" | "FILF"): StoryCharacter[] => [
@@ -63,9 +63,9 @@ const search = (speaker: "SUS" | "MONKO" | "FILF"): StoryCharacter[] => [
   ch("cut-monko", 34, 0.46, speaker !== "MONKO"),
   ch("cut-sus-dog", 14, 0.6, speaker !== "SUS"),
 ];
-const susBubble: B = { x: 24, y: 6, tailX: 16, tailY: 36 };
-const monkoBubble: B = { x: 38, y: 8, tailX: 34, tailY: 52 };
-const filfBubble: B = { x: 58, y: 8, tailX: 52, tailY: 48 };
+const susBubble: B = { x: 28, y: 16, tailX: 16, tailY: 36 };
+const monkoBubble: B = { x: 40, y: 16, tailX: 34, tailY: 52 };
+const filfBubble: B = { x: 62, y: 16, tailX: 52, tailY: 48 };
 
 const panel = (title: string, background: string, characters: StoryCharacter[], speaker: string, portrait: string, text: string, bubble: B, extra: Partial<StoryPanelData> = {}): StoryPanelData => ({
   treatment: T, panelTitle: title, background, characters, dialogue: { speaker, portrait, text, bubble }, ...extra,
