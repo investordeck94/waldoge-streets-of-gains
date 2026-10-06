@@ -4,3 +4,4 @@
 - Story/narration scenes are data (`src/game/story/*Story.ts`, `StoryScene`) rendered by the reusable `StoryPanel` overlay; while one is open `storyActiveRef` freezes the simulation — why: Levels 2–7 can add stories without touching game logic.
 - Rescue NPCs (e.g. FILF in `src/game/story/filfRescue.ts`) are pure state machines outside `g.enemies` with no hp/damage/hitbox — why: they must never enter combat code paths.
 - Level 4 Baddie is an optional key-gated rescue NPC outside combat state, using only her supplied captive artwork — why: her cage objective must not alter Fudder Territory gameplay.
+- Monko is a Level 5 rescue NPC implemented as a pure state machine outside player, enemy, companion, and combat systems — why: the canonical character must never become playable or gain combat behavior.
