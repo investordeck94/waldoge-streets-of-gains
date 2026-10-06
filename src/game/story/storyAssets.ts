@@ -209,6 +209,8 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "ep-fatcat-black-defeat": { src: catBlackSheet, frame: { x: 314, y: 1156, w: 107, h: 42 }, sheet: { w: 1012, h: 1207 }, alt: "Black and red Fat Cat knocked out" },
   "ep-fatcat-white-defeat": { src: catOrangeSheet, frame: { x: 338, y: 1127, w: 122, h: 50 }, sheet: { w: 819, h: 1217 }, alt: "White and gold Fat Cat knocked out" },
   "bg-l7-citadel": { src: l7CitadelBg, alt: "The Citadel" },
+  "l7-fatcat-black-idle": { src: catBlackSheet, frame: { x: 0, y: 0, w: 77, h: 134 }, sheet: { w: 1012, h: 1207 }, alt: "Black and red Fat Cat" },
+  "l7-fatcat-white-idle": { src: catOrangeSheet, frame: { x: 0, y: 0, w: 87, h: 117 }, sheet: { w: 819, h: 1217 }, alt: "White and gold Fat Cat" },
   "l7-anon-rescued": { src: l7AnonRescued, alt: "Anon, freed from his cage" },
   "l7-anon-cage": { src: l7AnonCaged, alt: "Anon's cage" },
   "bg-once-peaceful": { src: oncePeacefulBg, alt: "The Anonverse at dusk under storm clouds, streets shuttered and empty" },
