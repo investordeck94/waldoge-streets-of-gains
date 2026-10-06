@@ -9,10 +9,10 @@ export const LUCKY_DIP_COST = 300;
 export const LUCKY_DIP_REWARDS: readonly ItemId[] = ["dobermann", "sidearm", "gauntlets", "health"];
 /** Level index (0-based) → stand world x. Levels 1–2 have none. Near each level start, clear of objectives/boss arenas. */
 // Levels 5 and 6 open with a walkway at x 520–1080, so their stall and
-// 420 Blaze It sit in the clear street gap just past it instead.
-export const LUCKY_DIP_STANDS: Record<number, number> = { 2: 470, 3: 470, 4: 470, 5: 1120, 6: 1120 };
+// 420 Blaze It sit on the clear street stretch between the walkways instead.
+export const LUCKY_DIP_STANDS: Record<number, number> = { 2: 470, 3: 470, 4: 470, 5: 1850, 6: 1850 };
 /** 420 Blaze It handover NPC, one per level 3–7, once per run. */
-export const BLAZE_NPC_X: Record<number, number> = { 2: 1150, 3: 1150, 4: 1150, 5: 1250, 6: 1250 };
+export const BLAZE_NPC_X: Record<number, number> = { 2: 1150, 3: 1150, 4: 1150, 5: 1980, 6: 1980 };
 export const INTERACT_RANGE = 70;
 
 const PENDING_KEY = "sogLuckyDipPending_v1";
