@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { ITEM_DEFS, equipItem, getInventory, subscribeInventory, useItem, type ItemId } from "@/game/inventory/inventory";
 
 /** Move the backpack by changing this one value. */
-export const INVENTORY_HUD_POSITION: "top-right" | "top-left" | "bottom-right" | "bottom-left" = "top-right";
-const POS: Record<typeof INVENTORY_HUD_POSITION, string> = {
+export type HudCorner = "top-right" | "top-left" | "bottom-right" | "bottom-left";
+export const INVENTORY_HUD_POSITION = "top-right" as HudCorner;
+const POS: Record<HudCorner, string> = {
   "top-right": "right-1 top-7 sm:top-10",
   "top-left": "left-1 top-14 sm:top-20",
   "bottom-right": "right-1 bottom-1",
