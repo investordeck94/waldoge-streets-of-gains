@@ -45,7 +45,7 @@ function buildLevel(level: number): GlassSpot[] {
   const keepOut = LEGEND_KEEP_OUT[level] ?? [];
   const blocked = (x: number) => overPit(level, x) || keepOut.some((k) => Math.abs(k - x) < 160);
   // Airborne trail along the street, alternating double-jump and timed-jump heights.
-  const airCount = Math.max(30, Math.floor((width - 1000) / 230)) + keepOut.length;
+  const airCount = Math.max(30, Math.floor((width - 1000) / 230)) + 2;
   const step = (width - 1000) / airCount;
   for (let i = 0; i < airCount; i++) {
     const x = Math.round(500 + step * (i + 0.5));
