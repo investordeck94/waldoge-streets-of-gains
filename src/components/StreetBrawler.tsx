@@ -6512,9 +6512,9 @@ export const StreetBrawler: FC = () => {
             // Frame-local space (already scaled/mirrored): undo the sprite scale so the strip keeps its size.
             const k = Math.abs(c.getTransform().d) / outerD;
             c.save();
-            c.translate(hand.x, hand.y);
+            c.translate(hand.x + 12, hand.y + 14);
             c.scale(1 / k, 1 / k);
-            drawStrip(c, handEq === "sidearm" ? "gunHold" : "gauntletHold", striking ? 1 : 0, 0, 10, 0.5, false);
+            drawStrip(c, handEq === "sidearm" ? "gunHold" : "gauntletHold", striking ? 1 : 0, 0, 12, 0.9, false);
             c.restore();
           } : undefined);
       }
