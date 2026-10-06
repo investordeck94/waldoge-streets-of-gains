@@ -120,6 +120,7 @@ import {
   CAGE_POSITION,
   KEY_POSITION,
   preloadMarketerTerritory,
+  getMarketerQuestState,
   setMarketerQuestState,
 } from "@/game/presentation/render2d/marketerTerritory";
 import {
