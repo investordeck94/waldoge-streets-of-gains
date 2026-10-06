@@ -91,6 +91,7 @@ import { drawMonkoQuest } from "@/game/presentation/render2d/monkoCaptiveSprites
 import { MONKO_BANANA_Y, MONKO_CAGE_Y, MONKO_BANANA_KEY_X, MONKO_BANANA_KEY_Y, MONKO_CAGE_KEY_X, MONKO_CAGE_KEY_Y, tryCollectMonkoKeys, nearMonkoBananas, MONKO_LEVEL, MONKO_BANANA_X, MONKO_CAGE_X, MONKO_RESCUE_BONUS, initialMonkoState, tryRecoverMonkoBananas, canRescueMonko, beginMonkoRescue, stepMonko, monkoObjectiveText } from "@/game/story/monkoRescue";
 import { LEVEL5_OPENING_EXIT_LIQUIDITY, LEVEL5_MONKO_RESCUE } from "@/game/story/level5Story";
 import { LEVEL6_OPENING_MARKETING_MACHINE, LEVEL6_SQUIRREL_RESCUE } from "@/game/story/level6Story";
+import { LEVEL7_FINAL_EPILOGUE } from "@/game/story/level7Epilogue";
 import { LEVEL7_ANON_RESCUE } from "@/game/story/level7AnonRescue";
 import { LEVEL2_ENDING_BAD_ACTOR_CALL } from "@/game/story/level2EndStory";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
@@ -5743,7 +5744,8 @@ export const StreetBrawler: FC = () => {
             if (g.level >= TOTAL_LEVELS) {
               g.running = false;
               sfx(() => SFX.victory());
-              setGameState("victory");
+              // Final campaign epilogue plays once, then the existing victory screen.
+              openStory(LEVEL7_FINAL_EPILOGUE, () => setGameState("victory"));
 
               // Record exactly one qualifying weekly entry for this run.
               // HARD MODE ONLY, and never a WDOGE payout.
