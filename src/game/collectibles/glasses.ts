@@ -25,8 +25,16 @@ function clearGround(level: number, x: number, width: number): number {
   return nx;
 }
 
-/** Keep regular glasses clear of the two legendary canes. */
-const LEGEND_KEEP_OUT: Record<number, number[]> = { 5: [2680], 6: [2920] };
+/** Keep regular glasses clear of the legendary canes (two per level). */
+const LEGEND_KEEP_OUT: Record<number, number[]> = {
+  0: [1800, 4200],
+  1: [3200, 7600],
+  2: [5200, 10400],
+  3: [2600, 6400],
+  4: [2400, 6600],
+  5: [2680, 6400],
+  6: [2920, 6600],
+};
 /** Low air = timed single jump; high air = needs the double jump. */
 const AIR_LOW = 130;
 
