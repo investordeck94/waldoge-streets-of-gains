@@ -184,3 +184,7 @@
 ## Current — Lucky Dip stall placement
 - [x] Move Level 5/6 Doxx stall and 420 Blaze It out from under the opening walkway (stall 1120, Blaze 1250)
 - [x] Visually verify Level 5 and 6 stall spots on desktop and phone
+
+## Current — Rare candy cane placement
+- [x] Move both rare candy canes out of the sky and into guaranteed breakable street containers
+- [ ] Verify Level 6 and Level 7 cane reveal, pickup, persistence, and score separation on desktop and phone

@@ -2,17 +2,25 @@
  * Legendary candy canes — exactly two in the whole Levels 1–7 campaign.
  * Fixed, hand-picked placements on existing geometry (no new platforms).
  *
- * 01 — Level 6: mid-top walkway (y=108, away from its ladder); a hop from its top.
- * 02 — Level 7: above the copy-west walkway (y=262), past its ladder. Pickup needs
- *      feet ≤125 (rise 137): single jump peaks ~120 (too low), double ~210.
+ * 01 — Level 6: hidden inside a guaranteed breakable trashcan on the main street.
+ * 02 — Level 7: hidden inside a guaranteed breakable crate on the main street.
  */
-export interface LegendarySpot { id: string; level: number; x: number; y: number }
+import { GROUND_Y } from "@/game/config/player";
+
+export interface LegendarySpot {
+  id: string;
+  level: number;
+  x: number;
+  y: number;
+  containerType: "crate" | "trashcan";
+}
 
 export const LEGENDARY_COIN_VALUE = 50;
+const STREET_PICKUP_Y = GROUND_Y - 38;
 
 export const LEGENDARY: readonly LegendarySpot[] = [
-  { id: "LEGENDARY_CANDY_01", level: 5, x: 4640, y: 40 },
-  { id: "LEGENDARY_CANDY_02", level: 6, x: 3960, y: 45 },
+  { id: "LEGENDARY_CANDY_01", level: 5, x: 2680, y: STREET_PICKUP_Y, containerType: "trashcan" },
+  { id: "LEGENDARY_CANDY_02", level: 6, x: 2920, y: STREET_PICKUP_Y, containerType: "crate" },
 ];
 
 export function legendaryForLevel(level: number): LegendarySpot[] {
