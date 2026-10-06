@@ -32,12 +32,12 @@ import { LEGENDARY, touchesLegendary } from "../legendary";
 import { claimCollectible, isGlassCollected } from "../coinWallet";
 import { glassesForLevel as gfl } from "../glasses";
 describe("legendary candy canes", () => {
-  it("exactly two, unique, not beside glasses, double jump needed for 02", () => {
+  it("exactly two, unique, hidden in street breakables and not beside glasses", () => {
     expect(LEGENDARY.map((c) => c.id)).toEqual(["LEGENDARY_CANDY_01", "LEGENDARY_CANDY_02"]);
     for (const c of LEGENDARY) for (const g of gfl(c.level)) expect(Math.abs(g.x - c.x)).toBeGreaterThan(150);
-    const c2 = LEGENDARY[1];
-    expect(touchesLegendary(c2, c2.x, 262 - 120)).toBe(false); // single jump peak
-    expect(touchesLegendary(c2, c2.x, 262 - 200)).toBe(true); // double jump
+    expect(LEGENDARY.map((c) => c.level)).toEqual([5, 6]);
+    expect(LEGENDARY.map((c) => c.containerType)).toEqual(["trashcan", "crate"]);
+    for (const c of LEGENDARY) expect(touchesLegendary(c, c.x, c.y + 38)).toBe(true);
   });
   it("+50 once, separate from glass count", () => {
     const before = getCoins();

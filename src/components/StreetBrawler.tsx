@@ -2109,13 +2109,14 @@ interface AlleyObject {
   x: number;
   y: number;
   type: "crate" | "trashcan";
+  legendaryId?: string;
   hp: number;
   maxHp: number;
   broken: boolean;
   breakTimer: number;
 }
 
-function spawnAlleyObjects(): AlleyObject[] {
+function spawnAlleyObjects(level: number): AlleyObject[] {
   const objs: AlleyObject[] = [];
   for (let i = 0; i < 12; i++) {
     const x = 350 + i * 250 + Math.random() * 100;
@@ -2129,7 +2130,30 @@ function spawnAlleyObjects(): AlleyObject[] {
       breakTimer: 0,
     });
   }
+  for (const cane of legendaryForLevel(level)) {
+    let replaceIdx = 0;
+    let replaceDist = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < objs.length; i++) {
+      const dist = Math.abs(objs[i].x - cane.x);
+      if (dist < replaceDist) { replaceDist = dist; replaceIdx = i; }
+    }
+    const hp = cane.containerType === "crate" ? 15 : 25;
+    objs[replaceIdx] = {
+      x: cane.x,
+      y: GROUND_Y,
+      type: cane.containerType,
+      legendaryId: cane.id,
+      hp,
+      maxHp: hp,
+      broken: false,
+      breakTimer: 0,
+    };
+  }
   return objs;
+}
+
+function isLegendaryRevealed(cane: LegendarySpot, objects: AlleyObject[]): boolean {
+  return objects.some((obj) => obj.legendaryId === cane.id && obj.broken);
 }
 
 function drawAlleyObject(ctx: CanvasRenderingContext2D, obj: AlleyObject, camX: number) {
@@ -3642,7 +3666,7 @@ export const StreetBrawler: FC = () => {
     g.attackActiveFrames = 0;
     g.hitApplied = false;
     setStyleName("brawler");
-    g.alleyObjects = spawnAlleyObjects();
+    g.alleyObjects = spawnAlleyObjects(g.level);
     g.platforms = spawnPlatforms(g.level);
     g.powerups = g.platforms.length
       ? spawnPlatformPickups(g.platforms, diff)
@@ -5473,6 +5497,7 @@ export const StreetBrawler: FC = () => {
             }
           }
           for (const lc of legendaryForLevel(g.level)) {
+            if (!isLegendaryRevealed(lc, g.alleyObjects)) continue;
             if (!isPickedThisRun(lc.id) && touchesLegendary(lc, p.x, p.y) && pickThisRun(lc.id)) {
               candyPopsRef.current.push({ c: lc, t: 0 });
               sfx(() => SFX.waveStart());
@@ -5749,6 +5774,7 @@ export const StreetBrawler: FC = () => {
               g.hardEncounter = initialized.hardEncounter;
             }
             g.platforms = spawnPlatforms(g.level);
+            g.alleyObjects = spawnAlleyObjects(g.level);
             g.powerups.push(...(g.platforms.length
               ? spawnPlatformPickups(g.platforms, g.difficulty)
               : spawnStreetPickups(g.level, g.difficulty)));
@@ -6011,7 +6037,7 @@ export const StreetBrawler: FC = () => {
         drawGlass(ctx, pp.g, g.camX, g.animFrameCount, pp.t / 24);
         return pp.t < 24;
       });
-      for (const lc of legendaryForLevel(g.level)) if (!isPickedThisRun(lc.id)) drawCandy(ctx, lc, g.camX, g.animFrameCount);
+      for (const lc of legendaryForLevel(g.level)) if (!isPickedThisRun(lc.id) && isLegendaryRevealed(lc, g.alleyObjects)) drawCandy(ctx, lc, g.camX, g.animFrameCount);
       candyPopsRef.current = candyPopsRef.current.filter((pp) => {
         pp.t += 1;
         drawCandy(ctx, pp.c, g.camX, g.animFrameCount, pp.t / 40);
