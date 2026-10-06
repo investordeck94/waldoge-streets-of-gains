@@ -36,12 +36,16 @@ export function isGlassCollected(id: string): boolean { return collectedSet.has(
 export function collectedCount(ids: readonly string[]): number { return ids.filter((id) => collectedSet.has(id)).length; }
 
 /** Atomic + idempotent: returns true only the first time an id is claimed. */
-export function claimGlass(id: string): boolean {
+export function claimCollectible(id: string, value: number): boolean {
   if (collectedSet.has(id)) return false;
   collectedSet.add(id);
-  data.coins += GLASS_COIN_VALUE;
+  data.coins += value;
   commit();
   return true;
+}
+
+export function claimGlass(id: string): boolean {
+  return claimCollectible(id, GLASS_COIN_VALUE);
 }
 
 /** For the upcoming inventory shop. Returns false (no change) if unaffordable. */
