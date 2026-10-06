@@ -3,7 +3,7 @@
 ## Current — Unobtrusive gameplay information
 - [x] Move the collectible counter to the top left outside the playing area
 - [x] Hide objective boxes until the information button is tapped
-- [ ] Verify counter placement and objective toggle in the running game
+- [x] Verify counter placement and objective toggle in the running game
 
 ## Current — Canonical Monko NPC and Level 5 rescue
 - [x] Replace every old pink Monko game/story reference with the supplied canonical sprite sheet
