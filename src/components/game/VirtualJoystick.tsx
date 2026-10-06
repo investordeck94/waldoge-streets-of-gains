@@ -64,7 +64,7 @@ export function VirtualJoystick({ onChange, deadZone = 0.25, verticalThreshold =
       onPointerCancel={release}
       onLostPointerCapture={release}
       onContextMenu={(e) => e.preventDefault()}
-      className="relative rounded-full glass-card border-2 border-primary/40 touch-none select-none shrink-0"
+      className="relative rounded-full bg-background/30 backdrop-blur-[2px] border-2 border-primary/40 touch-none select-none shrink-0"
       style={{ width: size, height: size }}
     >
       <div className="absolute inset-[18%] rounded-full border border-primary/20 pointer-events-none" />

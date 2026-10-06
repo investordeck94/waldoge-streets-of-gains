@@ -6850,7 +6850,7 @@ export const StreetBrawler: FC = () => {
             style={{ padding: "4px max(4px, env(safe-area-inset-right)) 4px max(4px, env(safe-area-inset-left))", ["--mb" as string]: "clamp(36px, 10.5vw, 56px)" } as React.CSSProperties}
           >
             <div className="pointer-events-auto opacity-80">
-              <VirtualJoystick onChange={touchStick} size={Math.round(Math.min(110, Math.max(76, (typeof window !== "undefined" ? window.innerWidth : 390) * 0.24)))} />
+              <VirtualJoystick onChange={touchStick} size={Math.round(Math.min(110, Math.max(70, (typeof window !== "undefined" ? window.innerWidth : 390) * 0.22)))} />
             </div>
             <div className="grid grid-cols-3 grid-rows-3 opacity-90" style={{ gridTemplateColumns: "repeat(3, var(--mb))", gridTemplateRows: "repeat(3, calc(var(--mb) * 0.78))" }}>
               <div className="col-start-2 row-start-1 flex justify-center">
