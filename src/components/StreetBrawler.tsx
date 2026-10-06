@@ -87,7 +87,7 @@ import { drawBaddieCaptive } from "@/game/presentation/render2d/baddieCaptiveSpr
 import { BADDIE_LEVEL, BADDIE_CAGE_X, BADDIE_KEY_X, BADDIE_RESCUE_BONUS, initialBaddieState, tryCollectBaddieKey, canRescueBaddie, beginBaddieRescue, stepBaddie, baddieObjectiveText } from "@/game/story/level4Baddie";
 import { LEVEL4_OPENING_FUDDER_REVEAL, LEVEL4_BADDIE_RESCUE } from "@/game/story/level4Story";
 import { drawMonkoQuest } from "@/game/presentation/render2d/monkoCaptiveSprites";
-import { MONKO_LEVEL, MONKO_BANANA_X, MONKO_CAGE_X, MONKO_RESCUE_BONUS, initialMonkoState, tryRecoverMonkoBananas, canRescueMonko, beginMonkoRescue, stepMonko, monkoObjectiveText } from "@/game/story/monkoRescue";
+import { MONKO_BANANA_Y, MONKO_CAGE_Y, MONKO_BANANA_KEY_X, MONKO_BANANA_KEY_Y, MONKO_CAGE_KEY_X, MONKO_CAGE_KEY_Y, tryCollectMonkoKeys, nearMonkoBananas, MONKO_LEVEL, MONKO_BANANA_X, MONKO_CAGE_X, MONKO_RESCUE_BONUS, initialMonkoState, tryRecoverMonkoBananas, canRescueMonko, beginMonkoRescue, stepMonko, monkoObjectiveText } from "@/game/story/monkoRescue";
 import { LEVEL5_OPENING_EXIT_LIQUIDITY, LEVEL5_MONKO_RESCUE } from "@/game/story/level5Story";
 import { LEVEL2_ENDING_BAD_ACTOR_CALL } from "@/game/story/level2EndStory";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
@@ -5408,18 +5408,30 @@ export const StreetBrawler: FC = () => {
           const ms = monkoRef.current;
           let mPrompt = false;
           if (g.level === MONKO_LEVEL) {
-            const bananaFloor = groundYAt(g.level, MONKO_BANANA_X, undefined, false);
-            const cageFloor = groundYAt(g.level, MONKO_CAGE_X, undefined, false);
+            const bananaFloor = MONKO_BANANA_Y;
+            const cageFloor = MONKO_CAGE_Y;
+            const gotKey = p.hp > 0 ? tryCollectMonkoKeys(ms, p.x, p.y) : null;
+            if (gotKey) {
+              sfx(() => SFX.waveStart());
+              const kx = gotKey === "banana" ? MONKO_BANANA_KEY_X : MONKO_CAGE_KEY_X;
+              const ky = gotKey === "banana" ? MONKO_BANANA_KEY_Y : MONKO_CAGE_KEY_Y;
+              g.effects.push({ x: kx, y: ky - 110, timer: 110, text: gotKey === "banana" ? "BANANA STASH KEY COLLECTED!" : "MONKO'S CAGE KEY COLLECTED!", color: "#ffd23f", size: 18 });
+              setMonkoObjective(monkoObjectiveText(ms));
+            }
+            if (p.hp > 0 && !ms.bananaKey && nearMonkoBananas(ms, p.x, p.y) && ms.lockedCooldown <= 0) {
+              ms.lockedCooldown = 90;
+              g.effects.push({ x: MONKO_BANANA_X, y: bananaFloor - 140, timer: 90, text: "STASH LOCKED. FIND THE BANANA KEY.", color: "#ff5f5f", size: 13 });
+            }
             if (p.hp > 0 && tryRecoverMonkoBananas(ms, p.x, p.y, bananaFloor)) {
               sfx(() => SFX.waveStart());
               g.effects.push({ x: MONKO_BANANA_X, y: bananaFloor - 130, timer: 130, text: "MONKO'S BANANAS RECOVERED!", color: "#ffe04b", size: 18 });
               setMonkoObjective(monkoObjectiveText(ms));
             }
             mPrompt = p.hp > 0 && canRescueMonko(ms, p.x, p.y, cageFloor);
-            if (mPrompt && filfRequestRef.current && !ms.bananasRecovered) {
+            if (mPrompt && filfRequestRef.current && (!ms.bananasRecovered || !ms.cageKey)) {
               if (ms.lockedCooldown <= 0) {
                 ms.lockedCooldown = 90;
-                g.effects.push({ x: MONKO_CAGE_X, y: cageFloor - 160, timer: 90, text: "THE CAGE IS LOCKED. RECOVER MONKO'S BANANAS.", color: "#ff5f5f", size: 13 });
+                g.effects.push({ x: MONKO_CAGE_X, y: cageFloor - 160, timer: 90, text: !ms.bananasRecovered ? "THE CAGE IS LOCKED. RECOVER MONKO'S BANANAS." : "THE CAGE IS LOCKED. FIND MONKO'S CAGE KEY.", color: "#ff5f5f", size: 13 });
               }
             } else if (mPrompt && filfRequestRef.current && beginMonkoRescue(ms)) {
               sfx(() => SFX.waveStart());
@@ -5852,10 +5864,12 @@ export const StreetBrawler: FC = () => {
         drawBaddieCaptive(ctx, baddieRef.current, g.camX, groundYAt(g.level, BADDIE_CAGE_X, undefined, false), g.animFrameCount, baddiePromptRef.current);
       }
       if (g.level === MONKO_LEVEL) {
+        if (!monkoRef.current.bananaKey) drawFilfKey(ctx, MONKO_BANANA_KEY_X, MONKO_BANANA_KEY_Y, g.camX, g.animFrameCount);
+        if (!monkoRef.current.cageKey) drawFilfKey(ctx, MONKO_CAGE_KEY_X, MONKO_CAGE_KEY_Y, g.camX, g.animFrameCount);
         drawMonkoQuest(
           ctx, monkoRef.current, g.camX,
-          groundYAt(g.level, MONKO_BANANA_X, undefined, false),
-          groundYAt(g.level, MONKO_CAGE_X, undefined, false),
+          MONKO_BANANA_Y,
+          MONKO_CAGE_Y,
           g.animFrameCount, monkoPromptRef.current,
         );
       }
@@ -6574,7 +6588,7 @@ export const StreetBrawler: FC = () => {
             onClick={() => { filfRequestRef.current = true; }}
             className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse"
           >
-            {monkoRef.current.bananasRecovered ? "RESCUE MONKO" : "CAGE LOCKED — RECOVER BANANAS"}
+            {!monkoRef.current.bananasRecovered ? "CAGE LOCKED — RECOVER BANANAS" : !monkoRef.current.cageKey ? "CAGE LOCKED — FIND CAGE KEY" : "RESCUE MONKO"}
           </button>
         )}
         {gameState === "playing" && baddiePrompt && !storyScene && (

@@ -56,7 +56,7 @@ export function drawMonkoQuest(
   if (!state.bananasRecovered && bananaX > -220 && bananaX < ctx.canvas.width + 220) {
     const bob = Math.sin(frame * 0.08) * 2;
     drawAt(ctx, "bananas", bananaX, bananaFloorY + bob, 118);
-    prompt(ctx, "▼ MONKO'S STOLEN BANANAS", bananaX, bananaFloorY - 150, frame);
+    prompt(ctx, state.bananaKey ? "▼ MONKO'S STOLEN BANANAS" : "▼ LOCKED STASH — FIND THE KEY", bananaX, bananaFloorY - 150, frame);
   }
 
   const x = MONKO_CAGE_X - camX;
@@ -79,6 +79,6 @@ export function drawMonkoQuest(
   }
 
   if (promptVisible) {
-    prompt(ctx, state.bananasRecovered ? "▼ RESCUE MONKO [E]" : "▼ LOCKED — RECOVER MONKO'S BANANAS", x, cageFloorY - 186, frame);
+    prompt(ctx, !state.bananasRecovered ? "▼ LOCKED — RECOVER MONKO'S BANANAS" : !state.cageKey ? "▼ LOCKED — FIND THE CAGE KEY" : "▼ RESCUE MONKO [E]", x, cageFloorY - 186, frame);
   }
 }
