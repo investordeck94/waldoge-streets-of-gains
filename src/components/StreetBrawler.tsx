@@ -93,6 +93,7 @@ import { LEVEL5_OPENING_EXIT_LIQUIDITY, LEVEL5_MONKO_RESCUE } from "@/game/story
 import { LEVEL6_OPENING_MARKETING_MACHINE, LEVEL6_SQUIRREL_RESCUE } from "@/game/story/level6Story";
 import { LEVEL7_FINAL_EPILOGUE } from "@/game/story/level7Epilogue";
 import { LEVEL7_ANON_RESCUE } from "@/game/story/level7AnonRescue";
+import { LEVEL7_OPENING_CITADEL } from "@/game/story/level7Story";
 import { LEVEL2_ENDING_BAD_ACTOR_CALL } from "@/game/story/level2EndStory";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
 import { glassesForLevel, touchesGlass, type GlassSpot } from "@/game/collectibles/glasses";
@@ -3756,6 +3757,7 @@ export const StreetBrawler: FC = () => {
     else if (g.level === BADDIE_LEVEL) openStory(LEVEL4_OPENING_FUDDER_REVEAL);
     else if (g.level === MONKO_LEVEL) openStory(LEVEL5_OPENING_EXIT_LIQUIDITY);
     else if (g.level === MARKETER_LEVEL) openStory(LEVEL6_OPENING_MARKETING_MACHINE);
+    else if (g.level === CITADEL_LEVEL) openStory(LEVEL7_OPENING_CITADEL);
     setGameState("playing");
     if (import.meta.env.DEV) {
       (window as unknown as { __sog?: unknown }).__sog = g;
@@ -5741,6 +5743,7 @@ export const StreetBrawler: FC = () => {
             if (g.level === BADDIE_LEVEL && g.level < TOTAL_LEVELS) openStory(LEVEL4_OPENING_FUDDER_REVEAL);
             if (g.level === MONKO_LEVEL && g.level < TOTAL_LEVELS) openStory(LEVEL5_OPENING_EXIT_LIQUIDITY);
             if (g.level === MARKETER_LEVEL && g.level < TOTAL_LEVELS) openStory(LEVEL6_OPENING_MARKETING_MACHINE);
+            if (g.level === CITADEL_LEVEL) openStory(LEVEL7_OPENING_CITADEL);
             if (g.level >= TOTAL_LEVELS) {
               g.running = false;
               sfx(() => SFX.victory());
