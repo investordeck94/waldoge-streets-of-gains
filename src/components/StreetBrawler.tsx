@@ -6824,7 +6824,16 @@ export const StreetBrawler: FC = () => {
         {gameState === "playing" && legendToast > 0 && !storyScene && (
           <LegendaryToast key={`l${legendToast}`} onDone={() => setLegendToast(0)} />
         )}
-        {gameState === "playing" && !storyScene && [DOXX_LEVEL, CAPTIVES_LEVEL, BADDIE_LEVEL, MONKO_LEVEL].includes(level) && (
+        {gameState === "playing" && objectivesOpen && !storyScene && ![DOXX_LEVEL, CAPTIVES_LEVEL, BADDIE_LEVEL, MONKO_LEVEL].includes(level) && (
+          <div id="game-objectives" className="absolute right-1 top-9 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+            {level === FILF_LEVEL && (
+              <div>{filfRef.current.objective === "KEY_NOT_COLLECTED" ? "FIND THE CAGE KEY" : filfRef.current.objective === "KEY_COLLECTED" ? "RESCUE FILF" : "FILF RESCUED ✓"}</div>
+            )}
+            <div>CLEAR ALL WAVES</div>
+            <div>DEFEAT {LEVELS[level - 1]?.boss.name ?? "THE BOSS"}</div>
+          </div>
+        )}
+        {gameState === "playing" && !storyScene && (
           <button type="button"
             aria-label="Objectives" aria-expanded={objectivesOpen} aria-controls="game-objectives"
             onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}
