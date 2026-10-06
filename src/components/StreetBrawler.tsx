@@ -90,6 +90,7 @@ import { LEVEL4_OPENING_FUDDER_REVEAL, LEVEL4_BADDIE_RESCUE } from "@/game/story
 import { drawMonkoQuest } from "@/game/presentation/render2d/monkoCaptiveSprites";
 import { MONKO_BANANA_Y, MONKO_CAGE_Y, MONKO_BANANA_KEY_X, MONKO_BANANA_KEY_Y, MONKO_CAGE_KEY_X, MONKO_CAGE_KEY_Y, tryCollectMonkoKeys, nearMonkoBananas, MONKO_LEVEL, MONKO_BANANA_X, MONKO_CAGE_X, MONKO_RESCUE_BONUS, initialMonkoState, tryRecoverMonkoBananas, canRescueMonko, beginMonkoRescue, stepMonko, monkoObjectiveText } from "@/game/story/monkoRescue";
 import { LEVEL5_OPENING_EXIT_LIQUIDITY, LEVEL5_MONKO_RESCUE } from "@/game/story/level5Story";
+import { LEVEL6_OPENING_MARKETING_MACHINE } from "@/game/story/level6Story";
 import { LEVEL2_ENDING_BAD_ACTOR_CALL } from "@/game/story/level2EndStory";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
 import { glassesForLevel, touchesGlass, type GlassSpot } from "@/game/collectibles/glasses";
@@ -3744,6 +3745,7 @@ export const StreetBrawler: FC = () => {
     else if (g.level === DOXX_LEVEL) openStory(LEVEL2_OPENING_CALL);
     else if (g.level === BADDIE_LEVEL) openStory(LEVEL4_OPENING_FUDDER_REVEAL);
     else if (g.level === MONKO_LEVEL) openStory(LEVEL5_OPENING_EXIT_LIQUIDITY);
+    else if (g.level === MARKETER_LEVEL) openStory(LEVEL6_OPENING_MARKETING_MACHINE);
     setGameState("playing");
     if (import.meta.env.DEV) {
       (window as unknown as { __sog?: unknown }).__sog = g;
@@ -5706,6 +5708,7 @@ export const StreetBrawler: FC = () => {
             if (g.level === DOXX_LEVEL + 1 && g.level < TOTAL_LEVELS) openStory(LEVEL2_ENDING_BAD_ACTOR_CALL);
             if (g.level === BADDIE_LEVEL && g.level < TOTAL_LEVELS) openStory(LEVEL4_OPENING_FUDDER_REVEAL);
             if (g.level === MONKO_LEVEL && g.level < TOTAL_LEVELS) openStory(LEVEL5_OPENING_EXIT_LIQUIDITY);
+            if (g.level === MARKETER_LEVEL && g.level < TOTAL_LEVELS) openStory(LEVEL6_OPENING_MARKETING_MACHINE);
             if (g.level >= TOTAL_LEVELS) {
               g.running = false;
               sfx(() => SFX.victory());
