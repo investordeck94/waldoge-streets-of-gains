@@ -1,7 +1,7 @@
 # Waldoge: Streets of Gains — combat pass
 
 ## Current — Level 7 Citadel story
-- [ ] Confirm the supplied individual blue-tracksuit Ticker Taker and both Fat Cat story assets; never extract characters from the storyboard
+- [ ] Confirm the supplied individual blue-tracksuit Ticker Taker story asset (blocked: currently located only the black-tracksuit gameplay artwork); never extract characters from the storyboard
 - [ ] Add the nine story chapters with exact dialogue, speaker-owned bubbles and seven-name target list
 - [ ] Connect the story to the existing Anon rescue without changing other gameplay
 - [ ] View every panel on desktop and phone and verify the Fat Cats key gate
