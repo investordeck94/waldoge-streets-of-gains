@@ -6979,11 +6979,11 @@ export const StreetBrawler: FC = () => {
 function GlassToast({ onDone }: { onDone: () => void }) {
   useEffect(() => { const t = setTimeout(onDone, 1400); return () => clearTimeout(t); }, [onDone]);
   return (
-    <div className="absolute left-1/2 top-[18%] -translate-x-1/2 z-40 pointer-events-none flex items-center gap-2 border-2 border-primary bg-background/90 px-3 py-1 shadow-lg animate-in fade-in zoom-in-95 duration-200">
-      <img src={glassIcon} alt="" className="h-7 sm:h-9 w-auto" style={{ imageRendering: "pixelated" }} />
-      <div className="font-mono font-black leading-tight tracking-wider">
-        <div className="text-[9px] sm:text-xs text-foreground">MAGNIFYING GLASS</div>
-        <div className="text-sm sm:text-lg text-primary">+{GLASS_COIN_VALUE} COINS</div>
+    <div className="absolute left-1/2 top-1 -translate-x-1/2 z-40 pointer-events-none flex items-center gap-1 border border-primary/70 bg-background/85 px-1.5 py-0.5 rounded animate-in fade-in zoom-in-95 duration-200">
+      <img src={glassIcon} alt="" className="h-4 sm:h-5 w-auto" style={{ imageRendering: "pixelated" }} />
+      <div className="font-mono font-black leading-none tracking-wider">
+        <div className="text-[7px] sm:text-[9px] text-foreground">MAGNIFYING GLASS</div>
+        <div className="text-[10px] sm:text-sm text-primary">+{GLASS_COIN_VALUE} COINS</div>
       </div>
     </div>
   );
