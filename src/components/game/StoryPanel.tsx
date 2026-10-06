@@ -84,7 +84,7 @@ function Stage({ panel, num }: { panel: StoryPanelData; num?: number }) {
             </div>
           )}
           {panel.narration && (
-            <div className="absolute left-2 right-2 bottom-2 sm:right-auto sm:max-w-[52%] border-2 border-background bg-primary px-2 py-1.5 sm:px-3 sm:py-2 shadow-[3px_3px_0_hsl(var(--background))]">
+            <div className="absolute left-2 bottom-2 max-w-[60%] sm:max-w-[52%] border-2 border-background bg-primary px-2 py-1.5 sm:px-3 sm:py-2 shadow-[3px_3px_0_hsl(var(--background))]">
               <p className="font-heading text-[10px] sm:text-sm font-black uppercase leading-tight text-primary-foreground whitespace-pre-line">{panel.narration}</p>
               {panel.subNarration && <p className="mt-1 font-heading text-[9px] sm:text-xs font-bold uppercase leading-tight text-primary-foreground/85 whitespace-pre-line">{panel.subNarration}</p>}
             </div>

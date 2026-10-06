@@ -63,7 +63,7 @@ export const LEVEL5_OPENING_EXIT_LIQUIDITY: StoryScene = {
     {
       treatment: "arcade-cinematic", panelTitle: "THE MISSION",
       background: "bg-level5-cemetery",
-      characters: [{ art: "cut-waldoge", x: 76, bottom: 2, scale: 0.8 }],
+      characters: [{ art: "cut-waldoge", x: 80, bottom: 2, scale: 0.8 }],
       narration: "MONKO HAS BEEN CAPTURED.\nHIS BANANAS HAVE BEEN STOLEN.",
       subNarration: "FIND MONKO.\nRECOVER HIS BANANAS.\nRESCUE MONKO.\nDEFEAT EXIT LIQUIDITY.",
       transition: "fade",
