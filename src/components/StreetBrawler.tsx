@@ -92,6 +92,7 @@ import { LEVEL5_OPENING_EXIT_LIQUIDITY, LEVEL5_MONKO_RESCUE } from "@/game/story
 import { LEVEL2_ENDING_BAD_ACTOR_CALL } from "@/game/story/level2EndStory";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
 import { glassesForLevel, touchesGlass, type GlassSpot } from "@/game/collectibles/glasses";
+import { resetRunPickups, isPickedThisRun, pickThisRun, pickedCount } from "@/game/collectibles/coinWallet";
 import { claimGlass, collectedCount, getCoins, isGlassCollected, subscribeCoins, GLASS_COIN_VALUE } from "@/game/collectibles/coinWallet";
 import { drawGlass } from "@/game/presentation/render2d/glassSprites";
 import glassIcon from "@/assets/glass/frame5.png";
@@ -3546,6 +3547,7 @@ export const StreetBrawler: FC = () => {
   // resumes at the furthest district reached in the save file. Omitted for a
   // fresh run, keeping the original level-0 / query-override behaviour.
   const startGame = useCallback((diff: Difficulty = "normal", startLevel?: number, freePlay = false) => {
+    resetRunPickups();
     const g = gameRef.current;
     freePlayRef.current = freePlay;
     g.difficulty = diff;
@@ -5422,18 +5424,22 @@ export const StreetBrawler: FC = () => {
         // COLLECTIBLES — idempotent glass claims (+coins only; score untouched).
         if (p.hp > 0) {
           for (const gl of glassesForLevel(g.level)) {
-            if (!isGlassCollected(gl.id) && touchesGlass(gl, p.x, p.y) && claimGlass(gl.id)) {
+            if (!isPickedThisRun(gl.id) && touchesGlass(gl, p.x, p.y) && pickThisRun(gl.id)) {
               glassPopsRef.current.push({ g: gl, t: 0 });
               sfx(() => SFX.waveStart());
+              setGlassTick((n) => n + 1);
+              if (!claimGlass(gl.id)) continue;
               g.effects.push({ x: gl.x, y: gl.y - 30, timer: 70, text: `+${GLASS_COIN_VALUE} COINS`, color: "#ffd23f", size: 16 });
               setGlassTick((n) => n + 1);
               setGlassToast((n) => n + 1);
             }
           }
           for (const lc of legendaryForLevel(g.level)) {
-            if (!isGlassCollected(lc.id) && touchesLegendary(lc, p.x, p.y) && claimCollectible(lc.id, LEGENDARY_COIN_VALUE)) {
+            if (!isPickedThisRun(lc.id) && touchesLegendary(lc, p.x, p.y) && pickThisRun(lc.id)) {
               candyPopsRef.current.push({ c: lc, t: 0 });
               sfx(() => SFX.waveStart());
+              setGlassTick((n) => n + 1);
+              if (!claimCollectible(lc.id, LEGENDARY_COIN_VALUE)) continue;
               g.effects.push({ x: lc.x, y: Math.max(40, lc.y + 30), timer: 90, text: `+${LEGENDARY_COIN_VALUE} COINS`, color: "#ffe066", size: 22 });
               setGlassTick((n) => n + 1);
               setLegendToast((n) => n + 1);
@@ -5900,13 +5906,13 @@ export const StreetBrawler: FC = () => {
         if (!baddieRef.current.keyCollected) drawFilfKey(ctx, BADDIE_KEY_X, groundYAt(g.level, BADDIE_KEY_X, undefined, false), g.camX, g.animFrameCount);
         drawBaddieCaptive(ctx, baddieRef.current, g.camX, groundYAt(g.level, BADDIE_CAGE_X, undefined, false), g.animFrameCount, baddiePromptRef.current);
       }
-      for (const gl of glassesForLevel(g.level)) if (!isGlassCollected(gl.id)) drawGlass(ctx, gl, g.camX, g.animFrameCount);
+      for (const gl of glassesForLevel(g.level)) if (!isPickedThisRun(gl.id)) drawGlass(ctx, gl, g.camX, g.animFrameCount);
       glassPopsRef.current = glassPopsRef.current.filter((pp) => {
         pp.t += 1;
         drawGlass(ctx, pp.g, g.camX, g.animFrameCount, pp.t / 24);
         return pp.t < 24;
       });
-      for (const lc of legendaryForLevel(g.level)) if (!isGlassCollected(lc.id)) drawCandy(ctx, lc, g.camX, g.animFrameCount);
+      for (const lc of legendaryForLevel(g.level)) if (!isPickedThisRun(lc.id)) drawCandy(ctx, lc, g.camX, g.animFrameCount);
       candyPopsRef.current = candyPopsRef.current.filter((pp) => {
         pp.t += 1;
         drawCandy(ctx, pp.c, g.camX, g.animFrameCount, pp.t / 40);
@@ -6617,11 +6623,11 @@ export const StreetBrawler: FC = () => {
           return (
             <div className="absolute left-1 top-7 sm:top-10 z-30 pointer-events-none flex items-center gap-1.5 font-mono font-bold text-[9px] sm:text-xs tracking-wider bg-background/80 border border-primary/60 px-1.5 py-0.5 rounded" aria-label="Collectibles">
               <img src={glassIcon} alt="" className="h-3.5 sm:h-5 w-auto" style={{ imageRendering: "pixelated" }} />
-              <span className="text-foreground">{collectedCount(ids)}/{ids.length}</span>
+              <span className="text-foreground">{pickedCount(ids)}/{ids.length}</span>
               <span className="inline-block h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 rounded-full bg-primary border border-primary-foreground/40" />
               <span className="text-primary" data-testid="coin-balance">{coins}</span>
               <img src={candyIcon} alt="Legendary" className="h-3.5 sm:h-5 w-auto ml-0.5" style={{ imageRendering: "pixelated" }} />
-              <span className="text-foreground" data-testid="legendary-count">{collectedCount(LEGENDARY.map((c) => c.id))}/{LEGENDARY.length}</span>
+              <span className="text-foreground" data-testid="legendary-count">{pickedCount(LEGENDARY.map((c) => c.id))}/{LEGENDARY.length}</span>
             </div>
           );
         })()}

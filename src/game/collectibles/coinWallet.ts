@@ -60,3 +60,11 @@ export function subscribeCoins(l: Listener): () => void {
   listeners.add(l);
   return () => { listeners.delete(l); };
 }
+
+/** Per-game pickup set: collectibles reappear every new game, but coins are
+ *  only ever paid once per id via claimGlass/claimCollectible. */
+const runPicked = new Set<string>();
+export function resetRunPickups(): void { runPicked.clear(); }
+export function isPickedThisRun(id: string): boolean { return runPicked.has(id); }
+export function pickThisRun(id: string): boolean { if (runPicked.has(id)) return false; runPicked.add(id); return true; }
+export function pickedCount(ids: readonly string[]): number { return ids.filter((id) => runPicked.has(id)).length; }
