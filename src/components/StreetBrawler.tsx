@@ -6506,10 +6506,11 @@ export const StreetBrawler: FC = () => {
       {
         const eq = getInventory().equipped;
         const handEq = eq === "sidearm" || eq === "gauntlets" ? eq : null;
+        const outerD = ctx.getTransform().d || 1;
         drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.style, !!g.specialFx, (p as unknown as Climber).climbing === true,
           handEq ? (c, hand, striking) => {
             // Frame-local space (already scaled/mirrored): undo the sprite scale so the strip keeps its size.
-            const k = Math.abs(c.getTransform().d);
+            const k = Math.abs(c.getTransform().d) / outerD;
             c.save();
             c.translate(hand.x, hand.y);
             c.scale(1 / k, 1 / k);
