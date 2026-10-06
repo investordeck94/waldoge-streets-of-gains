@@ -11,8 +11,6 @@ export const LUCKY_DIP_REWARDS: readonly ItemId[] = ["dobermann", "sidearm", "ga
 // Levels 5 and 6 open with a walkway at x 520–1080, so their stall and
 // 420 Blaze It sit on the clear street stretch between the walkways instead.
 export const LUCKY_DIP_STANDS: Record<number, number> = { 2: 470, 3: 470, 4: 470, 5: 1850, 6: 1850 };
-/** 420 Blaze It handover NPC, one per level 3–7, once per run. */
-export const BLAZE_NPC_X: Record<number, number> = { 2: 1150, 3: 1150, 4: 1150, 5: 1980, 6: 1980 };
 export const INTERACT_RANGE = 70;
 
 const PENDING_KEY = "sogLuckyDipPending_v1";
@@ -39,17 +37,10 @@ try {
   if (p && (LUCKY_DIP_REWARDS as readonly string[]).includes(p)) { addItem(p as ItemId); localStorage.removeItem(PENDING_KEY); }
 } catch { /* ignore */ }
 
-const blazeDone = new Set<number>();
-export function resetBlazeRun(): void { blazeDone.clear(); }
-export function blazeAvailable(level: number): boolean { return BLAZE_NPC_X[level] !== undefined && !blazeDone.has(level); }
-/** Gives exactly one health item, once per level per run. */
-export function claimBlazeHandover(level: number): boolean {
-  if (!blazeAvailable(level)) return false;
-  blazeDone.add(level);
-  addItem("health");
-  return true;
-}
-
+/** 420 Blaze It is NOT an NPC or shop: he only appears briefly as the
+ *  presentation of a Lucky Dip "health" reward. The item itself is stored
+ *  atomically by purchaseLuckyDip; the handover adds nothing extra. */
+export const BLAZE_HANDOVER_OFFSET_X = 70;
 /** Equipment hit rules. Standard enemies: one hit defeats. Bosses / Fat Cats:
  *  double damage, capped at 12% max HP per hit, and never the killing blow from above 12%. */
 export function equipmentDamage(base: number, target: { hp: number; maxHp: number; isBoss?: boolean }, isTough: boolean, equipped: ItemId | null): number {

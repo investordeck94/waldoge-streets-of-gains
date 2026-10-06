@@ -4,7 +4,7 @@ import { ITEM_DEFS, type ItemId } from "@/game/inventory/inventory";
 import { LUCKY_DIP_COST, purchaseLuckyDip } from "@/game/inventory/luckyDip";
 import { ITEM_ICONS } from "@/game/presentation/render2d/luckyDipSprites";
 
-export function LuckyDipModal({ onClose, onOpenChange }: { onClose: () => void; onOpenChange: (open: boolean) => void }) {
+export function LuckyDipModal({ onClose, onOpenChange, onReward }: { onClose: () => void; onOpenChange: (open: boolean) => void; onReward?: (r: ItemId) => void }) {
   const [coins, setCoins] = useState(getCoins());
   const [reward, setReward] = useState<ItemId | null>(null);
   const done = useRef(false);
@@ -18,7 +18,9 @@ export function LuckyDipModal({ onClose, onOpenChange }: { onClose: () => void; 
   const confirm = () => {
     if (done.current) return;
     done.current = true;
-    setReward(purchaseLuckyDip());
+    const r = purchaseLuckyDip();
+    setReward(r);
+    if (r) onReward?.(r);
   };
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
   const btn = "border-2 px-3 py-1 tracking-wider";
