@@ -6894,7 +6894,7 @@ export const StreetBrawler: FC = () => {
             onClick={() => { filfRequestRef.current = true; }}
             className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse"
           >
-            {marketerQuestHasKey() ? "UNLOCK" : "CAGE LOCKED — FIND KEY"}
+            {getMarketerQuestState().keyTaken ? "UNLOCK" : "CAGE LOCKED — FIND KEY"}
           </button>
         )}
         {gameState === "playing" && baddiePrompt && !storyScene && (
