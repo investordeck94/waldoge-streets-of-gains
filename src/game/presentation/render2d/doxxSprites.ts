@@ -28,7 +28,7 @@ function getAtlas(): HTMLImageElement | null {
   if (typeof window === "undefined") return null;
   if (!atlas) {
     atlas = new Image();
-    residentImage(atlas, DOXX_ATLAS_URL, [1]); // Level 2 only
+    residentImage(atlas, DOXX_ATLAS_URL, [1, 2, 3, 4, 5, 6]); // Level 2 rescue + Lucky Dip stalls (L3–7)
   }
   return atlas;
 }
@@ -146,4 +146,9 @@ export function drawDoxx(
     ctx.fillStyle = "#fff"; ctx.fillText(label, sx, y + 16);
     ctx.restore();
   }
+}
+
+/** Doxx standing at his Lucky Dip stall (canonical "stand" frame). */
+export function drawDoxxStand(ctx: CanvasRenderingContext2D, sx: number, footY: number, flip: boolean): void {
+  blit(ctx, "stand", sx, footY, 112, flip);
 }

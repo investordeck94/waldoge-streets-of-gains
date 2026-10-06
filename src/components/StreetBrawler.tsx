@@ -295,6 +295,11 @@ type Entity = PlayerEntity;
 // Byte-identical shapes; every existing call site continues to compile
 // unchanged via the imports below.
 import { Backpack } from "@/components/game/Backpack";
+import { LuckyDipModal } from "@/components/game/LuckyDipModal";
+import { getInventory, useItem as consumeItem, type ItemId } from "@/game/inventory/inventory";
+import { LUCKY_DIP_STANDS, BLAZE_NPC_X, INTERACT_RANGE, blazeAvailable, claimBlazeHandover, resetBlazeRun, equipmentDamage, DOG_MAX_KILLS, DOG_BOSS_CHIP_TOTAL, type DogAlly } from "@/game/inventory/luckyDip";
+import { drawStrip, drawLuckyDipSign, preloadLuckyDipArt } from "@/game/presentation/render2d/luckyDipSprites";
+import { drawDoxxStand } from "@/game/presentation/render2d/doxxSprites";
 import type {
   Projectile,
   PowerUp,
@@ -3248,11 +3253,36 @@ export const StreetBrawler: FC = () => {
 
   const pausedRef = useRef(false);
   const bagPrevPausedRef = useRef<boolean | null>(null);
+  const dogRef = useRef<DogAlly | null>(null);
+  const blazeRef = useRef<{ level: number; phase: "idle" | "hand" | "vanish" | "gone"; t: number }>({ level: -1, phase: "idle", t: 0 });
+  const ldPromptRef = useRef<"dip" | "blaze" | null>(null);
+  const [ldPrompt, setLdPrompt] = useState<"dip" | "blaze" | null>(null);
+  const [shopOpen, setShopOpen] = useState(false);
+  const shopOpenRef = useRef(false);
   const onBackpackOpen = useCallback((open: boolean) => {
     const g = gameRef.current;
     if (open) { bagPrevPausedRef.current = pausedRef.current; pausedRef.current = true; }
     else if (bagPrevPausedRef.current !== null) { pausedRef.current = bagPrevPausedRef.current; bagPrevPausedRef.current = null; }
     g?.keys?.clear(); g?.keyJustPressed?.clear();
+  }, []);
+  const onUseItem = useCallback((id: ItemId): string | null => {
+    const g = gameRef.current; const p = g?.player;
+    if (!g || !p) return null;
+    if (id === "health") {
+      if (p.hp >= 100) return "HEALTH FULL";
+      if (!consumeItem("health")) return null;
+      p.hp = 100; setPlayerHp(100);
+      g.effects.push({ x: p.x, y: p.y - 110, timer: 90, text: "HEALTH RESTORED 100 HP", color: "#7dff6a", size: 16 });
+      return "HEALTH RESTORED — 100 HP";
+    }
+    if (id === "dobermann") {
+      if (dogRef.current) return "DOBERMANN ALREADY ACTIVE";
+      if (!consumeItem("dobermann")) return null;
+      dogRef.current = { x: p.x - p.facing * 46, y: p.y, vx: 0, facing: p.facing >= 0 ? 1 : -1, kills: 0, state: "run", timer: 0, targetCd: 30, frame: 0, bossChip: 0 };
+      g.effects.push({ x: p.x, y: p.y - 110, timer: 80, text: "DOBERMANN SUPPORT!", color: "#ff9a3c", size: 16 });
+      return "DOBERMANN DEPLOYED";
+    }
+    return null;
   }, []);
   // Story / narration overlay (reusable). While open, the simulation is frozen.
   const [storyScene, setStoryScene] = useState<StoryScene | null>(null);
@@ -3555,7 +3585,7 @@ export const StreetBrawler: FC = () => {
   // resumes at the furthest district reached in the save file. Omitted for a
   // fresh run, keeping the original level-0 / query-override behaviour.
   const startGame = useCallback((diff: Difficulty = "normal", startLevel?: number, freePlay = false) => {
-    resetRunPickups();
+    resetRunPickups(); resetBlazeRun(); dogRef.current = null; preloadLuckyDipArt();
     const g = gameRef.current;
     freePlayRef.current = freePlay;
     g.difficulty = diff;
@@ -4444,7 +4474,7 @@ export const StreetBrawler: FC = () => {
           );
 
           if (inRange) {
-            e.hp -= dmg;
+            e.hp -= equipmentDamage(dmg, e, isCatGuard(e), getInventory().equipped);
             e.state = "hit";
             if (isCatGuard(e)) {
               // Fat Cat hit feedback (presentation only): white flash + reel.
@@ -5504,6 +5534,67 @@ export const StreetBrawler: FC = () => {
             setMonkoPrompt(mPrompt);
           }
         }
+        // LUCKY DIP stall (L3–7) + 420 BLAZE IT handover NPC + DOBERMANN ally.
+        {
+          let lp: "dip" | "blaze" | null = null;
+          const standX = LUCKY_DIP_STANDS[g.level];
+          if (standX !== undefined && p.hp > 0 && Math.abs(p.x - standX) < INTERACT_RANGE && Math.abs(p.y - groundYAt(g.level, standX, undefined, false)) < 30) lp = "dip";
+          const bz = blazeRef.current;
+          if (bz.level !== g.level) { bz.level = g.level; bz.phase = blazeAvailable(g.level) ? "idle" : "gone"; bz.t = 0; }
+          const bx = BLAZE_NPC_X[g.level];
+          if (bx !== undefined && bz.phase === "idle" && p.hp > 0 && Math.abs(p.x - bx) < INTERACT_RANGE && Math.abs(p.y - groundYAt(g.level, bx, undefined, false)) < 30) lp = "blaze";
+          if (filfRequestRef.current && lp === "dip" && !shopOpenRef.current) {
+            shopOpenRef.current = true; setShopOpen(true);
+          } else if (filfRequestRef.current && lp === "blaze" && bz.phase === "idle") {
+            bz.phase = "hand"; bz.t = 0;
+          }
+          if (bz.phase === "hand") {
+            bz.t++;
+            if (bz.t === 56 && claimBlazeHandover(g.level) && bx !== undefined) {
+              sfx(() => SFX.waveStart());
+              g.effects.push({ x: bx, y: groundYAt(g.level, bx, undefined, false) - 120, timer: 110, text: "HEALTH RESTORE ITEM +1", color: "#7dff6a", size: 16 });
+            }
+            if (bz.t >= 72) { bz.phase = "vanish"; bz.t = 0; }
+          } else if (bz.phase === "vanish") { bz.t++; if (bz.t >= 48) bz.phase = "gone"; }
+          if (lp !== ldPromptRef.current) { ldPromptRef.current = lp; setLdPrompt(lp); }
+
+          const dog = dogRef.current;
+          if (dog) {
+            dog.frame++;
+            dog.y = groundYAt(g.level, dog.x, undefined, false);
+            if (dog.state === "vanish") {
+              dog.timer++; if (dog.timer >= 54) dogRef.current = null;
+            } else {
+              const foes = g.enemies.filter((o) => o.state !== "dead" && o.hp > 0 && Math.abs(o.x - dog.x) < 520);
+              const tgt = foes.sort((a, b) => Math.abs(a.x - dog.x) - Math.abs(b.x - dog.x))[0];
+              const goalX = tgt ? tgt.x : p.x - p.facing * 50;
+              const dx = goalX - dog.x;
+              dog.facing = dx >= 0 ? 1 : -1;
+              if (dog.targetCd > 0) dog.targetCd--;
+              if (tgt && Math.abs(dx) < 46) {
+                dog.state = "attack";
+                if (dog.targetCd <= 0) {
+                  dog.targetCd = 40;
+                  if (tgt.isBoss || isCatGuard(tgt)) {
+                    const cap = Math.round(tgt.maxHp * DOG_BOSS_CHIP_TOTAL);
+                    const chip = Math.min(Math.round(tgt.maxHp * 0.02), cap - dog.bossChip, tgt.hp - 1);
+                    if (chip > 0) { tgt.hp -= chip; dog.bossChip += chip; tgt.state = "hit"; tgt.stateTimer = 8; }
+                    else { dog.kills = DOG_MAX_KILLS; }
+                  } else {
+                    tgt.hp = 0; tgt.state = "dead"; tgt.stateTimer = 60; dog.kills++;
+                    sfx(() => SFX.enemyDeath());
+                    g.effects.push({ x: tgt.x, y: tgt.y - 70, timer: 35, text: "DOBERMANN!", color: "#ff9a3c", size: 14 });
+                  }
+                }
+              } else {
+                dog.state = "run";
+                if (Math.abs(dx) > 30) dog.x += Math.sign(dx) * Math.min(5.5, Math.abs(dx));
+              }
+              dog.timer++;
+              if (dog.kills >= DOG_MAX_KILLS || dog.timer > 60 * 90) { dog.state = "vanish"; dog.timer = 0; }
+            }
+          }
+        }
         filfRequestRef.current = false;
         if (prompt !== filfPromptRef.current) {
           filfPromptRef.current = prompt;
@@ -5940,6 +6031,31 @@ export const StreetBrawler: FC = () => {
         if (!doxxHasBlueprints(doxxRef.current)) drawDoxxBlueprints(ctx, DOXX_BLUEPRINT_X, groundYAt(g.level, DOXX_BLUEPRINT_X, undefined, false), g.camX, g.animFrameCount);
         if (!doxxHasKey(doxxRef.current)) drawFilfKey(ctx, DOXX_KEY_X, groundYAt(g.level, DOXX_KEY_X, undefined, false), g.camX, g.animFrameCount);
         drawDoxx(ctx, doxxRef.current, g.camX, groundYAt(g.level, DOXX_CAGE_X, undefined, false), g.player?.x ?? 0, g.animFrameCount, doxxPromptRef.current, doxxHasBlueprints(doxxRef.current));
+      }
+      {
+        const standX = LUCKY_DIP_STANDS[g.level];
+        if (standX !== undefined) {
+          const fy = groundYAt(g.level, standX, undefined, false); const sx = standX - g.camX;
+          if (sx > -120 && sx < ctx.canvas.width + 120) {
+            drawDoxxStand(ctx, sx - 18, fy - 2, (g.player?.x ?? 0) < standX);
+            drawLuckyDipSign(ctx, sx + 22, fy, g.animFrameCount, ldPromptRef.current === "dip" ? "LUCKY DIP [E]" : null);
+          }
+        }
+        const bx = BLAZE_NPC_X[g.level]; const bz = blazeRef.current;
+        if (bx !== undefined && bz.level === g.level && bz.phase !== "gone") {
+          const fy = groundYAt(g.level, bx, undefined, false); const sx = bx - g.camX;
+          const flip = (g.player?.x ?? 0) < bx;
+          if (bz.phase === "idle") drawStrip(ctx, "blazeIdle", Math.floor(g.animFrameCount / 14) % 3, sx, fy, 1.45, flip);
+          else if (bz.phase === "hand") drawStrip(ctx, "blazeHand", bz.t / 9, sx, fy, 1.45, flip);
+          else drawStrip(ctx, "blazeVanish", bz.t / 8, sx, fy, 1.45, flip);
+          if (bz.phase === "idle" && ldPromptRef.current === "blaze") {
+            ctx.save(); ctx.font = "bold 12px monospace"; ctx.textAlign = "center";
+            const label = "TALK TO 420 BLAZE IT [E]"; const w = ctx.measureText(label).width + 14;
+            ctx.fillStyle = "rgba(10,6,16,0.85)"; ctx.fillRect(sx - w / 2, fy - 136, w, 20);
+            ctx.strokeStyle = "#7dff6a"; ctx.strokeRect(sx - w / 2, fy - 136, w, 20);
+            ctx.fillStyle = "#fff"; ctx.fillText(label, sx, fy - 122); ctx.restore();
+          }
+        }
       }
       if (g.level === FILF_LEVEL && !filfHasKey(filfRef.current)) {
         drawFilfKey(ctx, FILF_KEY_X, groundYAt(g.level, FILF_KEY_X, undefined, false), g.camX, g.animFrameCount);
@@ -6388,6 +6504,22 @@ export const StreetBrawler: FC = () => {
       // Presentation only — combat state (p.state / p.stateTimer / p.facing)
       // is produced by the gameplay loop above and merely read here.
       drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.style, !!g.specialFx, (p as unknown as Climber).climbing === true);
+      {
+        const eq = getInventory().equipped;
+        if ((eq === "sidearm" || eq === "gauntlets") && !(p as unknown as Climber).climbing) {
+          const striking = p.state === "punch" || p.state === "kick" || p.state === "uppercut";
+          const hx = p.x - g.camX + p.facing * (striking ? 30 : 18);
+          const hy = p.y - (striking ? 46 : 40);
+          drawStrip(ctx, eq === "sidearm" ? "gunHold" : "gauntletHold", striking ? 1 : 0, hx, hy + 10, 0.5, p.facing < 0);
+        }
+        const dog = dogRef.current;
+        if (dog) {
+          const sx = dog.x - g.camX; const flip = dog.facing < 0;
+          if (dog.state === "vanish") drawStrip(ctx, "dogVanish", dog.timer / 6, sx, dog.y, 0.95, flip);
+          else if (dog.state === "attack") drawStrip(ctx, "dogAttack", Math.floor(dog.frame / 8) % 2, sx, dog.y, 0.95, flip);
+          else drawStrip(ctx, "dogRun", Math.floor(dog.frame / 4) % 8, sx, dog.y, 0.95, flip);
+        }
+      }
 
       // Heal flash: expanding green ring + glow around player when fully healed at level start
       if (g.healFlash > 0) {
@@ -6639,7 +6771,16 @@ export const StreetBrawler: FC = () => {
             </div>
           );
         })()}
-        {gameState === "playing" && !storyScene && <Backpack onOpenChange={onBackpackOpen} />}
+        {gameState === "playing" && !storyScene && <Backpack onOpenChange={onBackpackOpen} onUse={onUseItem} />}
+        {gameState === "playing" && ldPrompt && !storyScene && !shopOpen && (
+          <button type="button" onClick={() => { filfRequestRef.current = true; }}
+            className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse">
+            {ldPrompt === "dip" ? "DOXX LUCKY DIP" : "TALK TO 420 BLAZE IT"}
+          </button>
+        )}
+        {gameState === "playing" && shopOpen && (
+          <LuckyDipModal onClose={() => { shopOpenRef.current = false; setShopOpen(false); }} onOpenChange={onBackpackOpen} />
+        )}
         {gameState === "playing" && glassToast > 0 && !storyScene && (
           <GlassToast key={glassToast} onDone={() => setGlassToast(0)} />
         )}
