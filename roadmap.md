@@ -187,4 +187,4 @@
 
 ## Current — Rare candy cane placement
 - [x] Move both rare candy canes out of the sky and into guaranteed breakable street containers
-- [ ] Verify Level 6 and Level 7 cane reveal, pickup, persistence, and score separation on desktop and phone
+- [x] Verify Level 6 and Level 7 cane reveal, pickup, persistence, and score separation on desktop and phone
