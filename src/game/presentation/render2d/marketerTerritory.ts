@@ -323,8 +323,6 @@ function squirrelCage(ctx: CanvasRenderingContext2D): void {
   // Plinth + cage body.
   ctx.fillStyle = "#14151a";
   ctx.fillRect(left - 10, ground - 14, w + 20, 14);
-  ctx.fillStyle = "rgba(10,10,14,.55)";
-  ctx.fillRect(left, top, w, h);
 
   // Supplied caged frame (cage + Squirrel) while locked; supplied idle frame beside the opened cage after rescue.
   const cagedArt = !quest.rescued && imgOk(squirrelCagedImage) ? squirrelCagedImage : null;
@@ -341,6 +339,8 @@ function squirrelCage(ctx: CanvasRenderingContext2D): void {
 
   if (!quest.rescued) {
     if (!cagedArt) {
+    ctx.fillStyle = "rgba(10,10,14,.55)";
+    ctx.fillRect(left, top, w, h);
     ctx.strokeStyle = "#c8ccd2";
     ctx.lineWidth = 5;
     for (let bx = left + 12; bx < left + w; bx += 22) {
@@ -365,10 +365,6 @@ function squirrelCage(ctx: CanvasRenderingContext2D): void {
     ctx.fillStyle = quest.keyTaken ? "#ffd23f" : "#ff5566";
     ctx.fillText(quest.keyTaken ? "USE THE KEY" : "LOCKED", x, top - 12);
   } else {
-    // Opened cage: bars swung aside.
-    ctx.strokeStyle = "#7d838a";
-    ctx.lineWidth = 6;
-    ctx.strokeRect(left, top, w, h);
     ctx.textAlign = "center";
     ctx.font = "900 16px Impact, sans-serif";
     ctx.fillStyle = "#54ff9f";
