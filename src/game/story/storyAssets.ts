@@ -69,6 +69,20 @@ import baddieThankful from "@/assets/baddie-thankful-local.png";
 import fudderAtlas from "@/assets/fudder-atlas.png.asset.json";
 import fudderWorldBg from "@/assets/level4-media.jpg-local.jpg";
 import fudderPanelBg from "@/assets/level4-fudder-panel.png";
+import sqIdle from "@/assets/squirrel/idle.png";
+import sqTalk from "@/assets/squirrel/talk.png";
+import sqWorking from "@/assets/squirrel/working.png";
+import sqCaged from "@/assets/squirrel/caged.png";
+import sqPortrait from "@/assets/squirrel/portrait.png";
+import sqPortraitCry from "@/assets/squirrel/portrait-cry.png";
+import marketerAtlas from "@/assets/mr-marketer-atlas-local.png";
+import marketerHead from "@/assets/boss-mr-marketer-head.png";
+import raiderAtlas from "@/assets/raiding-team-atlas.png";
+import l6Advertising from "@/assets/level6-advertising.jpg";
+import l6ColdCall from "@/assets/level6-coldcall.jpg";
+import l6Funnel from "@/assets/level6-funnel.jpg";
+import l6Manipulation from "@/assets/level6-manipulation.jpg";
+import l6Hq from "@/assets/level6-hq.jpg";
 import type { StoryArtId, StoryPanelData, StoryPortrait } from "./storyTypes";
 
 export interface StoryArt {
@@ -155,6 +169,22 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "bg-level5-cemetery": { src: level5Cemetery, alt: "The Graveyard of Gains" },
   "bg-level5-throne": { src: level5Throne, alt: "Exit Liquidity fully seated on his complete throne" },
   "exit-liquidity-head": { src: exitLiquidityHead, alt: "Exit Liquidity" },
+  // Level 6 — new canonical Squirrel frames, canonical Mr Marketer / Raiding Team atlases, Level 6 scenery.
+  "l6-sq-idle": { src: sqIdle, alt: "Squirrel holding his acorn" },
+  "l6-sq-talk": { src: sqTalk, alt: "Squirrel talking" },
+  "l6-sq-working": { src: sqWorking, alt: "Squirrel forced to push crates" },
+  "l6-sq-caged": { src: sqCaged, alt: "Squirrel locked inside his cage" },
+  "l6-sq-portrait": { src: sqPortrait, alt: "Squirrel" },
+  "l6-sq-portrait-cry": { src: sqPortraitCry, alt: "Squirrel crying" },
+  "l6-marketer": { src: marketerAtlas, frame: { x: 0, y: 0, w: 238, h: 325 }, sheet: { w: 1200, h: 991 }, alt: "Mr Marketer" },
+  "l6-marketer-pitch": { src: marketerAtlas, frame: { x: 0, y: 331, w: 231, h: 309 }, sheet: { w: 1200, h: 991 }, alt: "Mr Marketer with his megaphone" },
+  "l6-marketer-head": { src: marketerHead, alt: "Mr Marketer" },
+  "l6-raider": { src: raiderAtlas, frame: { x: 6, y: 6, w: 89, h: 111 }, sheet: { w: 1130, h: 123 }, alt: "Raiding Team henchman" },
+  "bg-l6-advertising": { src: l6Advertising, alt: "Advertising District" },
+  "bg-l6-coldcall": { src: l6ColdCall, alt: "Cold Call Central" },
+  "bg-l6-funnel": { src: l6Funnel, alt: "The Funnel" },
+  "bg-l6-manipulation": { src: l6Manipulation, alt: "Manipulation District" },
+  "bg-l6-hq": { src: l6Hq, alt: "Mr Marketer's HQ" },
   "bg-once-peaceful": { src: oncePeacefulBg, alt: "The Anonverse at dusk under storm clouds, streets shuttered and empty" },
 
 /**
