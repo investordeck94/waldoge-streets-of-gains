@@ -5,8 +5,11 @@ import { ITEM_ICONS } from "@/game/presentation/render2d/luckyDipSprites";
 
 /** Move the backpack by changing this one value. */
 export type HudCorner = "top-right" | "top-left" | "bottom-right" | "bottom-left";
-export const INVENTORY_HUD_POSITION = "top-right" as HudCorner;
-const POS: Record<HudCorner, string> = {
+/** "hud" = in the lower HUD (Player HP header row), outside the game screen; corners = over the game screen. */
+export type BackpackPlacement = HudCorner | "hud";
+export const INVENTORY_HUD_POSITION = "hud" as BackpackPlacement;
+const POS: Record<BackpackPlacement, string> = {
+  hud: "",
   "top-right": "right-1 top-7 sm:top-10",
   "top-left": "left-1 top-14 sm:top-20",
   "bottom-right": "right-1 bottom-1",
@@ -15,10 +18,10 @@ const POS: Record<HudCorner, string> = {
 
 function BagIcon() {
   // Supplied red-white rucksack artwork (canonical inventory icon).
-  return <img src={rucksack} alt="" draggable={false} className="h-9 w-9 sm:h-12 sm:w-12 object-contain" style={{ imageRendering: "pixelated" }} />;
+  return <img src={rucksack} alt="" draggable={false} className="h-12 w-12 sm:h-14 sm:w-14 object-contain" style={{ imageRendering: "pixelated" }} />;
 }
 
-export function Backpack({ onOpenChange, onUse }: { onOpenChange: (open: boolean) => void; onUse: (id: ItemId) => string | null }) {
+export function Backpack({ onOpenChange, onUse, slot }: { onOpenChange: (open: boolean) => void; onUse: (id: ItemId) => string | null; slot: "overlay" | "hud" }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [inv, setInv] = useState(getInventory());
@@ -60,8 +63,12 @@ export function Backpack({ onOpenChange, onUse }: { onOpenChange: (open: boolean
     );
   };
 
+  const inHud = INVENTORY_HUD_POSITION === "hud";
+  if ((slot === "hud") !== inHud) return null;
+  const right = inHud || INVENTORY_HUD_POSITION.endsWith("right");
+  const below = !inHud && INVENTORY_HUD_POSITION.startsWith("top");
   return (
-    <div className={`absolute ${POS[INVENTORY_HUD_POSITION]} z-40 font-mono font-bold`}
+    <div className={`${inHud ? "relative shrink-0" : `absolute ${POS[INVENTORY_HUD_POSITION]}`} z-40 font-mono font-bold`}
       onPointerDown={stop} onTouchStart={stop} onMouseDown={stop} onKeyDown={stop}>
       <button type="button" aria-label="Inventory" aria-expanded={open} data-testid="backpack-button"
         onClick={() => setOpen((o) => !o)}
@@ -70,7 +77,7 @@ export function Backpack({ onOpenChange, onUse }: { onOpenChange: (open: boolean
       </button>
       {open && (
         <div role="dialog" aria-label="Inventory" data-testid="inventory-panel"
-          className={`absolute ${INVENTORY_HUD_POSITION.endsWith("right") ? "right-0" : "left-0"} ${INVENTORY_HUD_POSITION.startsWith("top") ? "top-full mt-1" : "bottom-full mb-1"} w-[min(13rem,calc(100vw-1rem))] max-h-[60svh] overflow-y-auto bg-background/95 border-2 border-primary rounded p-2 text-[10px] sm:text-xs shadow-lg`}>
+          className={`absolute ${right ? "right-0" : "left-0"} ${below ? "top-full mt-1" : "bottom-full mb-1"} w-[min(13rem,calc(100vw-1rem))] max-h-[60svh] overflow-y-auto bg-background/95 border-2 border-primary rounded p-2 text-[10px] sm:text-xs shadow-lg`}>
           <div className="flex items-center justify-between">
             <span className="tracking-widest text-foreground">INVENTORY</span>
             <button type="button" aria-label="Close inventory" onClick={() => setOpen(false)}

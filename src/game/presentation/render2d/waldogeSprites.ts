@@ -16,6 +16,7 @@
 import { renderNow } from "./clock";
 import type { StyleName } from "@/lib/fightStyles";
 import atlasUrl from "@/assets/waldoge-atlas-local.png";
+import bareAtlasUrl from "@/assets/waldoge-atlas-bare-local.png";
 import punchExtUrl from "@/assets/waldoge-punch-extended-local.png";
 import { drawWaldogeFighter, type FighterView } from "./waldogeFighter";
 import { residentImage, drawSource } from "./imageResidency";
@@ -90,6 +91,19 @@ function getAtlas(): CanvasImageSource | null {
   return atlasReady && atlas.complete && atlas.naturalWidth > 0 ? drawSource(atlas) : null;
 }
 
+let bareAtlas: HTMLImageElement | null = null;
+let bareReady = false;
+/** Same atlas with the boxing gloves replaced by bare paws (hand equipment active). */
+function getBareAtlas(): CanvasImageSource | null {
+  if (typeof Image === "undefined") return null;
+  if (!bareAtlas) {
+    bareAtlas = new Image();
+    bareAtlas.onload = () => { bareReady = true; };
+    residentImage(bareAtlas, bareAtlasUrl, "always", { pin: true });
+  }
+  return bareReady && bareAtlas.complete && bareAtlas.naturalWidth > 0 ? drawSource(bareAtlas) : null;
+}
+
 function getPunchExt(): CanvasImageSource | null {
   if (typeof Image === "undefined") return null;
   if (!punchExt) {
@@ -101,7 +115,7 @@ function getPunchExt(): CanvasImageSource | null {
 }
 
 /** Kick off the download early (called once from the game bootstrap). */
-export function preloadWaldogeSprites() { getAtlas(); getPunchExt(); }
+export function preloadWaldogeSprites() { getAtlas(); getBareAtlas(); getPunchExt(); }
 
 
 function styleTint(style: StyleName): string {
@@ -181,7 +195,7 @@ function frameFor(e: FighterView, specialActive: boolean, clock: number): Pick {
  * already applied ctx.scale(facing, …)) and scales with the sprite. There are
  * no hard-coded screen offsets anywhere.
  */
-interface Hand { x: number; y: number; r: number }
+export interface Hand { x: number; y: number; r: number }
 
 const HAND = new Map<WaldogeFrame, Hand>([
   [F.idle0, { x: 34, y: -100, r: 0.62 }],
@@ -254,6 +268,7 @@ function drawWaldogeClimb(
   e: FighterView,
   camX: number,
   style: StyleName,
+  bare = false,
 ) {
   const sx = e.x - camX;
   const sy = e.y;
@@ -318,9 +333,9 @@ function drawWaldogeClimb(
     ctx.lineTo(handX, handY);
     ctx.stroke();
     // Closed glove over the rung: a horizontal palm with a dark grip notch.
-    ctx.fillStyle = "#e03434";
+    ctx.fillStyle = bare ? "#d99a4e" : "#e03434";
     ctx.beginPath(); ctx.ellipse(handX, handY, 7, 5.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = bare ? "#7a4a1c" : "#ffffff"; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.ellipse(handX, handY, 7, 5.5, 0, 0, Math.PI * 2); ctx.stroke();
     ctx.strokeStyle = "#641018"; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(handX - 4, handY + 1); ctx.lineTo(handX + 4, handY + 1); ctx.stroke();
@@ -376,17 +391,20 @@ export function drawWaldogeSprite(
   style: StyleName = "brawler",
   specialActive = false,
   climbing = false,
+  /** Active hand equipment: when set, gloves are hidden and this draws at the hand anchor. */
+  drawEquip?: (ctx: CanvasRenderingContext2D, hand: Hand, striking: boolean) => void,
 ) {
 
   // The ladder pose is self-contained and must run before atlas fallback.
   // Otherwise a slow/cached-miss image load briefly draws the normal fighter
   // standing in mid-air while the climb state is already moving downward.
   if (climbing && e.state !== "dead" && e.state !== "hit") {
-    drawWaldogeClimb(ctx, e, camX, style);
+    drawWaldogeClimb(ctx, e, camX, style, !!drawEquip);
     return;
   }
 
-  const img = getAtlas();
+  const bare = drawEquip ? getBareAtlas() : null;
+  const img = drawEquip ? bare : getAtlas();
   if (!img) {
     // Artwork not downloaded yet — keep the procedural fighter at the same
     // requested presentation scale as the atlas instead of shrinking it.
@@ -403,6 +421,8 @@ export function drawWaldogeSprite(
   const sy = e.y;
   const clock = renderNow();
   const picked = frameFor(e, specialActive, clock);
+  // The standalone jab art has gloves baked in; with equipment use the atlas jab.
+  if (drawEquip && picked.ext) { picked.ext = false; picked.f = F.punch1; }
   const extImg = picked.ext ? getPunchExt() : null;
   // Fall back to the atlas wind-up frame until the standalone jab has loaded.
   const f = picked.ext && !extImg ? F.punch0 : picked.f;
@@ -459,6 +479,11 @@ export function drawWaldogeSprite(
 
   ctx.imageSmoothingEnabled = true;
   drawFrame(ctx, src, f);
+  if (drawEquip) {
+    const hand = (src === img && picked.ext ? PUNCH_EXT_HAND : HAND.get(f)) ?? DEFAULT_HAND;
+    const striking = e.state === "punch" || e.state === "kick" || e.state === "uppercut" || e.state === "dashpunch";
+    drawEquip(ctx, hand, striking);
+  }
 
   ctx.restore();
 }

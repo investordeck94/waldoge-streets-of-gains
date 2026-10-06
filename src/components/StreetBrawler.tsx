@@ -6503,15 +6503,22 @@ export const StreetBrawler: FC = () => {
 
       // Presentation only — combat state (p.state / p.stateTimer / p.facing)
       // is produced by the gameplay loop above and merely read here.
-      drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.style, !!g.specialFx, (p as unknown as Climber).climbing === true);
       {
         const eq = getInventory().equipped;
-        if ((eq === "sidearm" || eq === "gauntlets") && !(p as unknown as Climber).climbing) {
-          const striking = p.state === "punch" || p.state === "kick" || p.state === "uppercut";
-          const hx = p.x - g.camX + p.facing * (striking ? 30 : 18);
-          const hy = p.y - (striking ? 46 : 40);
-          drawStrip(ctx, eq === "sidearm" ? "gunHold" : "gauntletHold", striking ? 1 : 0, hx, hy + 10, 0.5, p.facing < 0);
-        }
+        const handEq = eq === "sidearm" || eq === "gauntlets" ? eq : null;
+        const outerD = ctx.getTransform().d || 1;
+        drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.style, !!g.specialFx, (p as unknown as Climber).climbing === true,
+          handEq ? (c, hand, striking) => {
+            // Frame-local space (already scaled/mirrored): undo the sprite scale so the strip keeps its size.
+            const k = Math.abs(c.getTransform().d) / outerD;
+            c.save();
+            c.translate(hand.x + 12, hand.y + 14);
+            c.scale(1 / k, 1 / k);
+            drawStrip(c, handEq === "sidearm" ? "gunHold" : "gauntletHold", striking ? 1 : 0, 0, 12, 0.9, false);
+            c.restore();
+          } : undefined);
+      }
+      {
         const dog = dogRef.current;
         if (dog) {
           const sx = dog.x - g.camX; const flip = dog.facing < 0;
@@ -6771,7 +6778,7 @@ export const StreetBrawler: FC = () => {
             </div>
           );
         })()}
-        {gameState === "playing" && !storyScene && <Backpack onOpenChange={onBackpackOpen} onUse={onUseItem} />}
+        {gameState === "playing" && !storyScene && <Backpack slot="overlay" onOpenChange={onBackpackOpen} onUse={onUseItem} />}
         {gameState === "playing" && ldPrompt && !storyScene && !shopOpen && (
           <button type="button" onClick={() => { filfRequestRef.current = true; }}
             className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse">
@@ -6875,6 +6882,9 @@ export const StreetBrawler: FC = () => {
           <div className="glass-card px-3 py-2">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[10px] font-bold font-mono text-green-400 tracking-wider">PLAYER HP</span>
+              <div className="ml-auto -mt-3 mb-1">
+                {!storyScene && <Backpack slot="hud" onOpenChange={onBackpackOpen} onUse={onUseItem} />}
+              </div>
             </div>
             <div
               className="relative h-9 w-full rounded-sm overflow-visible border-2"
