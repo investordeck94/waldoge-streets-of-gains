@@ -40,7 +40,7 @@ const TARGET_LIST = "TARGET LIST\n1. WALDOGE\n2. ANON\n3. FILF\n4. MONKO\n5. 420
 
 export const LEVEL7_OPENING_CITADEL: StoryScene = {
   id: "l7-opening-citadel",
-  kind: "level-intro",
+  kind: "opening",
   title: "LEVEL 7 — THE CITADEL",
   panels: [
     { treatment: T, panelTitle: "LEVEL 7 — THE CITADEL", background: BG, narration: "FOR YEARS, THE ANONVERSE LIVED FREE.", subNarration: "BUT SOMEONE HAS BEEN WATCHING.", transition: "fade" },
