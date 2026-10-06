@@ -1,5 +1,4 @@
 /* =============================================================================
- * PRESENTATION LAYER — 2D canvas renderer for "Waldoge: Streets of Gains".
  *
  * Architecture role: this file is the single Presentation-layer module today.
  * It owns the requestAnimationFrame loop, DPR handling, canvas draw calls,
@@ -40,6 +39,7 @@
  * are welcome; behavior-changing refactors are not. See ARCHITECTURE.md for
  * the migration map (2D systems -> planned 3D equivalents).
  * ============================================================================= */
+import { VirtualJoystick, type JoystickDir } from "@/components/game/VirtualJoystick";
 import { FC, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { TitleScreen, type ContinueInfo } from "@/components/game/TitleScreen";
 import { Button } from "@/components/ui/button";
@@ -6717,6 +6717,16 @@ export const StreetBrawler: FC = () => {
     if (dir === "right") g.keys.add("d");
   }, []);
 
+  // Joystick adapter: maps stick direction onto the same keys as the old buttons
+  // (a/d) and the keyboard's arrow up/down for ladders. No physics changes.
+  const touchStick = useCallback((d: JoystickDir) => {
+    touchMove(d.x < 0 ? "left" : d.x > 0 ? "right" : "stop");
+    const g = gameRef.current;
+    g.keys.delete("arrowup"); g.keys.delete("arrowdown");
+    if (d.y < 0) g.keys.add("arrowup");
+    if (d.y > 0) g.keys.add("arrowdown");
+  }, [touchMove]);
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -7102,60 +7112,37 @@ export const StreetBrawler: FC = () => {
             </button>
           </div>
 
-          {/* Mobile touch controls */}
-          <div className="flex justify-between items-start gap-3 md:hidden px-1 pt-2 pb-1 select-none">
-            {/* Left: D-pad */}
-            <div className="flex gap-3">
-              <button
-                onTouchStart={() => touchMove("left")}
-                onTouchEnd={() => touchMove("stop")}
-                onTouchCancel={() => touchMove("stop")}
-                onPointerUp={() => touchMove("stop")}
-                onPointerCancel={() => touchMove("stop")}
-                onPointerLeave={() => touchMove("stop")}
-                onContextMenu={(e) => e.preventDefault()}
-                className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
-              >◀</button>
-              <button
-                onTouchStart={() => touchMove("right")}
-                onTouchEnd={() => touchMove("stop")}
-                onTouchCancel={() => touchMove("stop")}
-                onPointerUp={() => touchMove("stop")}
-                onPointerCancel={() => touchMove("stop")}
-                onPointerLeave={() => touchMove("stop")}
-                onContextMenu={(e) => e.preventDefault()}
-                className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
-              >▶</button>
-
-            </div>
-            {/* Right: Action cluster — jump/punch/kick aligned, special under punch */}
-            <div className="flex gap-2 items-start">
+          {/* Mobile touch controls: joystick (left) + action diamond (right) */}
+          <div
+            className="flex justify-between items-center gap-3 md:hidden pt-3 select-none"
+            style={{ paddingLeft: "max(0.75rem, env(safe-area-inset-left))", paddingRight: "max(0.75rem, env(safe-area-inset-right))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+          >
+            <VirtualJoystick onChange={touchStick} size={116} />
+            <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 w-[7.5rem] place-items-center">
               <button
                 onTouchStart={() => touchAction("jump")}
                 onContextMenu={(e) => e.preventDefault()}
-                className="w-14 h-14 glass-card flex items-center justify-center text-[11px] font-extrabold tracking-wider text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
+                className="col-span-2 w-14 h-12 glass-card flex items-center justify-center text-[11px] font-extrabold tracking-wider text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
                 aria-label="Jump"
               >JUMP</button>
-              <div className="flex flex-col gap-4 items-center">
-                <button
-                  onTouchStart={() => touchAction("punch")}
-                  onContextMenu={(e) => e.preventDefault()}
-                  className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
-                  aria-label="Punch"
-                >👊</button>
-                <button
-                  onTouchStart={() => touchAction("special")}
-                  onContextMenu={(e) => e.preventDefault()}
-                  className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-yellow-400 active:bg-yellow-400/30 active:scale-95 transition-transform touch-none"
-                  aria-label="Special"
-                >⚡</button>
-              </div>
+              <button
+                onTouchStart={() => touchAction("punch")}
+                onContextMenu={(e) => e.preventDefault()}
+                className="w-14 h-12 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
+                aria-label="Punch"
+              >👊</button>
               <button
                 onTouchStart={() => touchAction("kick")}
                 onContextMenu={(e) => e.preventDefault()}
-                className="w-14 h-14 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
+                className="w-14 h-12 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
                 aria-label="Kick"
               >🦶</button>
+              <button
+                onTouchStart={() => touchAction("special")}
+                onContextMenu={(e) => e.preventDefault()}
+                className="col-span-2 w-14 h-12 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
+                aria-label="Special"
+              >⚡</button>
             </div>
           </div>
 
