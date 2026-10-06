@@ -26,7 +26,7 @@ const GROUPS: { level: string; scenes: [string, StoryScene][] }[] = [
   { level: "Level 4", scenes: [["Fudder reveal", LEVEL4_OPENING_FUDDER_REVEAL], ["Baddie rescue", LEVEL4_BADDIE_RESCUE]] },
   { level: "Level 5", scenes: [["Exit Liquidity opening", LEVEL5_OPENING_EXIT_LIQUIDITY], ["Monko rescue", LEVEL5_MONKO_RESCUE]] },
   { level: "Level 6", scenes: [["Marketing Machine opening", LEVEL6_OPENING_MARKETING_MACHINE], ["Squirrel rescue", LEVEL6_SQUIRREL_RESCUE]] },
-  { level: "Level 7", scenes: [["Anon rescue", LEVEL7_ANON_RESCUE], ["Final epilogue", LEVEL7_FINAL_EPILOGUE]] },
+  { level: "Level 7", scenes: [["Citadel opening", LEVEL7_OPENING_CITADEL], ["Anon rescue", LEVEL7_ANON_RESCUE], ["Final epilogue", LEVEL7_FINAL_EPILOGUE]] },
 ];
 
 export default function StoryGallery() {
