@@ -19,7 +19,9 @@ import coldCallArt from "@/assets/level6-coldcall.jpg";
 import funnelArt from "@/assets/level6-funnel.jpg";
 import manipulationArt from "@/assets/level6-manipulation.jpg";
 import hqArt from "@/assets/level6-hq.jpg";
-import squirrelArt from "@/assets/squirrel-hodl.png";
+import squirrelArt from "@/assets/squirrel/idle.png";
+import squirrelCagedArt from "@/assets/squirrel/caged.png";
+import squirrelCapturedArt from "@/assets/squirrel/captured.png";
 import marketerAtlasAsset from "@/assets/mr-marketer-atlas.png.asset.json";
 import { flicker, renderNow } from "./clock";
 import { residentImage } from "./imageResidency";
@@ -120,6 +122,9 @@ const sectionImages: Array<HTMLImageElement | null> = [null, null, null, null, n
 const sectionReady = [false, false, false, false, false];
 let squirrelImage: HTMLImageElement | null = null;
 let squirrelReady = false;
+let squirrelCagedImage: HTMLImageElement | null = null;
+let squirrelCapturedImage: HTMLImageElement | null = null;
+const imgOk = (i: HTMLImageElement | null): i is HTMLImageElement => !!i && i.complete && i.naturalWidth > 0;
 
 function loadImage(src: string, ready: () => void): HTMLImageElement | null {
   if (typeof Image === "undefined") return null;
@@ -135,6 +140,8 @@ export function preloadMarketerTerritory(): void {
     if (!sectionImages[index]) sectionImages[index] = loadImage(source, () => { sectionReady[index] = true; });
   });
   if (!squirrelImage) squirrelImage = loadImage(squirrelArt, () => { squirrelReady = true; });
+  if (!squirrelCagedImage) squirrelCagedImage = loadImage(squirrelCagedArt, () => {});
+  if (!squirrelCapturedImage) squirrelCapturedImage = loadImage(squirrelCapturedArt, () => {});
 }
 preloadMarketerTerritory();
 
@@ -319,17 +326,21 @@ function squirrelCage(ctx: CanvasRenderingContext2D): void {
   ctx.fillStyle = "rgba(10,10,14,.55)";
   ctx.fillRect(left, top, w, h);
 
-  // Squirrel artwork inside (or beside the open cage after the rescue).
-  if (squirrelImage && (squirrelReady || (squirrelImage.complete && squirrelImage.naturalWidth > 0))) {
-    const sh = 150;
+  // Supplied caged frame (cage + Squirrel) while locked; supplied idle frame beside the opened cage after rescue.
+  const cagedArt = !quest.rescued && imgOk(squirrelCagedImage) ? squirrelCagedImage : null;
+  if (cagedArt) {
+    const ch = h + 14;
+    const cw = ch * (cagedArt.naturalWidth / cagedArt.naturalHeight);
+    ctx.drawImage(cagedArt, x - cw / 2, ground - ch, cw, ch);
+  } else if (quest.rescued && squirrelImage && (squirrelReady || imgOk(squirrelImage))) {
+    const sh = 120;
     const sw = sh * (squirrelImage.naturalWidth / squirrelImage.naturalHeight);
     const bob = Math.sin(renderNow() / 520) * 3;
-    const sx = quest.rescued ? x + w / 2 + 40 : x;
-    ctx.drawImage(squirrelImage, sx - sw / 2, ground - sh + bob, sw, sh);
+    ctx.drawImage(squirrelImage, x + w / 2 + 40 - sw / 2, ground - sh + bob, sw, sh);
   }
 
   if (!quest.rescued) {
-    // Bars.
+    if (!cagedArt) {
     ctx.strokeStyle = "#c8ccd2";
     ctx.lineWidth = 5;
     for (let bx = left + 12; bx < left + w; bx += 22) {
@@ -340,6 +351,7 @@ function squirrelCage(ctx: CanvasRenderingContext2D): void {
     }
     ctx.lineWidth = 7;
     ctx.strokeRect(left, top, w, h);
+    }
     // Padlock.
     ctx.fillStyle = quest.keyTaken ? "#ffd23f" : "#9aa0a8";
     ctx.fillRect(x - 13, ground - h / 2 - 12, 26, 24);
@@ -413,12 +425,13 @@ function drawManipulation(ctx: CanvasRenderingContext2D, x: number): void {
   // The story display: Squirrel is captured.
   const sx = x + 1060;
   sign(ctx, sx, 62, 500, 168, ["TARGET: SQUIRREL", "STATUS: CAPTURED"], "red");
-  if (squirrelImage && (squirrelReady || (squirrelImage.complete && squirrelImage.naturalWidth > 0))) {
+  const statusArt = imgOk(squirrelCapturedImage) ? squirrelCapturedImage : squirrelImage;
+  if (statusArt && imgOk(statusArt)) {
     const h = 104;
-    const w = h * (squirrelImage.naturalWidth / squirrelImage.naturalHeight);
+    const w = h * (statusArt.naturalWidth / statusArt.naturalHeight);
     ctx.save();
     ctx.globalAlpha = 0.95;
-    ctx.drawImage(squirrelImage, sx + 340, 92, w, h);
+    ctx.drawImage(statusArt, sx + 340, 92, w, h);
     ctx.strokeStyle = "#ff3244";
     ctx.lineWidth = 3;
     for (let i = 0; i < 4; i++) {
