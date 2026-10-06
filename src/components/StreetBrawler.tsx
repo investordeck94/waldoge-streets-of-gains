@@ -1,5 +1,4 @@
 /* =============================================================================
- * PRESENTATION LAYER — 2D canvas renderer for "Waldoge: Streets of Gains".
  *
  * Architecture role: this file is the single Presentation-layer module today.
  * It owns the requestAnimationFrame loop, DPR handling, canvas draw calls,
@@ -40,6 +39,7 @@
  * are welcome; behavior-changing refactors are not. See ARCHITECTURE.md for
  * the migration map (2D systems -> planned 3D equivalents).
  * ============================================================================= */
+import { VirtualJoystick, type JoystickDir } from "@/components/game/VirtualJoystick";
 import { FC, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { TitleScreen, type ContinueInfo } from "@/components/game/TitleScreen";
 import { Button } from "@/components/ui/button";
