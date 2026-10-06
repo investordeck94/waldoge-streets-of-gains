@@ -15,7 +15,7 @@ const POS: Record<HudCorner, string> = {
 
 function BagIcon() {
   // Supplied red-white rucksack artwork (canonical inventory icon).
-  return <img src={rucksack} alt="" draggable={false} className="h-12 w-12 sm:h-16 sm:w-16 object-contain" style={{ imageRendering: "pixelated" }} />;
+  return <img src={rucksack} alt="" draggable={false} className="h-9 w-9 sm:h-12 sm:w-12 object-contain" style={{ imageRendering: "pixelated" }} />;
 }
 
 export function Backpack({ onOpenChange, onUse }: { onOpenChange: (open: boolean) => void; onUse: (id: ItemId) => string | null }) {
