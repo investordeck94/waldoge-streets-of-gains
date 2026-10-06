@@ -6830,7 +6830,7 @@ export const StreetBrawler: FC = () => {
           // Allow the canvas to grow up to ~55svh on mobile so it's not tiny,
           // but never wider than the native 800px so visuals stay crisp.
           // 55svh * (800/400 aspect) = 110svw cap for width, then min() with 100% keeps it inside the column.
-          maxWidth: `min(100%, ${CANVAS_W}px, calc(55svh * ${CANVAS_W} / ${CANVAS_H}))`,
+          maxWidth: `min(100%, ${CANVAS_W}px, calc(62svh * ${CANVAS_W} / ${CANVAS_H}))`,
         }}
       >
         <canvas
@@ -6843,6 +6843,55 @@ export const StreetBrawler: FC = () => {
             display: gameState === "playing" ? "block" : "none",
           }}
         />
+        {/* Mobile on-screen controls overlaid on the lower gameplay viewport (touch only). */}
+        {gameState === "playing" && !storyScene && (
+          <div
+            className="md:hidden absolute inset-0 z-20 pointer-events-none select-none flex items-end justify-between"
+            style={{ padding: "4px max(4px, env(safe-area-inset-right)) 4px max(4px, env(safe-area-inset-left))", ["--mb" as string]: "clamp(36px, 10.5vw, 56px)" } as React.CSSProperties}
+          >
+            <div className="pointer-events-auto opacity-80">
+              <VirtualJoystick onChange={touchStick} size={Math.round(Math.min(110, Math.max(70, (typeof window !== "undefined" ? window.innerWidth : 390) * 0.22)))} />
+            </div>
+            <div className="grid grid-cols-3 grid-rows-3 opacity-90" style={{ gridTemplateColumns: "repeat(3, var(--mb))", gridTemplateRows: "repeat(3, calc(var(--mb) * 0.78))" }}>
+              <div className="col-start-2 row-start-1 flex justify-center">
+              <button
+                onTouchStart={(e) => { e.preventDefault(); touchAction("jump"); }}
+                onContextMenu={(e) => e.preventDefault()}
+                className="pointer-events-auto rounded-full bg-background/35 border border-primary/50 backdrop-blur-[2px] flex items-center justify-center font-extrabold text-primary active:bg-primary/40 active:scale-95 transition-transform touch-none text-[10px] tracking-wider"
+                style={{ width: "var(--mb)", height: "var(--mb)" }}
+                aria-label="Jump"
+              >JUMP</button>
+              </div>
+              <div className="col-start-1 row-start-2 flex justify-center items-center">
+              <button
+                onTouchStart={(e) => { e.preventDefault(); touchAction("punch"); }}
+                onContextMenu={(e) => e.preventDefault()}
+                className="pointer-events-auto rounded-full bg-background/35 border border-primary/50 backdrop-blur-[2px] flex items-center justify-center font-extrabold text-primary active:bg-primary/40 active:scale-95 transition-transform touch-none text-xl"
+                style={{ width: "var(--mb)", height: "var(--mb)" }}
+                aria-label="Punch"
+              >👊</button>
+              </div>
+              <div className="col-start-3 row-start-2 flex justify-center items-center">
+              <button
+                onTouchStart={(e) => { e.preventDefault(); touchAction("kick"); }}
+                onContextMenu={(e) => e.preventDefault()}
+                className="pointer-events-auto rounded-full bg-background/35 border border-primary/50 backdrop-blur-[2px] flex items-center justify-center font-extrabold text-primary active:bg-primary/40 active:scale-95 transition-transform touch-none text-xl"
+                style={{ width: "var(--mb)", height: "var(--mb)" }}
+                aria-label="Kick"
+              >🦶</button>
+              </div>
+              <div className="col-start-2 row-start-3 flex justify-center items-end">
+              <button
+                onTouchStart={(e) => { e.preventDefault(); touchAction("special"); }}
+                onContextMenu={(e) => e.preventDefault()}
+                className="pointer-events-auto rounded-full bg-background/35 border border-primary/50 backdrop-blur-[2px] flex items-center justify-center font-extrabold text-primary active:bg-primary/40 active:scale-95 transition-transform touch-none text-xl"
+                style={{ width: "var(--mb)", height: "var(--mb)" }}
+                aria-label="Special"
+              >⚡</button>
+              </div>
+            </div>
+          </div>
+        )}
         {gameState === "playing" && !storyScene && (() => {
           const ids = glassesForLevel(level).map((gl) => gl.id);
           void glassTick;
@@ -7110,40 +7159,6 @@ export const StreetBrawler: FC = () => {
             >
               {sfxEnabled ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
             </button>
-          </div>
-
-          {/* Mobile touch controls: joystick bottom-left + vertical action stack bottom-right */}
-          <div
-            className="flex justify-between items-end gap-3 md:hidden pt-3 select-none"
-            style={{ paddingLeft: "max(0.75rem, env(safe-area-inset-left))", paddingRight: "max(0.75rem, env(safe-area-inset-right))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
-          >
-            <VirtualJoystick onChange={touchStick} size={116} />
-            <div className="flex flex-col items-center gap-2">
-              <button
-                onTouchStart={() => touchAction("jump")}
-                onContextMenu={(e) => e.preventDefault()}
-                className="w-16 h-11 glass-card flex items-center justify-center text-[11px] font-extrabold tracking-wider text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
-                aria-label="Jump"
-              >JUMP</button>
-              <button
-                onTouchStart={() => touchAction("punch")}
-                onContextMenu={(e) => e.preventDefault()}
-                className="w-16 h-11 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
-                aria-label="Punch"
-              >👊</button>
-              <button
-                onTouchStart={() => touchAction("kick")}
-                onContextMenu={(e) => e.preventDefault()}
-                className="w-16 h-11 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
-                aria-label="Kick"
-              >🦶</button>
-              <button
-                onTouchStart={() => touchAction("special")}
-                onContextMenu={(e) => e.preventDefault()}
-                className="w-16 h-11 glass-card flex items-center justify-center text-2xl font-bold text-primary active:bg-primary/30 active:scale-95 transition-transform touch-none"
-                aria-label="Special"
-              >⚡</button>
-            </div>
           </div>
 
           {comboName && (
