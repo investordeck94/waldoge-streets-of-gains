@@ -10,7 +10,7 @@ describe("magnifying glass collectibles", () => {
     expect(new Set(ids).size).toBe(ids.length);
     for (let l = 0; l < 7; l++) {
       const set = glassesForLevel(l);
-      expect(set.length).toBeGreaterThanOrEqual(6);
+      expect(set.length).toBeGreaterThanOrEqual(30);
       expect(set.some((g) => g.kind === "ground")).toBe(true);
       expect(set.some((g) => g.kind === "air")).toBe(true);
       expect(set[0].id).toBe(`L${l + 1}_GLASS_01`);
