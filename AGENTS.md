@@ -6,3 +6,4 @@
 - Level 4 Baddie is an optional key-gated rescue NPC outside combat state, using only her supplied captive artwork — why: her cage objective must not alter Fudder Territory gameplay.
 - Monko is a Level 5 rescue NPC implemented as a pure state machine outside player, enemy, companion, and combat systems — why: the canonical character must never become playable or gain combat behavior.
 - Magnifying-glass collectibles live in `src/game/collectibles/` (deterministic spots derived from level geometry; `coinWallet.ts` is the persistent, idempotent coin ledger with `spendCoins` for the future shop) — why: coins must stay fully separate from score/high score and never re-award.
+- Inventory/Lucky Dip live in `src/game/inventory/` (persistent `inventory.ts`, `luckyDip.ts` rules; art strips in `src/assets/luckydip/` cut at fixed frames); UI only calls these — why: keeps items/coins atomic and separate from score.
