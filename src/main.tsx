@@ -3,4 +3,4 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-createRoot(document.getElementById("root")!).render({location.search.includes("tmpstory")?<TmpStory/>:<App />});
+createRoot(document.getElementById("root")!).render(location.search.includes("tmpstory")?<TmpStory/>:<App />);
