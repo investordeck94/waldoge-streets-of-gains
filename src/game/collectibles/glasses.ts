@@ -25,28 +25,43 @@ function clearGround(level: number, x: number, width: number): number {
   return nx;
 }
 
+/** Keep regular glasses clear of the two legendary canes. */
+const LEGEND_KEEP_OUT: Record<number, number[]> = { 5: [4400], 6: [3860] };
+/** Low air = timed single jump; high air = needs the double jump. */
+const AIR_LOW = 130;
+
 function buildLevel(level: number): GlassSpot[] {
   const width = getLevelWidth(level);
   const spots: Omit<GlassSpot, "id">[] = [];
-  for (const f of [0.14, 0.47, 0.8]) spots.push({ level, x: clearGround(level, width * f, width), y: GROUND_Y - REST, kind: "ground" });
-  for (const f of [0.31, 0.64]) spots.push({ level, x: clearGround(level, width * f, width), y: GROUND_Y - AIR, kind: "air" });
-  const decks = landingDecksFor(level)
-    .filter((d) => d.x1 - d.x0 >= 90)
-    .slice()
-    .sort((a, b) => a.x0 - b.x0);
-  if (decks.length) {
-    const picks = decks.length <= 3 ? decks : [0, Math.floor(decks.length / 2), decks.length - 1].map((i) => decks[i]);
-    for (const d of picks) {
-      // Prefer the deck's far end — slightly off the walking line.
-      const x = Math.round(d.x1 - Math.min(60, (d.x1 - d.x0) / 2));
-      spots.push({ level, x, y: d.y - REST, kind: "deck" });
-    }
-  } else {
-    // Level without decks: a third double-jump reward instead.
-    spots.push({ level, x: clearGround(level, width * 0.9, width), y: GROUND_Y - AIR, kind: "air" });
+  const decks = landingDecksFor(level).filter((d) => d.x1 - d.x0 >= 90).slice().sort((a, b) => a.x0 - b.x0);
+  const keepOut = LEGEND_KEEP_OUT[level] ?? [];
+  const blocked = (x: number) => overPit(level, x) || keepOut.some((k) => Math.abs(k - x) < 160);
+  // Airborne trail along the street, alternating double-jump and timed-jump heights.
+  const airCount = Math.max(30, Math.floor((width - 1000) / 230));
+  const step = (width - 1000) / airCount;
+  for (let i = 0; i < airCount; i++) {
+    const x = Math.round(500 + step * (i + 0.5));
+    if (blocked(x)) continue;
+    const overDeck = decks.find((d) => x >= d.x0 && x <= d.x1);
+    const high = i % 3 !== 1;
+    // Under a walkway: hover above the walkway instead (reached from its top).
+    const y = overDeck ? overDeck.y - (high ? AIR : AIR_LOW) : GROUND_Y - (high ? AIR : AIR_LOW);
+    if (y < 18) { spots.push({ level, x, y: overDeck!.y - REST - 30, kind: "air" }); continue; }
+    spots.push({ level, x, y, kind: "air" });
+  }
+  // Ground glasses between the air trail.
+  for (const f of [0.08, 0.2, 0.33, 0.46, 0.59, 0.72, 0.85, 0.95]) {
+    const x = clearGround(level, width * f + step / 2, width);
+    if (!blocked(x)) spots.push({ level, x, y: GROUND_Y - REST, kind: "ground" });
+  }
+  // One resting on each walkway (far end), capped.
+  for (const d of decks.slice(0, 6)) {
+    const x = Math.round(d.x1 - Math.min(40, (d.x1 - d.x0) / 3));
+    if (!blocked(x)) spots.push({ level, x, y: d.y - REST, kind: "deck" });
   }
   return spots
-    .sort((a, b) => a.x - b.x)
+    .sort((a, b) => a.x - b.x || a.y - b.y)
+    .filter((s, i, arr) => i === 0 || Math.abs(s.x - arr[i - 1].x) > 30 || Math.abs(s.y - arr[i - 1].y) > 40)
     .map((s, i) => ({ ...s, id: `L${level + 1}_GLASS_${String(i + 1).padStart(2, "0")}` }));
 }
 
