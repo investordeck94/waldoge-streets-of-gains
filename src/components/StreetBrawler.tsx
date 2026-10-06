@@ -147,6 +147,7 @@ import {
   CITADEL_KEY_POSITION,
   preloadTakerCitadel,
   setCitadelQuestState,
+  getCitadelQuestState,
 } from "@/game/presentation/render2d/takerCitadel";
 import {
   CITADEL_KEY_GUARD_WAVE,
