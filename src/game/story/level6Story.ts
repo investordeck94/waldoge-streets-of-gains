@@ -69,8 +69,8 @@ export const LEVEL6_OPENING_MARKETING_MACHINE: StoryScene = {
     {
       treatment: T, panelTitle: "THE KEY", background: "bg-l6-hq",
       characters: [
-        { art: "l6-raider", x: 14, bottom: 2, scale: 0.5, dimmed: true },
-        { art: "l6-raider", x: 34, bottom: 2, scale: 0.5, dimmed: true, flip: true },
+        { art: "l6-raider", x: 14, bottom: 2, scale: 0.5 },
+        { art: "l6-raider", x: 34, bottom: 2, scale: 0.5, flip: true },
         marketer,
       ],
       dialogue: { speaker: MK, portrait: "l6-marketer-head", text: "YOU WANT SQUIRREL? THE KEY IS IN THE HANDS OF MY RAIDING TEAM. BEAT THEM. TAKE THE KEY. THEN COME AND GET YOUR FRIEND.", bubble: { x: 40, y: 8, tailX: 70, tailY: 40 } },
