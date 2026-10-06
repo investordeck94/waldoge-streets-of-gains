@@ -1,5 +1,9 @@
 # Waldoge: Streets of Gains — combat pass
 
+## Current — Waldoge story facing
+- [ ] Turn Waldoge toward the speaking character or enemy without changing artwork or gameplay
+- [ ] Test orientation and visually check the story gallery
+
 ## Current — Level 7 Citadel story
 - [ ] Confirm the supplied individual blue-tracksuit Ticker Taker story asset (blocked: currently located only the black-tracksuit gameplay artwork); never extract characters from the storyboard
 - [ ] Add the nine story chapters with exact dialogue, speaker-owned bubbles and seven-name target list
