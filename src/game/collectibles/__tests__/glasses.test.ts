@@ -29,7 +29,7 @@ describe("magnifying glass collectibles", () => {
 });
 
 import { LEGENDARY, touchesLegendary } from "../legendary";
-import { claimCollectible, getCoins, isGlassCollected } from "../coinWallet";
+import { claimCollectible, isGlassCollected } from "../coinWallet";
 import { glassesForLevel as gfl } from "../glasses";
 describe("legendary candy canes", () => {
   it("exactly two, unique, not beside glasses, double jump needed for 02", () => {
