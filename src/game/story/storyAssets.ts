@@ -83,6 +83,15 @@ import l6ColdCall from "@/assets/level6-coldcall.jpg";
 import l6Funnel from "@/assets/level6-funnel.jpg";
 import l6Manipulation from "@/assets/level6-manipulation.jpg";
 import l6Hq from "@/assets/level6-hq.jpg";
+import epArrest from "@/assets/epilogue/ep-arrest.jpg";
+import epCelebration from "@/assets/epilogue/ep-celebration.jpg";
+import epFriends from "@/assets/epilogue/ep-friends.jpg";
+import epHiding from "@/assets/epilogue/ep-hiding.jpg";
+import epAlley from "@/assets/epilogue/ep-alley.jpg";
+import epLogo from "@/assets/epilogue/ep-logo.png";
+import tickerAtlasAsset from "@/assets/ticker-taker-atlas-40.png.asset.json";
+import catBlackSheet from "@/assets/cat-guard-black-clean-75.png";
+import catOrangeSheet from "@/assets/cat-guard-orange-clean-75.png";
 import l7CitadelBg from "@/assets/level7-citadel-bg.jpg";
 import l7AnonRescued from "@/assets/anon/anon-rescued.png";
 import l7AnonCaged from "@/assets/anon/anon-caged.png";
@@ -188,6 +197,17 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "bg-l6-funnel": { src: l6Funnel, alt: "The Funnel" },
   "bg-l6-manipulation": { src: l6Manipulation, alt: "Manipulation District" },
   "bg-l6-hq": { src: l6Hq, alt: "Mr Marketer's HQ" },
+  "bg-ep-arrest": { src: epArrest, alt: "Police arriving at the foot of the Citadel" },
+  "bg-ep-celebration": { src: epCelebration, alt: "The Anonverse celebrating under fireworks" },
+  "bg-ep-friends": { src: epFriends, alt: "Festive Anonverse plaza" },
+  "bg-ep-hiding": { src: epHiding, alt: "The Citadel skyline under a red moon" },
+  "bg-ep-alley": { src: epAlley, alt: "A dark alley leading toward the Citadel" },
+  "ep-logo": { src: epLogo, alt: "Waldoge: Streets of Gains" },
+  // Canonical villain frames (explicit rects from the game atlases; Ticker Taker atlas is pre-scaled 0.4, Fat Cat sheets 0.75).
+  "ep-ticker-defeat": { src: tickerAtlasAsset.url, frame: { x: 0, y: 703, w: 234, h: 107 }, sheet: { w: 678, h: 928 }, alt: "Ticker Taker knocked out" },
+  "ep-ticker-idle": { src: tickerAtlasAsset.url, frame: { x: 0, y: 0, w: 146, h: 216 }, sheet: { w: 678, h: 928 }, alt: "Ticker Taker" },
+  "ep-fatcat-black-defeat": { src: catBlackSheet, frame: { x: 314, y: 1156, w: 107, h: 42 }, sheet: { w: 1012, h: 1207 }, alt: "Black and red Fat Cat knocked out" },
+  "ep-fatcat-white-defeat": { src: catOrangeSheet, frame: { x: 338, y: 1127, w: 122, h: 50 }, sheet: { w: 819, h: 1217 }, alt: "White and gold Fat Cat knocked out" },
   "bg-l7-citadel": { src: l7CitadelBg, alt: "The Citadel" },
   "l7-anon-rescued": { src: l7AnonRescued, alt: "Anon, freed from his cage" },
   "l7-anon-cage": { src: l7AnonCaged, alt: "Anon's cage" },
