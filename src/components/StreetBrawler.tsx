@@ -6512,9 +6512,19 @@ export const StreetBrawler: FC = () => {
             // Frame-local space (already scaled/mirrored): undo the sprite scale so the strip keeps its size.
             const k = Math.abs(c.getTransform().d) / outerD;
             c.save();
-            c.translate(hand.x + 12, hand.y + 14);
-            c.scale(1 / k, 1 / k);
-            drawStrip(c, handEq === "sidearm" ? "gunHold" : "gauntletHold", striking ? 1 : 0, 0, 12, 0.9, false);
+            if (handEq === "sidearm") {
+              c.translate(hand.x + 12, hand.y + 14);
+              c.scale(1 / k, 1 / k);
+              drawStrip(c, "gunHold", striking ? 1 : 0, 0, 12, 0.9, false);
+            } else {
+              // Gauntlet art is a forearm + fist (fist centre ≈ x52,y22 of a 72×39 cell).
+              // Pin the fist exactly over Waldoge's paw so it reads as worn, not floating.
+              // Drawn in frame-local units so it scales with the paw; the HAND anchors sit
+              // at the wrist, the visible paw is ~(+14, +12) further out.
+              const s = 1.7;
+              c.translate(hand.x + 14, hand.y + 12);
+              drawStrip(c, "gauntletHold", striking ? 1 : 0, -(52 - 36) * s, (39 - 22) * s, s, false);
+            }
             c.restore();
           } : undefined);
       }
