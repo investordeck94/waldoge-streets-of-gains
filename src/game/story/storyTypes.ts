@@ -60,7 +60,11 @@ export interface StoryPanelData {
   durationMs?: number;
   transition?: StoryTransition;
   /** Optional scene-specific presentation treatment. */
-  treatment?: "captive-noir";
+  treatment?: "captive-noir" | "arcade-cinematic";
+  /** Numbered chip title for cinematic panels, e.g. "MONKO IS CAPTURED". */
+  panelTitle?: string;
+  /** Show the character inside an in-scene monitor frame (art id). */
+  monitor?: { art: StoryArtId; x: number; y: number; w: number };
   /** Small location stamp used by cinematic treatments. */
   locationLabel?: string;
 

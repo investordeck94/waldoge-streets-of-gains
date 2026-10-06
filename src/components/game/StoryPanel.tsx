@@ -41,11 +41,12 @@ const POS: Record<NonNullable<StoryCharacter["position"]>, string> = {
   right: "right-[4%]",
 };
 
-function Stage({ panel }: { panel: StoryPanelData }) {
+function Stage({ panel, num }: { panel: StoryPanelData; num?: number }) {
   if (!panel.background && !panel.characters?.length) return null;
   const captiveNoir = panel.treatment === "captive-noir";
+  const cine = panel.treatment === "arcade-cinematic";
   return (
-    <div className={`relative w-full aspect-[16/9] max-h-[45svh] overflow-hidden bg-background mb-3 ${captiveNoir ? "rounded-sm border-2 border-foreground/20 shadow-[4px_4px_0_hsl(var(--background))]" : "rounded-md border-2 border-primary/60"}`}>
+    <div className={`relative w-full ${cine ? "aspect-[4/3] sm:aspect-[16/10] max-h-[62svh] border-4 border-foreground/90 rounded-none shadow-[0_0_0_3px_hsl(var(--background)),0_0_30px_hsl(var(--primary)/0.25)]" : "aspect-[16/9] max-h-[45svh]"} overflow-hidden bg-background mb-3 ${captiveNoir ? "rounded-sm border-2 border-foreground/20 shadow-[4px_4px_0_hsl(var(--background))]" : "rounded-md border-2 border-primary/60"}`}>
       {panel.background && (
         <Art id={panel.background} className="absolute inset-0 w-full h-full" fit="cover" height="100%" />
       )}
@@ -65,6 +66,31 @@ function Stage({ panel }: { panel: StoryPanelData }) {
           </div>
         );
       })}
+      {panel.monitor && (
+        <div className="absolute -translate-x-1/2 aspect-[4/3] border-4 border-muted bg-background shadow-[0_0_24px_hsl(var(--accent)/0.5)] overflow-hidden" style={{ left: `${panel.monitor.x}%`, top: `${panel.monitor.y}%`, width: `${panel.monitor.w}%` }}>
+          <div className="absolute inset-0 bg-gradient-to-b from-accent/30 to-primary/20" />
+          <div className="absolute inset-x-0 bottom-0 h-[92%] flex justify-center"><Art id={panel.monitor.art} height="100%" className="max-w-none" /></div>
+          <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(transparent_50%,hsl(var(--background)/0.6)_50%)] [background-size:100%_3px]" />
+        </div>
+      )}
+      {cine && (
+        <>
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,hsl(var(--background)/0.75)_100%)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(transparent_50%,hsl(var(--foreground))_50%)] [background-size:100%_3px]" />
+          {panel.panelTitle && (
+            <div className="absolute left-2 top-2 flex items-stretch border-2 border-background shadow-[3px_3px_0_hsl(var(--background))]">
+              <span className="bg-background px-1.5 sm:px-2 font-heading text-xs sm:text-base font-black text-primary flex items-center">{num}</span>
+              <span className="bg-primary px-2 py-0.5 sm:py-1 font-heading text-[10px] sm:text-sm font-black tracking-wide text-primary-foreground">{panel.panelTitle}</span>
+            </div>
+          )}
+          {panel.narration && (
+            <div className="absolute left-2 bottom-2 max-w-[60%] sm:max-w-[52%] border-2 border-background bg-primary px-2 py-1.5 sm:px-3 sm:py-2 shadow-[3px_3px_0_hsl(var(--background))]">
+              <p className="font-heading text-[10px] sm:text-sm font-black uppercase leading-tight text-primary-foreground whitespace-pre-line">{panel.narration}</p>
+              {panel.subNarration && <p className="mt-1 font-heading text-[9px] sm:text-xs font-bold uppercase leading-tight text-primary-foreground/85 whitespace-pre-line">{panel.subNarration}</p>}
+            </div>
+          )}
+        </>
+      )}
       {panel.dialogue?.bubble && <SpeechBubble d={panel.dialogue} />}
       {captiveNoir && (
         <>
@@ -206,11 +232,11 @@ export function StoryPanel({ scene, onDone }: { scene: StoryScene; onDone: () =>
           )}
         </div>
         <div key={index} className={TRANSITION[panel.transition ?? "slide"]}>
-          <Stage panel={panel} />
-          {panel.narration && (
+          <Stage panel={panel} num={index + 1} />
+          {panel.narration && panel.treatment !== "arcade-cinematic" && (
             <p className="text-foreground text-base sm:text-xl italic leading-snug mb-2 break-words whitespace-pre-line">{panel.narration}</p>
           )}
-          {panel.subNarration && (
+          {panel.subNarration && !(panel.treatment === "arcade-cinematic" && panel.narration) && (
             <p className="text-muted-foreground text-xs sm:text-sm italic uppercase tracking-wide leading-snug mb-2 break-words whitespace-pre-line">{panel.subNarration}</p>
           )}
           {line && !panel.dialogue?.bubble && (
