@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ITEM_DEFS, equipItem, getInventory, subscribeInventory, useItem, type ItemId } from "@/game/inventory/inventory";
+import { ITEM_DEFS, equipItem, getInventory, subscribeInventory, type ItemId } from "@/game/inventory/inventory";
+import { ITEM_ICONS } from "@/game/presentation/render2d/luckyDipSprites";
 
 /** Move the backpack by changing this one value. */
 export type HudCorner = "top-right" | "top-left" | "bottom-right" | "bottom-left";
@@ -25,12 +26,13 @@ function BagIcon() {
   );
 }
 
-export function Backpack({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
+export function Backpack({ onOpenChange, onUse }: { onOpenChange: (open: boolean) => void; onUse: (id: ItemId) => string | null }) {
+  const [msg, setMsg] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [inv, setInv] = useState(getInventory());
   const busy = useRef(false);
   useEffect(() => subscribeInventory(setInv), []);
-  useEffect(() => { onOpenChange(open); }, [open, onOpenChange]);
+  useEffect(() => { onOpenChange(open); if (!open) setMsg(null); }, [open, onOpenChange]);
   useEffect(() => {
     if (!open) return;
     const k = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); setOpen(false); } };
@@ -42,7 +44,7 @@ export function Backpack({ onOpenChange }: { onOpenChange: (open: boolean) => vo
   const act = (id: ItemId) => {
     if (busy.current) return;
     busy.current = true;
-    if (ITEM_DEFS[id].action === "EQUIP") equipItem(id); else useItem(id);
+    if (ITEM_DEFS[id].action === "EQUIP") { equipItem(id); setMsg(null); } else setMsg(onUse(id));
     setTimeout(() => { busy.current = false; }, 250);
   };
   const owned = (Object.keys(inv.items) as ItemId[]).filter((id) => (inv.items[id] ?? 0) > 0);
@@ -54,7 +56,8 @@ export function Backpack({ onOpenChange }: { onOpenChange: (open: boolean) => vo
         <div className="text-[9px] sm:text-[10px] text-primary tracking-widest">{title}</div>
         {list.map((id) => (
           <div key={id} className="flex items-center justify-between gap-2 py-0.5">
-            <span className="truncate text-foreground">{ITEM_DEFS[id].name}{(inv.items[id] ?? 0) > 1 ? ` x${inv.items[id]}` : ""}</span>
+            <img src={ITEM_ICONS[id]} alt="" className="h-5 w-6 shrink-0 object-contain object-left" style={{ imageRendering: "pixelated" }} />
+            <span className="flex-1 truncate text-foreground">{ITEM_DEFS[id].name}{(inv.items[id] ?? 0) > 1 ? ` x${inv.items[id]}` : ""}</span>
             <button type="button" onClick={() => act(id)}
               className="shrink-0 border border-primary px-1.5 py-0.5 text-[9px] sm:text-[10px] text-primary hover:bg-primary hover:text-primary-foreground">
               {ITEM_DEFS[id].action === "EQUIP" && inv.equipped === id ? "EQUIPPED" : ITEM_DEFS[id].action}
@@ -83,7 +86,8 @@ export function Backpack({ onOpenChange }: { onOpenChange: (open: boolean) => vo
           </div>
           {owned.length === 0
             ? <div className="mt-2 text-muted-foreground tracking-wider">INVENTORY EMPTY</div>
-            : <>{section("weapon", "WEAPONS")}{section("consumable", "CONSUMABLES")}</>}
+            : <>{section("weapon", "EQUIPMENT")}{section("consumable", "CONSUMABLES")}</>}
+          {msg && <div className="mt-1.5 text-primary tracking-wider" data-testid="inventory-msg">{msg}</div>}
         </div>
       )}
     </div>

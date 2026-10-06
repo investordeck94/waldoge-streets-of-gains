@@ -2,17 +2,17 @@
  * Persistent player inventory (separate from score). Items are added by the
  * future Doxx Lucky Dip; the backpack UI only reads/calls these functions.
  */
-export type ItemId = "handgun" | "knuckle_dusters" | "dobermann" | "blaze_edible";
+export type ItemId = "sidearm" | "gauntlets" | "dobermann" | "health";
 export type ItemKind = "weapon" | "consumable";
 
 export const ITEM_DEFS: Record<ItemId, { name: string; kind: ItemKind; action: "EQUIP" | "USE" }> = {
-  handgun: { name: "HANDGUN", kind: "weapon", action: "EQUIP" },
-  knuckle_dusters: { name: "KNUCKLE DUSTERS", kind: "weapon", action: "EQUIP" },
-  dobermann: { name: "DOBERMANN", kind: "weapon", action: "USE" },
-  blaze_edible: { name: "420 BLAZE IT EDIBLE", kind: "consumable", action: "USE" },
+  sidearm: { name: "RED-WHITE SIDEARM", kind: "weapon", action: "EQUIP" },
+  gauntlets: { name: "SPIKED COMBAT GAUNTLETS", kind: "weapon", action: "EQUIP" },
+  dobermann: { name: "DOBERMANN SUPPORT", kind: "weapon", action: "USE" },
+  health: { name: "HEALTH RESTORE ITEM", kind: "consumable", action: "USE" },
 };
 
-const KEY = "sogInventory_v1";
+const KEY = "sogInventory_v2";
 interface InvData { items: Partial<Record<ItemId, number>>; equipped: ItemId | null }
 type Listener = (d: Readonly<InvData>) => void;
 
