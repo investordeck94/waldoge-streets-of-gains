@@ -86,6 +86,9 @@ import { LEVEL3_SUS_RESCUE, LEVEL3_FILF_RESCUE } from "@/game/story/level3Story"
 import { drawBaddieCaptive } from "@/game/presentation/render2d/baddieCaptiveSprites";
 import { BADDIE_LEVEL, BADDIE_CAGE_X, BADDIE_KEY_X, BADDIE_RESCUE_BONUS, initialBaddieState, tryCollectBaddieKey, canRescueBaddie, beginBaddieRescue, stepBaddie, baddieObjectiveText } from "@/game/story/level4Baddie";
 import { LEVEL4_OPENING_FUDDER_REVEAL, LEVEL4_BADDIE_RESCUE } from "@/game/story/level4Story";
+import { drawMonkoQuest } from "@/game/presentation/render2d/monkoCaptiveSprites";
+import { MONKO_LEVEL, MONKO_BANANA_X, MONKO_CAGE_X, MONKO_RESCUE_BONUS, initialMonkoState, tryRecoverMonkoBananas, canRescueMonko, beginMonkoRescue, stepMonko, monkoObjectiveText } from "@/game/story/monkoRescue";
+import { LEVEL5_OPENING_EXIT_LIQUIDITY, LEVEL5_MONKO_RESCUE } from "@/game/story/level5Story";
 import { LEVEL2_ENDING_BAD_ACTOR_CALL } from "@/game/story/level2EndStory";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
 import { STORY_PANEL_1_EARTH, STORY_PANEL_2_ANONVERSE, STORY_PANEL_3_HIDE_AND_SEEK, STORY_PANEL_4_MONKO_BANANAS, STORY_PANEL_5_DOXX_BLACKJACK, STORY_PANEL_6_BLAZE_CHILL, STORY_PANEL_7_DOBERMANN_GUARD, STORY_PANEL_8_FILF_BADDIE, STORY_PANEL_9_SQUIRREL_NUTS, STORY_PANEL_10_ANON_MAYOR, STORY_PANEL_11_PEACE_ENDS, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
@@ -3265,6 +3268,11 @@ export const StreetBrawler: FC = () => {
   const baddiePromptRef = useRef(false);
   const [baddiePrompt, setBaddiePrompt] = useState(false);
   const [baddieObjective, setBaddieObjective] = useState(() => baddieObjectiveText(initialBaddieState()));
+  // LEVEL 5 — Monko's finite banana recovery and cage rescue (never combat state).
+  const monkoRef = useRef(initialMonkoState());
+  const monkoPromptRef = useRef(false);
+  const [monkoPrompt, setMonkoPrompt] = useState(false);
+  const [monkoObjective, setMonkoObjective] = useState(() => monkoObjectiveText(initialMonkoState()));
   const doxxPromptRef = useRef(false);
   const [doxxPrompt, setDoxxPrompt] = useState(false);
   const [doxxObjective, setDoxxObjective] = useState(() => doxxObjectiveText(initialDoxxState()));
@@ -3642,12 +3650,17 @@ export const StreetBrawler: FC = () => {
     baddiePromptRef.current = false;
     setBaddiePrompt(false);
     setBaddieObjective(baddieObjectiveText(baddieRef.current));
+    monkoRef.current = initialMonkoState();
+    monkoPromptRef.current = false;
+    setMonkoPrompt(false);
+    setMonkoObjective(monkoObjectiveText(monkoRef.current));
     storyActiveRef.current = false;
     storyFinishRef.current = null;
     setStoryScene(null);
     if (g.level === FILF_LEVEL) openStory(STORY_PANEL_1_EARTH, () => openStory(STORY_PANEL_2_ANONVERSE, () => openStory(STORY_PANEL_3_HIDE_AND_SEEK, () => openStory(STORY_PANEL_4_MONKO_BANANAS, () => openStory(STORY_PANEL_5_DOXX_BLACKJACK, () => openStory(STORY_PANEL_6_BLAZE_CHILL, () => openStory(STORY_PANEL_7_DOBERMANN_GUARD, () => openStory(STORY_PANEL_8_FILF_BADDIE, () => openStory(STORY_PANEL_9_SQUIRREL_NUTS, () => openStory(STORY_PANEL_10_ANON_MAYOR, () => openStory(STORY_PANEL_11_PEACE_ENDS, () => openStory(LEVEL1_OPENING))))))))))));
     else if (g.level === DOXX_LEVEL) openStory(LEVEL2_OPENING_CALL);
     else if (g.level === BADDIE_LEVEL) openStory(LEVEL4_OPENING_FUDDER_REVEAL);
+    else if (g.level === MONKO_LEVEL) openStory(LEVEL5_OPENING_EXIT_LIQUIDITY);
     setGameState("playing");
     if (import.meta.env.DEV) {
       (window as unknown as { __sog?: unknown }).__sog = g;
@@ -3655,6 +3668,7 @@ export const StreetBrawler: FC = () => {
       (window as unknown as { __sogDoxx?: unknown }).__sogDoxx = doxxRef.current;
       (window as unknown as { __sogCaptives?: unknown }).__sogCaptives = captivesRef.current;
       (window as unknown as { __sogBaddie?: unknown }).__sogBaddie = baddieRef.current;
+      (window as unknown as { __sogMonko?: unknown }).__sogMonko = monkoRef.current;
     }
   }, [openStory]);
 
@@ -5389,6 +5403,44 @@ export const StreetBrawler: FC = () => {
             setBaddiePrompt(bPrompt);
           }
         }
+        // LEVEL 5 STORY — one fixed banana stash unlocks Monko's one-way rescue.
+        {
+          const ms = monkoRef.current;
+          let mPrompt = false;
+          if (g.level === MONKO_LEVEL) {
+            const bananaFloor = groundYAt(g.level, MONKO_BANANA_X, undefined, false);
+            const cageFloor = groundYAt(g.level, MONKO_CAGE_X, undefined, false);
+            if (p.hp > 0 && tryRecoverMonkoBananas(ms, p.x, p.y, bananaFloor)) {
+              sfx(() => SFX.waveStart());
+              g.effects.push({ x: MONKO_BANANA_X, y: bananaFloor - 130, timer: 130, text: "MONKO'S BANANAS RECOVERED!", color: "#ffe04b", size: 18 });
+              setMonkoObjective(monkoObjectiveText(ms));
+            }
+            mPrompt = p.hp > 0 && canRescueMonko(ms, p.x, p.y, cageFloor);
+            if (mPrompt && filfRequestRef.current && !ms.bananasRecovered) {
+              if (ms.lockedCooldown <= 0) {
+                ms.lockedCooldown = 90;
+                g.effects.push({ x: MONKO_CAGE_X, y: cageFloor - 160, timer: 90, text: "THE CAGE IS LOCKED. RECOVER MONKO'S BANANAS.", color: "#ff5f5f", size: 13 });
+              }
+            } else if (mPrompt && filfRequestRef.current && beginMonkoRescue(ms)) {
+              sfx(() => SFX.waveStart());
+              g.effects.push({ x: MONKO_CAGE_X, y: cageFloor - 150, timer: 90, text: "CAGE OPENED!", color: "#ffe04b", size: 18 });
+              mPrompt = false;
+            }
+            if (stepMonko(ms)) {
+              sfx(() => SFX.victory());
+              g.score += MONKO_RESCUE_BONUS;
+              setScore(g.score);
+              g.effects.push({ x: MONKO_CAGE_X + 70, y: cageFloor - 140, timer: 120, text: "MONKO RESCUED!", color: "#69f58a", size: 22 });
+              g.effects.push({ x: MONKO_CAGE_X + 70, y: cageFloor - 180, timer: 140, text: `+${MONKO_RESCUE_BONUS} RESCUE BONUS`, color: "#ffe04b", size: 16 });
+              setMonkoObjective(monkoObjectiveText(ms));
+              openStory(LEVEL5_MONKO_RESCUE);
+            }
+          }
+          if (mPrompt !== monkoPromptRef.current) {
+            monkoPromptRef.current = mPrompt;
+            setMonkoPrompt(mPrompt);
+          }
+        }
         filfRequestRef.current = false;
         if (prompt !== filfPromptRef.current) {
           filfPromptRef.current = prompt;
@@ -5472,6 +5524,7 @@ export const StreetBrawler: FC = () => {
             if (g.level === FILF_LEVEL + 1 && g.level < TOTAL_LEVELS) openStory(LEVEL1_COMPLETE, () => openStory(LEVEL2_OPENING_CALL));
             if (g.level === DOXX_LEVEL + 1 && g.level < TOTAL_LEVELS) openStory(LEVEL2_ENDING_BAD_ACTOR_CALL);
             if (g.level === BADDIE_LEVEL && g.level < TOTAL_LEVELS) openStory(LEVEL4_OPENING_FUDDER_REVEAL);
+            if (g.level === MONKO_LEVEL && g.level < TOTAL_LEVELS) openStory(LEVEL5_OPENING_EXIT_LIQUIDITY);
             if (g.level >= TOTAL_LEVELS) {
               g.running = false;
               sfx(() => SFX.victory());
@@ -5797,6 +5850,14 @@ export const StreetBrawler: FC = () => {
       if (g.level === BADDIE_LEVEL) {
         if (!baddieRef.current.keyCollected) drawFilfKey(ctx, BADDIE_KEY_X, groundYAt(g.level, BADDIE_KEY_X, undefined, false), g.camX, g.animFrameCount);
         drawBaddieCaptive(ctx, baddieRef.current, g.camX, groundYAt(g.level, BADDIE_CAGE_X, undefined, false), g.animFrameCount, baddiePromptRef.current);
+      }
+      if (g.level === MONKO_LEVEL) {
+        drawMonkoQuest(
+          ctx, monkoRef.current, g.camX,
+          groundYAt(g.level, MONKO_BANANA_X, undefined, false),
+          groundYAt(g.level, MONKO_CAGE_X, undefined, false),
+          g.animFrameCount, monkoPromptRef.current,
+        );
       }
       if (g.level === DOXX_LEVEL) {
         if (!doxxHasBlueprints(doxxRef.current)) drawDoxxBlueprints(ctx, DOXX_BLUEPRINT_X, groundYAt(g.level, DOXX_BLUEPRINT_X, undefined, false), g.camX, g.animFrameCount);
@@ -6501,6 +6562,20 @@ export const StreetBrawler: FC = () => {
           <div className="absolute right-1 top-1 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[42%]">
             {baddieObjective}
           </div>
+        )}
+        {gameState === "playing" && level === MONKO_LEVEL && !storyScene && (
+          <div className="absolute right-1 top-1 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+            {monkoObjective}
+          </div>
+        )}
+        {gameState === "playing" && monkoPrompt && !storyScene && (
+          <button
+            type="button"
+            onClick={() => { filfRequestRef.current = true; }}
+            className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 font-mono font-bold text-sm tracking-wider bg-primary text-primary-foreground px-4 py-2 rounded border-2 border-foreground/80 shadow-lg animate-pulse"
+          >
+            {monkoRef.current.bananasRecovered ? "RESCUE MONKO" : "CAGE LOCKED — RECOVER BANANAS"}
+          </button>
         )}
         {gameState === "playing" && baddiePrompt && !storyScene && (
           <button

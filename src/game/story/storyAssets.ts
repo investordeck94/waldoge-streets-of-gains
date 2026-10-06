@@ -12,7 +12,6 @@ import jeetHead from "@/assets/jeet-boss-head.png";
 import waldogeStory from "@/assets/story/story-waldoge.jpeg.asset.json";
 import baddieStory from "@/assets/story/story-baddie.jpeg.asset.json";
 import anonStory from "@/assets/story/story-anon.jpeg.asset.json";
-import monkoStory from "@/assets/story/story-monko.jpeg.asset.json";
 import dogevanStory from "@/assets/story/story-dogevan.jpeg.asset.json";
 import doxxStory from "@/assets/story/story-doxx.jpeg.asset.json";
 import squirrelStory from "@/assets/story/story-squirrel.png.asset.json";
@@ -24,7 +23,16 @@ import earthBg from "@/assets/story/story-earth.jpg";
 import cut_waldoge from "@/assets/story/cutouts/waldoge.webp";
 import cut_baddie from "@/assets/story/cutouts/baddie.webp";
 import cut_anon from "@/assets/story/cutouts/anon.webp";
-import cut_monko from "@/assets/story/cutouts/monko.webp";
+import monkoIdle from "@/assets/monko/idle.png";
+import monkoPortraitNormal from "@/assets/monko/portrait-normal.png";
+import monkoPortraitWorried from "@/assets/monko/portrait-worried.png";
+import monkoCaged from "@/assets/monko/caged.png";
+import monkoRescueHappy from "@/assets/monko/rescue-happy.png";
+import monkoRescueWave from "@/assets/monko/rescue-wave.png";
+import monkoBananaStash from "@/assets/monko/banana-stash.png";
+import level5Cemetery from "@/assets/level5-cemetery.jpg-local.jpg";
+import level5Throne from "@/assets/story-level5-exit-throne.jpg";
+import exitLiquidityHead from "@/assets/boss-exit-liquidity-head.png";
 import cut_dogevan from "@/assets/story/cutouts/dogevan.webp";
 import cut_doxx from "@/assets/story/cutouts/doxx.webp";
 import casinoBg from "@/assets/story/story-casino.jpg";
@@ -93,7 +101,7 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "cut-waldoge": { src: cut_waldoge, alt: "waldoge" },
   "cut-baddie": { src: cut_baddie, alt: "baddie" },
   "cut-anon": { src: cut_anon, alt: "anon" },
-  "cut-monko": { src: cut_monko, alt: "monko" },
+  "cut-monko": { src: monkoIdle, alt: "Monko in his ZILLIONS cap and MONKO shirt" },
   "cut-dogevan": { src: cut_dogevan, alt: "dogevan" },
   "cut-doxx": { src: cut_doxx, alt: "doxx" },
   "cut-sus-dog": { src: cut_sus_dog, alt: "sus-dog" },
@@ -137,6 +145,16 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "baddie-caged": { src: baddieCaged, alt: "Baddie locked inside a cage" },
   "baddie-thankful": { src: baddieThankful, alt: "Baddie thankful after her rescue" },
   "baddie-worried": { src: baddieWorried, alt: "Baddie worried" },
+  "monko-idle": { src: monkoIdle, alt: "Monko" },
+  "monko-portrait-normal": { src: monkoPortraitNormal, alt: "Monko" },
+  "monko-portrait-worried": { src: monkoPortraitWorried, alt: "Monko worried" },
+  "monko-caged": { src: monkoCaged, alt: "Monko fully visible behind the bars of his complete cage" },
+  "monko-rescue-happy": { src: monkoRescueHappy, alt: "Monko celebrating after his rescue" },
+  "monko-rescue-wave": { src: monkoRescueWave, alt: "Monko waving after his rescue" },
+  "monko-banana-stash": { src: monkoBananaStash, alt: "Monko's stolen banana crates" },
+  "bg-level5-cemetery": { src: level5Cemetery, alt: "The Graveyard of Gains" },
+  "bg-level5-throne": { src: level5Throne, alt: "Exit Liquidity fully seated on his complete throne" },
+  "exit-liquidity-head": { src: exitLiquidityHead, alt: "Exit Liquidity" },
   "bg-once-peaceful": { src: oncePeacefulBg, alt: "The Anonverse at dusk under storm clouds, streets shuttered and empty" },
 
 /**
@@ -147,7 +165,7 @@ export const STORY_ART: Record<StoryArtId, StoryArt> = {
   "char-waldoge": { src: waldogeStory.url, alt: "Waldoge" },
   "char-baddie": { src: baddieStory.url, alt: "Baddie" },
   "char-anon": { src: anonStory.url, alt: "Anon (TV-head)" },
-  "char-monko": { src: monkoStory.url, alt: "Monko" },
+  "char-monko": { src: monkoIdle, alt: "Monko" },
   "char-dogevan": { src: dogevanStory.url, alt: "Dogevan" },
   "char-doxx": { src: doxxStory.url, alt: "Doxx" },
   "char-squirrel": { src: squirrelStory.url, alt: "Squirrel" },
