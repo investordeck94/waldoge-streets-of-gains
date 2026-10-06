@@ -91,6 +91,7 @@ import { drawMonkoQuest } from "@/game/presentation/render2d/monkoCaptiveSprites
 import { MONKO_BANANA_Y, MONKO_CAGE_Y, MONKO_BANANA_KEY_X, MONKO_BANANA_KEY_Y, MONKO_CAGE_KEY_X, MONKO_CAGE_KEY_Y, tryCollectMonkoKeys, nearMonkoBananas, MONKO_LEVEL, MONKO_BANANA_X, MONKO_CAGE_X, MONKO_RESCUE_BONUS, initialMonkoState, tryRecoverMonkoBananas, canRescueMonko, beginMonkoRescue, stepMonko, monkoObjectiveText } from "@/game/story/monkoRescue";
 import { LEVEL5_OPENING_EXIT_LIQUIDITY, LEVEL5_MONKO_RESCUE } from "@/game/story/level5Story";
 import { LEVEL6_OPENING_MARKETING_MACHINE, LEVEL6_SQUIRREL_RESCUE } from "@/game/story/level6Story";
+import { LEVEL7_ANON_RESCUE } from "@/game/story/level7AnonRescue";
 import { LEVEL2_ENDING_BAD_ACTOR_CALL } from "@/game/story/level2EndStory";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
 import { glassesForLevel, touchesGlass, type GlassSpot } from "@/game/collectibles/glasses";
@@ -5347,6 +5348,7 @@ export const StreetBrawler: FC = () => {
         if (anonUnlock && rescueAnon(q, p, ANON_CAGE_POSITION)) {
           sfx(() => SFX.victory());
           g.effects.push({ x: p.x, y: p.y - 72, timer: 160, text: "ANON RESCUED!", color: "#c36bff", size: 22 });
+          openStory(LEVEL7_ANON_RESCUE);
         }
         setCitadelQuestState(q);
       } else if (g.citadelQuest.keyAvailable || g.citadelQuest.keyTaken || g.citadelQuest.rescued) {
