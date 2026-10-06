@@ -10,6 +10,7 @@ import { LEVEL5_OPENING_EXIT_LIQUIDITY, LEVEL5_MONKO_RESCUE } from "@/game/story
 import { LEVEL6_OPENING_MARKETING_MACHINE, LEVEL6_SQUIRREL_RESCUE } from "@/game/story/level6Story";
 import { LEVEL7_ANON_RESCUE } from "@/game/story/level7AnonRescue";
 import { LEVEL7_FINAL_EPILOGUE } from "@/game/story/level7Epilogue";
+import { LEVEL7_OPENING_CITADEL } from "@/game/story/level7Story";
 
 /** Preview-only story browser (not linked from the game). */
 const GROUPS: { level: string; scenes: [string, StoryScene][] }[] = [
