@@ -25,6 +25,7 @@ import squirrelCapturedArt from "@/assets/squirrel/captured.png";
 import marketerAtlasAsset from "@/assets/mr-marketer-atlas.png.asset.json";
 import { flicker, renderNow } from "./clock";
 import { residentImage } from "./imageResidency";
+import { drawFilfKey } from "./filfKey";
 
 export const MARKETER_TERRITORY_LEVEL = 5;
 export const MARKETER_SECTION_WIDTH = 1800;
@@ -269,8 +270,6 @@ function statue(ctx: CanvasRenderingContext2D, x: number, y: number, h = 96): vo
 function keyDisplay(ctx: CanvasRenderingContext2D): void {
   if (quest.keyTaken) return;
   const { x, y } = KEY_POSITION;
-  const clock = renderNow();
-  const bob = Math.sin(clock / 380) * 6;
   const locked = !quest.keyAvailable;
   ctx.save();
   // Plinth / holder.
@@ -285,22 +284,10 @@ function keyDisplay(ctx: CanvasRenderingContext2D): void {
   beam.addColorStop(1, locked ? "rgba(255,50,68,.22)" : "rgba(255,204,61,.3)");
   ctx.fillStyle = beam;
   ctx.fillRect(x - 26, y - 150, 52, 150);
-  // Key.
-  ctx.translate(x, y - 52 + bob);
-  ctx.shadowColor = locked ? "rgba(255,60,70,.6)" : "rgba(255,214,64,.9)";
-  ctx.shadowBlur = locked ? 10 : 24;
-  ctx.fillStyle = locked ? "#8a7530" : "#ffd23f";
-  ctx.beginPath();
-  ctx.arc(-10, 0, 11, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillRect(-2, -4, 30, 8);
-  ctx.fillRect(18, 0, 5, 12);
-  ctx.fillRect(26, 0, 5, 9);
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = "#1b1206";
-  ctx.beginPath();
-  ctx.arc(-10, 0, 4.5, 0, Math.PI * 2);
-  ctx.fill();
+  // Same pixel key, size and animation as Levels 1–5. This renderer is
+  // already in world space, so translate locally before its screen culling.
+  ctx.translate(x, 0);
+  drawFilfKey(ctx, 0, y, 0, Math.floor(renderNow() * 60 / 1000));
   ctx.restore();
 
   ctx.save();
