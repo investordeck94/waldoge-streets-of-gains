@@ -6882,7 +6882,7 @@ export const StreetBrawler: FC = () => {
           <div className="glass-card px-3 py-2">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[10px] font-bold font-mono text-green-400 tracking-wider">PLAYER HP</span>
-              <div className="ml-auto -my-3">
+              <div className="ml-auto -mt-2 -mb-1">
                 {!storyScene && <Backpack slot="hud" onOpenChange={onBackpackOpen} onUse={onUseItem} />}
               </div>
             </div>
