@@ -91,6 +91,10 @@ import { MONKO_BANANA_Y, MONKO_CAGE_Y, MONKO_BANANA_KEY_X, MONKO_BANANA_KEY_Y, M
 import { LEVEL5_OPENING_EXIT_LIQUIDITY, LEVEL5_MONKO_RESCUE } from "@/game/story/level5Story";
 import { LEVEL2_ENDING_BAD_ACTOR_CALL } from "@/game/story/level2EndStory";
 import { drawFilfKey } from "@/game/presentation/render2d/filfKey";
+import { glassesForLevel, touchesGlass, type GlassSpot } from "@/game/collectibles/glasses";
+import { claimGlass, collectedCount, getCoins, isGlassCollected, subscribeCoins, GLASS_COIN_VALUE } from "@/game/collectibles/coinWallet";
+import { drawGlass } from "@/game/presentation/render2d/glassSprites";
+import glassIcon from "@/assets/glass/frame5.png";
 import { STORY_PANEL_1_EARTH, STORY_PANEL_2_ANONVERSE, STORY_PANEL_3_HIDE_AND_SEEK, STORY_PANEL_4_MONKO_BANANAS, STORY_PANEL_5_DOXX_BLACKJACK, STORY_PANEL_6_BLAZE_CHILL, STORY_PANEL_7_DOBERMANN_GUARD, STORY_PANEL_8_FILF_BADDIE, STORY_PANEL_9_SQUIRREL_NUTS, STORY_PANEL_10_ANON_MAYOR, STORY_PANEL_11_PEACE_ENDS, LEVEL1_OPENING, LEVEL1_FILF_RESCUE, LEVEL1_COMPLETE } from "@/game/story/level1Story";
 import type { StoryScene } from "@/game/story/storyTypes";
 import { StoryPanel } from "@/components/game/StoryPanel";
@@ -3175,6 +3179,12 @@ export const StreetBrawler: FC = () => {
   const hardTraceRef = useRef<string | null>(null);
   const [level, setLevel] = useState(0);
   const [score, setScore] = useState(0);
+  // Magnifying-glass collectibles → coins. Never touches score.
+  const [coins, setCoins] = useState(getCoins);
+  const [glassTick, setGlassTick] = useState(0);
+  const [glassToast, setGlassToast] = useState(0);
+  const glassPopsRef = useRef<{ g: GlassSpot; t: number }[]>([]);
+  useEffect(() => subscribeCoins((w) => setCoins(w.coins)), []);
   const [playerHp, setPlayerHp] = useState(100);
   const [comboCount, setComboCount] = useState(0);
   const [comboName, setComboName] = useState("");
@@ -5403,6 +5413,18 @@ export const StreetBrawler: FC = () => {
             setBaddiePrompt(bPrompt);
           }
         }
+        // COLLECTIBLES — idempotent glass claims (+coins only; score untouched).
+        if (p.hp > 0) {
+          for (const gl of glassesForLevel(g.level)) {
+            if (!isGlassCollected(gl.id) && touchesGlass(gl, p.x, p.y) && claimGlass(gl.id)) {
+              glassPopsRef.current.push({ g: gl, t: 0 });
+              sfx(() => SFX.waveStart());
+              g.effects.push({ x: gl.x, y: gl.y - 30, timer: 70, text: `+${GLASS_COIN_VALUE} COINS`, color: "#ffd23f", size: 16 });
+              setGlassTick((n) => n + 1);
+              setGlassToast((n) => n + 1);
+            }
+          }
+        }
         // LEVEL 5 STORY — one fixed banana stash unlocks Monko's one-way rescue.
         {
           const ms = monkoRef.current;
@@ -5863,6 +5885,12 @@ export const StreetBrawler: FC = () => {
         if (!baddieRef.current.keyCollected) drawFilfKey(ctx, BADDIE_KEY_X, groundYAt(g.level, BADDIE_KEY_X, undefined, false), g.camX, g.animFrameCount);
         drawBaddieCaptive(ctx, baddieRef.current, g.camX, groundYAt(g.level, BADDIE_CAGE_X, undefined, false), g.animFrameCount, baddiePromptRef.current);
       }
+      for (const gl of glassesForLevel(g.level)) if (!isGlassCollected(gl.id)) drawGlass(ctx, gl, g.camX, g.animFrameCount);
+      glassPopsRef.current = glassPopsRef.current.filter((pp) => {
+        pp.t += 1;
+        drawGlass(ctx, pp.g, g.camX, g.animFrameCount, pp.t / 24);
+        return pp.t < 24;
+      });
       if (g.level === MONKO_LEVEL) {
         if (!monkoRef.current.bananaKey) drawFilfKey(ctx, MONKO_BANANA_KEY_X, MONKO_BANANA_KEY_Y, g.camX, g.animFrameCount);
         if (!monkoRef.current.cageKey) drawFilfKey(ctx, MONKO_CAGE_KEY_X, MONKO_CAGE_KEY_Y, g.camX, g.animFrameCount);
@@ -6562,6 +6590,21 @@ export const StreetBrawler: FC = () => {
             display: gameState === "playing" ? "block" : "none",
           }}
         />
+        {gameState === "playing" && !storyScene && (() => {
+          const ids = glassesForLevel(level).map((gl) => gl.id);
+          void glassTick;
+          return (
+            <div className="absolute left-1 top-7 sm:top-10 z-30 pointer-events-none flex items-center gap-1.5 font-mono font-bold text-[9px] sm:text-xs tracking-wider bg-background/80 border border-primary/60 px-1.5 py-0.5 rounded" aria-label="Collectibles">
+              <img src={glassIcon} alt="" className="h-3.5 sm:h-5 w-auto" style={{ imageRendering: "pixelated" }} />
+              <span className="text-foreground">{collectedCount(ids)}/{ids.length}</span>
+              <span className="inline-block h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 rounded-full bg-primary border border-primary-foreground/40" />
+              <span className="text-primary" data-testid="coin-balance">{coins}</span>
+            </div>
+          );
+        })()}
+        {gameState === "playing" && glassToast > 0 && !storyScene && (
+          <GlassToast key={glassToast} onDone={() => setGlassToast(0)} />
+        )}
         {gameState === "playing" && level === DOXX_LEVEL && !storyScene && (
           <div className="absolute right-1 top-1 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[42%]">
             {doxxObjective}
@@ -6906,3 +6949,16 @@ export const StreetBrawler: FC = () => {
     </div>
   );
 };
+
+function GlassToast({ onDone }: { onDone: () => void }) {
+  useEffect(() => { const t = setTimeout(onDone, 1400); return () => clearTimeout(t); }, [onDone]);
+  return (
+    <div className="absolute left-1/2 top-[18%] -translate-x-1/2 z-40 pointer-events-none flex items-center gap-2 border-2 border-primary bg-background/90 px-3 py-1 shadow-lg animate-in fade-in zoom-in-95 duration-200">
+      <img src={glassIcon} alt="" className="h-7 sm:h-9 w-auto" style={{ imageRendering: "pixelated" }} />
+      <div className="font-mono font-black leading-tight tracking-wider">
+        <div className="text-[9px] sm:text-xs text-foreground">MAGNIFYING GLASS</div>
+        <div className="text-sm sm:text-lg text-primary">+{GLASS_COIN_VALUE} COINS</div>
+      </div>
+    </div>
+  );
+}
