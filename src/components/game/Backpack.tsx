@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ITEM_DEFS, equipItem, getInventory, subscribeInventory, type ItemId } from "@/game/inventory/inventory";
+import { ITEM_DEFS, equipItem, getInventory, subscribeInventory, weaponHitsLeft, type ItemId } from "@/game/inventory/inventory";
 import rucksack from "@/assets/rucksack.png";
 import { ITEM_ICONS } from "@/game/presentation/render2d/luckyDipSprites";
 
@@ -52,7 +52,7 @@ export function Backpack({ onOpenChange, onUse, slot }: { onOpenChange: (open: b
         {list.map((id) => (
           <div key={id} className="flex items-center justify-between gap-2 py-0.5">
             <img src={ITEM_ICONS[id]} alt="" className="h-5 w-6 shrink-0 object-contain object-left" style={{ imageRendering: "pixelated" }} />
-            <span className="flex-1 truncate text-foreground">{ITEM_DEFS[id].name}{(inv.items[id] ?? 0) > 1 ? ` x${inv.items[id]}` : ""}</span>
+            <span className="flex-1 truncate text-foreground">{ITEM_DEFS[id].name}{(inv.items[id] ?? 0) > 1 ? ` x${inv.items[id]}` : ""}{ITEM_DEFS[id].action === "EQUIP" ? <span className="text-muted-foreground"> · {weaponHitsLeft(id)} HITS</span> : null}</span>
             <button type="button" onClick={() => act(id)}
               className="shrink-0 border border-primary px-1.5 py-0.5 text-[9px] sm:text-[10px] text-primary hover:bg-primary hover:text-primary-foreground">
               {ITEM_DEFS[id].action === "EQUIP" && inv.equipped === id ? "EQUIPPED" : ITEM_DEFS[id].action}

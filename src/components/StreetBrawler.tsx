@@ -4499,6 +4499,7 @@ export const StreetBrawler: FC = () => {
 
           if (inRange) {
             e.hp -= equipmentDamage(dmg, e, isCatGuard(e), getInventory().equipped);
+            { const wb = recordWeaponHit().broke; if (wb) g.effects.push({ x: p.x, y: p.y - 140, timer: 90, text: `${ITEM_DEFS[wb].name} BROKE!`, color: "#ff5a5a", size: 14 }); }
             e.state = "hit";
             if (isCatGuard(e)) {
               // Fat Cat hit feedback (presentation only): white flash + reel.
