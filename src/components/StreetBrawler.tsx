@@ -1,18 +1,3 @@
-      {
-        const eq = getInventory().equipped;
-        const handEq = eq === "sidearm" || eq === "gauntlets" ? eq : null;
-        drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.style, !!g.specialFx, (p as unknown as Climber).climbing === true,
-          handEq ? (c, hand, striking) => {
-            // Frame-local space (already scaled/mirrored): undo the sprite scale so the strip keeps its size.
-            const k = Math.abs(c.getTransform().d) / (window.devicePixelRatio > 0 ? 1 : 1);
-            c.save();
-            c.translate(hand.x, hand.y);
-            c.scale(1 / k, 1 / k);
-            drawStrip(c, handEq === "sidearm" ? "gunHold" : "gauntletHold", striking ? 1 : 0, 0, 10, 0.5, false);
-            c.restore();
-          } : undefined);
-      }
-      {
 /* =============================================================================
  * PRESENTATION LAYER — 2D canvas renderer for "Waldoge: Streets of Gains".
  *
@@ -6518,15 +6503,21 @@ export const StreetBrawler: FC = () => {
 
       // Presentation only — combat state (p.state / p.stateTimer / p.facing)
       // is produced by the gameplay loop above and merely read here.
-      drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.style, !!g.specialFx, (p as unknown as Climber).climbing === true);
       {
         const eq = getInventory().equipped;
-        if ((eq === "sidearm" || eq === "gauntlets") && !(p as unknown as Climber).climbing) {
-          const striking = p.state === "punch" || p.state === "kick" || p.state === "uppercut";
-          const hx = p.x - g.camX + p.facing * (striking ? 30 : 18);
-          const hy = p.y - (striking ? 46 : 40);
-          drawStrip(ctx, eq === "sidearm" ? "gunHold" : "gauntletHold", striking ? 1 : 0, hx, hy + 10, 0.5, p.facing < 0);
-        }
+        const handEq = eq === "sidearm" || eq === "gauntlets" ? eq : null;
+        drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.style, !!g.specialFx, (p as unknown as Climber).climbing === true,
+          handEq ? (c, hand, striking) => {
+            // Frame-local space (already scaled/mirrored): undo the sprite scale so the strip keeps its size.
+            const k = Math.abs(c.getTransform().d);
+            c.save();
+            c.translate(hand.x, hand.y);
+            c.scale(1 / k, 1 / k);
+            drawStrip(c, handEq === "sidearm" ? "gunHold" : "gauntletHold", striking ? 1 : 0, 0, 10, 0.5, false);
+            c.restore();
+          } : undefined);
+      }
+      {
         const dog = dogRef.current;
         if (dog) {
           const sx = dog.x - g.camX; const flip = dog.facing < 0;
