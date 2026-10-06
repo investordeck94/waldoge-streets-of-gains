@@ -65,6 +65,7 @@ function Stage({ panel }: { panel: StoryPanelData }) {
           </div>
         );
       })}
+      {panel.dialogue?.bubble && <SpeechBubble d={panel.dialogue} />}
       {captiveNoir && (
         <>
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/85 via-transparent to-background/30" />
@@ -78,6 +79,28 @@ function Stage({ panel }: { panel: StoryPanelData }) {
         </>
       )}
     </div>
+  );
+}
+
+function SpeechBubble({ d }: { d: NonNullable<StoryPanelData["dialogue"]> }) {
+  const b = d.bubble!;
+  return (
+    <>
+      <svg className="pointer-events-none absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+        <polygon
+          points={`${b.x - 3},${b.y + 8} ${b.x + 3},${b.y + 8} ${b.tailX},${b.tailY}`}
+          className="fill-foreground stroke-background"
+          strokeWidth={0.4}
+        />
+      </svg>
+      <div
+        className="absolute -translate-x-1/2 max-w-[46%] rounded-2xl border-2 border-background bg-foreground px-2 py-1 sm:px-3 sm:py-2 shadow-[3px_3px_0_hsl(var(--background))]"
+        style={{ left: `${b.x}%`, top: `${b.y}%` }}
+      >
+        <div className="font-heading text-[8px] sm:text-[10px] font-black tracking-wider text-primary">{d.speaker}</div>
+        <p className="font-heading text-[9px] sm:text-xs font-bold uppercase leading-tight text-background">{d.text}</p>
+      </div>
+    </>
   );
 }
 
@@ -190,7 +213,7 @@ export function StoryPanel({ scene, onDone }: { scene: StoryScene; onDone: () =>
           {panel.subNarration && (
             <p className="text-muted-foreground text-xs sm:text-sm italic uppercase tracking-wide leading-snug mb-2 break-words whitespace-pre-line">{panel.subNarration}</p>
           )}
-          {line && (
+          {line && !panel.dialogue?.bubble && (
             <div className="flex gap-3 sm:gap-4 items-start">
               {portrait && (
                 <div className={`relative shrink-0 w-20 h-20 sm:w-28 sm:h-28 border-2 border-primary bg-background overflow-hidden flex items-center justify-center ${captiveNoir ? "rounded-sm shadow-[4px_4px_0_hsl(var(--background))]" : "rounded-md"}`}>

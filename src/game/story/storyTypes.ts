@@ -49,7 +49,13 @@ export interface StoryPanelData {
   /** Smaller secondary caption shown under `narration`. */
   subNarration?: string;
   /** Character line. */
-  dialogue?: { speaker: string; text: string; portrait?: StoryArtId };
+  dialogue?: {
+    speaker: string;
+    text: string;
+    portrait?: StoryArtId;
+    /** In-stage comic bubble anchored to the speaker: x/y = bubble centre-top %, tailX = % stage x the tail points at. */
+    bubble?: { x: number; y: number; tailX: number; tailY: number };
+  };
   /** Auto-advance after this many ms (tap still advances earlier). */
   durationMs?: number;
   transition?: StoryTransition;
