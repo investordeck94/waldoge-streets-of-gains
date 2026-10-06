@@ -6830,7 +6830,7 @@ export const StreetBrawler: FC = () => {
               <div>{filfRef.current.objective === "KEY_NOT_COLLECTED" ? "FIND THE CAGE KEY" : filfRef.current.objective === "KEY_COLLECTED" ? "RESCUE FILF" : "FILF RESCUED ✓"}</div>
             )}
             <div>CLEAR ALL WAVES</div>
-            <div>DEFEAT {LEVELS[level - 1]?.boss.name ?? "THE BOSS"}</div>
+            <div>DEFEAT {LEVELS[level]?.boss.name ?? "THE BOSS"}</div>
           </div>
         )}
         {gameState === "playing" && !storyScene && (
