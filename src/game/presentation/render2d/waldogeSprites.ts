@@ -268,6 +268,7 @@ function drawWaldogeClimb(
   e: FighterView,
   camX: number,
   style: StyleName,
+  bare = false,
 ) {
   const sx = e.x - camX;
   const sy = e.y;
@@ -332,9 +333,9 @@ function drawWaldogeClimb(
     ctx.lineTo(handX, handY);
     ctx.stroke();
     // Closed glove over the rung: a horizontal palm with a dark grip notch.
-    ctx.fillStyle = "#e03434";
+    ctx.fillStyle = bare ? "#d99a4e" : "#e03434";
     ctx.beginPath(); ctx.ellipse(handX, handY, 7, 5.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = bare ? "#7a4a1c" : "#ffffff"; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.ellipse(handX, handY, 7, 5.5, 0, 0, Math.PI * 2); ctx.stroke();
     ctx.strokeStyle = "#641018"; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(handX - 4, handY + 1); ctx.lineTo(handX + 4, handY + 1); ctx.stroke();

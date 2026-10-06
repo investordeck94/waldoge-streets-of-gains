@@ -1,3 +1,18 @@
+      {
+        const eq = getInventory().equipped;
+        const handEq = eq === "sidearm" || eq === "gauntlets" ? eq : null;
+        drawWaldogeSprite(ctx, p, g.camX, g.headImg, g.style, !!g.specialFx, (p as unknown as Climber).climbing === true,
+          handEq ? (c, hand, striking) => {
+            // Frame-local space (already scaled/mirrored): undo the sprite scale so the strip keeps its size.
+            const k = Math.abs(c.getTransform().d) / (window.devicePixelRatio > 0 ? 1 : 1);
+            c.save();
+            c.translate(hand.x, hand.y);
+            c.scale(1 / k, 1 / k);
+            drawStrip(c, handEq === "sidearm" ? "gunHold" : "gauntletHold", striking ? 1 : 0, 0, 10, 0.5, false);
+            c.restore();
+          } : undefined);
+      }
+      {
 /* =============================================================================
  * PRESENTATION LAYER — 2D canvas renderer for "Waldoge: Streets of Gains".
  *
