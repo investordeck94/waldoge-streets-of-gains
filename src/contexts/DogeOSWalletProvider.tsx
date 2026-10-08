@@ -29,7 +29,7 @@ const DogeOSWalletContext =
 createContext<DogeOSWalletContextValue | null>(null);
 
 const dogeConfig = {
-clientId: import.meta.env.VITE_DOGEOS_CLIENT_ID,
+clientId: "K3iWs7eLuNKBXiZWsLrUZOBWWhaatfzXcLh2z3VsJVAfLyguZAfHcolg8dSxLnGvpFqinIle2FYcIB3m2x4yYM3l",
 defaultConnectChain: ChainTypeEnum.EVM,
 chains: {
 evm: [
