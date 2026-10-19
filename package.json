@@ -13,7 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@dogeos/dogeos-sdk": "^4.0.0",
+    "@dogeos/dogeos-sdk": "^4.0.4",
     "@hookform/resolvers": "^3.10.0",
     "@lovable.dev/mcp-js": "^0.22.2",
     "@radix-ui/react-accordion": "^1.2.11",
