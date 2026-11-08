@@ -42,12 +42,48 @@ const POS: Record<NonNullable<StoryCharacter["position"]>, string> = {
   right: "right-[4%]",
 };
 
+/** Every image a panel shows (background, characters, monitor). */
+function panelSources(panel: StoryPanelData): string[] {
+  const ids: (StoryArtId | undefined)[] = [panel.background, ...(panel.characters ?? []).map((c) => c.art), panel.monitor?.art];
+  const out = new Set<string>();
+  for (const id of ids) { const a = id ? STORY_ART[id] : undefined; if (a?.src) out.add(a.src); }
+  return [...out];
+}
+
+/** True once all of the panel's images are downloaded and decoded (capped at 5s). */
+function usePanelReady(panel: StoryPanelData): boolean {
+  const key = panelSources(panel).join("|");
+  const [readyKey, setReadyKey] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const srcs = key ? key.split("|") : [];
+    const loads = srcs.map((src) => new Promise<void>((resolve) => {
+      const img = new Image();
+      img.onload = () => { (img.decode ? img.decode() : Promise.resolve()).catch(() => {}).then(() => resolve()); };
+      img.onerror = () => resolve();
+      img.src = src;
+    }));
+    const cap = new Promise<void>((resolve) => window.setTimeout(resolve, 5000));
+    Promise.race([Promise.all(loads).then(() => undefined), cap]).then(() => { if (alive) setReadyKey(key); });
+    return () => { alive = false; };
+  }, [key]);
+  return readyKey === key;
+}
+
 function Stage({ panel, num }: { panel: StoryPanelData; num?: number }) {
+  // Show the whole scene at once instead of background first, characters later.
+  const ready = usePanelReady(panel);
   if (!panel.background && !panel.characters?.length) return null;
   const captiveNoir = panel.treatment === "captive-noir";
   const cine = panel.treatment === "arcade-cinematic";
   return (
     <div className={`relative w-full ${cine ? "aspect-[4/3] sm:aspect-[16/10] max-h-[62svh] border-4 border-foreground/90 rounded-none shadow-[0_0_0_3px_hsl(var(--background)),0_0_30px_hsl(var(--primary)/0.25)]" : "aspect-[16/9] max-h-[45svh]"} overflow-hidden bg-background mb-3 ${captiveNoir ? "rounded-sm border-2 border-foreground/20 shadow-[4px_4px_0_hsl(var(--background))]" : "rounded-md border-2 border-primary/60"}`}>
+      {!ready && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background">
+          <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted"><div className="h-full w-1/2 animate-pulse rounded-full bg-primary" /></div>
+        </div>
+      )}
+      <div className={`absolute inset-0 transition-opacity duration-300 ${ready ? "opacity-100" : "opacity-0"}`}>
       {panel.background && (
         <Art id={panel.background} className="absolute inset-0 w-full h-full" fit="cover" height="100%" />
       )}
@@ -74,6 +110,7 @@ function Stage({ panel, num }: { panel: StoryPanelData; num?: number }) {
           <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(transparent_50%,hsl(var(--background)/0.6)_50%)] [background-size:100%_3px]" />
         </div>
       )}
+      </div>
       {cine && (
         <>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,hsl(var(--background)/0.75)_100%)]" />
@@ -162,7 +199,7 @@ export function StoryPanel({ scene, onDone }: { scene: StoryScene; onDone: () =>
   }, [last, finish]);
 
   useEffect(() => { setIndex(0); doneRef.current = false; }, [scene.id]);
-  useEffect(() => { prefetchPanel(scene.panels[index + 1]); }, [scene, index]);
+  useEffect(() => { prefetchPanel(scene.panels[index + 1]); prefetchPanel(scene.panels[index + 2]); }, [scene, index]);
 
   // Optional auto-advance
   useEffect(() => {
