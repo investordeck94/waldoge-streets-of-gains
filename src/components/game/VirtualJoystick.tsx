@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Touch analogue joystick — pure input adapter. Emits the same direction
@@ -15,7 +15,7 @@ interface Props {
   size?: number;
 }
 
-export function VirtualJoystick({ onChange, deadZone = 0.25, verticalThreshold = 0.65, size = 112 }: Props) {
+export function VirtualJoystick({ onChange, deadZone = 0.4, verticalThreshold = 0.65, size = 112 }: Props) {
   const baseRef = useRef<HTMLDivElement>(null);
   const pointerId = useRef<number | null>(null);
   const last = useRef<JoystickDir>({ x: 0, y: 0 });
@@ -35,18 +35,46 @@ export function VirtualJoystick({ onChange, deadZone = 0.25, verticalThreshold =
     if (len > maxTravel) { dx = (dx / len) * maxTravel; dy = (dy / len) * maxTravel; }
     setThumb({ x: dx, y: dy });
     const nx = dx / maxTravel, ny = dy / maxTravel;
+    // Hysteresis: once moving, keep moving until the thumb comes well back
+    // toward centre; once stopped, need a clear push to start. Stops jitter
+    // around the threshold reading as drift.
+    const hx = last.current.x !== 0 ? deadZone * 0.6 : deadZone;
+    const hy = last.current.y !== 0 ? verticalThreshold * 0.8 : verticalThreshold;
     emit({
-      x: nx < -deadZone ? -1 : nx > deadZone ? 1 : 0,
-      y: ny < -verticalThreshold ? -1 : ny > verticalThreshold ? 1 : 0,
+      x: nx < -hx ? -1 : nx > hx ? 1 : 0,
+      y: ny < -hy ? -1 : ny > hy ? 1 : 0,
     });
   };
 
-  const release = (e: React.PointerEvent) => {
-    if (pointerId.current !== e.pointerId) return;
+  const reset = () => {
     pointerId.current = null;
     setThumb({ x: 0, y: 0 });
     emit({ x: 0, y: 0 });
   };
+
+  const release = (e: React.PointerEvent) => {
+    if (pointerId.current !== e.pointerId) return;
+    reset();
+  };
+
+  // Safety net: if the finger-up is ever missed (app switch, notification,
+  // touch lost off-screen), stop moving instead of drifting.
+  useEffect(() => {
+    const onUp = (e: PointerEvent) => { if (pointerId.current === e.pointerId) reset(); };
+    const onHide = () => { if (pointerId.current !== null || last.current.x || last.current.y) reset(); };
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    window.addEventListener("blur", onHide);
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("blur", onHide);
+      document.removeEventListener("visibilitychange", onHide);
+      onChange({ x: 0, y: 0 });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div
@@ -68,8 +96,6 @@ export function VirtualJoystick({ onChange, deadZone = 0.25, verticalThreshold =
       style={{ width: size, height: size }}
     >
       <div className="absolute inset-[18%] rounded-full border border-primary/20 pointer-events-none" />
-      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-primary/50 text-xs pointer-events-none">◀</span>
-      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-primary/50 text-xs pointer-events-none">▶</span>
       <div
         className="absolute left-1/2 top-1/2 rounded-full bg-primary/80 border-2 border-primary shadow-lg pointer-events-none"
         style={{
