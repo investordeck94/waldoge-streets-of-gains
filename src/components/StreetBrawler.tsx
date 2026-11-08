@@ -3319,6 +3319,15 @@ export const StreetBrawler: FC = () => {
   }, []);
   // Story / narration overlay (reusable). While open, the simulation is frozen.
   const [storyScene, setStoryScene] = useState<StoryScene | null>(null);
+  // Desktop = full-screen arcade layout with the HUD drawn over the game.
+  const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches);
+  const desktopHudRef = useRef(isDesktop);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const on = () => { setIsDesktop(mq.matches); desktopHudRef.current = mq.matches; };
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
   // First-fight controls tip (desktop). Shown once, on level 1, until the
   // player lands a 3-hit combo or 15s pass.
   const [controlsHintDone, setControlsHintDone] = useState(() => {
@@ -6305,7 +6314,8 @@ export const StreetBrawler: FC = () => {
         ctx.fillText(`x${c.multiplier.toFixed(1)} damage`, CANVAS_W - 20, 68);
       }
 
-      // Energy bar on canvas
+      // Energy bar on canvas (desktop shows it in the arcade HUD instead)
+      if (!desktopHudRef.current) {
       ctx.fillStyle = "#333";
       ctx.fillRect(20, 40, 100, 8);
       ctx.fillStyle = c.specialEnergy > 20 ? "#00ccff" : "#ff6600";
@@ -6314,6 +6324,7 @@ export const StreetBrawler: FC = () => {
       ctx.fillStyle = "#ffffffaa";
       ctx.textAlign = "left";
       ctx.fillText("⚡ ENERGY", 20, 36);
+      }
 
       // Draw power-ups
       for (const pu of g.powerups) {
@@ -6746,9 +6757,9 @@ export const StreetBrawler: FC = () => {
   }, []);
 
   return (
-    <div ref={containerRef} className="flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl lg:max-w-6xl mx-auto relative">
+    <div ref={containerRef} className={`flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl mx-auto relative ${gameState === "playing" ? "md:fixed md:inset-0 md:z-40 md:max-w-none md:justify-center md:gap-0 md:bg-black" : ""}`}>
       {gameState === "playing" && (
-        <div className="absolute top-2 right-2 z-20 flex gap-1.5">
+        <div className="absolute top-2 right-2 z-50 flex gap-1.5 md:opacity-70 md:hover:opacity-100 transition-opacity">
           <button
             onClick={() => setCamPreset((p) => (p === "snappy" ? "buttery" : "snappy"))}
             className="px-2 py-1 rounded glass-card hover:bg-muted/50 transition text-[10px] font-mono text-primary"
@@ -6830,14 +6841,14 @@ export const StreetBrawler: FC = () => {
         </div>
       )}
       {gameState !== "menu" && (
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 md:hidden">
           <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
           <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Waldoge: Streets of Gains</h2>
         </div>
       )}
 
       <div
-        className={`relative w-full mx-auto ${gameState === "playing" ? "mt-7 sm:mt-8" : ""}`}
+        className={`relative w-full mx-auto ${gameState === "playing" ? "mt-7 sm:mt-8 md:!mt-0 md:!max-w-[min(100vw,200svh)]" : ""}`}
         style={{
           // Allow the canvas to grow up to ~55svh on mobile so it's not tiny,
           // but never wider than the native 800px so visuals stay crisp.
@@ -6848,7 +6859,7 @@ export const StreetBrawler: FC = () => {
       >
         <canvas
           ref={canvasRef}
-          className="rounded-lg border border-border/50 w-full block"
+          className="rounded-lg border border-border/50 md:rounded-none md:border-0 w-full block"
           style={{
             aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
             height: "auto",
@@ -6909,7 +6920,7 @@ export const StreetBrawler: FC = () => {
           const ids = glassesForLevel(level).map((gl) => gl.id);
           void glassTick;
           return (
-            <div className="absolute left-1 -top-6 sm:-top-7 z-30 pointer-events-none flex items-center gap-1.5 font-mono font-bold text-[9px] sm:text-xs tracking-wider bg-background/80 border border-primary/60 px-1.5 py-0.5 rounded" aria-label="Collectibles">
+            <div className="absolute left-1 -top-6 sm:-top-7 md:top-auto md:bottom-3 md:left-3 z-30 pointer-events-none flex items-center gap-1.5 font-mono font-bold text-[9px] sm:text-xs tracking-wider bg-background/80 border border-primary/60 px-1.5 py-0.5 rounded" aria-label="Collectibles">
               <img src={glassIcon} alt="" className="h-3.5 sm:h-5 w-auto" style={{ imageRendering: "pixelated" }} />
               <span className="text-foreground">{pickedCount(ids)}/{ids.length}</span><span className="hidden sm:inline text-[9px] text-muted-foreground">GLASSES</span>
               <span className="inline-block h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 rounded-full bg-primary border border-primary-foreground/40" />
@@ -6919,6 +6930,44 @@ export const StreetBrawler: FC = () => {
             </div>
           );
         })()}
+        {gameState === "playing" && isDesktop && (
+          <>
+            {/* Arcade HUD: top-left fighter card */}
+            <div className="absolute left-3 top-3 z-30 flex items-center gap-2.5 rounded-xl border border-white/15 bg-black/55 px-2.5 py-2 backdrop-blur-sm shadow-[0_4px_18px_rgba(0,0,0,0.5)]" style={{ width: "min(34%, 360px)" }}>
+              <img src={waldogeHead} alt="" className="h-12 w-12 shrink-0 rounded-lg border-2 object-cover" style={{ borderColor: STYLES[styleName].tint, background: "rgba(0,0,0,0.4)" }} />
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex items-center justify-between font-mono text-[10px] font-bold tracking-wider">
+                  <span className="text-white">WALDOGE</span>
+                  <button
+                    onClick={() => { const g = gameRef.current; g.style = nextStyle(g.style); setStyleName(g.style); sfxRef.current && SFX.powerupPickup(); }}
+                    className="rounded border px-1 leading-4"
+                    style={{ color: STYLES[styleName].tint, borderColor: STYLES[styleName].tint }}
+                    title="Switch fight style (Q)"
+                  >{STYLES[styleName].label} [Q]</button>
+                </div>
+                <div className="relative h-3.5 overflow-hidden rounded-sm border border-black/70 bg-[#1a0d0d]" title={`HP ${Math.round(playerHp)}/100`}>
+                  <div className="absolute inset-y-0 left-0 transition-all duration-200" style={{ width: `${Math.max(0, playerHp)}%`, background: playerHp > 50 ? "linear-gradient(180deg,#7cff8c,#14a82e)" : playerHp > 25 ? "linear-gradient(180deg,#ffe14a,#d99a00)" : "linear-gradient(180deg,#ff7a7a,#c41212)" }} />
+                  <span className="absolute inset-0 flex items-center justify-center font-mono text-[9px] font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tabular-nums">{Math.max(0, Math.round(playerHp))}</span>
+                </div>
+                <div className="relative h-1.5 overflow-hidden rounded-sm bg-[#0d1a22]" title="Energy">
+                  <div className="absolute inset-y-0 left-0 transition-all duration-200" style={{ width: `${(energy / MAX_ENERGY) * 100}%`, background: energy > 20 ? "#00ccff" : "#ff6600" }} />
+                </div>
+              </div>
+            </div>
+            {/* Bottom-right: score, stage, wallet, sound, backpack */}
+            <div className="absolute right-3 bottom-3 z-30 flex items-center gap-3 rounded-xl border border-white/15 bg-black/55 px-3 py-1.5 backdrop-blur-sm font-mono text-xs font-bold">
+              {comboCount > 1 && <span className="text-primary animate-pulse">{comboCount}x COMBO</span>}
+              <span className="text-white/70">{`L${level + 1}/${TOTAL_LEVELS} · ${wave >= LEVELS[level].waves.length ? "BOSS" : `W${wave + 1}/${LEVELS[level].waves.length}${hardLeft !== null ? ` · ${hardLeft} LEFT` : ""}`}`}</span>
+              <span className="text-primary text-base tabular-nums">{score.toLocaleString()}</span>
+              <DogeOSConnectButton />
+              <DogeOSPlayerBadge />
+              <button onClick={() => { const v = !sfxEnabled; setSfxEnabled(v); sfxRef.current = v; }} className="p-0.5" title={sfxEnabled ? "Mute SFX" : "Unmute SFX"}>
+                {sfxEnabled ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4 text-muted-foreground" />}
+              </button>
+              {!storyScene && <Backpack slot="hud" onOpenChange={onBackpackOpen} onUse={onUseItem} />}
+            </div>
+          </>
+        )}
         {gameState === "playing" && !storyScene && level === 0 && !controlsHintDone && (
           <ControlsHint comboCount={comboCount} onDone={dismissControlsHint} />
         )}
@@ -6939,7 +6988,7 @@ export const StreetBrawler: FC = () => {
           <LegendaryToast key={`l${legendToast}`} onDone={() => setLegendToast(0)} />
         )}
         {gameState === "playing" && objectivesOpen && !storyScene && ![DOXX_LEVEL, CAPTIVES_LEVEL, BADDIE_LEVEL, MONKO_LEVEL].includes(level) && (
-          <div id="game-objectives" className="absolute right-1 top-9 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+          <div id="game-objectives" className="absolute right-1 top-9 md:right-3 md:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {level === FILF_LEVEL && (
               <div>{filfRef.current.objective === "KEY_NOT_COLLECTED" ? "FIND THE CAGE KEY" : filfRef.current.objective === "KEY_COLLECTED" ? "RESCUE FILF" : "FILF RESCUED ✓"}</div>
             )}
@@ -6952,27 +7001,27 @@ export const StreetBrawler: FC = () => {
             aria-label="Objectives" aria-expanded={objectivesOpen} aria-controls="game-objectives"
             onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}
             onClick={() => setObjectivesOpen((open) => !open)}
-            className="absolute right-1 top-1 z-40 h-7 px-2 border border-primary/60 bg-background/80 text-primary font-mono font-bold text-[10px] sm:text-xs tracking-wider rounded-full uppercase">
+            className="absolute right-1 top-1 md:right-3 md:top-12 z-40 h-7 px-2 border border-primary/60 bg-background/80 text-primary font-mono font-bold text-[10px] sm:text-xs tracking-wider rounded-full uppercase">
             Objectives
           </button>
         )}
         {gameState === "playing" && objectivesOpen && level === DOXX_LEVEL && !storyScene && (
-          <div id="game-objectives" className="absolute right-1 top-9 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+          <div id="game-objectives" className="absolute right-1 top-9 md:right-3 md:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {doxxObjective}
           </div>
         )}
         {gameState === "playing" && objectivesOpen && level === CAPTIVES_LEVEL && !storyScene && (
-          <div id="game-objectives" className="absolute right-1 top-9 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+          <div id="game-objectives" className="absolute right-1 top-9 md:right-3 md:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {captivesObjective}
           </div>
         )}
         {gameState === "playing" && objectivesOpen && level === BADDIE_LEVEL && !storyScene && (
-          <div id="game-objectives" className="absolute right-1 top-9 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+          <div id="game-objectives" className="absolute right-1 top-9 md:right-3 md:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {baddieObjective}
           </div>
         )}
         {gameState === "playing" && objectivesOpen && level === MONKO_LEVEL && !storyScene && (
-          <div id="game-objectives" className="absolute right-1 top-9 z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+          <div id="game-objectives" className="absolute right-1 top-9 md:right-3 md:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {monkoObjective}
           </div>
         )}
@@ -7056,7 +7105,7 @@ export const StreetBrawler: FC = () => {
         )}
       </div>
 
-      {gameState === "playing" && (
+      {gameState === "playing" && !isDesktop && (
         <div className="game-wrapper space-y-3 w-full">
           {/* Player HP — own full-width row, large */}
           <div className="glass-card px-3 py-2">
@@ -7303,7 +7352,7 @@ function ControlsHint({ comboCount, onDone }: { comboCount: number; onDone: () =
     <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded border border-primary/70 bg-background/90 text-primary text-[11px]">{k}</span>
   );
   return (
-    <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 bottom-4 z-30 pointer-events-none items-center gap-3 font-mono font-bold text-[11px] tracking-wider text-foreground bg-background/80 border border-primary/60 px-3 py-2 rounded-lg shadow-lg">
+    <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 bottom-20 z-30 pointer-events-none items-center gap-3 font-mono font-bold text-[11px] tracking-wider text-foreground bg-background/80 border border-primary/60 px-3 py-2 rounded-lg shadow-lg">
       <span className="flex items-center gap-1"><Key k="A" /><Key k="D" /> move</span>
       <span className="flex items-center gap-1"><Key k="W" /> jump</span>
       <span className="flex items-center gap-1"><Key k="J" /> punch</span>
