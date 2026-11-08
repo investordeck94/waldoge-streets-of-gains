@@ -40,6 +40,8 @@
  * the migration map (2D systems -> planned 3D equivalents).
  * ============================================================================= */
 import { VirtualJoystick, type JoystickDir } from "@/components/game/VirtualJoystick";
+// Same rule as the `arcade` Tailwind screen: desktop, or a touch device held sideways.
+const ARCADE_MQ = "(min-width: 768px), (pointer: coarse) and (orientation: landscape)";
 import { FC, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { TitleScreen, type ContinueInfo } from "@/components/game/TitleScreen";
 import { Button } from "@/components/ui/button";
@@ -3320,13 +3322,17 @@ export const StreetBrawler: FC = () => {
   // Story / narration overlay (reusable). While open, the simulation is frozen.
   const [storyScene, setStoryScene] = useState<StoryScene | null>(null);
   // Desktop = full-screen arcade layout with the HUD drawn over the game.
-  const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches);
+  const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.matchMedia(ARCADE_MQ).matches);
+  const [isTouch, setIsTouch] = useState(() => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches);
   const desktopHudRef = useRef(isDesktop);
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    const on = () => { setIsDesktop(mq.matches); desktopHudRef.current = mq.matches; };
+    const mq = window.matchMedia(ARCADE_MQ);
+    const tq = window.matchMedia("(pointer: coarse)");
+    const on = () => { setIsDesktop(mq.matches); desktopHudRef.current = mq.matches; setIsTouch(tq.matches); };
+    on();
     mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
+    tq.addEventListener("change", on);
+    return () => { mq.removeEventListener("change", on); tq.removeEventListener("change", on); };
   }, []);
   // First-fight controls tip (desktop). Shown once, on level 1, until the
   // player lands a 3-hit combo or 15s pass.
@@ -6757,9 +6763,9 @@ export const StreetBrawler: FC = () => {
   }, []);
 
   return (
-    <div ref={containerRef} className={`flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl mx-auto relative ${gameState === "playing" ? "md:fixed md:inset-0 md:z-40 md:max-w-none md:justify-center md:gap-0 md:bg-black" : ""}`}>
+    <div ref={containerRef} className={`flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl mx-auto relative ${gameState === "playing" ? "arcade:fixed arcade:inset-0 arcade:z-40 arcade:max-w-none arcade:justify-center arcade:gap-0 arcade:bg-black" : ""}`}>
       {gameState === "playing" && (
-        <div className="absolute top-2 right-2 z-50 flex gap-1.5 md:opacity-70 md:hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 z-50 flex gap-1.5 arcade:opacity-70 arcade:hover:opacity-100 transition-opacity">
           <button
             onClick={() => setCamPreset((p) => (p === "snappy" ? "buttery" : "snappy"))}
             className="px-2 py-1 rounded glass-card hover:bg-muted/50 transition text-[10px] font-mono text-primary"
@@ -6841,14 +6847,14 @@ export const StreetBrawler: FC = () => {
         </div>
       )}
       {gameState !== "menu" && (
-        <div className="flex items-center gap-2 sm:gap-3 md:hidden">
+        <div className="flex items-center gap-2 sm:gap-3 arcade:hidden">
           <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
           <h2 className="text-lg sm:text-xl font-bold text-primary font-heading">Waldoge: Streets of Gains</h2>
         </div>
       )}
 
       <div
-        className={`relative w-full mx-auto ${gameState === "playing" ? "mt-7 sm:mt-8 md:!mt-0 md:!max-w-[min(100vw,200svh)]" : ""}`}
+        className={`relative w-full mx-auto ${gameState === "playing" ? "mt-7 sm:mt-8 arcade:!mt-0 arcade:!max-w-[min(100vw,200svh)]" : ""}`}
         style={{
           // Allow the canvas to grow up to ~55svh on mobile so it's not tiny,
           // but never wider than the native 800px so visuals stay crisp.
@@ -6859,7 +6865,7 @@ export const StreetBrawler: FC = () => {
       >
         <canvas
           ref={canvasRef}
-          className="rounded-lg border border-border/50 md:rounded-none md:border-0 w-full block"
+          className="rounded-lg border border-border/50 arcade:rounded-none arcade:border-0 w-full block"
           style={{
             aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
             height: "auto",
@@ -6870,7 +6876,7 @@ export const StreetBrawler: FC = () => {
         {/* Mobile on-screen controls overlaid on the lower gameplay viewport (touch only). */}
         {gameState === "playing" && !storyScene && (
           <div
-            className="md:hidden absolute inset-0 z-20 pointer-events-none select-none flex items-end justify-between"
+            className={`${isTouch || !isDesktop ? "" : "hidden"} absolute inset-0 z-20 pointer-events-none select-none flex items-end justify-between tarc:p-3`}
             style={{ padding: "4px max(4px, env(safe-area-inset-right)) 4px max(4px, env(safe-area-inset-left))", ["--mb" as string]: "clamp(36px, 10.5vw, 56px)" } as React.CSSProperties}
           >
             <div className="pointer-events-auto opacity-80">
@@ -6920,7 +6926,7 @@ export const StreetBrawler: FC = () => {
           const ids = glassesForLevel(level).map((gl) => gl.id);
           void glassTick;
           return (
-            <div className="absolute left-1 -top-6 sm:-top-7 md:top-auto md:bottom-3 md:left-3 z-30 pointer-events-none flex items-center gap-1.5 font-mono font-bold text-[9px] sm:text-xs tracking-wider bg-background/80 border border-primary/60 px-1.5 py-0.5 rounded" aria-label="Collectibles">
+            <div className="absolute left-1 -top-6 sm:-top-7 arcade:top-auto arcade:bottom-3 arcade:left-3 tarc:bottom-auto tarc:top-[78px] z-30 pointer-events-none flex items-center gap-1.5 font-mono font-bold text-[9px] sm:text-xs tracking-wider bg-background/80 border border-primary/60 px-1.5 py-0.5 rounded" aria-label="Collectibles">
               <img src={glassIcon} alt="" className="h-3.5 sm:h-5 w-auto" style={{ imageRendering: "pixelated" }} />
               <span className="text-foreground">{pickedCount(ids)}/{ids.length}</span><span className="hidden sm:inline text-[9px] text-muted-foreground">GLASSES</span>
               <span className="inline-block h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 rounded-full bg-primary border border-primary-foreground/40" />
@@ -6955,7 +6961,7 @@ export const StreetBrawler: FC = () => {
               </div>
             </div>
             {/* Bottom-right: score, stage, wallet, sound, backpack */}
-            <div className="absolute right-3 bottom-3 z-30 flex items-center gap-3 rounded-xl border border-white/15 bg-black/55 px-3 py-1.5 backdrop-blur-sm font-mono text-xs font-bold">
+            <div className="absolute right-3 bottom-3 tarc:bottom-2 tarc:right-auto tarc:left-1/2 tarc:-translate-x-1/2 tarc:gap-2 tarc:px-2 tarc:py-1 tarc:text-[10px] z-30 flex items-center gap-3 rounded-xl border border-white/15 bg-black/55 px-3 py-1.5 backdrop-blur-sm font-mono text-xs font-bold">
               {comboCount > 1 && <span className="text-primary animate-pulse">{comboCount}x COMBO</span>}
               <span className="text-white/70">{`L${level + 1}/${TOTAL_LEVELS} · ${wave >= LEVELS[level].waves.length ? "BOSS" : `W${wave + 1}/${LEVELS[level].waves.length}${hardLeft !== null ? ` · ${hardLeft} LEFT` : ""}`}`}</span>
               <span className="text-primary text-base tabular-nums">{score.toLocaleString()}</span>
@@ -6988,7 +6994,7 @@ export const StreetBrawler: FC = () => {
           <LegendaryToast key={`l${legendToast}`} onDone={() => setLegendToast(0)} />
         )}
         {gameState === "playing" && objectivesOpen && !storyScene && ![DOXX_LEVEL, CAPTIVES_LEVEL, BADDIE_LEVEL, MONKO_LEVEL].includes(level) && (
-          <div id="game-objectives" className="absolute right-1 top-9 md:right-3 md:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+          <div id="game-objectives" className="absolute right-1 top-9 arcade:right-3 arcade:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {level === FILF_LEVEL && (
               <div>{filfRef.current.objective === "KEY_NOT_COLLECTED" ? "FIND THE CAGE KEY" : filfRef.current.objective === "KEY_COLLECTED" ? "RESCUE FILF" : "FILF RESCUED ✓"}</div>
             )}
@@ -7001,27 +7007,27 @@ export const StreetBrawler: FC = () => {
             aria-label="Objectives" aria-expanded={objectivesOpen} aria-controls="game-objectives"
             onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}
             onClick={() => setObjectivesOpen((open) => !open)}
-            className="absolute right-1 top-1 md:right-3 md:top-12 z-40 h-7 px-2 border border-primary/60 bg-background/80 text-primary font-mono font-bold text-[10px] sm:text-xs tracking-wider rounded-full uppercase">
+            className="absolute right-1 top-1 arcade:right-3 arcade:top-12 z-40 h-7 px-2 border border-primary/60 bg-background/80 text-primary font-mono font-bold text-[10px] sm:text-xs tracking-wider rounded-full uppercase">
             Objectives
           </button>
         )}
         {gameState === "playing" && objectivesOpen && level === DOXX_LEVEL && !storyScene && (
-          <div id="game-objectives" className="absolute right-1 top-9 md:right-3 md:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+          <div id="game-objectives" className="absolute right-1 top-9 arcade:right-3 arcade:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {doxxObjective}
           </div>
         )}
         {gameState === "playing" && objectivesOpen && level === CAPTIVES_LEVEL && !storyScene && (
-          <div id="game-objectives" className="absolute right-1 top-9 md:right-3 md:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+          <div id="game-objectives" className="absolute right-1 top-9 arcade:right-3 arcade:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {captivesObjective}
           </div>
         )}
         {gameState === "playing" && objectivesOpen && level === BADDIE_LEVEL && !storyScene && (
-          <div id="game-objectives" className="absolute right-1 top-9 md:right-3 md:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+          <div id="game-objectives" className="absolute right-1 top-9 arcade:right-3 arcade:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {baddieObjective}
           </div>
         )}
         {gameState === "playing" && objectivesOpen && level === MONKO_LEVEL && !storyScene && (
-          <div id="game-objectives" className="absolute right-1 top-9 md:right-3 md:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
+          <div id="game-objectives" className="absolute right-1 top-9 arcade:right-3 arcade:top-[84px] z-30 pointer-events-none font-mono font-bold text-[8px] sm:text-[11px] leading-tight tracking-wider text-primary bg-background/80 border border-primary/60 px-1.5 py-1 rounded text-right max-w-[48%]">
             {monkoObjective}
           </div>
         )}
@@ -7092,16 +7098,6 @@ export const StreetBrawler: FC = () => {
         )}
         {gameState === "playing" && storyScene && (
           <StoryPanel scene={storyScene} onDone={closeStory} />
-        )}
-        {/* Landscape rotate hint — portrait-only game */}
-        {gameState === "playing" && (
-          <div className="landscape-rotate-hint absolute inset-0 hidden items-center justify-center bg-background/95 rounded-lg z-50 p-6 text-center">
-            <div>
-              <div className="text-4xl mb-3">📱↻</div>
-              <h3 className="text-lg font-bold text-primary mb-1">Rotate to Portrait</h3>
-              <p className="text-sm text-muted-foreground">This game is best played in portrait mode.</p>
-            </div>
-          </div>
         )}
       </div>
 
@@ -7352,7 +7348,7 @@ function ControlsHint({ comboCount, onDone }: { comboCount: number; onDone: () =
     <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded border border-primary/70 bg-background/90 text-primary text-[11px]">{k}</span>
   );
   return (
-    <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 bottom-20 z-30 pointer-events-none items-center gap-3 font-mono font-bold text-[11px] tracking-wider text-foreground bg-background/80 border border-primary/60 px-3 py-2 rounded-lg shadow-lg">
+    <div className="hidden desk:flex absolute left-1/2 -translate-x-1/2 bottom-20 z-30 pointer-events-none items-center gap-3 font-mono font-bold text-[11px] tracking-wider text-foreground bg-background/80 border border-primary/60 px-3 py-2 rounded-lg shadow-lg">
       <span className="flex items-center gap-1"><Key k="A" /><Key k="D" /> move</span>
       <span className="flex items-center gap-1"><Key k="W" /> jump</span>
       <span className="flex items-center gap-1"><Key k="J" /> punch</span>
