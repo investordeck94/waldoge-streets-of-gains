@@ -3319,6 +3319,15 @@ export const StreetBrawler: FC = () => {
   }, []);
   // Story / narration overlay (reusable). While open, the simulation is frozen.
   const [storyScene, setStoryScene] = useState<StoryScene | null>(null);
+  // First-fight controls tip (desktop). Shown once, on level 1, until the
+  // player lands a 3-hit combo or 15s pass.
+  const [controlsHintDone, setControlsHintDone] = useState(() => {
+    try { return localStorage.getItem("wg_controls_hint_v1") === "1"; } catch { return false; }
+  });
+  const dismissControlsHint = useCallback(() => {
+    setControlsHintDone(true);
+    try { localStorage.setItem("wg_controls_hint_v1", "1"); } catch { /* ignore */ }
+  }, []);
   const storyActiveRef = useRef(false);
   const storyFinishRef = useRef<(() => void) | null>(null);
   /** Opens a story sequence; `onFinish` runs once when it ends or is skipped. */
@@ -3851,7 +3860,10 @@ export const StreetBrawler: FC = () => {
     // Lock the backing buffer to the fixed internal game resolution.
     // CSS handles visual scaling via aspect-ratio so the game never stretches
     // or crops regardless of phone screen size.
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // Render sharper when the canvas is shown larger than its native 800px
+    // (big desktop layout), so upscaling stays crisp instead of blocky.
+    const displayScale = Math.max(1, (canvas.clientWidth || CANVAS_W) / CANVAS_W);
+    const dpr = Math.min((window.devicePixelRatio || 1) * displayScale, 3);
     canvas.width = CANVAS_W * dpr;
     canvas.height = CANVAS_H * dpr;
     const ctx = canvas.getContext("2d");
@@ -6734,7 +6746,7 @@ export const StreetBrawler: FC = () => {
   }, []);
 
   return (
-    <div ref={containerRef} className="flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl mx-auto relative">
+    <div ref={containerRef} className="flex flex-col items-center gap-2 sm:gap-4 w-full max-w-4xl lg:max-w-6xl mx-auto relative">
       {gameState === "playing" && (
         <div className="absolute top-2 right-2 z-20 flex gap-1.5">
           <button
@@ -6830,7 +6842,8 @@ export const StreetBrawler: FC = () => {
           // Allow the canvas to grow up to ~55svh on mobile so it's not tiny,
           // but never wider than the native 800px so visuals stay crisp.
           // 55svh * (800/400 aspect) = 110svw cap for width, then min() with 100% keeps it inside the column.
-          maxWidth: `min(100%, ${CANVAS_W}px, calc(62svh * ${CANVAS_W} / ${CANVAS_H}))`,
+          // Desktop: grow past the native 800px to fill the screen height (minus HUD).
+          maxWidth: `min(100%, calc(max(62svh, 100svh - 290px) * ${CANVAS_W} / ${CANVAS_H}))`,
         }}
       >
         <canvas
@@ -6839,7 +6852,7 @@ export const StreetBrawler: FC = () => {
           style={{
             aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
             height: "auto",
-            imageRendering: "pixelated",
+            imageRendering: "auto",
             display: gameState === "playing" ? "block" : "none",
           }}
         />
@@ -6898,14 +6911,17 @@ export const StreetBrawler: FC = () => {
           return (
             <div className="absolute left-1 -top-6 sm:-top-7 z-30 pointer-events-none flex items-center gap-1.5 font-mono font-bold text-[9px] sm:text-xs tracking-wider bg-background/80 border border-primary/60 px-1.5 py-0.5 rounded" aria-label="Collectibles">
               <img src={glassIcon} alt="" className="h-3.5 sm:h-5 w-auto" style={{ imageRendering: "pixelated" }} />
-              <span className="text-foreground">{pickedCount(ids)}/{ids.length}</span>
+              <span className="text-foreground">{pickedCount(ids)}/{ids.length}</span><span className="hidden sm:inline text-[9px] text-muted-foreground">GLASSES</span>
               <span className="inline-block h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 rounded-full bg-primary border border-primary-foreground/40" />
-              <span className="text-primary" data-testid="coin-balance">{coins}</span>
+              <span className="text-primary" data-testid="coin-balance">{coins}</span><span className="hidden sm:inline text-[9px] text-muted-foreground">COINS</span>
               <img src={candyIcon} alt="Legendary" className="h-3.5 sm:h-5 w-auto ml-0.5" style={{ imageRendering: "pixelated" }} />
-              <span className="text-foreground" data-testid="legendary-count">{pickedCount(LEGENDARY.map((c) => c.id))}/{LEGENDARY.length}</span>
+              <span className="text-foreground" data-testid="legendary-count">{pickedCount(LEGENDARY.map((c) => c.id))}/{LEGENDARY.length}</span><span className="hidden sm:inline text-[9px] text-muted-foreground">LEGENDARY</span>
             </div>
           );
         })()}
+        {gameState === "playing" && !storyScene && level === 0 && !controlsHintDone && (
+          <ControlsHint comboCount={comboCount} onDone={dismissControlsHint} />
+        )}
         {gameState === "playing" && !storyScene && <Backpack slot="overlay" onOpenChange={onBackpackOpen} onUse={onUseItem} />}
         {gameState === "playing" && ldPrompt && !storyScene && !shopOpen && (
           <button type="button" onClick={() => { filfRequestRef.current = true; }}
@@ -7274,3 +7290,26 @@ function LegendaryToast({ onDone }: { onDone: () => void }) {
     </div>
   );
 }
+
+function ControlsHint({ comboCount, onDone }: { comboCount: number; onDone: () => void }) {
+  useEffect(() => {
+    const t = window.setTimeout(onDone, 15000);
+    return () => window.clearTimeout(t);
+  }, [onDone]);
+  useEffect(() => {
+    if (comboCount >= 3) onDone();
+  }, [comboCount, onDone]);
+  const Key = ({ k }: { k: string }) => (
+    <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded border border-primary/70 bg-background/90 text-primary text-[11px]">{k}</span>
+  );
+  return (
+    <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 bottom-4 z-30 pointer-events-none items-center gap-3 font-mono font-bold text-[11px] tracking-wider text-foreground bg-background/80 border border-primary/60 px-3 py-2 rounded-lg shadow-lg">
+      <span className="flex items-center gap-1"><Key k="A" /><Key k="D" /> move</span>
+      <span className="flex items-center gap-1"><Key k="W" /> jump</span>
+      <span className="flex items-center gap-1"><Key k="J" /> punch</span>
+      <span className="flex items-center gap-1"><Key k="K" /> kick</span>
+      <span className="flex items-center gap-1 text-primary">combo: <Key k="J" /><Key k="J" /><Key k="K" /> uppercut</span>
+    </div>
+  );
+}
+
