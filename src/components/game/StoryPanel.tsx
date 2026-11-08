@@ -77,7 +77,7 @@ function Stage({ panel, num }: { panel: StoryPanelData; num?: number }) {
   const captiveNoir = panel.treatment === "captive-noir";
   const cine = panel.treatment === "arcade-cinematic";
   return (
-    <div className={`relative w-full ${cine ? "aspect-[4/3] sm:aspect-[16/10] max-h-[62svh] border-4 border-foreground/90 rounded-none shadow-[0_0_0_3px_hsl(var(--background)),0_0_30px_hsl(var(--primary)/0.25)]" : "aspect-[16/9] max-h-[45svh]"} overflow-hidden bg-background mb-3 ${captiveNoir ? "rounded-sm border-2 border-foreground/20 shadow-[4px_4px_0_hsl(var(--background))]" : "rounded-md border-2 border-primary/60"}`}>
+    <div className={`relative w-full ${cine ? "aspect-[4/3] sm:aspect-[16/10] max-h-[62svh] md:max-h-[70svh] border-4 border-foreground/90 rounded-none shadow-[0_0_0_3px_hsl(var(--background)),0_0_30px_hsl(var(--primary)/0.25)]" : "aspect-[16/9] max-h-[45svh]"} overflow-hidden bg-background mb-3 ${captiveNoir ? "rounded-sm border-2 border-foreground/20 shadow-[4px_4px_0_hsl(var(--background))]" : "rounded-md border-2 border-primary/60"}`}>
       {!ready && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background">
           <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted"><div className="h-full w-1/2 animate-pulse rounded-full bg-primary" /></div>
@@ -123,7 +123,7 @@ function Stage({ panel, num }: { panel: StoryPanelData; num?: number }) {
           )}
           {panel.narration && (
             <div className="absolute left-2 bottom-2 max-w-[60%] sm:max-w-[52%] border-2 border-background bg-primary px-2 py-1.5 sm:px-3 sm:py-2 shadow-[3px_3px_0_hsl(var(--background))]">
-              <p className="font-heading text-[10px] sm:text-sm font-black uppercase leading-tight text-primary-foreground whitespace-pre-line">{panel.narration}</p>
+              <p className="font-heading text-[10px] sm:text-sm md:text-lg font-black uppercase leading-tight text-primary-foreground whitespace-pre-line">{panel.narration}</p>
               {panel.subNarration && <p className="mt-1 font-heading text-[9px] sm:text-xs font-bold uppercase leading-tight text-primary-foreground/85 whitespace-pre-line">{panel.subNarration}</p>}
             </div>
           )}
@@ -158,11 +158,12 @@ function SpeechBubble({ d }: { d: NonNullable<StoryPanelData["dialogue"]> }) {
         />
       </svg>
       <div
-        className="absolute -translate-x-1/2 max-w-[46%] rounded-2xl border-2 border-background bg-foreground px-2 py-1 sm:px-3 sm:py-2 shadow-[3px_3px_0_hsl(var(--background))]"
-        style={{ left: `${b.x}%`, top: `${b.y}%` }}
+        className="absolute max-w-[46%] rounded-2xl border-2 border-background bg-foreground px-2 py-1 sm:px-3 sm:py-2 shadow-[3px_3px_0_hsl(var(--background))]"
+        // Shift by the same % as the anchor so a bubble near either edge stays fully on screen.
+        style={{ left: `${b.x}%`, top: `${b.y}%`, transform: `translateX(-${Math.max(0, Math.min(100, b.x))}%)` }}
       >
-        <div className="font-heading text-[8px] sm:text-[10px] font-black tracking-wider text-primary">{d.speaker}</div>
-        <p className="font-heading text-[9px] sm:text-xs font-bold uppercase leading-tight text-background">{d.text}</p>
+        <div className="font-heading text-[8px] sm:text-[10px] md:text-xs font-black tracking-wider text-primary">{d.speaker}</div>
+        <p className="font-heading text-[9px] sm:text-xs md:text-base font-bold uppercase leading-tight text-background">{d.text}</p>
       </div>
     </>
   );
@@ -255,7 +256,7 @@ export function StoryPanel({ scene, onDone }: { scene: StoryScene; onDone: () =>
       aria-modal="true"
       aria-label={scene.title}
     >
-      <div className={`relative w-full max-w-2xl border-2 border-primary/70 p-3 sm:p-5 max-h-[95svh] overflow-y-auto ${captiveNoir ? "rounded-sm bg-card shadow-[0_0_28px_hsl(var(--primary)/0.16)]" : "glass-card rounded-lg shadow-2xl"}`}>
+      <div className={`relative w-full max-w-2xl md:max-w-4xl lg:max-w-5xl border-2 border-primary/70 p-3 sm:p-5 max-h-[95svh] overflow-y-auto ${captiveNoir ? "rounded-sm bg-card shadow-[0_0_28px_hsl(var(--primary)/0.16)]" : "glass-card rounded-lg shadow-2xl"}`}>
         {captiveNoir && <div className="pointer-events-none absolute inset-0 z-20 opacity-[0.035] [background-image:linear-gradient(transparent_50%,hsl(var(--foreground)/0.25)_50%)] [background-size:100%_2px]" />}
         <div className="flex items-center justify-between mb-3 gap-2">
           <span className="font-mono text-[11px] font-bold tracking-[0.2em] text-primary truncate">{scene.title}</span>
