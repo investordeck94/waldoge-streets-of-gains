@@ -117,6 +117,9 @@ function getPunchExt(): CanvasImageSource | null {
 /** Kick off the download early (called once from the game bootstrap). */
 export function preloadWaldogeSprites() { getAtlas(); getBareAtlas(); getPunchExt(); }
 
+/** True once the main fighter artwork is decoded (title screen waits on this). */
+export function waldogeSpritesReady(): boolean { getAtlas(); return getAtlas() !== null; }
+
 
 function styleTint(style: StyleName): string {
   return style === "rush" ? "#00ccff"

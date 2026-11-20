@@ -5,7 +5,8 @@
  * StreetBrawler's existing `startGame`, and SETTINGS mutates the same React
  * settings state that already mirrors into the save file.
  */
-import { useState, type FC, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FC, type ReactNode } from "react";
+import { waldogeSpritesReady, preloadWaldogeSprites } from "@/game/presentation/render2d/waldogeSprites";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, RotateCcw, BookOpen, Settings as SettingsIcon, X, Volume2, VolumeX, Camera, Map } from "lucide-react";
 import { LEVELS, type Difficulty } from "@/game/config";
@@ -119,12 +120,31 @@ export const TitleScreen: FC<TitleScreenProps> = ({
   const [panel, setPanel] = useState<"main" | "levels" | "difficulty">("main");
   const [freePlayLevel, setFreePlayLevel] = useState<number | null>(null);
   const [modal, setModal] = useState<null | "howto" | "settings">(null);
+  // Reveal the whole title screen at once, after the backdrop and the fighter
+  // artwork are ready, instead of letting pieces pop in one by one.
+  const bgRef = useRef<HTMLImageElement>(null);
+  const [bgLoaded, setBgLoaded] = useState(false);
+  const [artReady, setArtReady] = useState(() => waldogeSpritesReady());
+  const [timedOut, setTimedOut] = useState(false);
+  useEffect(() => {
+    if (bgRef.current?.complete && bgRef.current.naturalWidth > 0) setBgLoaded(true);
+    preloadWaldogeSprites();
+    const poll = window.setInterval(() => {
+      if (waldogeSpritesReady()) { setArtReady(true); window.clearInterval(poll); }
+    }, 100);
+    const cap = window.setTimeout(() => setTimedOut(true), 6000);
+    return () => { window.clearInterval(poll); window.clearTimeout(cap); };
+  }, []);
+  const revealed = (bgLoaded && artReady) || timedOut;
 
   return (
     <div className="relative mx-auto flex min-h-[780px] w-full max-w-[680px] flex-col overflow-hidden border border-border/50 sm:min-h-[960px]">
       {/* Cinematic backdrop */}
-      <div className="absolute inset-0">
+      <div className={`absolute inset-0 transition-opacity duration-500 ${revealed ? "opacity-100" : "opacity-0"}`}>
         <img
+          ref={bgRef}
+          onLoad={() => setBgLoaded(true)}
+          onError={() => setBgLoaded(true)}
           src={titleBg}
           alt=""
           aria-hidden
@@ -135,7 +155,17 @@ export const TitleScreen: FC<TitleScreenProps> = ({
         <div className="absolute inset-0 bg-gradient-to-b from-background/15 via-transparent to-background/75" />
       </div>
 
-      <div className="relative z-10 flex min-h-[780px] flex-col items-center px-4 py-5 sm:min-h-[960px] sm:px-10 sm:py-8">
+      {!revealed && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-background">
+          <div className="font-heading text-2xl font-black italic tracking-tight text-primary">WALDOGE</div>
+          <div className="h-1.5 w-40 overflow-hidden rounded-full bg-muted">
+            <div className="h-full w-1/3 animate-[loadbar_1.1s_ease-in-out_infinite] rounded-full bg-primary" />
+          </div>
+          <style>{"@keyframes loadbar{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}"}</style>
+        </div>
+      )}
+
+      <div className={`relative z-10 flex min-h-[780px] flex-col items-center px-4 py-5 sm:min-h-[960px] sm:px-10 sm:py-8 transition-opacity duration-500 ${revealed ? "opacity-100" : "opacity-0"}`}>
         {/* Logotype */}
         <motion.div
           initial={{ opacity: 0, y: -14 }}

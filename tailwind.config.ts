@@ -13,6 +13,14 @@ export default {
       },
     },
     extend: {
+      screens: {
+        // Full-screen arcade layout: desktop, OR any touch device held sideways.
+        arcade: { raw: "(min-width: 768px), (pointer: coarse) and (orientation: landscape)" },
+        // Touch device in the arcade layout (on-screen controls over the game).
+        tarc: { raw: "(pointer: coarse) and (min-width: 768px), (pointer: coarse) and (orientation: landscape)" },
+        // Mouse/keyboard desktop only.
+        desk: { raw: "(min-width: 768px) and (pointer: fine)" },
+      },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         display: ['Space Grotesk', 'sans-serif'],

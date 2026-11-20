@@ -1,5 +1,5 @@
 import { useEffect, useRef, type FC } from "react";
-import { drawWaldogeSprite, preloadWaldogeSprites } from "@/game/presentation/render2d/waldogeSprites";
+import { drawWaldogeSprite, preloadWaldogeSprites, waldogeSpritesReady } from "@/game/presentation/render2d/waldogeSprites";
 
 const CANVAS_WIDTH = 560;
 const CANVAS_HEIGHT = 500;
@@ -20,6 +20,12 @@ export const TitleWaldogeFighter: FC = () => {
 
     const draw = (now: number) => {
       context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      // Never flash the blocky placeholder fighter while the real artwork is
+      // still downloading (only fall back if it hasn't arrived after 6s).
+      if (!waldogeSpritesReady() && now - startedAt < 6000) {
+        frameId = requestAnimationFrame(draw);
+        return;
+      }
       const cycle = (now - startedAt) % 3600;
       let state: "idle" | "punch" | "dashpunch" | "uppercut" = "idle";
       let stateTimer = 0;
